@@ -72,14 +72,29 @@ class ParaleloTests(unittest.TestCase):
             "explicit authorization gentle ai requires for parallel writers in isolated worktrees",
         )
 
-    def test_marks_sessions_with_worktrees_and_unmarks_on_close(self):
+    def test_gives_each_session_a_worktree_without_markers_or_a_formal_start(self):
         self.assert_phrases(
-            "radar marcar <ID> --worktree <absolute path>",
-            "radar marcar <ID> --listo",
-            "radar desmarcar <ID>",
-            "`EN CURSO`",
+            "one git worktree on its own branch",
             "never under `/tmp`",
             "stops that Session only",
+        )
+        for gone in ("radar marcar", "radar desmarcar", "chanks-3-session-kickoff", "`en curso`"):
+            self.assertNotIn(gone, self.text, gone)
+
+    def test_orchestrator_delegates_integrates_and_delivers_inside_one_conversation(self):
+        self.assert_phrases(
+            "you are the orchestrator",
+            "inside one conversation",
+            "one Gentle AI subagent per approved Session",
+            "you, the orchestrator, integrate",
+            "close it in stage 5",
+        )
+
+    def test_v1_reserves_nothing_and_says_what_that_costs(self):
+        self.assert_phrases(
+            "stays `LISTO` until its delivery commit is recorded",
+            "Radar does not warn when another conversation takes the same Session",
+            "arrive with V2 (Pista)",
         )
 
     def test_hands_over_only_identity_encargo_and_worktree(self):
@@ -89,12 +104,8 @@ class ParaleloTests(unittest.TestCase):
             "chanks-5-session-doc",
         )
 
-    def test_radar_refusals_are_protection_and_cimiento_pairs_cannot_share_a_lot(self):
-        self.assert_phrases(
-            "radar refuses to mark a Session that collides with one already `EN CURSO` or reuses a worktree",
-            "a refusal is expected protection, not an error to work around",
-            "`cimiento-compartido` pairs cannot share a lot in v1",
-        )
+    def test_cimiento_pairs_cannot_share_a_lot(self):
+        self.assert_phrases("`cimiento-compartido` pairs cannot share a lot in v1")
         self.assertNotIn("explicit acceptance", self.text)
 
     def test_hand_over_names_the_feature_document_with_the_session_id(self):
@@ -102,11 +113,10 @@ class ParaleloTests(unittest.TestCase):
             "`odd/tasks/<id>-<feature>.md`",
             "lowercase Session ID",
             "`odd/tasks/<id>.md`",
-            "exactly one matching document",
         )
         self.assertNotIn("<id>*.md", self.skill)
         self.assert_phrases("chanks-4-puente", "verified commit and completed-task evidence",
-                            "radar marcar <ID> --listo", "a refusal leaves stage 5 pending")
+                            "missing evidence leaves that Session pending")
 
     def test_integration_is_serial(self):
         self.assert_phrases("serial", "one Session at a time", "repository's own delivery policy")
@@ -115,10 +125,11 @@ class ParaleloTests(unittest.TestCase):
         for forbidden in ("--base-ref", "400", "review before", "work-unit commit", "tdd", "red/green", "sha-256", "digest"):
             self.assertNotIn(forbidden, self.text, forbidden)
 
-    def test_herdr_and_intercom_appear_only_as_the_single_v2_non_goal(self):
+    def test_herdr_and_intercom_appear_only_as_the_single_v3_non_goal(self):
         lines = [line for line in self.skill.splitlines() if re.search(r"herdr|intercom", line, re.I)]
         self.assertEqual(len(lines), 1, lines)
-        self.assertIn("V2", lines[0])
+        self.assertIn("V3", lines[0])
+        self.assertNotIn("V2", lines[0])
         self.assertIn("chanks-3-despacho-herdr", lines[0])
 
     def test_boundary_block_points_to_it(self):
@@ -127,6 +138,8 @@ class ParaleloTests(unittest.TestCase):
         parallel = [l for l in routing.splitlines() if l.startswith("- Parallel work")]
         self.assertEqual(len(parallel), 1)
         self.assertTrue(parallel[0].rstrip().endswith("Load `chanks-3-paralelo`."), parallel[0])
+        self.assertIn("inside one conversation", parallel[0])
+        self.assertIn("the orchestrator integrates and delivers serially", parallel[0])
 
 
 if __name__ == "__main__":

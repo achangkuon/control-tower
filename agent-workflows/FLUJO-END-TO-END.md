@@ -3,7 +3,14 @@
 > **Frozen product documentation.** The original candidate is also preserved byte-for-byte at
 > `product/tower/generic/FLUJO-END-TO-END.md`. It explains prior product choreography only;
 > it does not direct the current generic builder, which uses a human-directed responsible parent,
-> read-only planning evidence, current-repository kickoff, and evidence-returning bridge/closure.
+> read-only planning evidence, an organic Session start with no admission step, and an
+> evidence-returning bridge/closure.
+>
+> **V1 (maintainer decision, 2026-10-01).** Every mention below of `chanks-3-session-kickoff`,
+> of the kickoff as an arrival check, or of Sessions marked in progress is historical. In V1 the
+> human chooses a `LISTO` Session and `chanks-4-puente` hands it to Gentle AI; parallel work runs
+> inside one conversation under `chanks-3-paralelo`. The formal start and the Radar dispatch
+> markers are deferred to V2 (Pista).
 > No global installation or consumer has been updated by this source migration.
 >
 > The following gate and flow claims are historical record only; they create no live gate or

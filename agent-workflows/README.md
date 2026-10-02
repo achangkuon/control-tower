@@ -129,8 +129,9 @@ Módulo behavior.
 | --- | --- |
 | Shared conventions | `_shared/plan-naming-convention.md` |
 | Chanks planning and bridge | `chanks-1-adopcion`, `chanks-1-autoridad`, `chanks-1-brain-dump`, `chanks-1-descubrimiento`, `chanks-1-feature`, `chanks-1-heredado`, `chanks-1-prd`, `chanks-1-project-kickoff`, `chanks-1-requirements`, `chanks-1-rfc`, `chanks-1-terreno`, `chanks-4-puente` |
-| Session workflow | `chanks-3-session-kickoff`, `chanks-3-paralelo`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `chanks-5-session-doc` |
+| Session workflow | `chanks-3-paralelo`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-0-agente-soporte`, `chanks-5-session-doc` |
 | Delivery policy | `chanks-5-politica-de-entrega` |
+| Deferred to V2, Pista (source kept, not installed, installed copies archived under `.retired-skills/`) | `chanks-3-session-kickoff` |
 | Deferred to V3 (source kept, not installed, installed copies archived under `.retired-skills/`) | `chanks-0-jornada`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation` |
 | Decision and communication support | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer` |
 
@@ -181,8 +182,14 @@ never writes through a skill symlink.
 
 It also owns one manual prompt-policy block in the Claude, OpenCode, Codex,
 and Pi instruction files: `SESSION-SKILL-ARCHITECTURE:MANUAL` states the
-Chanks and Gentle AI boundary in under 2 KB; the Session admission contract
-loads lazily from `chanks-3-session-kickoff/references/admission-contract.md`. It is a prompt instruction, not executable Gentle AI
+Chanks and Gentle AI boundary in under 2 KB. V1 starts a Session organically:
+the human chooses a `LISTO` Session and `chanks-4-puente` hands it to Gentle AI,
+with no admission step, no dispatch marker and no "in progress" state. Parallel
+work happens inside one conversation, where the orchestrator delegates each
+approved Session to a subagent in its own worktree and integrates serially. The
+formal start (`chanks-3-session-kickoff` and its admission contract) and the
+Radar dispatch markers are deferred to V2 (Pista): their sources and tests stay
+in this repository unchanged. The block is a prompt instruction, not executable Gentle AI
 enforcement. The installer no longer ships an SDD gatekeeper block: how SDD is
 run belongs to Gentle AI. A gatekeeper block already present in an instruction
 file is left untouched.
@@ -216,10 +223,15 @@ byte is rewritten. A block already present is replaced in place, never duplicate
 and a second run changes nothing. A half-present, inline or managed-nested marker
 is refused before any write. `AGENT-PROPAGATION-MAP:MANUAL` is not added anywhere.
 
-The plan-naming block is **not** added yet: its wording has no template in this
-repository, so there is nothing canonical to install. Add
-`templates/plan-naming-standard.md`, register it in `MANUAL_BLOCKS` and list its
-marker in `ADDED_WHEN_ABSENT_BLOCKS` to complete the set.
+The plan-naming block (`PLAN-NAMING:GLOBAL`) is **not** added yet. It has no
+template in this repository, and on 2026-10-01 the three installed copies were
+found to differ: the Claude Code and OpenCode copies each name their own runtime
+path to the canon, and the Pi copy carries an older, shorter wording. Because a
+registered block is replaced in place wherever it exists, one template would
+rewrite at least two of those runtimes. The maintainer first chooses the
+canonical wording and how the runtime path is expressed; then add
+`templates/plan-naming.md`, register it in `MANUAL_BLOCKS` and list its marker in
+`ADDED_WHEN_ABSENT_BLOCKS` to complete the set.
 
 ### Preparing the personal-runtime retirement
 

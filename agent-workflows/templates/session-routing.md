@@ -5,8 +5,8 @@ Chanks decides what is worked on and what runs in parallel. Gentle AI decides ho
 
 - Chanks owns stages 1 Definir, 2 Preparar, 3 Paralelo and 5 Cerrar. Stage 4, implementing and reviewing, belongs to Gentle AI: Chanks hands over the Session and receives the delivered commit.
 - The plan lives only in `openspec/plan.yaml`; `openspec/ROADMAP.md` is its generated view. Read state with the installed Radar: `radar status --json`, `radar sesion <ID>`, `radar faltan`, `radar check`.
-- Radar never selects work. Propose only `LISTO` Sessions in Zona order and let the human choose. Start or resume the chosen Session with `chanks-3-session-kickoff`.
-- Parallel work: only Sessions Radar reports as compatible, only after the human approves the exact lot, each in its own git worktree. That approval is the explicit authorization Gentle AI requires for parallel writers. Load `chanks-3-paralelo`.
+- Radar never selects work. Propose only `LISTO` Sessions in Zona order and let the human choose. The start is organic: hand the chosen Session to Gentle AI through `chanks-4-puente`; there is no admission step.
+- Parallel work happens inside one conversation: only Sessions Radar reports as compatible, only after the human approves the exact lot, each delegated to a subagent in its own git worktree; the orchestrator integrates and delivers serially. That approval is the explicit authorization Gentle AI requires for parallel writers. Load `chanks-3-paralelo`.
 - Chanks skills load only when their stage is entered. Nothing here grants execution, review or delivery authority.
-- Herdr dispatch, Pi Intercom and sealed unattended execution are V2 and are not part of this flow.
+- Session reservation and several conversations delivering at once arrive with V2 (Pista); Herdr dispatch, Pi Intercom and sealed unattended execution are V3. None is part of this flow.
 <!-- /SESSION-SKILL-ARCHITECTURE:MANUAL -->

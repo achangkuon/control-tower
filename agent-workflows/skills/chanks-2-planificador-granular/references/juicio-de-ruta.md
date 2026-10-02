@@ -5,7 +5,7 @@ escalate to SDD because of size, risk, file count, seams, or technical uncertain
 
 | Evidence | Preparation result |
 |---|---|
-| Approved coordination and four-part Encargo | Hand the prepared Session to stage 3 for fresh Radar admission. |
+| Approved coordination and four-part Encargo | The prepared Session waits for the human to choose it; it then goes to Gentle AI through `chanks-4-puente`. |
 | Exact files or authority missing | Incomplete/blocked evidence; no mutation. |
 | Scope/files expand | Human-approved change plus fresh compatibility before affected mutation. |
 | Explicit human `solicitud_sdd` with authority | Preserve the request verbatim in the Encargo for Gentle AI. |

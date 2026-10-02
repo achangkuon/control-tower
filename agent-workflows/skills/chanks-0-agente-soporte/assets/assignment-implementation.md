@@ -20,8 +20,8 @@ Forbidden scope: <PATHS_AND_EFFECTS>
 Responsible parent: <IDENTITY_AND_RETURN_CHANNEL>
 ```
 
-Admission is `chanks-3-session-kickoff`'s job and is not repeated here. Verify repository, HEAD,
-branch, checkout, and compatibility before editing. A native Encargo keeps the same Session identity
+V1 has no admission step: the human-chosen Session reaches Gentle AI through `chanks-4-puente`.
+Verify repository, HEAD, branch, checkout, and compatibility before editing. A native Encargo keeps the same Session identity
 and reconciles Gentle AI's technical record, code, and evidence; a legacy Session continues at first
 pending Módulo for legacy. Do not choose another Session, widen scope, or create a fake lock.
 

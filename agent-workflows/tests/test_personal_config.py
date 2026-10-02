@@ -377,6 +377,19 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.assertEqual(store.read_bytes(), before)
         self.assertFalse((self.home / ".claude/.skill-backups/manual-blocks-boundary-2026-10-01").exists())
 
+    def test_snapshot_refuses_a_block_that_still_points_to_a_deferred_skill(self):
+        self.assertIn("chanks-3-session-kickoff", personal.STALE_SNAPSHOT)
+        for skill in install.DEFERRED_SKILLS:
+            self.assertIn(skill, personal.STALE_SNAPSHOT)
+        self.make_instruction_files()
+        claude = self.home / ".claude/CLAUDE.md"
+        claude.write_bytes(
+            claude.read_bytes()
+            + b"<!-- OWN-NOTE:MANUAL -->\nStart with `chanks-3-session-kickoff`.\n<!-- /OWN-NOTE:MANUAL -->\n"
+        )
+        with self.assertRaisesRegex(personal.MigrationError, "stale personal instruction block"):
+            personal.apply_stage("snapshot", self.home, repo_root=ROOT)
+
     def test_snapshot_restore_simulation_does_not_resurrect_retired_block(self):
         self.make_instruction_files()
         personal.apply_stage("snapshot", self.home, repo_root=ROOT)

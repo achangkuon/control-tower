@@ -833,12 +833,15 @@ class InstallerTests(unittest.TestCase):
         self.assertNotIn("MAIN", content)
         self.assertNotIn("Tower", content)
 
-    def test_routing_leaves_resource_mechanics_to_the_kickoff_skill(self):
+    def test_routing_starts_a_session_organically_without_resource_mechanics(self):
         content = (ROOT / "templates/session-routing.md").read_text(encoding="utf-8")
 
         self.assertNotIn("Recurso", content)
         self.assertNotIn("exclusive or serial", content)
-        self.assertIn("chanks-3-session-kickoff", content)
+        self.assertNotIn("chanks-3-session-kickoff", content)
+        self.assertNotIn("radar marcar", content)
+        self.assertIn("hand the chosen Session to Gentle AI through `chanks-4-puente`", content)
+        self.assertIn("there is no admission step", content)
 
     def test_routing_selects_next_work_only_from_the_radar_queue(self):
         content = (
@@ -1153,12 +1156,12 @@ class SessionBoundaryBlockTests(unittest.TestCase):
     def test_rendered_block_stays_under_the_size_ceiling(self):
         self.assertLessEqual(len(self.rendered), BLOCK_SIZE_CEILING)
 
-    def test_block_names_herdr_and_intercom_only_in_the_single_v2_line(self):
+    def test_block_names_herdr_and_intercom_only_in_the_single_later_versions_line(self):
         lines = [line for line in self.template.splitlines()
                  if "herdr" in line.lower() or "intercom" in line.lower()]
         self.assertEqual(len(lines), 1, lines)
-        self.assertIn("V2", lines[0])
-        self.assertIn("sealed unattended execution", lines[0])
+        self.assertIn("sealed unattended execution are V3", lines[0])
+        self.assertIn("arrive with V2 (Pista)", lines[0])
 
     def test_block_does_not_route_to_v2_skills_or_carry_how_rules(self):
         for skill in V2_SKILLS:

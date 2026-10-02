@@ -41,6 +41,7 @@ Los identificadores N corresponden a la auditoría del documento de Pista.
 | B2 | No estaba claro si cada Sesión pasa por un arranque formal (N17). | No hay arranque formal. El inicio de una Sesión es orgánico, como en ODD y Gentle AI, y nunca bloquea la escritura. |
 | B3 | Codex y Hermes no tienen los bloques de cierre documental, nombres de plan y explicación simple (N16). | Deben tenerlos. |
 | B4 | Quedan piezas de control instaladas fuera de las skills (N11). | Se conservan el aviso de etapa (`chanks-etapa.sh`) y `pi-intercom`. El candado de escritura (`chanks-controls.ts`) pasa a V2 y la firma de la Torre (`torre-firma.sh`) a V3: dejan de instalarse y su fuente se conserva. |
+| B5 | No estaba definido cómo sabe V1 que una Sesión está en curso sin arranque formal ni marca de despacho. | V1 no registra «en curso». Una Sesión pasa de lista a completa cuando se registra su commit de entrega; el orquestador sabe qué está en curso por su propia conversación. Costo aceptado: dos conversaciones simultáneas podrían tomar la misma Sesión sin aviso de Radar; lo resuelve Pista (V2). La función de marcas se difiere, no se pierde: `radar marcar`, `radar desmarcar`, su rechazo por colisión y sus pruebas quedan intactos en Radar para que V2 vuelva a usarlos. |
 
 ### Estado vivo
 
@@ -65,6 +66,7 @@ Los identificadores N corresponden a la auditoría del documento de Pista.
 - `chanks-3-session-kickoff` y `radar marcar` / `radar desmarcar` dejan de ser parte del flujo de V1. La reserva de Sesiones vuelve en V2 como primera pieza de Pista.
 - En V1 nada impide por herramienta que un agente escriba fuera de los archivos de su Sesión. El límite son sus instrucciones y la revisión.
 - `chanks-3-paralelo` debe nombrar al orquestador como quien integra y entrega.
+- `chanks-3-session-kickoff` deja de instalarse y sus copias instaladas se archivan de forma reversible; su fuente queda sin cambios. La Sesión elegida por el humano se entrega a Gentle AI mediante `chanks-4-puente`, sin paso de admisión.
 - Las restricciones de `S174`, `S150` y `S173` deben dejar de fijar un máximo de 400 líneas.
 - Nada de lo construido para V2 o V3 se borra: la fuente se conserva en el repositorio y las copias instaladas se archivan de forma reversible.
 

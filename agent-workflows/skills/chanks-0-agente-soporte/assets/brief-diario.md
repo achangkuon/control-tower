@@ -8,11 +8,11 @@ state. Radar is product authority; a native ODD technical record is subordinate 
 1. `$HOME/.local/bin/radar status --json -C <repo>` and `$HOME/.local/bin/radar sesion <ID> -C <repo>` only; never read the whole plan/view or execute a repository binary.
 2. Git evidence, repository instructions, and delivery policy.
 
-## Admission
+## Start
 
-Whether a Session may start, continue or resume is decided once, in `chanks-3-session-kickoff`. This
-brief only reports the Radar state, the blocker, and the Zone-ordered `LISTO` choices. Seats, queue
-and choices are never assigned agents.
+V1 has no admission step: the human chooses a `LISTO` Session and it goes to Gentle AI through
+`chanks-4-puente`. This brief only reports the Radar state, the blocker, and the Zone-ordered `LISTO`
+choices. Seats, queue and choices are never assigned agents.
 
 ## Template
 

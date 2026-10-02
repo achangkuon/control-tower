@@ -4,7 +4,7 @@ description: "Trigger: Chanks etapa 5, cerrar Sesión, close session, registrar 
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "7.0"
+  version: "8.0"
 ---
 
 ## Activation Contract
@@ -39,15 +39,14 @@ install anything.
    `openspec/plan.yaml`.
 4. For that completed, integrated Session run `radar archivar <ID>`, then `radar check`, then
    `radar render`. Never archive an open Session or batch-archive older ones.
-5. If the Session carries a marker (`radar marcar`), run `radar desmarcar <ID>` and remove its
-   dedicated worktree once the commit is integrated.
+5. Remove the Session's dedicated worktree, when it has one, once the commit is integrated.
 6. When a delivery closed no planned work, say so as a standalone line, `nada que registrar`, instead
    of inventing a Session or a closure.
 
 ## Output Contract
 
-Return outcome and check evidence, commit/HEAD/PR evidence, the Radar archive/check/render and
-`desmarcar` results (or the pending parent commands), the closure outcome or failure, and the exact
+Return outcome and check evidence, commit/HEAD/PR evidence, the Radar archive/check/render
+results (or the pending parent commands), the closure outcome or failure, and the exact
 evidence the responsible parent must record. State that ordinary delivery policy still applies.
 
 ## References

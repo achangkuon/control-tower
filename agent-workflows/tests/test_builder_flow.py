@@ -147,7 +147,11 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertIn("first pending Módulo for legacy", source)
         for source in (support, handoff, brief):
             self.assertNotIn("SHA-256", source)
-            self.assertIn("chanks-3-session-kickoff", source)
+            # V1 has no admission step: the pointer is the organic handover, never the
+            # V2-deferred kickoff skill.
+            self.assertNotIn("chanks-3-session-kickoff", source)
+            self.assertIn("chanks-4-puente", source)
+            self.assertIn("no admission step", source)
         self.assertIn("native record, code, and evidence", kickoff)
         self.assertIn("never execute a repository binary", support)
         self.assertIn("no fallback from a rejected state", " ".join(kickoff.split()).lower())
@@ -188,7 +192,9 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("aprobación humana", autoridad)
         self.assertIn("evidencia", autoridad)
         self.assertIn("responsible parent", autoridad)
-        self.assertIn("chanks-3-session-kickoff", planner)
+        self.assertNotIn("chanks-3-session-kickoff", planner)
+        self.assertIn("chanks-4-puente", planner)
+        self.assertIn("no admission step", planner)
         self.assertIn("evidence", planner)
         self.assertIn("responsible parent", planner)
         for source in (autoridad, planner):
@@ -232,13 +238,13 @@ class GenericBuilderFlowTests(unittest.TestCase):
         compact = " ".join(closure.split())
         for rule in (
             "`entrega.commit`", "ancestor", "`radar archivar <ID>`", "`radar check`",
-            "`radar render`", "`radar desmarcar <ID>`", "Only the responsible parent writes `openspec/plan.yaml`",
+            "`radar render`", "Only the responsible parent writes `openspec/plan.yaml`",
             "nada que registrar",
         ):
             with self.subTest(rule=rule):
                 self.assertIn(rule, compact)
         for gone in ("reinstall", "Issue-Patch", "Herdr", "Pi sessions",
-                     "installers", "chanks-7"):
+                     "installers", "chanks-7", "radar marcar", "radar desmarcar"):
             with self.subTest(gone=gone):
                 self.assertNotIn(gone, closure)
         self.assertTrue(closure.startswith("---\nname: chanks-5-session-doc\n"))
@@ -247,21 +253,46 @@ class GenericBuilderFlowTests(unittest.TestCase):
                          ["SKILL.md", "assets/project-notion-map.json", "assets/session-doc.schema.json",
                           "references/notion-closure.md"])
 
-    def test_single_session_handoff_and_readiness_reach_stage_five(self):
-        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+    def test_single_session_handoff_reaches_stage_five_without_markers(self):
         bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
-        for source in (kickoff, bridge):
-            self.assertIn("references/session-readiness.md", source)
-        self.assertIn("`radar marcar <ID> --listo`", bridge)
+        self.assertIn("references/session-readiness.md", bridge)
         self.assertIn("verified commit and completed-task evidence", bridge)
-        self.assertIn("A refusal leaves stage 5 pending", bridge)
+        self.assertIn("no admission step", bridge)
+        self.assertIn("chanks-5-session-doc", bridge)
+        self.assertIn("stage 5 stays pending", bridge)
         readiness = " ".join(read("skills/chanks-4-puente/references/session-readiness.md").split())
         for phrase in ("lowercase Session ID", "`odd/tasks/<id>.md`", "`odd/tasks/<id>-<feature>.md`",
                        "exactly one", "at least one checked task", "no unchecked tasks",
-                       "resolves in Git", "same marked checkout", "no additional review"):
+                       "resolves in Git", "same checkout", "no additional review",
+                       "deferred to V2 (Pista)"):
             self.assertIn(phrase, readiness)
         self.assertNotIn("<id>*.md", readiness)
         self.assertIn("One Session does not require parallel machinery", readiness)
+        for source in (bridge, readiness):
+            for gone in ("radar marcar", "radar desmarcar", "--listo", "radar etapa",
+                         "chanks-3-session-kickoff", "admitted"):
+                with self.subTest(gone=gone):
+                    self.assertNotIn(gone, source)
+
+    def test_v1_stage_skills_and_live_docs_give_no_marker_or_formal_start_instruction(self):
+        """V1 runs without dispatch markers or a formal start; both wait for V2 (Pista)."""
+        folders = [SKILLS / name for name in INSTALLER.CHANKS_SKILLS]
+        sources = [path for folder in folders for path in sorted(folder.rglob("*"))
+                   if path.is_file() and path.suffix in {".md", ".json", ".py"}]
+        sources.append(ROOT / "templates/session-routing.md")
+        self.assertGreater(len(sources), len(folders))
+        for path in sources:
+            text = path.read_text(encoding="utf-8")
+            for gone in ("radar marcar", "radar desmarcar", "chanks-3-session-kickoff"):
+                with self.subTest(file=path.relative_to(ROOT).as_posix(), gone=gone):
+                    self.assertNotIn(gone, text)
+        readme = " ".join(read("README.md").split())
+        self.assertIn("Deferred to V2", readme)
+        self.assertNotIn("| Session workflow | `chanks-3-session-kickoff`", readme)
+        flow = " ".join(read("FLUJO-END-TO-END.md").split())
+        self.assertIn("no admission step", flow)
+        self.assertIn("deferred to V2 (Pista)", flow)
+        self.assertNotIn("current-repository kickoff", flow)
 
     def test_generic_notion_closure_preserves_known_maps_on_demand(self):
         skill = read("skills/chanks-5-session-doc/SKILL.md")
@@ -385,7 +416,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
             },
             "tower_boundary": "manual-only; no Tower runtime or skills",
         })
-        self.assertIn("chanks-3-session-kickoff", template)
+        self.assertNotIn("chanks-3-session-kickoff", template)
 
     def test_support_preserves_read_only_adoption_and_handoff_boundaries(self):
         support = read("skills/chanks-0-agente-soporte/SKILL.md")

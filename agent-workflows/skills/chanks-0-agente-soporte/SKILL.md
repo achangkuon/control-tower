@@ -20,8 +20,9 @@ read-only: it advises the responsible parent and never becomes a dispatcher, pla
 - A repository with no `openspec/plan.yaml` has not adopted plan management, which is a human choice
   and not a fault. Say what the request needs it for, offer to start adoption, and stop. Never
   improvise a substitute record or adopt it without the human saying yes.
-- Radar remains product authority; no ODD document or Engram record changes plan status. Admission
-  to start, continue or resume a Session is stated once, in `../chanks-3-session-kickoff/SKILL.md`.
+- Radar remains product authority; no ODD document or Engram record changes plan status. V1 has
+  no admission step: a human-chosen `LISTO` Session goes to Gentle AI through
+  `../chanks-4-puente/SKILL.md`.
 - Preserve human choice for scope, files, risks, authority, and contradictions. Compatible seats
   are a parallel-safety verdict (§13), not a live lock, assignment, or topology instruction.
 - Do not implement, deliver, dispatch, create external sessions, or mutate planning data.
@@ -45,7 +46,7 @@ When the request is what could run in parallel — resuming work, planning a bat
   the declarations every verdict above is derived from.
 
 All of this is a forecast over the current plan and base. It reserves nothing, assigns no agent,
-grants no access, and does not change what admission allows. `radar roadmap` renders the same
+grants no access, and does not change what Radar reports. `radar roadmap` renders the same
 evidence for a person to read; it is never the machine path and never an authority.
 
 ## Decision Gates
@@ -65,7 +66,7 @@ evidence for a person to read; it is never the machine path and never an authori
 2. Distinguish native Encargo coordination from legacy historical Module evidence.
 3. Report dependencies, exact-file/Cimiento/Recurso compatibility, risks, and unresolved human choices.
 4. Issue one bounded implementation handoff using `assets/assignment-implementation.md` only when the
-   human-approved Session passed admission and a selected implementer is identified; issuance is not
+   human chose a `LISTO` Session and a selected implementer is identified; issuance is not
    dispatch, delivery, or plan mutation.
 5. Return only a preconditioned proposed delta; the responsible parent records confirmed plan evidence.
 
@@ -80,4 +81,4 @@ product authority and the responsible parent records changes.
 
 - `assets/brief-diario.md`
 - `assets/assignment-implementation.md`
-- `../chanks-3-session-kickoff/SKILL.md`
+- `../chanks-4-puente/SKILL.md`

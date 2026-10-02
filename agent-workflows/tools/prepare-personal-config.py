@@ -42,7 +42,7 @@ SNAPSHOT_RE = re.compile(
     re.DOTALL | re.MULTILINE,
 )
 MANAGED_PREFIXES = ("gentle-ai:", "section:")
-STALE_SNAPSHOT = (UNATTENDED.decode(),) + install.V3_DEFERRED_SKILLS
+STALE_SNAPSHOT = (UNATTENDED.decode(),) + install.DEFERRED_SKILLS
 
 
 class MigrationError(RuntimeError):

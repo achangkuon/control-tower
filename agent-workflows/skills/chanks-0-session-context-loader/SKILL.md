@@ -45,5 +45,4 @@ Devuelve estado según Radar, contexto de la Sesión, decisiones y riesgos relev
 
 ## References
 
-- `../chanks-3-session-kickoff/SKILL.md`
-- `../chanks-4-puente/SKILL.md`
+- `../chanks-4-puente/SKILL.md` — la Sesión elegida por el humano se entrega a Gentle AI por acá; no hay paso de admisión.

@@ -30,9 +30,10 @@ parent; do not write the plan or generated view.
 - Visible-message suggestions (`../chanks-0-mensajes-visibles/SKILL.md`) load only when the human asks
   for them, never as a planning step.
 - Legacy Module/Task contracts remain historical/technical evidence and are not rewritten here.
-- Announce `chanks-3-session-kickoff` as the next stage only after approved scope, complete
-  authority, exact-file evidence, and the responsible parent's plan write; fresh Radar admission
-  remains required there. This handoff neither approves execution nor claims a live status.
+- Announce `chanks-4-puente` as the next step only after approved scope, complete authority,
+  exact-file evidence, and the responsible parent's plan write. The human chooses the Session and
+  the start is organic, with no admission step. This handoff neither approves execution nor claims
+  a live status.
 
 ## Decision Gates
 
@@ -61,7 +62,7 @@ parent; do not write the plan or generated view.
 Return prepared coordination, four-part Encargo, file/compatibility evidence, human
 decisions, and the exact parent-record delta. State whether it is complete or incomplete; do not
 claim planning status, a lock, technical task decomposition, or execution authority. Announce
-`chanks-3-session-kickoff` only when its evidence-backed handoff conditions are met.
+`chanks-4-puente` only when its evidence-backed handoff conditions are met.
 
 ## References
 

@@ -764,7 +764,7 @@ class DespachoHerdrRoutingTests(unittest.TestCase):
                     self.assertNotIn(skill, text, path)
                 for mechanic in ("Torre", "fire-and-forget", "intercom ask", "retire mode", "may load"):
                     self.assertNotIn(mechanic, text, path)
-                self.assertIn("Herdr dispatch, Pi Intercom and sealed unattended execution are V2", text, path)
+                self.assertIn("Herdr dispatch, Pi Intercom and sealed unattended execution are V3", text, path)
 
 
 V2_SKILLS = (
