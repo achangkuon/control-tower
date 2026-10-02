@@ -372,3 +372,17 @@ Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in
 - Runbook rules: the installer SHA-256 and tag always come from the human (maintainer's second channel), never from GitHub; stop on checksum failure; ask before installing tools, editing shell files or adopting a project. Claims checked against `install.mjs`, `cli.mjs`, `global.mjs` and `adoption.mjs` (uninstall removes the journal; cleanup only for an intact residual journal; no global uninstall command in V1).
 - Native review `review-bbe17af08173b01b`: approved and acknowledged; its two non-blocking notes (existing-install reference, path quoting) were fixed afterwards as a passive text edit.
 - Fresh-agent trial (2026-10-02): a clean Claude Code 2.1.287 (no personal hooks, skills or instructions; disposable HOME; temporary credential copy removed afterwards) received only the partner's sentence, the repository link, the tag and the installer SHA-256. It found `INSTALL-AGENTS.md` through `gh`, verified the installer (`OK`), installed v1.0.1, added the PATH line, adopted a demo project and reported `healthy` everywhere. Its notes led to two passive fixes: the README no longer claims no release exists, and the runbook now selects the shell startup file from `$SHELL` and warns about a shadowing `torre-control`. A first trial attempt created a stray `~/.claude/.claude.json`; it was identified by its start time and removed.
+
+## S186 / S185 / v1.0.2 execution
+
+Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-02 executing S186, S185 and the v1.0.2 release in order, delivering each only after approved review and a green full suite, then updating this machine.
+
+- [ ] S186 — setup.sh launcher becomes `torre-setup` and never writes `torre-control`.
+- [ ] S185 — Arrow-key colored V1 menu tolerant of LF, CR and CR LF.
+- [ ] v1.0.2 — Build, publish privately, verify partner flow, update this machine.
+
+### S186 evidence
+
+- Writer: `setup.sh` +40/-10, new `agent-workflows/tests/test_setup_launcher.py` 140 lines (180 authored). RED 10 tests / 12 failure records; GREEN 11 pass (`python3 -m unittest discover -s agent-workflows/tests -p test_setup_launcher.py`); `bash -n` clean; shellcheck unavailable.
+- Default launcher `torre-setup`; `torre-control` is reserved and never written (refused with an explanation; `--link` returns non-zero, skills install still succeeds with a warning); an existing `torre-setup` is overwritten only when it is the exact generated launcher. `install_tower` delegates to the legacy Tower `install.sh`, which writes `torre`, not `torre-control`. Real HOME untouched.
+- Native review `review-a24086acaa163f08`: high risk (shell/process boundary), four lenses (risk, resilience, readability, reliability), approved without findings and acknowledged.
