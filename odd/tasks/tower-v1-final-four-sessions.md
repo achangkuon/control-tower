@@ -267,3 +267,20 @@ Unit 5 scope: only `product/tower/v1/cli.mjs` and `product/tower/v1/test/cli.tes
 ### S174 closure
 
 - `entrega.commit: 088cf3a3c96098e47d44315f30d8ef0a89640057` recorded in `openspec/plan.yaml`; `radar archivar S174` succeeded, `radar check` 0 errors / 63 pre-existing warnings, ROADMAP regenerated. Radar now admits S173 as LISTO. Next: S173 two units, then S175 planning (release packager), then S150.
+
+## S173 benchmark resumption
+
+Fresh Radar: S173 🟢 LISTO after S174 archived. Only `product/tower/v1/benchmark.mjs` and `product/tower/v1/test/benchmark.test.mjs` are authorized.
+
+Observed spike (disposable `/tmp/s173-spike-sTX9`, no model cost, Engram 12889/12890): a loopback capture server records each host's first real inference request. Claude Code 2.1.287 with isolated `HOME`/`CLAUDE_CONFIG_DIR`, `ANTHROPIC_BASE_URL` and a dummy key posts `/v1/messages` (63,837 bytes non-adopter vs 64,036 adopter); it retries, so only the first POST counts, and it injects git status, so fixtures must be committed identically. Pi 1.0.0 with isolated `HOME`/`PI_CODING_AGENT_DIR`, a `models.json` openai-completions provider, `--offline --no-extensions --no-session --approve` posts `/v1/chat/completions` (5,865 vs 6,534). Pi needs `read`/`bash` tools enabled for the skill listing; never `--no-tools`.
+
+Maintainer decision: the ordinary-question check uses a real model through an operator-supplied API key in the environment, for that check only. Without the key the behavioral result is reported as not measured, never inferred. Byte measurement never needs a real model.
+
+- [ ] B1 — Isolation, loopback capture boundary for Pi and Claude Code, and ordinary-question arm (optional real-model forwarding).
+- [ ] B2 — Independent Radar contrast, failure modes and proxy-free report, keeping B1 green.
+
+### B1 evidence
+
+- Writer: `benchmark.mjs` 193 + `test/benchmark.test.mjs` 151 = 344 authored lines, 11 tests. RED 0 pass / 1 fail / 1 import error (module absent); GREEN 11 pass / 116 assertions; V1 suite 221 pass. Whitespace clean; scope exactly the two files plus this record.
+- Real capture-only run (no key, no model): Pi 1.0.0 request 5,906 → 6,595 bytes (+689; system text +675, tools +0); Claude Code 2.1.287 64,386 → 64,499 (+113; system text +112, tools +0). Behavior `not_measured` in capture-only mode by design.
+- Native review `review-1f532c5a9dbfca16`: medium/reliability, 355 lines, approved and acknowledged. Non-blocking `R3-radar-false-positive` (`benchmark.mjs:28`, a bare `radar` word in a shell input counts as execution) is carried into B2.
