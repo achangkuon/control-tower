@@ -2097,43 +2097,7 @@ sesiones:
         instalación de Gentle AI vía Homebrew como referencia de experiencia;
         hallazgos de la prueba real del 2026-10-02 (Engram 12940).
 
-  - id: S185
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "El menú de torre-control se maneja con flechas y Enter, con colores, y no aborta cuando la terminal envía el Enter como CR LF."
-    autoridad: "Emilio reportó el 2026-10-02 que el menú aborta en su terminal y eligió en esta Conversación un menú con flechas como el de setup.sh."
-    depende_de: [S183]
-    archivos: [product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs]
-    cimientos: []
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        Al usar torre-control sin argumentos en la terminal del mantenedor, el menú
-        numérico aborta en la segunda pregunta con «menu input missing or invalid»:
-        el Enter llega como CR LF, la TTY lo convierte en dos saltos de línea y la
-        línea vacía responde la pregunta siguiente (cli.mjs líneas 127–132;
-        reproducido con una pseudo-terminal). El mantenedor esperaba la experiencia
-        visual del instalador anterior (setup.sh: flechas, colores, pantalla propia).
-      resultado_comportamiento: >-
-        En una terminal interactiva, el menú muestra las mismas acciones cerradas,
-        se navega con flechas y se elige con Enter, con resaltado y colores, y
-        restaura siempre el estado de la terminal al salir, al fallar o con Ctrl-C.
-        Las preguntas de texto (tag, asset, SHA-256, raíz del proyecto y palabras de
-        confirmación) aceptan Enter como LF, CR o CR LF sin respuestas vacías
-        fantasma. Si la terminal no admite el modo visual, cae a un menú numérico
-        simple que también tolera esos finales de línea. Funciona en Linux y macOS.
-      restricciones_decisiones: >-
-        Sólo los dos archivos declarados; sin módulos nuevos ni dependencias, para no
-        cambiar los miembros del Release. El menú sigue siendo una fachada de los
-        mismos comandos cerrados, con las mismas confirmaciones escritas; no agrega
-        acciones. Pruebas deterministas con una pseudo-terminal o entradas
-        inyectadas, incluida la regresión CR LF. Pronóstico de 150–300 líneas
-        authored; el tamaño sigue la guía nativa de Gentle AI y no es una
-        restricción de esta Sesión. Llega a los usuarios con una release nueva,
-        decisión humana aparte.
-      referencias: >-
-        product/tower/v1/cli.mjs líneas 117–163; agent-workflows/tools/setup.sh
-        líneas 382–520 como referencia visual; reproducción CR LF del 2026-10-02.
+  - {id: S185, entrega: {commit: a86b4cb856dc19a28fac0cc3166b942b3ff798ec}, historico: openspec/archive/sesiones/S185.md}
 
   - {id: S186, entrega: {commit: 7723d7e15322980b535401ee500839fd895a9c19}, historico: openspec/archive/sesiones/S186.md}
 

@@ -378,7 +378,7 @@ Maintainer approved on 2026-10-02 executing S183, S184 and the v1.0.1 release in
 Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-02 executing S186, S185 and the v1.0.2 release in order, delivering each only after approved review and a green full suite, then updating this machine.
 
 - [x] S186 — setup.sh launcher becomes `torre-setup` and never writes `torre-control`. DONE: `7723d7e` (bun hook 1,814 pass; Python launcher tests 11 pass), archived.
-- [ ] S185 — Arrow-key colored V1 menu tolerant of LF, CR and CR LF.
+- [x] S185 — Arrow-key colored V1 menu tolerant of LF, CR and CR LF. DONE: `a86b4cb`, push hook 1,824 pass / 0 fail, archived.
 - [ ] v1.0.2 — Build, publish privately, verify partner flow, update this machine.
 
 ### S186 evidence
