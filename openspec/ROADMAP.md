@@ -1364,7 +1364,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs
+  - Archivos autorizados: product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard&#95;test.go
   - Depende de: S205
   - Recursos: —
   - Ejecución: ODD nativo.
