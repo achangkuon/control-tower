@@ -203,6 +203,27 @@ test("uninstall preserves later settings and empty unrelated hooks; restores an 
   expect(JSON.parse(read(home, ".claude/settings.json"))).toEqual({ personal: "later", hooks: { UserPromptSubmit: [{ matcher: "personal", hooks: [] }] } });
 }));
 
+test("settings edited between installs survive a reinstall followed by uninstall", () => {
+  fixture(({ home, write, install }) => {
+    install();
+    const edited = JSON.parse(read(home, ".claude/settings.json"));
+    edited.personal = "kept";
+    write(".claude/settings.json", JSON.stringify(edited));
+    install();
+    uninstallRuntime({ home });
+    expect(JSON.parse(read(home, ".claude/settings.json"))).toEqual({ personal: "kept" });
+  });
+  fixture(({ home, write, install }) => {
+    write(".claude/settings.json", JSON.stringify({ theme: "dark" }));
+    install();
+    const edited = JSON.parse(read(home, ".claude/settings.json"));
+    edited.personal = "kept";
+    write(".claude/settings.json", JSON.stringify(edited));
+    install();
+    uninstallRuntime({ home });
+    expect(JSON.parse(read(home, ".claude/settings.json"))).toEqual({ theme: "dark", personal: "kept" });
+  });
+});
 test("semantically identical existing hooks are not duplicated; private instruction and settings modes stay private", () => fixture(({ home, write, install }) => {
   write(".claude/settings.json", JSON.stringify({ hooks: { UserPromptSubmit: [{ matcher: "", hooks: [{ timeout: 15, command: 'sh \"$HOME/.claude/hooks/chanks-etapa.sh\"', type: "command" }] }] } }));
   write(".claude/CLAUDE.md", "private instructions\n");

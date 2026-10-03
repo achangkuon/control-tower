@@ -332,8 +332,11 @@ export function installRuntime(plan) {
     const settingsBytes = encode(nextSettings) === encode(config.value) ? config.bytes : Buffer.from(JSON.stringify(nextSettings, null, 2) + "\n");
     if (settingsBytes && !settingsBytes.equals(config.bytes ?? Buffer.alloc(0))) atomic(home, join(home, settingsPath), settingsBytes, config.mode, created);
     for (const p of pointers) if (p.next !== p.priorBytes?.toString("utf8")) atomic(home, join(home, p.path), p.next, p.mode, created);
+    // Settings edited since the previous install make the original snapshot stale: uninstall
+    // must then remove only the Tower hooks instead of restoring or deleting the file.
+    const surgical = Boolean(prior && (prior.settings.surgical || (config.bytes?.toString("base64") ?? null) !== prior.settings.installed));
     const record = { schema, entries, pointers: pointers.map(({ priorBytes, next, ...p }) => p), directories: [...created].sort(),
-      settings: { original: prior ? prior.settings.original : config.bytes?.toString("base64") ?? null, originalMode: prior?.settings.originalMode ?? config.mode, installed: settingsBytes?.toString("base64") ?? null,
+      settings: { original: prior ? prior.settings.original : config.bytes?.toString("base64") ?? null, originalMode: prior?.settings.originalMode ?? config.mode, installed: settingsBytes?.toString("base64") ?? null, surgical,
         hookDigests: Object.fromEntries(hooks.filter(h => added.includes(h.event)).map(h => [h.event, hash(encode({ matcher: h.matcher, hook: h.hook }))])), added } };
     atomic(home, join(home, manifestPath), encode(record), 0o600);
     for (const item of displaced) remove(home, join(home, item.path), item.content);
@@ -406,7 +409,7 @@ export function uninstallRuntime({ home }) {
     if (actual) remove(home, target, entry.installed);
     if (entry.backup) { directories(home, dirname(target)); renameSync(join(home, entry.backup.path), target); }
   }
-  const identical = config.bytes?.toString("base64") === record.settings.installed;
+  const identical = !record.settings.surgical && config.bytes?.toString("base64") === record.settings.installed;
   if (identical && record.settings.original === null) { if (config.bytes) unlinkSync(join(home, settingsPath)); }
   else if (identical) atomic(home, join(home, settingsPath), Buffer.from(record.settings.original, "base64"), record.settings.originalMode ?? config.mode);
   else if (encode(next) !== encode(config.value)) atomic(home, join(home, settingsPath), JSON.stringify(next, null, 2) + "\n", config.mode);
