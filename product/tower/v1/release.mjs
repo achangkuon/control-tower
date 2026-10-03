@@ -188,7 +188,8 @@ function latestOptions(options) {
 
 function discoverLatestTag(identity, runner) {
   const { repository } = identity;
-  execute(runner, ["auth", "status", "--active", "--hostname", "github.com"], 1024);
+  // gh auth output grows with configured accounts; only success matters here.
+  execute(runner, ["auth", "status", "--active", "--hostname", "github.com"], 64 * 1024);
   const metadata = execute(runner, ["release", "view", "--repo", repository, "--json", "tagName"], 1024);
   let tag;
   try { tag = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(metadata)).tagName; } catch {}

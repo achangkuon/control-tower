@@ -75,6 +75,13 @@ describe("latest private release", () => {
     };
     return { calls, runner };
   }
+  test("verbose gh auth output (several accounts) does not break latest discovery", () => {
+    const h = latest();
+    const runner = (command, argv) => argv[0] === "auth"
+      ? { status: 0, stdout: Buffer.from("✓ Logged in to github.com account someone\n".repeat(200)) }
+      : h.runner(command, argv);
+    expect(acquireLatestRelease({ repository: input.repository, installedTag: "v2", runner })).toEqual({ status: "up-to-date", tag: "v2" });
+  });
   test("equal tag authenticates and discovers without any download", () => {
     const h = latest();
     expect(acquireLatestRelease({ repository: input.repository, installedTag: "v2", runner: h.runner })).toEqual({ status: "up-to-date", tag: "v2" });
