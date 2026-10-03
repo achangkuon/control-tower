@@ -409,7 +409,7 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 
 - [x] S187 — read-only `status` command. DONE: `c67dc1b`, push hook 1,840 pass / 0 fail, archived.
 - [x] S188 — Go home screen. DONE: `09941dc` (go test pass; push hook 1,840 pass after one retry — first attempt failed only the pre-existing timing-sensitive `installed torre launch-worker ignores legacy and PATH shims` test at 5.37 s), archived.
-- [ ] S189 — wizards and projects.
+- [x] S189 — wizards and projects. DONE: `987e65f`, go test pass, push hook 1,840 pass / 0 fail, archived.
 - [ ] S190 — packaging, default launch, v1.1.0.
 
 ### S187 evidence
