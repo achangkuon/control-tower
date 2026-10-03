@@ -2189,31 +2189,7 @@ sesiones:
 
   - {id: S198, entrega: {commit: 748d58d33c4b32cd1bc59b0fec37fd0cc2c812c5}, historico: openspec/archive/sesiones/S198.md}
 
-  - id: S199
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "Instalar o actualizar ya no pide versión: busca la última publicada y, si no hay nada nuevo, dice Todas las configuraciones al día."
-    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación la actualización sin preguntas y confiar en la huella publicada en su repo privado."
-    depende_de: [S198]
-    archivos: [product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard_test.go, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/tui/main.go, product/tower/v1/tui/model.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model_test.go]
-    cimientos: []
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        El asistente pide etiqueta, asset y SHA-256 a mano y rechaza latest; para alguien
-        no técnico es fricción pura.
-      resultado_comportamiento: >-
-        La actualización consulta la última release publicada del repo privado, la
-        compara con el tag instalado y, si es más nueva, la baja y verifica con la huella
-        publicada junto a esa misma release. Si no hay nada nuevo muestra "Todas las
-        configuraciones al día". La opción manual por tag queda para casos avanzados.
-      restricciones_decisiones: >-
-        Riesgo aceptado por Emilio: huella del mismo origen, mitigado por repo privado y
-        gh autenticado. Toda descarga se verifica antes de usarse. La release publica su
-        huella en un asset propio.
-      referencias: >-
-        release.mjs:39-49; wizard.go:29-31, 113-122, 204-246; Engram
-        tower-v1/tui-patch-2026-10.
+  - {id: S199, entrega: {commit: 5c601cdfd75ea1fc17eca46efa1a24f53c098cd3}, historico: openspec/archive/sesiones/S199.md}
 
   - id: S200
     zona: producto-torre
