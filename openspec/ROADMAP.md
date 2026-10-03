@@ -1224,7 +1224,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
-  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tests/test&#95;install.py, agent-workflows/README.md, agent-workflows/templates/doc-guard-rule.md, agent-workflows/templates/explain-to-maintainer.md, agent-workflows/templates/agent-propagation-map.md
+  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tests/test&#95;install.py, agent-workflows/README.md, agent-workflows/templates/doc-guard-rule.md, agent-workflows/templates/explain-to-maintainer.md, agent-workflows/templates/agent-propagation-map.md, agent-workflows/tests/test&#95;despacho&#95;herdr.py, agent-workflows/tests/test&#95;setup&#95;launcher.py
   - Depende de: S195, S196
   - Recursos: —
   - Ejecución: ODD nativo.

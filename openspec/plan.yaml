@@ -2165,7 +2165,7 @@ sesiones:
     resultado: "La máquina de Emilio pasa al instalador único: install.py sólo administra los bloques personales Generados por Chanks y migra los bloques viejos sin duplicar."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación un solo instalador y la familia de bloques Generado por Chanks para su configuración local."
     depende_de: [S195, S196]
-    archivos: [agent-workflows/tools/install.py, agent-workflows/tests/test_install.py, agent-workflows/README.md, agent-workflows/templates/doc-guard-rule.md, agent-workflows/templates/explain-to-maintainer.md, agent-workflows/templates/agent-propagation-map.md]
+    archivos: [agent-workflows/tools/install.py, agent-workflows/tests/test_install.py, agent-workflows/README.md, agent-workflows/templates/doc-guard-rule.md, agent-workflows/templates/explain-to-maintainer.md, agent-workflows/templates/agent-propagation-map.md, agent-workflows/tests/test_despacho_herdr.py, agent-workflows/tests/test_setup_launcher.py]
     cimientos: []
     recurso: []
     encargo:
