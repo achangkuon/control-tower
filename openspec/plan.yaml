@@ -2157,32 +2157,7 @@ sesiones:
 
   - {id: S195, entrega: {commit: 1aaa7d08a6ab3970cc5d934f9e919c73570144ca}, historico: openspec/archive/sesiones/S195.md}
 
-  - id: S196
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "Adoptar un proyecto escribe el bloque de la Torre en su AGENTS.md y un CLAUDE.md que lo importa, y actualizar refresca todos los proyectos adoptados."
-    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación las instrucciones por proyecto y que actualizar aplique a los proyectos ya adoptados."
-    depende_de: [S195]
-    archivos: [product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs]
-    cimientos: []
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        Codex, OpenCode y Pi leen solos el AGENTS.md del proyecto; Claude Code lee
-        CLAUDE.md. La adopción actual no escribe instrucciones.
-      resultado_comportamiento: >-
-        project init inserta el bloque de proyecto de S192 entre marcas en AGENTS.md y
-        asegura un CLAUDE.md con @AGENTS.md, preservando el texto propio del proyecto.
-        Desinstalar quita sólo esos bloques y restaura el estado original. Al actualizar
-        la Torre, cada proyecto registrado y sano recibe el bloque nuevo y el resultado
-        informa qué proyectos cambiaron.
-      restricciones_decisiones: >-
-        No commitea en el proyecto: el cambio queda visible para el humano. Mantiene
-        confianza explícita y el journal de adopción reversible. Un proyecto inaccesible
-        o con bloque alterado se informa y no se fuerza.
-      referencias: >-
-        adoption.mjs (journal, snapshots); projects.mjs (registro); Engram
-        tower-v1/installer-skills-and-migration.
+  - {id: S196, entrega: {commit: 1fcbacc746bfdf67cde19107a0d2d788141617af}, historico: openspec/archive/sesiones/S196.md}
 
   - id: S197
     zona: metodo
