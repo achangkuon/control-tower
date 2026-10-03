@@ -1215,7 +1215,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs
+  - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs
   - Depende de: S195
   - Recursos: —
   - Ejecución: ODD nativo.
