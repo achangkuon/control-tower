@@ -1189,7 +1189,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs, product/tower/v1/bootstrap.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs
+  - Archivos autorizados: product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs, product/tower/v1/bootstrap.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/test/global.test.mjs
   - Depende de: S192, S193
   - Recursos: —
   - Ejecución: ODD nativo.
