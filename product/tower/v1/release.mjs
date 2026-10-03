@@ -1,5 +1,7 @@
 import { spawnSync } from "node:child_process";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { chmodSync, closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, readSync, renameSync, writeFileSync } from "node:fs";
+import { isAbsolute, join, parse, resolve, sep } from "node:path";
 
 export const MAX_RELEASE_BYTES = 16 * 1024 * 1024;
 
@@ -38,6 +40,134 @@ function execute(runner, argv, limit = MAX_RELEASE_BYTES) {
 }
 
 const latestAsset = "tower-v1.json";
+const TUI_LIMIT = 64 * 1024 * 1024;
+const digest = bytes => createHash("sha256").update(bytes).digest("hex");
+const tuiFailure = (reason, text) => { throw Object.assign(new Error(text), { tuiReason: reason }); };
+
+export function tuiPlatformKey(platform = process.platform, arch = process.arch) {
+  return ["linux", "darwin"].includes(platform) && ["x64", "arm64"].includes(arch) ?
+    `${platform}-${arch === "x64" ? "amd64" : arch}` : null;
+}
+
+// Mirror the standalone install.mjs guards: that asset cannot import repository
+// modules, and adding it to the engine envelope would change historical rosters.
+function tuiDirectory(path, home, create = false) {
+  let current = parse(path).root;
+  for (const part of path.slice(current.length).split(sep)) {
+    current = join(current, part);
+    let stat;
+    try { stat = lstatSync(current); } catch (error) { if (error.code !== "ENOENT") throw error; }
+    if (!stat && create && (current === home || current.startsWith(home + sep))) {
+      mkdirSync(current, { mode: 0o755 }); chmodSync(current, 0o755); stat = lstatSync(current);
+    }
+    if (!stat && !create) return false;
+    if (!stat?.isDirectory() || stat.isSymbolicLink() ||
+        (current === home || current.startsWith(home + sep)) && (stat.uid !== process.getuid() || stat.mode & 0o022)) {
+      tuiFailure("unsafe", "Directorio de la interfaz inseguro; se conservó la interfaz anterior.");
+    }
+  }
+  return true;
+}
+function tuiRead(path, limit) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || stat.nlink !== 1 || stat.uid !== process.getuid() || stat.mode & 0o022 || stat.size > limit) {
+      tuiFailure("unsafe", "Archivo de la interfaz inseguro; se conservó la interfaz anterior.");
+    }
+    const bytes = Buffer.alloc(stat.size + 1), count = readSync(fd, bytes, 0, bytes.length, 0);
+    if (count !== stat.size) tuiFailure("unsafe", "El archivo de la interfaz cambió durante la lectura.");
+    return { bytes: bytes.subarray(0, count), mode: stat.mode & 0o7777 };
+  } finally { closeSync(fd); }
+}
+function tuiChecksum(bytes, asset) {
+  const sha256 = /^([a-f0-9]{64})  [^\n]+\n$/.exec(bytes.toString("ascii"))?.[1];
+  if (!sha256 || !bytes.equals(Buffer.from(`${sha256}  ${asset}\n`))) {
+    tuiFailure("checksum", "La huella SHA-256 publicada de la interfaz tiene un formato no válido; se conservó la interfaz anterior.");
+  }
+  return sha256;
+}
+function tuiCurrent(home, platform, sha256) {
+  const store = join(home, ".local/share/torre-control/tui"), path = join(store, sha256, "torre-tui");
+  if (!tuiDirectory(store, home)) return false;
+  let record;
+  try { record = JSON.parse(tuiRead(join(store, "current.json"), 4096).bytes.toString("utf8")); }
+  catch (error) { if (error.code === "ENOENT" || error instanceof SyntaxError) return false; throw error; }
+  if (record?.schema !== "tower.v1.tui/1" || Object.keys(record).sort().join() !== "path,platform,schema,sha256" ||
+      record.sha256 !== sha256 || record.platform !== platform || record.path !== path || !tuiDirectory(join(store, sha256), home)) return false;
+  try {
+    const file = tuiRead(path, TUI_LIMIT);
+    return file.mode === 0o755 && digest(file.bytes) === sha256;
+  } catch (error) { if (error.code === "ENOENT") return false; throw error; }
+}
+function publishTui(bytes, sha256, platform, home) {
+  // Verify at the write boundary, including local intake. Never publish from a
+  // trusted-looking filename or record alone, nor alter the previous pointer first.
+  if (!bytes.length || bytes.length > TUI_LIMIT || digest(bytes) !== sha256) {
+    tuiFailure("mismatch", "La huella SHA-256 de la interfaz no coincide; se conservó la interfaz anterior. El motor sigue actualizado.");
+  }
+  const store = join(home, ".local/share/torre-control/tui"), directory = join(store, sha256);
+  tuiDirectory(directory, home, true);
+  const path = join(directory, "torre-tui");
+  let existing;
+  try { existing = tuiRead(path, TUI_LIMIT); } catch (error) { if (error.code !== "ENOENT") throw error; }
+  if (existing) {
+    if (digest(existing.bytes) !== sha256 || existing.mode !== 0o755) tuiFailure("unsafe", "El binario de la interfaz existente fue alterado; no se reemplazó la interfaz anterior.");
+  } else {
+    writeFileSync(path, bytes, { flag: "wx", mode: 0o755 }); chmodSync(path, 0o755);
+  }
+  // Verify the installed bytes before activation, not just the download buffer.
+  const installed = tuiRead(path, TUI_LIMIT);
+  if (installed.mode !== 0o755 || digest(installed.bytes) !== sha256) tuiFailure("unsafe", "No se pudo verificar la interfaz instalada.");
+  const current = join(store, "current.json");
+  try { tuiRead(current, 4096); } catch (error) { if (error.code !== "ENOENT") throw error; }
+  const next = join(store, `.current-${randomUUID()}`);
+  writeFileSync(next, JSON.stringify({ schema: "tower.v1.tui/1", sha256, path, platform }), { flag: "wx", mode: 0o644 });
+  chmodSync(next, 0o644); renameSync(next, current);
+  // Retain prior content-addressed binaries, as in the standalone installer.
+}
+
+/** Best-effort second lifecycle, invoked only after engine success. Uses the same
+ * pinned tag as the engine, with S199's published same-origin checksum trust.
+ * Missing legacy assets are silent; verification/safety errors are Spanish warnings.
+ */
+export function updateTui({ home, repository, tag, runner = defaultRunner, checkout,
+  platform = process.platform, arch = process.arch, stderr = process.stderr }) {
+  const key = tuiPlatformKey(platform, arch);
+  if (!key) return "unavailable:platform";
+  try {
+    if (!isAbsolute(home ?? "") || resolve(home) !== home || home === parse(home).root || /[\0\r\n\\]/.test(home)) {
+      tuiFailure("unsafe", "HOME de la interfaz no es seguro.");
+    }
+    const asset = `torre-tui-${key}`;
+    let checksum;
+    const download = (name, limit) => execute(runner, ["release", "download", tag, "--repo", repository,
+      "--pattern", name, "--output", "-"], limit);
+    if (checkout) {
+      if (!tuiDirectory(checkout, home)) return "unavailable:checkout";
+      try { checksum = tuiRead(join(checkout, asset + ".sha256"), 1024).bytes; }
+      catch (error) { if (error.code === "ENOENT") return "unavailable:checkout"; throw error; }
+    } else {
+      if (!validOptions({ repository, tag, asset, sha256: "0".repeat(64), runner })) throw new TypeError("Invalid TUI acquisition options");
+      try { checksum = download(asset + ".sha256", 1024); } catch { return "unavailable:assets"; }
+    }
+    const sha256 = tuiChecksum(checksum, asset);
+    if (tuiCurrent(home, key, sha256)) return "unchanged";
+    let bytes;
+    if (checkout) {
+      try { bytes = tuiRead(join(checkout, asset), TUI_LIMIT).bytes; }
+      catch (error) { if (error.code === "ENOENT") return "unavailable:checkout"; throw error; }
+    } else {
+      try { bytes = download(asset, TUI_LIMIT); } catch { return "unavailable:download"; }
+    }
+    publishTui(bytes, sha256, key, home);
+    return "updated";
+  } catch (error) {
+    // No engine rollback or nonzero exit: it already completed successfully.
+    stderr.write(`Interfaz no actualizada: ${error.tuiReason ? error.message : "No se pudo instalar la interfaz; se conservó la anterior."}\n`);
+    return `unavailable:${error.tuiReason ?? "install"}`;
+  }
+}
 
 /** Authenticated same-origin checksum trust is explicit for automatic updates.
  * Discover once, pin that exact tag, and verify raw package bytes before returning.

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { acquireLatestRelease, acquireVerifiedRelease, MAX_RELEASE_BYTES } from "../release.mjs";
+import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { acquireLatestRelease, acquireVerifiedRelease, MAX_RELEASE_BYTES, updateTui } from "../release.mjs";
 
 const bytes = Buffer.from([0, 255, 10, 31, 0x1f, 0x8b]);
 const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -60,6 +63,80 @@ describe("latest private release", () => {
     expect(() => acquireLatestRelease({ repository: input.repository, installedTag: "latest", runner: invalid.runner })).toThrow();
     expect(invalid.calls).toEqual([]);
   });
+});
+
+describe("S207 verified TUI refresh", () => {
+  function fixture(run) {
+    const home = mkdtempSync(join(tmpdir(), "tower-tui-refresh-"));
+    try { return run(home); } finally { rmSync(home, { recursive: true, force: true }); }
+  }
+  function refresh(home, { platform = "linux", arch = "x64", wire = bytes, checksum,
+    asset = `torre-tui-${platform}-${arch === "x64" ? "amd64" : arch}` } = {}) {
+    const calls = [], warnings = [];
+    const result = updateTui({ home, repository: input.repository, tag: input.tag, platform, arch,
+      stderr: { write: text => warnings.push(text) }, runner: (command, argv, options) => {
+        calls.push({ command, argv, options });
+        expect(command).toBe("gh"); expect(argv.slice(0, 5)).toEqual(["release", "download", input.tag, "--repo", input.repository]);
+        if (argv.includes(asset + ".sha256")) return { status: 0, stdout: checksum ?? Buffer.from(`${sha256}  ${asset}\n`) };
+        return { status: 0, stdout: wire };
+      } });
+    return { result, calls, warnings };
+  }
+  for (const platform of ["linux", "darwin"]) for (const arch of ["x64", "arm64"]) {
+    test(`${platform}/${arch} uses exact platform asset, bounded binary intake and an intact unchanged shortcut`, () => fixture(home => {
+      const first = refresh(home, { platform, arch });
+      expect(first.result).toBe("updated"); expect(first.warnings).toEqual([]);
+      expect(first.calls.map(call => call.options.maxBuffer)).toEqual([1025, 64 * 1024 * 1024 + 1]);
+      const current = join(home, ".local/share/torre-control/tui/current.json"), before = readFileSync(current);
+      const record = JSON.parse(before);
+      expect(record.platform).toBe(`${platform}-${arch === "x64" ? "amd64" : arch}`);
+      const second = refresh(home, { platform, arch });
+      expect(second.result).toBe("unchanged"); expect(second.calls).toHaveLength(1);
+      expect(readFileSync(current)).toEqual(before);
+    }));
+  }
+  test("unsupported platforms never acquire or create storage", () => fixture(home => {
+    for (const options of [{ platform: "win32" }, { arch: "ia32" }]) {
+      const h = refresh(home, options); expect(h.result).toBe("unavailable:platform"); expect(h.calls).toEqual([]);
+    }
+    expect(existsSync(join(home, ".local"))).toBe(false);
+  }));
+  test("strict checksum rejects alternate names, spacing, high-bit ASCII aliases and extra lines before binary intake", () => fixture(home => {
+    const asset = "torre-tui-linux-amd64", good = Buffer.from(`${sha256}  ${asset}\n`), highBit = Buffer.from(good);
+    highBit[0] |= 0x80;
+    for (const checksum of [highBit, ...[`${sha256}  other\n`, `${sha256} ${asset}\n`, `${sha256.toUpperCase()}  ${asset}\n`, `${sha256}  ${asset}\nextra\n`].map(value => Buffer.from(value))]) {
+      const h = refresh(home, { checksum }); expect(h.result).toBe("unavailable:checksum"); expect(h.calls).toHaveLength(1);
+    }
+    expect(existsSync(join(home, ".local"))).toBe(false);
+  }));
+  test("unsafe store, pointer, binary and version directory never follow links or replace the old pointer", () => {
+    for (const scenario of ["store-link", "pointer-link", "binary-link", "directory-link", "binary-hardlink", "writable-pointer", "writable-store"]) fixture(home => {
+      expect(refresh(home).result).toBe("updated");
+      const store = join(home, ".local/share/torre-control/tui"), current = join(store, "current.json"), previous = readFileSync(current);
+      const record = JSON.parse(previous), foreign = join(home, "foreign");
+      // Mutate only disposable fixture objects, never an operator's files.
+      if (scenario === "store-link") { mkdirSync(foreign); rmSync(store, { recursive: true }); symlinkSync(foreign, store); }
+      if (scenario === "pointer-link") { writeFileSync(foreign, previous, { mode: 0o644 }); rmSync(current); symlinkSync(foreign, current); }
+      if (scenario === "binary-link") { writeFileSync(foreign, bytes, { mode: 0o755 }); rmSync(record.path); symlinkSync(foreign, record.path); }
+      if (scenario === "directory-link") { mkdirSync(foreign); rmSync(join(store, sha256), { recursive: true }); symlinkSync(foreign, join(store, sha256)); }
+      if (scenario === "binary-hardlink") linkSync(record.path, foreign);
+      if (scenario === "writable-pointer") chmodSync(current, 0o666);
+      if (scenario === "writable-store") chmodSync(store, 0o777);
+      const h = refresh(home); expect(h.result).toMatch(/^unavailable:/); expect(h.warnings).toHaveLength(1);
+      if (scenario !== "store-link") expect(readFileSync(current)).toEqual(previous);
+      else expect(existsSync(join(foreign, "current.json"))).toBe(false);
+    });
+  });
+  test("a same-SHA pointer without an intact binary does not claim unchanged", () => fixture(home => {
+    expect(refresh(home).result).toBe("updated");
+    const current = join(home, ".local/share/torre-control/tui/current.json"), before = readFileSync(current), record = JSON.parse(before);
+    rmSync(record.path);
+    const restored = refresh(home); expect(restored.result).toBe("updated"); expect(restored.calls).toHaveLength(2);
+    expect(readFileSync(record.path)).toEqual(bytes);
+    writeFileSync(record.path, "drift");
+    const drift = refresh(home); expect(drift.result).toBe("unavailable:unsafe"); expect(drift.calls).toHaveLength(2);
+    expect(readFileSync(current)).toEqual(before);
+  }));
 });
 
 describe("private GitHub Release acquisition", () => {

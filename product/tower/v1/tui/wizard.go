@@ -325,9 +325,9 @@ func resultStatusLabel(status string) string {
 func firstLine(s string) string { return clean(strings.Split(strings.TrimSpace(s), "\n")[0]) }
 func resultLines(r execution) []string {
 	var result struct {
-		Status, Active, Previous, Tag string
-		LocalResult                   *struct{ Status string }
-		Registry                      struct{ Status string }
+		Status, Active, Previous, Tag, Tui string
+		LocalResult                        *struct{ Status string }
+		Registry                           struct{ Status string }
 	}
 	parsed := json.Unmarshal(r.stdout, &result) == nil && (result.Status != "" || (result.LocalResult != nil && result.LocalResult.Status != ""))
 	raw := firstLine(string(r.stderr))
@@ -367,6 +367,9 @@ func resultLines(r execution) []string {
 		if result.LocalResult == nil {
 			lines = append(lines, "Activa: "+short(result.Active)+" · Anterior: "+short(result.Previous))
 		}
+	}
+	if parsed && r.code == 0 && r.err == nil && result.Tui == "updated" {
+		lines = append(lines, "Volvé a abrir torre-control para ver la nueva interfaz.")
 	}
 	if raw != "" {
 		lines = append(lines, "Mensaje original: "+raw)

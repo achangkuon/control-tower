@@ -113,7 +113,10 @@ for (const argv of invalid) test(`closed usage rejects ${JSON.stringify(argv)}`,
   expect(readdirSync(f.home)).toEqual([]);
 });
 
-function latestRunner(r, tag, { checksum = `${r.sha}  tower-v1.json\n`, missing = false } = {}) {
+const tuiPlatform = `${process.platform}-${process.arch === "x64" ? "amd64" : process.arch}`;
+const tuiAsset = `torre-tui-${tuiPlatform}`;
+function latestRunner(r, tag, { checksum = `${r.sha}  tower-v1.json\n`, missing = false,
+  tui = null, tuiChecksum = tui && `${digest(tui)}  ${tuiAsset}\n`, tuiDownload = tui } = {}) {
   const calls = [];
   return { calls, runner: (command, argv, options) => {
     if (command !== "gh") return r.runner(command, argv, options);
@@ -121,11 +124,85 @@ function latestRunner(r, tag, { checksum = `${r.sha}  tower-v1.json\n`, missing 
     if (argv[0] === "auth") return { status: 0, stdout: Buffer.alloc(0) };
     if (argv[1] === "view") return { status: 0, stdout: Buffer.from(JSON.stringify({ tagName: tag })) };
     if (argv.includes("tower-v1.json.sha256")) return { status: missing ? 1 : 0, stdout: Buffer.from(checksum) };
+    if (argv.includes(tuiAsset + ".sha256")) return { status: tuiChecksum ? 0 : 1, stdout: Buffer.from(tuiChecksum ?? "") };
+    if (argv.includes(tuiAsset)) return { status: tuiDownload ? 0 : 1, stdout: tuiDownload ?? Buffer.alloc(0) };
     return { status: 0, stdout: r.wire };
   } };
 }
 
-test("latest install and update retain verified provenance; equal tag never downloads or changes HOME", () => {
+test("S207 latest installs and switches verified TUI even when engine tag is already current", async () => {
+  const f = fixture(), r = release(), first = Buffer.from("first interface"), second = Buffer.from("second interface");
+  const install = invoke(f, ["install", "--latest"], { runner: latestRunner(r, "v1-test", { tui: first }).runner });
+  success(install); expect(install.value.tui).toBe("updated");
+  const current = join(f.share, "tui/current.json"), old = JSON.parse(readFileSync(current));
+  expect(readFileSync(old.path)).toEqual(first); expect(statSync(old.path).mode & 0o7777).toBe(0o755);
+  const equal = latestRunner(r, "v1-test", { tui: first }), before = snapshot(f);
+  const unchanged = invoke(f, ["update", "--latest"], { runner: equal.runner });
+  success(unchanged); expect(unchanged.value).toMatchObject({ status: "up-to-date", tui: "unchanged" });
+  expect(equal.calls.some(args => args.includes(tuiAsset))).toBe(false); expect(snapshot(f)).toEqual(before);
+  const newer = latestRunner(r, "v1-test", { tui: second });
+  const updated = invoke(f, ["update", "--latest"], { runner: newer.runner });
+  success(updated); expect(updated.value).toMatchObject({ status: "up-to-date", tui: "updated" });
+  const record = JSON.parse(readFileSync(current));
+  expect(record.sha256).toBe(digest(second)); expect(readFileSync(record.path)).toEqual(second);
+  expect(readFileSync(old.path)).toEqual(first);
+  const launched = await main([], { env: f.env, stdin: { isTTY: true }, stdout: { isTTY: true, write() {} },
+    cliPath: join(f.state, "versions", r.sha, "product/tower/v1/cli.mjs"),
+    tuiSpawn: path => { expect(path).toBe(record.path); return { status: 0 }; } });
+  expect(launched).toBe(0);
+});
+
+test("S207 TUI failures keep previous pointer and do not hide successful engine activation", () => {
+  for (const scenario of ["old-release", "checksum", "mismatch", "download"]) {
+    const f = fixture(), r = release(), binary = Buffer.from("previous interface"), next = Buffer.from("new interface");
+    success(invoke(f, ["install", "--latest"], { runner: latestRunner(r, "v1-test", { tui: binary }).runner }));
+    const current = join(f.share, "tui/current.json"), previous = readFileSync(current);
+    const second = release(scenario), options = scenario === "old-release" ? {} : { tui: next,
+      ...(scenario === "checksum" ? { tuiChecksum: `${digest(next)} ${tuiAsset}\n` } : {}),
+      ...(scenario === "mismatch" ? { tuiDownload: Buffer.from("tampered") } : {}),
+      ...(scenario === "download" ? { tuiDownload: null } : {}) };
+    const result = invoke(f, ["update", "--latest"], { runner: latestRunner(second, "v2-test", options).runner });
+    expect(result.code).toBe(0); expect(result.value.active).toBe(second.sha);
+    expect(result.value.tui).toBe(`unavailable:${scenario === "old-release" ? "assets" : scenario}`);
+    expect(readFileSync(current)).toEqual(previous); expect(readFileSync(JSON.parse(previous).path)).toEqual(binary);
+    if (scenario === "mismatch") expect(result.stderr).toContain("La huella SHA-256 de la interfaz no coincide");
+    expect(invoke(f, ["doctor"]).value.activeTag).toBe("v2-test");
+  }
+});
+
+test("S207 engine failure never downloads or activates the new TUI", () => {
+  const f = fixture(), r = release(), binary = Buffer.from("previous interface"), next = Buffer.from("next interface");
+  success(invoke(f, ["install", "--latest"], { runner: latestRunner(r, "v1-test", { tui: binary }).runner }));
+  const before = snapshot(f), h = latestRunner(release("next"), "v2-test", { tui: next });
+  const result = invoke(f, ["update", "--latest"], { runner: h.runner,
+    operations: { updateGlobal: () => { throw new Error("engine activation refused"); } } });
+  failed(result); expect(snapshot(f)).toEqual(before);
+  expect(h.calls.some(args => args.includes(tuiAsset) || args.includes(tuiAsset + ".sha256"))).toBe(false);
+});
+
+test("S207 checkout requests TUI outputs and installs only verified local platform bytes", () => {
+  for (const scenario of ["available", "missing", "mismatch"]) {
+    const f = fixture(), r = release(), binary = Buffer.from("local interface");
+    const result = invoke(f, ["install", "--from-checkout", f.root], { runner: r.runner, buildRelease: options => {
+      expect(options["tui-out-dir"]).toBeString();
+      writeFileSync(options.out, r.wire);
+      if (scenario !== "missing") {
+        mkdirSync(options["tui-out-dir"]);
+        writeFileSync(join(options["tui-out-dir"], tuiAsset), binary, { mode: 0o755 });
+        writeFileSync(join(options["tui-out-dir"], tuiAsset + ".sha256"), `${scenario === "mismatch" ? "0".repeat(64) : digest(binary)}  ${tuiAsset}\n`, { mode: 0o644 });
+      }
+      return { commit: "a".repeat(40), sha256: r.sha };
+    } });
+    expect(result.code).toBe(0); expect(result.value.status).toBe("installed");
+    expect(result.value.tui).toBe(scenario === "available" ? "updated" : `unavailable:${scenario === "missing" ? "checkout" : "mismatch"}`);
+    expect(r.calls).toEqual([]);
+    const current = join(f.share, "tui/current.json");
+    expect(existsSync(current)).toBe(scenario === "available");
+    if (scenario === "available") expect(readFileSync(JSON.parse(readFileSync(current)).path)).toEqual(binary);
+  }
+});
+
+test("latest install and update retain verified provenance; equal tag only downloads the TUI checksum", () => {
   const f = fixture(), first = release("first"), h = latestRunner(first, "v1-test");
   const installed = invoke(f, ["install", "--latest"], { runner: h.runner });
   success(installed); expect(installed.value.tag).toBe("v1-test");
@@ -133,7 +210,7 @@ test("latest install and update retain verified provenance; equal tag never down
   const before = snapshot(f), equal = latestRunner(first, "v1-test");
   const unchanged = invoke(f, ["update", "--latest"], { runner: equal.runner });
   success(unchanged); expect(unchanged.value.status).toBe("up-to-date");
-  expect(equal.calls.some(args => args[1] === "download")).toBe(false);
+  expect(equal.calls.filter(args => args[1] === "download").map(args => args[args.indexOf("--pattern") + 1])).toEqual([tuiAsset + ".sha256"]);
   expect(snapshot(f)).toEqual(before);
   const second = release("second"), newer = latestRunner(second, "v2-test");
   const updated = invoke(f, ["update", "--latest"], { runner: newer.runner });
@@ -152,7 +229,7 @@ test("S205 checkout promotion by latest becomes up-to-date on the next invocatio
   const before = snapshot(f), again = latestRunner(r, "v1.2.0");
   const unchanged = invoke(f, ["update", "--latest"], { runner: again.runner });
   success(unchanged); expect(unchanged.value.status).toBe("up-to-date");
-  expect(again.calls.some(args => args[1] === "download")).toBe(false);
+  expect(again.calls.filter(args => args[1] === "download").map(args => args[args.indexOf("--pattern") + 1])).toEqual([tuiAsset + ".sha256"]);
   expect(snapshot(f)).toEqual(before);
 });
 

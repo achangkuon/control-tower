@@ -146,19 +146,61 @@ test("instruction gate inspects the requested commit instead of newer clean temp
 test("clean committed checkout installs locally without publishing through the real release builder", () => fixture(({ repo, commit }) => {
   let stdout = "", stderr = "";
   const env = { HOME: process.env.HOME, PATH: process.env.PATH };
-  const runner = (command, argv) => {
+  const runner = (command, argv, options) => {
     if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
     if (command !== "go") throw new Error("local install must not acquire over GitHub");
     if (argv[0] === "env") return { status: 0, stdout: join(env.HOME, "modules") };
+    if (options.cwd.endsWith("/tui")) return { status: 1 }; // Optional offline UI build unavailable.
     writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 };
   };
   const deps = { env, runner, stdout: { write: text => { stdout += text; } }, stderr: { write: text => { stderr += text; } } };
   expect(towerCli(["install", "--from-checkout", repo], deps)).toBe(0);
   expect(stderr).toBe(""); expect(JSON.parse(stdout).status).toBe("installed");
+  expect(JSON.parse(stdout).tui).toBe("unavailable:checkout");
   expect(readFileSync(join(env.HOME, ".claude/CLAUDE.md"), "utf8")).toContain(`checkout-${commit.slice(0, 12)}`);
   writeFileSync(join(repo, "untracked"), "dirty"); stdout = "";
   expect(towerCli(["update", "--from-checkout", repo], deps)).toBe(1);
   expect(stderr).toContain("clean worktree");
+}, repo => {
+  for (const path of paths) writeFileSync(join(repo, path), readFileSync(new URL(`../../../../${path}`, import.meta.url)));
+}));
+
+test("S207 legacy checkout without TUI or installer still builds a verified engine", () => fixture(({ repo, root, out }) => {
+  const tui = join(root, "tui"); let calls = 0;
+  const receipt = buildRelease({ repo, out, "tui-out-dir": tui }, { allowTuiFailure: true,
+    builder: () => { calls++; throw new Error("absent TUI must not invoke Go"); } });
+  expect(calls).toBe(0); expect(receipt.sha256).toBe(digest(readFileSync(out)));
+  expect(receipt.tui).toBeUndefined(); expect(existsSync(tui)).toBe(false);
+}, repo => {
+  rmSync(join(repo, "product/tower/v1/tui"), { recursive: true });
+  rmSync(join(repo, "product/tower/v1/install.mjs"));
+}));
+
+test("S207 checkout installs local cross-build output with the real release builder and injected Go runner", () => fixture(({ repo }) => {
+  const env = { HOME: process.env.HOME, PATH: process.env.PATH }, calls = [];
+  const runner = (command, argv, options) => {
+    calls.push([command, argv]);
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    if (command !== "go") throw new Error("checkout must not acquire over GitHub");
+    if (argv[0] === "env") return { status: 0, stdout: join(env.HOME, "modules") };
+    if (options.cwd.endsWith("/tui")) {
+      expect(options.env).toMatchObject({ GOWORK: "off", GOPROXY: "off", GOFLAGS: "-mod=readonly" });
+      writeFileSync(argv[5], `${options.env.GOOS}-${options.env.GOARCH}`, { mode: 0o755 });
+    } else writeFileSync(argv[5], "fixture radar", { mode: 0o755 });
+    return { status: 0 };
+  };
+  let stdout = "", stderr = "";
+  const deps = { env, runner, stdout: { write: text => { stdout += text; } }, stderr: { write: text => { stderr += text; } } };
+  expect(towerCli(["install", "--from-checkout", repo], deps)).toBe(0);
+  expect(stderr).toBe(""); expect(JSON.parse(stdout).tui).toBe("updated");
+  const current = join(env.HOME, ".local/share/torre-control/tui/current.json"), before = readFileSync(current);
+  const platform = `${process.platform}-${process.arch === "x64" ? "amd64" : process.arch}`;
+  expect(readFileSync(JSON.parse(before).path, "utf8")).toBe(platform);
+  stdout = "";
+  expect(towerCli(["update", "--from-checkout", repo], deps)).toBe(0);
+  expect(stderr).toBe(""); expect(JSON.parse(stdout).tui).toBe("unchanged");
+  expect(readFileSync(current)).toEqual(before);
+  expect(calls.some(([command]) => command === "gh")).toBe(false);
 }, repo => {
   for (const path of paths) writeFileSync(join(repo, path), readFileSync(new URL(`../../../../${path}`, import.meta.url)));
 }));
@@ -192,6 +234,8 @@ test("TUI builds exported commit sources offline and stamps deterministic binari
     const path = join(root, "tui-one", pin.asset);
     expect(digest(readFileSync(path))).toBe(pin.sha256);
     expect(lstatSync(path).mode & 0o777).toBe(0o755);
+    expect(readFileSync(path + ".sha256", "utf8")).toBe(`${pin.sha256}  ${pin.asset}\n`);
+    expect(lstatSync(path + ".sha256").mode & 0o777).toBe(0o644);
   }
   const stamped = JSON.parse(readFileSync(join(root, "installer-one.mjs"), "utf8").match(/^const PINNED = (.+);$/m)[1]);
   expect(stamped.tui).toEqual(first.tui);

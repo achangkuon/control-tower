@@ -69,6 +69,24 @@ func TestLatestDefault(t *testing.T) {
 	contains(t, lines, "v9.9.9")
 }
 
+func TestUpdatedInterfaceReopenMessage(t *testing.T) {
+	for _, status := range []string{"activated", "up-to-date"} {
+		t.Run(status, func(t *testing.T) {
+			lines := strings.Join(resultLines(execution{stdout: []byte(`{"status":"` + status + `","tui":"updated"}`)}), "\n")
+			contains(t, lines, "Volvé a abrir torre-control para ver la nueva interfaz")
+		})
+	}
+	for _, r := range []execution{
+		{stdout: []byte(`{"status":"activated","tui":"unchanged"}`)},
+		{stdout: []byte(`{"status":"activated","tui":"unavailable:assets"}`)},
+		{code: 1, stdout: []byte(`{"status":"activated","tui":"updated"}`)},
+	} {
+		if strings.Contains(strings.Join(resultLines(r), "\n"), "Volvé a abrir") {
+			t.Fatal("reopen message without a successful interface update")
+		}
+	}
+}
+
 func TestReleaseWizard(t *testing.T) {
 	for _, action := range []string{"install", "update"} {
 		t.Run(action, func(t *testing.T) {

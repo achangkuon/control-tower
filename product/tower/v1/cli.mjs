@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "./global.mjs";
 import { requireGentleAi, doctorRuntime, preflightRuntimeHome, uninstallRuntime } from "./runtime-config.mjs";
 import { buildRelease } from "./release-build.mjs";
-import { acquireLatestRelease } from "./release.mjs";
+import { acquireLatestRelease, updateTui } from "./release.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
   cleanupRegisteredProject, listProjects } from "./projects.mjs";
 
@@ -464,7 +464,11 @@ export function main(argv, deps = {}) {
       const permissionsChanged = acquiring ? preflightRuntimeHome({ home, stateRoot, launcherPath, registryRoot,
         fixPermissions: flags["--fix-permissions"] === true,
         onPermissionsFixed: paths => stderr.write(`Permisos corregidos (sólo go-w):\n${paths.map(path => `- ${path}`).join("\n")}\n`) }) : [];
-      let latestRelease;
+      const refreshTui = options => updateTui({ home, stderr, ...options,
+        ...(runner === undefined ? {} : { runner }),
+        ...(deps.platform === undefined ? {} : { platform: deps.platform }),
+        ...(deps.arch === undefined ? {} : { arch: deps.arch }) });
+      let latestRelease, checkoutTui;
       if (flags["--latest"]) {
         const missing = absentGlobalDefaults(home, stateRoot, launcherPath, flags);
         // Doctor validates cached provenance and launcher before trusting the installed tag.
@@ -473,7 +477,8 @@ export function main(argv, deps = {}) {
           installedTag: installed.status === "healthy" ? installed.activeTag : null,
           ...(runner === undefined ? {} : { runner }) });
         if (latestRelease.status === "up-to-date") {
-          stdout.write(`${JSON.stringify({ status: "up-to-date", tag: latestRelease.tag,
+          const tui = refreshTui({ repository: "achangkuon/control-tower", tag: latestRelease.tag });
+          stdout.write(`${JSON.stringify({ status: "up-to-date", tag: latestRelease.tag, tui,
             ...(flags["--fix-permissions"] ? { permissionsChanged } : {}) })}\n`);
           return 0;
         }
@@ -502,7 +507,9 @@ export function main(argv, deps = {}) {
       if (flags["--from-checkout"]) {
         localTemporary = mkdtempSync(join(tmpdir(), "tower-local-install-"));
         const out = join(localTemporary, "tower-v1.json");
-        const receipt = (deps.buildRelease ?? buildRelease)({ repo: flags["--from-checkout"], out });
+        checkoutTui = join(localTemporary, "tui");
+        const receipt = (deps.buildRelease ?? buildRelease)({ repo: flags["--from-checkout"], out, "tui-out-dir": checkoutTui },
+        { allowTuiFailure: true, ...(runner === undefined ? {} : { builder: runner }) });
         const bytes = readFileSync(out);
         acquire = { repository: "achangkuon/control-tower", tag: `checkout-${receipt.commit.slice(0, 12)}`,
           asset: "tower-v1.json", sha256: receipt.sha256,
@@ -515,7 +522,9 @@ export function main(argv, deps = {}) {
       result = absent ? command === "uninstall" ? uninstallRuntime({ home }) :
         { status: "absent", active: null, previous: null, components: doctorRuntime({ home, env, runner }) } :
         api[globals[command]]({ stateRoot, launcherPath, home, env, ...(runner ? { runner } : {}), ...(acquiring ? { acquire, registryRoot } : {}) });
-      if (latestRelease) result = { ...result, tag: latestRelease.tag };
+      if (latestRelease) result = { ...result, tag: latestRelease.tag,
+        tui: refreshTui({ repository: "achangkuon/control-tower", tag: latestRelease.tag }) };
+      if (checkoutTui) result = { ...result, tui: refreshTui({ checkout: checkoutTui }) };
       if (flags["--fix-permissions"]) result = { ...result, permissionsChanged };
     }
     stdout.write(`${JSON.stringify(result)}\n`);

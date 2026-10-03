@@ -184,6 +184,9 @@ function buildTui({ repo, commit, out }, { builder = childProcess.spawnSync } = 
     for (const { asset, bytes } of binaries) {
       const fd = openSync(join(out, asset), "wx", 0o755);
       try { writeFileSync(fd, bytes); fchmodSync(fd, 0o755); } finally { closeSync(fd); }
+      const checksumFd = openSync(join(out, asset + ".sha256"), "wx", 0o644);
+      try { writeFileSync(checksumFd, `${digest(bytes)}  ${asset}\n`); fchmodSync(checksumFd, 0o644); }
+      finally { closeSync(checksumFd); }
     }
     return tui;
   } finally { rmSync(base, { recursive: true, force: true }); }
@@ -207,7 +210,7 @@ export function buildRelease(options, deps = {}) {
   const target = outputPath(out, root);
   const checksumTarget = outputPath(out + ".sha256", root);
   const installerTarget = withInstaller ? outputPath(installerOut, root) : null;
-  if (tuiOut && !withInstaller) fail("TUI requires --tag and --installer-out");
+  if (tuiOut && !withInstaller && !deps.allowTuiFailure) fail("TUI requires --tag and --installer-out");
   const tuiTarget = tuiOut ? outputPath(tuiOut, root) : null;
   const outputs = [target, checksumTarget, installerTarget, tuiTarget].filter(Boolean);
   if (new Set(outputs).size !== outputs.length) fail("outputs must differ");
@@ -259,7 +262,15 @@ export function buildRelease(options, deps = {}) {
     installerSource = new TextDecoder("utf-8", { fatal: true }).decode(source);
     stampInstaller(installerSource, { tag, sha256 }); // Admit source and pins before any TUI publication.
   }
-  const tui = tuiTarget ? buildTui({ repo: root, commit: sha, out: tuiTarget }, deps) : null;
+  let tui = null;
+  if (tuiTarget) {
+    try { tui = buildTui({ repo: root, commit: sha, out: tuiTarget }, deps); }
+    catch (error) {
+      // Checkout engine installs may proceed without optional offline Go output.
+      // Published builds remain all-or-nothing; final clean(root) still runs.
+      if (!deps.allowTuiFailure) throw error;
+    }
+  }
   if (installerSource) installer = Buffer.from(stampInstaller(installerSource, { tag, sha256, tui }));
   clean(root);
   const fd = openSync(target, "wx", 0o644);
