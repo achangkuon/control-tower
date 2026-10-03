@@ -171,6 +171,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.page, m.offset = "home", 0
 			m.sequence++
+		case "a":
+			if m.page == "home" && m.selected == 0 && !m.loading && m.statusError == "" && m.status.Schema != "" {
+				return m.releaseAction(true)
+			}
 		case "r":
 			if m.page == "home" && !m.loading {
 				refresh := m.reloadStatus()
@@ -202,10 +206,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			switch m.selected {
 			case 0:
-				m.page, m.flow = "wizard", workflow{action: "install", asset: "tower-v1.json"}
-				if m.status.Engine.Installed {
-					m.flow.action = "update"
-				}
+				return m.releaseAction(false)
 			case 1:
 				m.page, m.flow = "wizard", workflow{action: "rollback", step: 4}
 				if m.status.Engine.Previous == "" {
@@ -249,7 +250,7 @@ func (m model) pageLines() []string {
 		}
 	case "help":
 		body = []string{"Ayuda", "↑/↓ o j/k: mover la selección; enter: elegir.", "esc: volver; r: refrescar el estado; q o Ctrl-C: salir.",
-			"Instalar o actualizar: preparar el motor.", "Volver a la versión anterior: restaurar el motor.",
+			"Instalar o actualizar: buscar la última versión publicada, sin preguntas.", "a sobre esa opción: Versión específica (avanzado).", "Volver a la versión anterior: restaurar el motor.",
 			"Proyectos: gestionar proyectos.", "Diagnóstico: comprobar el motor, sin modificarlo.", "Ayuda: consultar esta guía. Salir: cerrar la interfaz.",
 			"Datos: TORRE_CONTROL_CLI (por defecto torre-control).", "status: motor, proyectos, requisitos, agentes y sistema.", "doctor: integridad global del motor; no repara ni activa versiones."}
 	}

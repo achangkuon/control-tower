@@ -113,6 +113,51 @@ for (const argv of invalid) test(`closed usage rejects ${JSON.stringify(argv)}`,
   expect(readdirSync(f.home)).toEqual([]);
 });
 
+function latestRunner(r, tag, { checksum = `${r.sha}  tower-v1.json\n`, missing = false } = {}) {
+  const calls = [];
+  return { calls, runner: (command, argv, options) => {
+    if (command !== "gh") return r.runner(command, argv, options);
+    calls.push(argv);
+    if (argv[0] === "auth") return { status: 0, stdout: Buffer.alloc(0) };
+    if (argv[1] === "view") return { status: 0, stdout: Buffer.from(JSON.stringify({ tagName: tag })) };
+    if (argv.includes("tower-v1.json.sha256")) return { status: missing ? 1 : 0, stdout: Buffer.from(checksum) };
+    return { status: 0, stdout: r.wire };
+  } };
+}
+
+test("latest install and update retain verified provenance; equal tag never downloads or changes HOME", () => {
+  const f = fixture(), first = release("first"), h = latestRunner(first, "v1-test");
+  const installed = invoke(f, ["install", "--latest"], { runner: h.runner });
+  success(installed); expect(installed.value.tag).toBe("v1-test");
+  expect(installed.value.active).toBe(first.sha);
+  const before = snapshot(f), equal = latestRunner(first, "v1-test");
+  const unchanged = invoke(f, ["update", "--latest"], { runner: equal.runner });
+  success(unchanged); expect(unchanged.value.status).toBe("up-to-date");
+  expect(equal.calls.some(args => args[1] === "download")).toBe(false);
+  expect(snapshot(f)).toEqual(before);
+  const second = release("second"), newer = latestRunner(second, "v2-test");
+  const updated = invoke(f, ["update", "--latest"], { runner: newer.runner });
+  success(updated); expect(updated.value.tag).toBe("v2-test"); expect(updated.value.active).toBe(second.sha);
+  expect(invoke(f, ["doctor"]).value.activeTag).toBe("v2-test");
+});
+
+test("latest refusals preserve both fresh and installed homes", () => {
+  for (const installed of [false, true]) for (const options of [{ missing: true }, { checksum: "malformed" }, { checksum: `${"0".repeat(64)}  tower-v1.json\n` }, { tag: "latest" }, { tag: "v..2" }]) {
+    const f = fixture(), r = release();
+    if (installed) success(invoke(f, pinned("install", r), { runner: r.runner }));
+    const before = snapshot(f), h = latestRunner(r, options.tag ?? "v2-test", options);
+    const result = invoke(f, [installed ? "update" : "install", "--latest"], { runner: h.runner });
+    failed(result); expect(snapshot(f)).toEqual(before);
+    if (options.missing) expect(result.stderr).toContain("No se pudo descargar la huella SHA-256");
+  }
+});
+
+test("latest flags are valueless, closed and exclusive with manual and checkout modes", () => {
+  for (const argv of [["doctor", "--latest"], ["install", "--latest", "--latest"], ["install", "--latest", "yes"], ["install", "--latest", "--tag", "v1"], ["update", "--latest", "--from-checkout", "/repo"]]) {
+    const f = fixture(); failed(invoke(f, argv)); expect(readdirSync(f.home)).toEqual([]);
+  }
+});
+
 test("global uninstall on an absent installation is read-only and idempotent", () => {
   const f = fixture(), before = snapshot(f);
   success(invoke(f, ["uninstall"])); success(invoke(f, ["uninstall"]));

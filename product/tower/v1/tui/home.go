@@ -164,7 +164,7 @@ func (m model) homeView() string {
 		}
 	}
 	tail := append([]string{""}, m.menuLines(hints)...)
-	tail = append(tail, "", "↑↓ o j/k mover · enter elegir · r refrescar · q salir")
+	tail = append(tail, "", "↑↓ o j/k mover · enter elegir · a: Versión específica (avanzado) · r refrescar · q salir")
 	if m.height < 11 {
 		tail = append(tail[1:len(tail)-2], tail[len(tail)-1])
 		header = header[:min(len(header), max(0, m.height-len(tail)))]
@@ -182,7 +182,7 @@ func (m model) homeView() string {
 		status = status[:available]
 	}
 	if m.height < 16 || m.width < 60 {
-		tail[len(tail)-1] = "↑↓/j/k · enter · r · q salir"
+		tail[len(tail)-1] = "enter · a avanzado · q salir"
 	}
 	return m.fit(append(append(header, status...), tail...))
 }

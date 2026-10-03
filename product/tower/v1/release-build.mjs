@@ -123,11 +123,12 @@ export function buildRelease(options, deps = {}) {
   const root = realpathSync(resolve(repo));
   if (git(root, ["rev-parse", "--show-toplevel"]).toString("utf8").trim() !== root) fail("repo must be a worktree root");
   const target = outputPath(out, root);
+  const checksumTarget = outputPath(out + ".sha256", root);
   const installerTarget = withInstaller ? outputPath(installerOut, root) : null;
   if (tuiOut && !withInstaller) fail("TUI requires --tag and --installer-out");
   const tuiTarget = tuiOut ? outputPath(tuiOut, root) : null;
-  if (tuiTarget === target || tuiTarget && tuiTarget === installerTarget) fail("outputs must differ");
-  if (installerTarget === target) fail("installer and envelope outputs must differ");
+  const outputs = [target, checksumTarget, installerTarget, tuiTarget].filter(Boolean);
+  if (new Set(outputs).size !== outputs.length) fail("outputs must differ");
   clean(root);
   const sha = git(root, ["rev-parse", "--verify", "--end-of-options", `${commit}^{commit}`]).toString("utf8").trim();
   if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(sha)) fail("git returned an invalid commit");
@@ -173,6 +174,9 @@ export function buildRelease(options, deps = {}) {
   clean(root);
   const fd = openSync(target, "wx", 0o644);
   try { writeFileSync(fd, bytes); fchmodSync(fd, 0o644); } finally { closeSync(fd); }
+  const checksumFd = openSync(checksumTarget, "wx", 0o644);
+  try { writeFileSync(checksumFd, `${sha256}  ${basename(target)}\n`); fchmodSync(checksumFd, 0o644); }
+  finally { closeSync(checksumFd); }
   if (installer) {
     const installerFd = openSync(installerTarget, "wx", 0o644);
     try { writeFileSync(installerFd, installer); fchmodSync(installerFd, 0o644); } finally { closeSync(installerFd); }

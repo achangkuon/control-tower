@@ -196,12 +196,29 @@ test("committed vendor drift is refused before envelope publication", () => {
   }, repo => rmSync(join(repo, "agent-workflows/tools/radar/vendor/modules.txt")));
 });
 
+test("release build publishes a deterministic checksum alongside each package", () => fixture(({ repo, out }) => {
+  const receipt = buildRelease({ repo, out });
+  expect(readFileSync(out + ".sha256", "utf8")).toBe(`${receipt.sha256}  tower-v1.json\n`);
+  expect(lstatSync(out + ".sha256").mode & 0o777).toBe(0o644);
+}));
+
+test("checksum destination is admitted before publishing anything and cannot collide", () => fixture(({ repo, out }) => {
+  writeFileSync(out + ".sha256", "preserve");
+  expect(() => buildRelease({ repo, out })).toThrow(/exists/);
+  expect(existsSync(out)).toBe(false);
+  expect(readFileSync(out + ".sha256", "utf8")).toBe("preserve");
+  const other = out + ".other";
+  expect(() => buildRelease({ repo, out: other, tag: "v1", "installer-out": other + ".sha256" })).toThrow();
+  expect(existsSync(other)).toBe(false);
+}));
+
 test("deterministic bytes, fixed keys and exact membership admitted by bootstrap", () => fixture(({ repo, commit, out, root }) => {
   const first = buildRelease({ repo, out }), second = buildRelease({ repo, commit, out: join(root, "second.json") });
   const bytes = readFileSync(out);
   expect(readFileSync(join(root, "second.json"))).toEqual(bytes);
   expect(first).toEqual({ schema: "tower.v1.release-build/1", commit, asset: "tower-v1.json", bytes: bytes.length, sha256: digest(bytes) });
   expect(second.sha256).toBe(first.sha256);
+  expect(readFileSync(join(root, "second.json.sha256"), "utf8")).toBe(`${second.sha256}  second.json\n`);
   expect(lstatSync(out).mode & 0o777).toBe(0o644);
   const envelope = JSON.parse(bytes);
   expect(Object.keys(envelope)).toEqual(["schema", "members"]);

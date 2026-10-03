@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "./global.mjs";
 import { requireGentleAi, doctorRuntime, preflightRuntimeHome, uninstallRuntime } from "./runtime-config.mjs";
 import { buildRelease } from "./release-build.mjs";
+import { acquireLatestRelease } from "./release.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
   cleanupRegisteredProject, listProjects } from "./projects.mjs";
 
@@ -31,13 +32,20 @@ function parseArguments(argv) {
     subcommand = tail.shift();
     if (!owns(projects, subcommand)) usage("unknown or missing project command");
   } else if (!owns(globals, command) && !["list", "status"].includes(command)) usage("unknown command");
+  const latest = ["install", "update"].includes(command) && tail.includes("--latest");
   const fromCheckout = ["install", "update"].includes(command) && tail.includes("--from-checkout");
-  const required = fromCheckout ? ["--from-checkout"] : command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
+  const required = latest ? ["--latest"] : fromCheckout ? ["--from-checkout"] : command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
     ["install", "update"].includes(command) ? ["--tag", "--asset", "--sha256"] : [];
   const allowed = new Set([...common, ...required]);
   const flags = Object.create(null);
-  for (let index = 0; index < tail.length; index += 2) {
+  for (let index = 0; index < tail.length;) {
     const flag = tail[index], value = tail[index + 1];
+    if (flag === "--latest" && latest && !owns(flags, flag)) {
+      flags[flag] = true;
+      index++;
+      continue;
+    }
+    index += 2;
     if (!allowed.has(flag) || owns(flags, flag) || !value || value.startsWith("--")) usage("invalid, duplicate or missing flag/value");
     flags[flag] = value;
   }
@@ -406,7 +414,8 @@ export function main(argv, deps = {}) {
   let localTemporary;
   try {
     if (Array.isArray(argv) && argv.length === 1 && ["--help", "help"].includes(argv[0])) {
-      stdout.write("torre-control install|update --tag <tag> --asset <asset> --sha256 <trusted-digest>\n" +
+      stdout.write("torre-control install|update --latest  (authenticated published checksum)\n" +
+        "torre-control install|update --tag <tag> --asset <asset> --sha256 <trusted-digest>\n" +
         "torre-control install|update --from-checkout <repo>  (clean committed tree; offline release-build and digest verification)\n" +
         "torre-control doctor | status | rollback | uninstall\n" +
         "uninstall removes owned global resources and restores backups; Gentle AI and projects remain untouched.\n");
@@ -445,6 +454,19 @@ export function main(argv, deps = {}) {
     } else {
       const absent = ["doctor", "uninstall"].includes(command) && absentGlobalDefaults(home, stateRoot, launcherPath, flags);
       const acquiring = command === "install" || command === "update";
+      let latestRelease;
+      if (flags["--latest"]) {
+        const missing = absentGlobalDefaults(home, stateRoot, launcherPath, flags);
+        // Doctor validates cached provenance and launcher before trusting the installed tag.
+        const installed = missing ? { status: "absent" } : api.doctorGlobal({ stateRoot, launcherPath });
+        latestRelease = acquireLatestRelease({ repository: "achangkuon/control-tower",
+          installedTag: installed.status === "healthy" ? installed.activeTag : null,
+          ...(runner === undefined ? {} : { runner }) });
+        if (latestRelease.status === "up-to-date") {
+          stdout.write(`${JSON.stringify({ status: "up-to-date", tag: latestRelease.tag })}\n`);
+          return 0;
+        }
+      }
       if (acquiring) {
         requireGentleAi({ env, runner }); // Before parent preparation or local build.
         for (const [flag, path] of [["--state", stateRoot], ["--launcher", launcherPath]])
@@ -453,6 +475,20 @@ export function main(argv, deps = {}) {
       }
       let acquire = acquiring ? { repository: "achangkuon/control-tower", tag: flags["--tag"],
         asset: flags["--asset"], sha256: flags["--sha256"], ...(runner === undefined ? {} : { runner }) } : null;
+      if (latestRelease) {
+        const { tag, asset, sha256, bytes } = latestRelease;
+        // Replay only the pinned verified receipt through the existing bootstrap/global
+        // path; no second network download may substitute the admitted package bytes.
+        const auth = ["auth", "status", "--active", "--hostname", "github.com"];
+        const download = ["release", "download", tag, "--repo", "achangkuon/control-tower", "--pattern", asset, "--output", "-"];
+        acquire = { repository: "achangkuon/control-tower", tag, asset, sha256,
+          runner: (command, args) => {
+            if (command !== "gh") throw new Error("Unexpected verified receipt command");
+            if (JSON.stringify(args) === JSON.stringify(auth)) return { status: 0, stdout: Buffer.alloc(0) };
+            if (JSON.stringify(args) === JSON.stringify(download)) return { status: 0, stdout: Buffer.from(bytes) };
+            throw new Error("Unexpected verified receipt arguments");
+          } };
+      }
       if (flags["--from-checkout"]) {
         localTemporary = mkdtempSync(join(tmpdir(), "tower-local-install-"));
         const out = join(localTemporary, "tower-v1.json");
@@ -469,6 +505,7 @@ export function main(argv, deps = {}) {
       result = absent ? command === "uninstall" ? uninstallRuntime({ home }) :
         { status: "absent", active: null, previous: null, components: doctorRuntime({ home, env, runner }) } :
         api[globals[command]]({ stateRoot, launcherPath, home, env, ...(runner ? { runner } : {}), ...(acquiring ? { acquire, registryRoot } : {}) });
+      if (latestRelease) result = { ...result, tag: latestRelease.tag };
     }
     stdout.write(`${JSON.stringify(result)}\n`);
     if (command === "project" && result.registry.status === "failed") {

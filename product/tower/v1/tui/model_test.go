@@ -215,9 +215,13 @@ func TestNavigation(t *testing.T) {
 	}
 	for _, index := range []int{0, 1, 2} {
 		m.selected = index
-		m, cmd := key(m, "enter")
+		openKey := "enter"
+		if index == 0 {
+			openKey = "a" // Manual advanced navigation is passive; default runs latest.
+		}
+		m, cmd := key(m, openKey)
 		if cmd != nil {
-			t.Fatal("opening a screen must not execute commands")
+			t.Fatal("opening a passive screen must not execute commands")
 		}
 		contains(t, m.View(), []string{"Requisitos", "ROLLBACK", "Proyectos"}[index], "esc")
 		m, _ = key(m, "esc")

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { acquireVerifiedRelease, MAX_RELEASE_BYTES } from "../release.mjs";
+import { acquireLatestRelease, acquireVerifiedRelease, MAX_RELEASE_BYTES } from "../release.mjs";
 
 const bytes = Buffer.from([0, 255, 10, 31, 0x1f, 0x8b]);
 const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -16,6 +16,51 @@ function harness(responses = [{ status: 0, stdout: Buffer.from("private auth out
   };
   return { calls, runner };
 }
+
+describe("latest private release", () => {
+  function latest({ tag = "v2", checksum = `${sha256}  tower-v1.json\n`, missing = false, wire = bytes } = {}) {
+    const calls = [];
+    const runner = (command, argv) => {
+      calls.push([command, argv]);
+      if (argv[0] === "auth") return { status: 0, stdout: Buffer.alloc(0) };
+      if (argv[1] === "view") return { status: 0, stdout: Buffer.from(JSON.stringify({ tagName: tag })) };
+      if (argv.includes("tower-v1.json.sha256")) return { status: missing ? 1 : 0, stdout: Buffer.from(checksum) };
+      return { status: 0, stdout: wire };
+    };
+    return { calls, runner };
+  }
+  test("equal tag authenticates and discovers without any download", () => {
+    const h = latest();
+    expect(acquireLatestRelease({ repository: input.repository, installedTag: "v2", runner: h.runner })).toEqual({ status: "up-to-date", tag: "v2" });
+    expect(h.calls.map(([, args]) => args)).toEqual([auth, ["release", "view", "--repo", input.repository, "--json", "tagName"]]);
+  });
+  test("different tag downloads exact checksum and package and verifies raw bytes", () => {
+    const h = latest();
+    const result = acquireLatestRelease({ repository: input.repository, installedTag: "v1", runner: h.runner });
+    expect(result).toEqual({ status: "available", tag: "v2", asset: "tower-v1.json", sha256, bytes });
+    expect(h.calls.filter(([, args]) => args[1] === "download").map(([, args]) => args)).toEqual(
+      ["tower-v1.json.sha256", "tower-v1.json"].map(asset => ["release", "download", "v2", "--repo", input.repository, "--pattern", asset, "--output", "-"]));
+  });
+  test("missing or malformed checksum refuses before package download", () => {
+    for (const options of [{ missing: true }, ...["", `${sha256}  wrong.json\n`, `${sha256.toUpperCase()}  tower-v1.json\n`, `${"a".repeat(63)}  tower-v1.json\n`, `${sha256} tower-v1.json\n`, `${sha256}  tower-v1.json\nextra\n`].map(checksum => ({ checksum }))]) {
+      const h = latest(options);
+      expect(() => acquireLatestRelease({ repository: input.repository, runner: h.runner })).toThrow(/huella SHA-256/);
+      expect(h.calls.some(([, args]) => args.includes("tower-v1.json"))).toBe(false);
+    }
+  });
+  test("package mismatch and unsafe latest tags fail closed", () => {
+    const h = latest({ wire: Buffer.from("tampered") });
+    expect(() => acquireLatestRelease({ repository: input.repository, runner: h.runner })).toThrow(/SHA-256 mismatch/);
+    for (const tag of ["latest", "LATEST", "-v2", "v..2", "v2.", "v/2", "v*", "v2\n", "v".repeat(129)]) {
+      const bad = latest({ tag });
+      expect(() => acquireLatestRelease({ repository: input.repository, runner: bad.runner })).toThrow(/etiqueta/);
+      expect(bad.calls).toHaveLength(2);
+    }
+    const invalid = latest();
+    expect(() => acquireLatestRelease({ repository: input.repository, installedTag: "latest", runner: invalid.runner })).toThrow();
+    expect(invalid.calls).toEqual([]);
+  });
+});
 
 describe("private GitHub Release acquisition", () => {
   test("authenticates first, downloads exactly one asset via argv and verifies raw bytes before return", () => {

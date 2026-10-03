@@ -40,11 +40,40 @@ func finish(m model, cmd tea.Cmd) model {
 	next, _ := m.Update(msg)
 	return next.(model)
 }
+func TestLatestDefault(t *testing.T) {
+	for _, installed := range []bool{false, true} {
+		t.Run(map[bool]string{false: "install", true: "update"}[installed], func(t *testing.T) {
+			m, calls := actionModel(t, installed)
+			contains(t, m.View(), "avanzado")
+			m.run = func(args []string) execution {
+				*calls = append(*calls, args)
+				return execution{stdout: []byte(`{"status":"up-to-date","tag":"v1.2.3"}`)}
+			}
+			m, cmd := key(m, "enter")
+			if cmd == nil || m.flow.step != 5 {
+				t.Fatal("default asked a question instead of starting latest")
+			}
+			contains(t, m.View(), "…", "0 s")
+			m = finish(m, cmd)
+			want := [][]string{{map[bool]string{false: "install", true: "update"}[installed], "--latest"}}
+			if !reflect.DeepEqual(*calls, want) {
+				t.Fatalf("argv: %v", *calls)
+			}
+			contains(t, m.View(), "Todas las configuraciones al día")
+		})
+	}
+	if lines := resultLines(execution{stdout: []byte(`{"status":"up-to-date","tag":"v1.2.3"}`)}); !reflect.DeepEqual(lines, []string{"Todas las configuraciones al día"}) {
+		t.Fatalf("up-to-date message: %v", lines)
+	}
+	lines := strings.Join(resultLines(execution{stdout: []byte(`{"status":"activated","tag":"v9.9.9","active":"abc"}`)}), "\n")
+	contains(t, lines, "v9.9.9")
+}
+
 func TestReleaseWizard(t *testing.T) {
 	for _, action := range []string{"install", "update"} {
 		t.Run(action, func(t *testing.T) {
 			m, calls := actionModel(t, action == "update")
-			m = keys(m, "enter", "enter", "v9.9.9", "enter")
+			m = keys(m, "a", "enter", "v9.9.9", "enter")
 			contains(t, m.View(), "tower-v1.json")
 			m = keys(m, "enter")
 			if m.flow.sha != "" {
@@ -97,7 +126,7 @@ func TestWizardValidationAndInput(t *testing.T) {
 	}
 	m = keys(m, "esc")
 	m.status.Prerequisites["go"] = prerequisite{Present: true, Version: "1.26"}
-	m = keys(m, "enter", "enter")
+	m = keys(m, "a", "enter")
 	for _, value := range []string{"", "latest", "two tags"} {
 		m.flow.tag = value
 		m = keys(m, "enter")
@@ -265,7 +294,7 @@ func TestPartialSuccessAndRecovery(t *testing.T) {
 }
 
 func TestClosedArguments(t *testing.T) {
-	for _, args := range [][]string{{"status"}, {"doctor"}, {"rollback"}, {"install", "--tag", "v1", "--asset", "tower-v1.json", "--sha256", strings.Repeat("a", 64)}, {"update", "--tag", "v1", "--asset", "a", "--sha256", strings.Repeat("a", 64)}, {"project", "init", "--project", "/path with spaces", "--trust", "trusted"}, {"project", "doctor", "--project", "/p"}, {"project", "uninstall", "--project", "/p"}, {"project", "cleanup", "--project", "/p"}} {
+	for _, args := range [][]string{{"status"}, {"doctor"}, {"rollback"}, {"install", "--latest"}, {"update", "--latest"}, {"install", "--tag", "v1", "--asset", "tower-v1.json", "--sha256", strings.Repeat("a", 64)}, {"update", "--tag", "v1", "--asset", "a", "--sha256", strings.Repeat("a", 64)}, {"project", "init", "--project", "/path with spaces", "--trust", "trusted"}, {"project", "doctor", "--project", "/p"}, {"project", "uninstall", "--project", "/p"}, {"project", "cleanup", "--project", "/p"}} {
 		if !allowedArgs(args) {
 			t.Fatal("rejected", args)
 		}

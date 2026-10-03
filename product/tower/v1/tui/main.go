@@ -38,6 +38,9 @@ func allowedArgs(a []string) bool {
 	if len(a) == 1 {
 		return a[0] == "status" || a[0] == "doctor" || a[0] == "rollback"
 	}
+	if len(a) == 2 && (a[0] == "install" || a[0] == "update") {
+		return a[1] == "--latest"
+	}
 	if len(a) == 7 && (a[0] == "install" || a[0] == "update") {
 		return a[1] == "--tag" && validTag(a[2]) && a[3] == "--asset" && validValue(a[4]) && a[5] == "--sha256" && validSHA(a[6])
 	}

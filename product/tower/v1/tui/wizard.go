@@ -14,20 +14,22 @@ import (
 
 type workflow struct {
 	action, tag, asset, sha, root, confirm, issue string
-	step, frame                                   int
-	started                                       time.Time
-	lines                                         []string
+	step, frame                                 int
+	advanced                                    bool
+	started                                     time.Time
+	lines                                       []string
 }
 type progressTick struct{ id uint64 }
 
 var shaPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
+var tagPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 
 func validSHA(s string) bool { return shaPattern.MatchString(s) }
 func validValue(s string) bool {
 	return s != "" && len(s) <= 4096 && !strings.HasPrefix(s, "--") && strings.IndexFunc(s, unicode.IsControl) < 0
 }
 func validTag(s string) bool {
-	return validValue(s) && s != "latest" && strings.IndexFunc(s, unicode.IsSpace) < 0
+	return len(s) <= 128 && tagPattern.MatchString(s) && !strings.EqualFold(s, "latest") && !strings.Contains(s, "..") && !strings.HasSuffix(s, ".")
 }
 func validRoot(s string) bool { return validValue(s) && filepath.IsAbs(s) }
 
@@ -135,6 +137,17 @@ func (m model) inputIssue() string {
 	}
 	return ""
 }
+func (m model) releaseAction(advanced bool) (tea.Model, tea.Cmd) {
+	m.page, m.offset = "wizard", 0
+	m.flow = workflow{action: "install", asset: "tower-v1.json", advanced: advanced}
+	if m.status.Engine.Installed {
+		m.flow.action = "update"
+	}
+	if _, ready := m.prerequisites(); ready && !advanced {
+		return m.startAction()
+	}
+	return m, nil
+}
 func (m model) homeRefresh() (tea.Model, tea.Cmd) {
 	m.page, m.offset = "home", 0
 	m.sequence++
@@ -175,6 +188,9 @@ func (m model) wizardKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.flow.step == 0 {
 			_, ready := m.prerequisites()
 			if ready {
+				if !m.flow.advanced && (m.flow.action == "install" || m.flow.action == "update") {
+					return m.startAction()
+				}
 				m.flow.step = 1
 			}
 			return m, nil
@@ -207,7 +223,11 @@ func (m model) startAction() (tea.Model, tea.Cmd) {
 	a := []string{m.flow.action}
 	switch m.flow.action {
 	case "install", "update":
-		a = append(a, "--tag", m.flow.tag, "--asset", m.flow.asset, "--sha256", m.flow.sha)
+		if m.flow.advanced || m.flow.tag != "" {
+			a = append(a, "--tag", m.flow.tag, "--asset", m.flow.asset, "--sha256", m.flow.sha)
+		} else {
+			a = append(a, "--latest")
+		}
 	case "init", "doctor", "uninstall", "cleanup":
 		a = []string{"project", m.flow.action, "--project", m.flow.root}
 		if m.flow.action == "init" {
@@ -305,9 +325,9 @@ func resultStatusLabel(status string) string {
 func firstLine(s string) string { return clean(strings.Split(strings.TrimSpace(s), "\n")[0]) }
 func resultLines(r execution) []string {
 	var result struct {
-		Status, Active, Previous string
-		LocalResult              *struct{ Status string }
-		Registry                 struct{ Status string }
+		Status, Active, Previous, Tag string
+		LocalResult                   *struct{ Status string }
+		Registry                      struct{ Status string }
 	}
 	parsed := json.Unmarshal(r.stdout, &result) == nil && (result.Status != "" || (result.LocalResult != nil && result.LocalResult.Status != ""))
 	raw := firstLine(string(r.stderr))
@@ -333,12 +353,17 @@ func resultLines(r execution) []string {
 			text = "Hay un problema de permisos. Siga la indicación chmod del mensaje original, si está presente."
 		}
 		lines = []string{text}
+	} else if result.Status == "up-to-date" {
+		lines = []string{"Todas las configuraciones al día"}
 	} else {
 		operationStatus := result.Status
 		if result.LocalResult != nil {
 			operationStatus = result.LocalResult.Status
 		}
 		lines = []string{"Operación completada: " + resultStatusLabel(operationStatus)}
+		if result.Tag != "" {
+			lines = append(lines, "Versión instalada: "+clean(result.Tag))
+		}
 		if result.LocalResult == nil {
 			lines = append(lines, "Activa: "+short(result.Active)+" · Anterior: "+short(result.Previous))
 		}
