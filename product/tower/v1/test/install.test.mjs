@@ -28,10 +28,11 @@ function fixture(run, mutate = () => {}, overrides = {}) {
     const pinned = { repository: "achangkuon/control-tower", tag: "v1.0.1", asset: "tower-v1.json",
       sha256: digest(bytes), paths, ...overrides };
     let stdout = "", stderr = "";
-    const deps = { pinned, tempRoot: root, stdout: { write: (text) => { stdout += text; } },
+    const deps = { pinned, tempRoot: root, env: { ...process.env, HOME: join(root, "home") }, stdout: { write: (text) => { stdout += text; } },
       stderr: { write: (text) => { stderr += text; } }, runner: (command, argv, options) => {
         calls.push([command, argv, options]);
         if (argv[0] === "release") return { status: 0, stdout: bytes };
+        if (argv[1] === "doctor") return { status: 0, stdout: Buffer.from('{"status":"absent"}') };
         if (argv[1] === "install") {
           expect(process.umask()).toBe(0o022);
           expect(lstatSync(options.cwd).mode & 0o777).toBe(0o700);
@@ -42,6 +43,59 @@ function fixture(run, mutate = () => {}, overrides = {}) {
     return run({ root, calls, deps, output: () => ({ stdout, stderr }) });
   } finally { process.umask(oldMask); rmSync(root, { recursive: true, force: true }); }
 }
+
+test("verified TUI installs beside global state; rerunning updates even when unchanged", () => fixture(({ root, deps, calls }) => {
+  const binary = Buffer.from("verified native binary"), sha256 = digest(binary);
+  deps.platform = "linux"; deps.arch = "x64";
+  deps.pinned.tui = { "linux-amd64": { asset: "torre-tui-linux-amd64", sha256, bytes: binary.length } };
+  const original = deps.runner;
+  deps.runner = (command, argv, options) => {
+    if (argv.includes("torre-tui-linux-amd64")) { calls.push([command, argv, options]); return { status: 0, stdout: binary }; }
+    if (argv[1] === "doctor") { calls.push([command, argv, options]); return { status: 0, stdout: Buffer.from('{"status":"healthy"}') }; }
+    if (argv[1] === "update") { calls.push([command, argv, options]); return { status: 0, stdout: Buffer.from('{"status":"unchanged"}') }; }
+    return original(command, argv, options);
+  };
+  expect(main([], deps)).toBe(0);
+  expect(main([], deps)).toBe(0);
+  const store = join(deps.env.HOME, ".local/share/torre-control/tui");
+  const record = JSON.parse(readFileSync(join(store, "current.json")));
+  expect(record).toEqual({ schema: "tower.v1.tui/1", sha256, path: join(store, sha256, "torre-tui"), platform: "linux-amd64" });
+  expect(readFileSync(record.path)).toEqual(binary);
+  expect(lstatSync(record.path).mode & 0o777).toBe(0o755);
+  expect(lstatSync(join(store, "current.json")).mode & 0o777).toBe(0o644);
+  expect(calls.filter(([, argv]) => argv[1] === "update")).toHaveLength(2);
+  expect(existsSync(join(store, "../v1/tui"))).toBe(false);
+}));
+
+test("TUI mismatch fails before engine execution or state writes; unsupported platform skips", () => fixture(({ deps, calls, output }) => {
+  deps.platform = "linux"; deps.arch = "arm64";
+  deps.pinned.tui = { "linux-arm64": { asset: "torre-tui-linux-arm64", sha256: "0".repeat(64), bytes: 1 } };
+  expect(main([], deps)).toBe(1);
+  expect(calls.some(([, argv]) => argv[1] === "install")).toBe(false);
+  expect(existsSync(deps.env.HOME)).toBe(false);
+  deps.platform = "win32";
+  expect(main([], deps)).toBe(0);
+  expect(output().stdout).toContain("unsupported");
+}));
+
+test("macOS arm64 selects only its pinned asset and dry-run verifies without writes", () => fixture(({ deps, calls }) => {
+  const binary = Buffer.from("darwin arm64"); deps.platform = "darwin"; deps.arch = "arm64";
+  deps.pinned.tui = { "darwin-arm64": { asset: "torre-tui-darwin-arm64", sha256: digest(binary), bytes: binary.length } };
+  const original = deps.runner;
+  deps.runner = (command, argv, options) => {
+    if (argv.includes("torre-tui-darwin-arm64")) { calls.push([command, argv, options]); return { status: 0, stdout: binary }; }
+    return original(command, argv, options);
+  };
+  expect(main(["--dry-run"], deps)).toBe(0);
+  expect(calls.at(-1)[1]).toEqual(["release", "download", "v1.0.1", "-R", deps.pinned.repository, "-p", "torre-tui-darwin-arm64", "--output", "-"]);
+  expect(existsSync(deps.env.HOME)).toBe(false);
+}));
+
+test("unhealthy engine stops without install or update", () => fixture(({ deps, output }) => {
+  const original = deps.runner;
+  deps.runner = (command, argv, options) => argv[1] === "doctor" ? { status: 1 } : original(command, argv, options);
+  expect(main([], deps)).toBe(1); expect(output().stderr).toContain("doctor failed");
+}));
 
 test("unstamped source and unknown flags refuse before any command", () => {
   const deps = { runner: () => { throw new Error("must not run"); }, stderr: { write() {} } };
@@ -55,12 +109,12 @@ test("verified extraction hands exact pins to S174, inherits stdio, cleans and p
   process.umask(0o077);
   expect(main([], deps)).toBe(0);
   expect(process.umask()).toBe(0o077);
-  expect(calls.map(([command]) => command)).toEqual(["gh", "bun", "git", "go", "gh", "bun"]);
+  expect(calls.map(([command]) => command)).toEqual(["gh", "bun", "git", "go", "gh", "bun", "bun"]);
   expect(calls[0][1]).toEqual(["auth", "status", "--active", "--hostname", "github.com"]);
   expect(calls[4][1]).toEqual(["release", "download", "v1.0.1", "--repo", deps.pinned.repository, "--pattern", "tower-v1.json", "--output", "-"]);
-  expect(calls[5][1].slice(1)).toEqual(["install", "--tag", "v1.0.1", "--asset", "tower-v1.json", "--sha256", deps.pinned.sha256]);
-  expect(calls[5][2].stdio).toBe("inherit");
-  expect(existsSync(calls[5][2].cwd)).toBe(false);
+  expect(calls[6][1].slice(1)).toEqual(["install", "--tag", "v1.0.1", "--asset", "tower-v1.json", "--sha256", deps.pinned.sha256]);
+  expect(calls[6][2].stdio).toBe("inherit");
+  expect(existsSync(calls[6][2].cwd)).toBe(false);
   expect(calls.every(([, , options]) => options.timeout > 0 && options.timeout <= 180_000)).toBe(true);
   expect(output().stdout).toContain('export PATH="$HOME/.local/bin:$PATH"');
   expect(output().stdout).toContain("--trust trusted"); expect(output().stdout).toContain("pi --approve");

@@ -33,12 +33,94 @@ function fixture(run, change = () => {}) {
     }
     const installer = "product/tower/v1/install.mjs";
     writeFileSync(join(repo, installer), readFileSync(new URL("../install.mjs", import.meta.url)));
+    mkdirSync(join(repo, "product/tower/v1/tui"));
+    writeFileSync(join(repo, "product/tower/v1/tui/go.mod"), "module fixture\n\ngo 1.20\n");
+    writeFileSync(join(repo, "product/tower/v1/tui/main.go"), 'package main\nfunc main() {}\n');
     change(repo);
     git(repo, "add", ".");
     git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "fixture");
     return run({ root, repo, commit: git(repo, "rev-parse", "HEAD"), out: join(root, "tower-v1.json") });
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
+
+test("TUI builds exported commit sources offline and stamps deterministic binaries", () => fixture(({ repo, root, out, commit }) => {
+  writeFileSync(join(repo, "product/tower/v1/tui/main.go"), "newer working source");
+  git(repo, "add", "."); git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "newer");
+  const calls = [];
+  const builder = (command, argv, options) => {
+    calls.push([command, argv, options]);
+    expect(options.env).toMatchObject({ GOWORK: "off", GOENV: "off", GOFLAGS: "-mod=readonly", GOPROXY: "off" });
+    const allowed = ["PATH", "HOME", "TMPDIR", "GOCACHE", "GOPATH", "GOMODCACHE", "GOFLAGS", "GOPROXY", "GOSUMDB", "GOWORK", "GOTOOLCHAIN", "GOENV", "GOTELEMETRY", "CGO_ENABLED", "GOOS", "GOARCH"];
+    expect(Object.keys(options.env).filter(key => !allowed.includes(key))).toEqual([]);
+    for (const key of ["GOINSECURE", "GONOSUMDB", "GONOSUMCHECK", "GOPRIVATE", "GONOPROXY"]) expect(options.env[key]).toBeUndefined();
+    if (argv[0] === "env") return { status: 0, stdout: Buffer.from("/operator/cache\n") };
+    expect(readFileSync(join(options.cwd, "main.go"), "utf8")).toContain("func main() {}");
+    expect(options.cwd).not.toStartWith(repo);
+    expect(options.env).toMatchObject({ CGO_ENABLED: "0", GOFLAGS: "-mod=readonly", GOPROXY: "off", GOTOOLCHAIN: "local", GOMODCACHE: "/operator/cache" });
+    expect(argv).toEqual(["build", "-trimpath", "-ldflags", "-s -w -buildid=", "-o", argv[5], "."]);
+    writeFileSync(argv[5], `${options.env.GOOS}-${options.env.GOARCH}`);
+    return { status: 0, stdout: Buffer.alloc(0) };
+  };
+  const build = (suffix, output) => buildRelease({ repo, commit, out: output, tag: "v1-test",
+    "installer-out": join(root, `installer-${suffix}.mjs`), "tui-out-dir": join(root, `tui-${suffix}`) }, { builder });
+  mkdirSync(join(root, "second"));
+  const first = build("one", out), second = build("two", join(root, "second/tower-v1.json"));
+  expect(first.tui).toEqual(second.tui);
+  expect(first.installerSha256).toBe(second.installerSha256);
+  expect(Object.keys(first.tui)).toEqual(["linux-amd64", "linux-arm64", "darwin-amd64", "darwin-arm64"]);
+  for (const pin of Object.values(first.tui)) {
+    const path = join(root, "tui-one", pin.asset);
+    expect(digest(readFileSync(path))).toBe(pin.sha256);
+    expect(lstatSync(path).mode & 0o777).toBe(0o755);
+  }
+  const stamped = JSON.parse(readFileSync(join(root, "installer-one.mjs"), "utf8").match(/^const PINNED = (.+);$/m)[1]);
+  expect(stamped.tui).toEqual(first.tui);
+  expect(calls.every(([, , options]) => options.timeout > 0 && options.timeout <= 180_000)).toBe(true);
+}));
+
+test("missing offline modules fail before publishing any TUI output", () => fixture(({ repo, root, out }) => {
+  const tui = join(root, "tui");
+  expect(() => buildRelease({ repo, out, tag: "v1", "installer-out": join(root, "installer"), "tui-out-dir": tui },
+    { builder: (_command, argv) => argv[0] === "env" ? { status: 0, stdout: Buffer.from("/operator/cache") } : { status: 1 } })).toThrow(/offline/);
+  expect(existsSync(tui)).toBe(false); expect(existsSync(out)).toBe(false);
+}));
+
+(Bun.which("go") ? test : test.skip)("real Go ignores ancestor workspace malicious dependency replacement", () => fixture(({ repo, root, out }) => {
+  const tui = join(root, "tui");
+  const builder = (command, argv, options) => {
+    if (argv[0] === "env") {
+      // Private fixture ancestor, never /tmp/go.work or any operator workspace.
+      const ancestor = join(options.cwd, "../../../..");
+      mkdirSync(join(ancestor, "malicious"));
+      writeFileSync(join(ancestor, "malicious/go.mod"), "module example.invalid/dependency\n\ngo 1.20\n");
+      writeFileSync(join(ancestor, "malicious/code.go"), 'package dependency\nconst Marker = "attacker"\n');
+      writeFileSync(join(ancestor, "go.work"), "go 1.20\nuse ./product/tower/v1/tui\nreplace example.invalid/dependency v1.0.0 => ./malicious\n");
+    }
+    return childProcess.spawnSync(command, argv, options);
+  };
+  // The dependency is deliberately absent offline. A workspace redirect would
+  // compile successfully from attacker code; ignoring it must fail closed.
+  expect(() => buildRelease({ repo, out, tag: "v1", "installer-out": join(root, "installer"), "tui-out-dir": tui }, { builder })).toThrow(/offline/);
+  expect(existsSync(tui)).toBe(false); expect(existsSync(out)).toBe(false);
+}, repo => {
+  writeFileSync(join(repo, "product/tower/v1/tui/go.mod"), "module fixture\n\ngo 1.20\nrequire example.invalid/dependency v1.0.0\n");
+  writeFileSync(join(repo, "product/tower/v1/tui/main.go"), 'package main\nimport "example.invalid/dependency"\nfunc main() { println(dependency.Marker) }\n');
+}), 180_000);
+
+// Opt-in integration: normal unit runs use the injected deterministic builder above.
+const realGo = process.env.TOWER_REAL_TUI_BUILD === "1" && Bun.which("go");
+(realGo ? test : test.skip)("optional real tiny Go cross-build", () => fixture(({ repo, root, out }) => {
+  const receipt = buildRelease({ repo, out, tag: "v1", "installer-out": join(root, "installer"), "tui-out-dir": join(root, "tui") });
+  expect(Object.values(receipt.tui).every(pin => pin.bytes > 0)).toBe(true);
+}), 180_000);
+
+test("TUI output requires installer pins and an absent external directory", () => fixture(({ repo, root, out }) => {
+  for (const directory of [repo, "relative", root]) {
+    expect(() => buildRelease({ repo, out, tag: "v1", "installer-out": join(root, "installer"), "tui-out-dir": directory })).toThrow();
+    expect(existsSync(out)).toBe(false);
+  }
+  expect(() => buildRelease({ repo, out, "tui-out-dir": join(root, "tui") })).toThrow();
+}));
 
 test("stamping is exact once, pins immutable envelope and emits deterministic separate installer", () => fixture(({ repo, out, root, commit }) => {
   const installerOut = join(root, "torre-install.mjs");

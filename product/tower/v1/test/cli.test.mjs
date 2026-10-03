@@ -2,7 +2,7 @@ import { expect, spyOn, test as bunTest } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { PassThrough } from "node:stream";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync,
+import { chmodSync, existsSync, fstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync,
   rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { main } from "../cli.mjs";
@@ -108,6 +108,54 @@ for (const argv of invalid) test(`closed usage rejects ${JSON.stringify(argv)}`,
   const f = fixture();
   failed(invoke(f, argv));
   expect(readdirSync(f.home)).toEqual([]);
+});
+
+test("verified interface ignores ambient TORRE_CONTROL_CLI for installed and checkout launch; plain bypasses", async () => {
+  const f = fixture(), binary = Buffer.from("native interface"), sha256 = digest(binary);
+  const store = join(f.share, "tui"), path = join(store, sha256, "torre-tui");
+  mkdirSync(join(store, sha256), { recursive: true, mode: 0o755 });
+  writeFileSync(path, binary, { mode: 0o755 });
+  writeFileSync(join(store, "current.json"), JSON.stringify({ schema: "tower.v1.tui/1", sha256, path, platform: `${process.platform}-${process.arch === "x64" ? "amd64" : process.arch}` }));
+  chmodSync(join(store, "current.json"), 0o644);
+  const calls = [];
+  const extra = { env: { ...f.env, TOWER_MENU: "", TORRE_CONTROL_CLI: "/tmp/attacker" }, tuiSpawn: (target, argv, options) => { calls.push([target, argv, options]); return { status: 7 }; },
+    cliPath: join(f.state, "versions", "a".repeat(64), "product/tower/v1/cli.mjs") };
+  const result = await menu(f, [], extra);
+  expect(result.code).toBe(7); expect(result.stderr).toBe(""); expect(result.stdout).toBe("");
+  expect(calls[0]).toEqual([path, [], expect.objectContaining({ stdio: "inherit", env: expect.objectContaining({ TORRE_CONTROL_CLI: f.launcher }) })]);
+  expect((await menu(f, ["10"], { ...extra, env: { ...f.env, TOWER_MENU: "plain" } })).code).toBe(0);
+  expect(calls).toHaveLength(1);
+  const sourceInvocation = await menu(f, [], { ...extra, cliPath: entry, tuiSpawn: (_target, _argv, options) => {
+    const shim = options.env.TORRE_CONTROL_CLI;
+    expect(shim).not.toBe("/tmp/attacker");
+    expect(readFileSync(shim, "utf8")).toContain(JSON.stringify(entry));
+    expect(statSync(shim).mode & 0o777).toBe(0o755);
+    return { status: 0 };
+  } });
+  expect(sourceInvocation.code).toBe(0);
+  for (const override of [{ uid: process.getuid() + 1 }, { size: 4097 }, { nlink: 2 }]) {
+    const prior = calls.length;
+    const rejected = await menu(f, ["10"], { ...extra, tuiFs: { fstatSync: fd => Object.assign(fstatSync(fd), override) } });
+    expect(rejected.code).toBe(0); expect(rejected.stderr).toContain("Interface not verified");
+    expect(calls).toHaveLength(prior);
+  }
+  for (const kind of ["hash", "record", "permissions", "symlink", "spawn", "access"]) {
+    writeFileSync(path, binary); chmodSync(path, 0o755);
+    const record = join(store, "current.json");
+    writeFileSync(record, JSON.stringify({ schema: "tower.v1.tui/1", sha256, path, platform: `${process.platform}-${process.arch === "x64" ? "amd64" : process.arch}` }));
+    chmodSync(record, 0o644);
+    if (kind === "hash") writeFileSync(path, "tampered");
+    if (kind === "record") writeFileSync(record, "{}");
+    if (kind === "permissions") chmodSync(record, 0o666);
+    if (kind === "symlink") { rmSync(record); symlinkSync(path, record); }
+    const prior = calls.length;
+    const fallback = await menu(f, ["10"], { ...extra, tuiSpawn: (...args) => { calls.push(args); return { error: Object.assign(new Error("missing"), { code: kind === "access" ? "EACCES" : "ENOENT" }) }; } });
+    expect(fallback.code).toBe(0); expect(fallback.stderr).toContain("Interface not verified");
+    expect(calls.length - prior).toBe(["spawn", "access"].includes(kind) ? 1 : 0);
+    rmSync(record);
+  }
+  const missing = await menu(f, ["10"], extra);
+  expect(missing.stderr).toContain("Interface not verified");
 });
 
 test("status reports the closed schema without changing disposable HOME", () => {
@@ -474,7 +522,7 @@ const snapshot = (f) => captureProjectFiles(f.root, readdirSync(f.root));
 async function menu(f, lines, extra = {}) {
   let stdout = "", stderr = "";
   const prompts = [];
-  const code = await main([], { env: f.env,
+  const code = await main([], { env: { ...f.env, TOWER_MENU: "plain" },
     stdin: { isTTY: true }, stdout: { isTTY: true, write: (text) => { stdout += text; } },
     stderr: { write: (text) => { stderr += text; } },
     readLine: (prompt) => { prompts.push(prompt); return lines.shift() ?? null; }, ...extra });
@@ -732,7 +780,7 @@ test("visual SS3/split arrows and edited project root tolerate split CR LF", asy
     "/explicit/projecX\x7ft\r", "\n"], { operations: {
     doctorRegisteredProject: (options) => { calls.push(options); return { registry: { status: "recorded" } }; },
   } });
-  expect(result.stderr).toBe("");
+  expect(result.stderr).toContain("Interface not verified");
   expect(result.code).toBe(0);
   expect(calls).toHaveLength(1);
   expect(calls[0].projectRoot).toBe("/explicit/project");

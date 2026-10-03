@@ -1,5 +1,7 @@
 #!/usr/bin/env bun
-import { accessSync, chmodSync, constants, lstatSync, mkdirSync, statSync } from "node:fs";
+import { accessSync, chmodSync, closeSync, constants, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, readSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { basename, delimiter, dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -342,6 +344,55 @@ async function runMenu(deps) {
   } finally { input?.close(); }
 }
 
+function verifiedTuiFile(path, limit, fs) {
+  const fd = fs.openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const stat = fs.fstatSync(fd);
+    if (!stat.isFile() || stat.nlink !== 1 || stat.uid !== process.getuid() || stat.mode & 0o022 || stat.size > limit) throw new Error("unsafe interface file");
+    const bytes = Buffer.alloc(stat.size + 1), count = fs.readSync(fd, bytes, 0, bytes.length, 0);
+    if (count !== stat.size) throw new Error("interface file changed");
+    return bytes.subarray(0, count);
+  } finally { fs.closeSync(fd); }
+}
+function runTui(deps) {
+  const { env = process.env, tuiSpawn = spawnSync, cliPath = fileURLToPath(import.meta.url) } = deps;
+  const home = homePath(env), store = join(home, ".local/share/torre-control/tui");
+  const fs = { openSync, fstatSync, readSync, closeSync, ...deps.tuiFs };
+  let record;
+  try {
+    if (!defaultParent(home, store, false)) throw new Error("missing interface store");
+    record = JSON.parse(verifiedTuiFile(join(store, "current.json"), 4096, fs).toString("utf8"));
+    const platform = `${process.platform}-${process.arch === "x64" ? "amd64" : process.arch}`;
+    if (record?.schema !== "tower.v1.tui/1" || Object.keys(record).sort().join() !== "path,platform,schema,sha256" ||
+        !/^[a-f0-9]{64}$/.test(record.sha256) || record.platform !== platform || record.path !== join(store, record.sha256, "torre-tui")) throw new Error("invalid interface record");
+    defaultParent(home, dirname(record.path), false);
+    const bytes = verifiedTuiFile(record.path, 64 * 1024 * 1024, fs);
+    if (createHash("sha256").update(bytes).digest("hex") !== record.sha256) throw new Error("interface hash mismatch");
+  } catch { return null; }
+  let temporary;
+  try {
+    // Ambient TORRE_CONTROL_CLI is not authority to select executable code.
+    // Only direct TUI-binary developer launches honor that override.
+    let launcher;
+    const versions = join(home, ".local/share/torre-control/v1/versions") + sep;
+    if (cliPath.startsWith(versions)) launcher = join(home, ".local/bin/torre-control");
+    else {
+      // Checkout .mjs and installed source members are not executable. A private
+      // Bun shim preserves this exact invocation without changing global launcher bytes.
+      temporary = mkdtempSync(join(tmpdir(), "tower-cli-tui-"));
+      launcher = join(temporary, "torre-control");
+      writeFileSync(launcher, `#!${process.execPath}\nimport {spawnSync} from "node:child_process";\nconst r=spawnSync(${JSON.stringify(process.execPath)},[${JSON.stringify(cliPath)},...process.argv.slice(2)],{stdio:"inherit",timeout:300000});\nprocess.exit(r.status??1);\n`, { flag: "wx", mode: 0o755 });
+      chmodSync(launcher, 0o755);
+    }
+    const result = tuiSpawn(record.path, [], { stdio: "inherit", env: { ...env, TORRE_CONTROL_CLI: launcher }, timeout: 24 * 60 * 60 * 1000 });
+    if (result.error) throw result.error;
+    return result.status ?? 1;
+  } catch (error) {
+    if (["ENOENT", "EACCES"].includes(error.code)) return null;
+    throw error;
+  } finally { if (temporary) rmSync(temporary, { recursive: true, force: true }); }
+}
+
 /** Testable dispatcher: injected environment, output sinks, gh runner and operation doubles.
  * Returns an exit code (a Promise for the interactive menu); never sets process.exitCode.
  * Production filesystem effects belong to the selected lifecycle and default-parent preparation.
@@ -350,7 +401,14 @@ export function main(argv, deps = {}) {
   const { env = process.env, stdout = process.stdout, stderr = process.stderr, runner } = deps;
   try {
     if (Array.isArray(argv) && argv.length === 0 &&
-        (deps.stdin ?? process.stdin).isTTY === true && stdout.isTTY === true) return runMenu(deps);
+        (deps.stdin ?? process.stdin).isTTY === true && stdout.isTTY === true) {
+      if (env.TOWER_MENU !== "plain") {
+        const result = runTui(deps);
+        if (result !== null) return result;
+        stderr.write("Interface not verified or unavailable; falling back to built-in menu.\n");
+      }
+      return runMenu(deps);
+    }
     const { command, subcommand, flags } = parseArguments(argv);
     const home = homePath(env);
     const share = join(home, ".local", "share", "torre-control");

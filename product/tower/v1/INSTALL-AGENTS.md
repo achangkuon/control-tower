@@ -82,20 +82,28 @@ On Linux without `shasum`, replace `shasum -a 256 -c -` with `sha256sum -c -`.
 What happens: `gh` downloads only the installer for that exact tag; the checksum is verified
 **before** anything runs; the installer then checks the prerequisites, downloads the release
 package, verifies it against the SHA-256 pinned inside the installer, and installs the
-global engine.
+global engine. It also downloads the native visual interface for Linux/macOS amd64/arm64,
+verifies its pinned SHA-256 before use, and stores it in the sibling `tui` directory
+(outside the engine's `v1` state). Unsupported platforms skip the interface.
+
+The **same one-command installer also updates** a healthy existing installation, including
+when the engine is unchanged. It runs `doctor` first and stops if integrity checks fail.
+Ask for the new exact tag and installer SHA-256 through the second channel, then repeat
+Step 3; a separate package SHA-256 is not needed for this route.
 
 Expected output (values differ per version):
 
 ```text
 .../torre-install.mjs: OK
 {"status":"installed","active":"<sha>","previous":null}
-Installed. For zsh/bash, add this line to ~/.zshrc or ~/.bashrc and run it now:
+Installed or updated. For zsh/bash, add this line to ~/.zshrc or ~/.bashrc and run it now:
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-If `torre-control` is already installed (`torre-control doctor` prints `"status":"healthy"`),
-do not run the installer again: use the `update` command from the **Other commands** table,
-with the package SHA-256 from the maintainer.
+On updates, the engine result is `"status":"activated"` or `"status":"unchanged"` instead
+of `"installed"`. Engine and interface activation are separate steps; report a later
+interface error without claiming the engine update was undone. Previous interface binaries
+are retained; engine `rollback` does not roll back the interface.
 
 ## Step 4 — Put `torre-control` on the PATH
 
@@ -116,7 +124,9 @@ torre-control doctor
 ```
 
 Expected: `{"status":"healthy","active":"<sha>","previous":...}`. Anything else: stop and
-report.
+report. Then tell the human to run `torre-control` in their terminal to open the visual
+interface. Opening it does not adopt a project. It shows engine/version, projects,
+prerequisites, agents and system; use arrows or j/k, Enter, Esc, r to refresh, q to quit.
 
 ## Step 6 — Adopt a project (only with the human's choice)
 
@@ -145,13 +155,17 @@ adopt that one.
 - **Pi:** `cd <project> && pi --approve`. `--approve` is the explicit trust Pi requires to
   load project skills.
 - A good first prompt: *"What is Control Tower and how do I start?"*
-- `torre-control` with no arguments opens an interactive menu (in a real terminal).
+- `torre-control` with no arguments opens the verified visual interface (in a real terminal).
+  Missing/invalid records or a binary hash mismatch fall back to the built-in menu with a
+  one-line notice; unverified binaries never run. `TOWER_MENU=plain torre-control` forces
+  that menu.
 
 ## Other commands
 
 | Goal | Command |
 |---|---|
-| Update to a new version (tag and package SHA-256 from the maintainer) | `torre-control update --tag <TAG> --asset tower-v1.json --sha256 <PACKAGE_SHA256>` |
+| Update engine and interface together | Repeat Step 3 with the new exact tag and installer SHA-256 |
+| Update engine only (tag and package SHA-256 from the maintainer) | `torre-control update --tag <TAG> --asset tower-v1.json --sha256 <PACKAGE_SHA256>` |
 | Check the global engine | `torre-control doctor` |
 | Return to the previous version | `torre-control rollback` |
 | Check one project | `torre-control project doctor --project <ABS_PATH>` |
@@ -175,6 +189,7 @@ installer SHA-256. Ask the maintainer for it through the same second channel.
 | `Invalid Tower CLI: Invalid Tower global lifecycle: unknown launcher` | `~/.local/bin/torre-control` already exists and is not a launcher the installer recognizes | It is preserved on purpose. Stop and ask the human what that file is; never delete or overwrite it. |
 | `Invalid Tower CLI: Invalid Tower global lifecycle: retained launcher backup` | Only with v1.0.0 on machines that had the older launcher | Update to v1.0.1 or newer. |
 | `Invalid Tower CLI: usage: menu input missing or invalid; aborted` right after choosing a menu entry | v1.0.0–v1.0.1 menu misreads an Enter sent as CR LF | Update to v1.0.2 or newer, or use the explicit subcommands. |
+| `Interface not verified or unavailable; falling back to built-in menu.` | Interface missing, unsafe, changed or unable to start; only the built-in menu is running | Report it; confirm the installer through the second channel and repeat Step 3. Use `TOWER_MENU=plain` for the menu. Never bypass verification. |
 | `torre-control: command not found` | `~/.local/bin` is not on the PATH | Step 4. |
 | Exit status 1 with a JSON line and a registry error after `project ...` | The project operation succeeded but the project list could not be updated | Report it; rerun `torre-control project doctor --project <ABS_PATH>`. |
 

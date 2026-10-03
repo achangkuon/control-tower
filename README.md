@@ -30,7 +30,8 @@ Las versiones se publican como Releases privados de `achangkuon/control-tower`
 (la vigente es `v1.0.2`). Los ejemplos usan marcadores como `<TAG>`; nunca
 tome valores de seguridad de esta página. Para instalar sin checkout, el mantenedor
 comunica el tag exacto y **un SHA-256 del instalador** por un segundo canal de
-confianza. El instalador verificado fija a su vez el digest del manifiesto.
+confianza. El instalador verificado fija a su vez el digest del manifiesto y
+los SHA-256 de los cuatro ejecutables de la interfaz visual.
 
 **Nunca tome el SHA-256 de la misma página del Release que suministra el asset.**
 La CLI exige el digest, pero no puede comprobar cómo se obtuvo. Debe ser un
@@ -60,6 +61,7 @@ Solo después publica la versión y activa el lanzador.
 | `~/.local/bin/torre-control` | Lanzador estable del motor activo |
 | `~/.local/share/torre-control/v1` | Estado global y versiones retenidas |
 | `~/.local/share/torre-control/projects` | Registro informativo de proyectos |
+| `~/.local/share/torre-control/tui` | Interfaz visual verificada y registro de la versión elegida |
 
 Los siguientes ejemplos de diagnóstico usan la ruta completa del lanzador;
 no dependen de que `~/.local/bin` esté en `PATH`.
@@ -118,8 +120,35 @@ temporales internos del instalador se eliminan al terminar.
 El instalador comprueba los requisitos y descarga el manifiesto `tower-v1.json`
 del tag fijado. Verifica su SHA-256 antes de leer JSON, verifica cada miembro y
 solo entonces invoca la instalación V1, que descarga y valida nuevamente.
+El mismo comando también **actualiza** una instalación sana: comprueba `doctor`
+y elige `update` en lugar de `install`, incluso si el motor ya está en esa versión.
+Si el diagnóstico falla, se detiene sin intentar reparar.
 Para una prueba guiada sin instalación global, cambie únicamente el último
 comando por `bun "$d/torre-install.mjs" --dry-run`: sí descarga y verifica.
+
+### Abrir la interfaz visual
+
+Tras activar PATH, ejecute `torre-control` sin argumentos en una terminal.
+La interfaz muestra el motor y su versión, proyectos registrados, requisitos,
+agentes disponibles y sistema. Permite instalar o actualizar, volver a la
+versión anterior, gestionar proyectos y consultar el diagnóstico o la ayuda.
+Use **↑/↓ o j/k** para moverse, **Enter** para elegir, **Esc** para volver,
+**r** para refrescar y **q o Ctrl-C** para salir. Las escrituras requieren los
+pasos de confirmación de cada operación; abrir la interfaz no adopta proyectos.
+
+El instalador descarga solo el ejecutable fijado para Linux o macOS, en amd64
+o arm64, mediante `gh` autenticado y el tag exacto. Comprueba tamaño y SHA-256
+antes de instalarlo. Cada apertura vuelve a comprobar el registro local y el
+SHA-256 del ejecutable antes de iniciarlo. Si falta, no es verificable o no se
+puede iniciar, aparece un aviso y se abre el menú integrado. En otras plataformas
+se omite la interfaz, sin impedir la instalación del motor.
+
+Para usar directamente el menú integrado: `TOWER_MENU=plain torre-control`.
+La interfaz se guarda fuera de `v1`, en `tui/<sha256>/torre-tui`, con un registro
+`current.json` reemplazado atómicamente. Se conservan las versiones anteriores;
+no se borran automáticamente. La activación del motor y la interfaz son pasos
+separados: un fallo posterior no implica que se haya deshecho la actualización
+del motor. `rollback` del motor no cambia el registro de la interfaz.
 
 ### Activar PATH, adoptar y abrir el host
 
@@ -146,18 +175,24 @@ residual intacto, no una adopción activa. Para revertir el motor global, use
 ### Publicar: procedimiento para el mantenedor
 
 Después de revisar y entregar un commit limpio que incluya el instalador,
-cree una carpeta de salida **fuera del repositorio**, con ambos archivos aún
-ausentes. Sustituya commit, tag y rutas; no publique desde un árbol modificado:
+cree una carpeta de salida **fuera del repositorio**, con ambos archivos y el
+subdirectorio `tui` aún ausentes. Se necesita Go local y sus módulos ya presentes
+en la caché del operador; el constructor no descarga dependencias. Sustituya commit, tag y rutas; no publique desde un árbol modificado:
 
 ```bash
-bun product/tower/v1/release-build.mjs --commit '<COMMIT>' --out /ruta/externa/tower-v1.json --tag '<TAG>' --installer-out /ruta/externa/torre-install.mjs
-gh release create '<TAG>' --repo achangkuon/control-tower --target '<COMMIT>' /ruta/externa/tower-v1.json /ruta/externa/torre-install.mjs
+bun product/tower/v1/release-build.mjs --commit '<COMMIT>' --out /ruta/externa/tower-v1.json --tag '<TAG>' --installer-out /ruta/externa/torre-install.mjs --tui-out-dir /ruta/externa/tui
+gh release create '<TAG>' --repo achangkuon/control-tower --target '<COMMIT>' /ruta/externa/tower-v1.json /ruta/externa/torre-install.mjs /ruta/externa/tui/torre-tui-linux-amd64 /ruta/externa/tui/torre-tui-linux-arm64 /ruta/externa/tui/torre-tui-darwin-amd64 /ruta/externa/tui/torre-tui-darwin-arm64
 ```
 
-El constructor lee ambos contenidos del commit, sella exactamente una línea
+El constructor lee ambos contenidos del commit y exporta las fuentes Go de ese
+mismo árbol con `git archive`, nunca del directorio de trabajo. Compila los cuatro
+ejecutables sin CGO, con rutas recortadas, sin build ID ni red y con caché de
+compilación desechable. Para un mismo commit y toolchain Go, los bytes son
+reproducibles. Sella exactamente una línea
 `const PINNED` con repositorio, tag, asset, digest del manifiesto y rutas
-permitidas, y rechaza sobrescrituras. El instalador no es miembro del manifiesto.
-La línea JSON contiene `sha256` (manifiesto) e `installerSha256` (instalador).
+permitidas y hashes de la interfaz, y rechaza sobrescrituras. El instalador no es miembro del manifiesto.
+La línea JSON contiene `sha256` (manifiesto), `installerSha256` (instalador) y
+`tui` (asset, tamaño y SHA-256 por plataforma).
 Comunique **`installerSha256` y el tag** al socio por el segundo canal, no solo
 en las notas del Release. Sin las nuevas banderas, el constructor sigue
 produciendo únicamente el manifiesto.
@@ -170,7 +205,7 @@ posicionales; se rechazan opciones desconocidas, duplicadas o sin valor.
 
 | Invocación de `torre-control` | Operación |
 |---|---|
-| Sin argumentos, en terminal interactiva | Abre el menú |
+| Sin argumentos, en terminal interactiva | Abre la interfaz visual verificada o el menú integrado |
 | `install --tag <TAG> --asset <ASSET> --sha256 <SHA256>` | Instala desde un Release fijado explícitamente |
 | `update --tag <TAG> --asset <ASSET> --sha256 <SHA256>` | Adquiere y activa otra versión verificada |
 | `doctor` | Verifica el estado global sin reparar ni descargar |
@@ -373,6 +408,7 @@ seguridad, ausencia de efectos secundarios ni reversibilidad del ciclo de vida.*
 
 | Síntoma | Qué revisar |
 |---|---|
+| Interfaz no verificada; aparece el menú integrado | Confirmar el instalador por el segundo canal y repetir el mismo comando; `TOWER_MENU=plain` fuerza el menú sin ejecutar la interfaz |
 | Falla la adquisición | Autenticación y acceso de `gh`, tag y asset exactos; no hay fallback |
 | Divergencia de SHA-256 | Detenerse y confirmar el digest por el segundo canal; no usar el del mismo Release |
 | Lanzador desconocido | Conservarlo; la migración solo acepta la plantilla heredada exacta |
