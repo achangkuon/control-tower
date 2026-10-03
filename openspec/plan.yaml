@@ -2161,7 +2161,7 @@ sesiones:
     resultado: "Instalar o actualizar deja en la máquina skills V1, Radar, firmas e instrucción global en los cuatro agentes, verifica Gentle AI y desinstalar lo quita todo."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el instalador único y que Gentle AI sea requisito."
     depende_de: [S194]
-    archivos: [product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs]
+    archivos: [product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs, product/tower/v1/bootstrap.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs]
     cimientos: []
     recurso: []
     encargo:
