@@ -263,7 +263,8 @@ func (m model) radarLines() []string {
 			if i == m.radar.selected {
 				prefix = "> "
 			}
-			lines = append(lines, prefix+label, "  "+command.description)
+			// Titles share the tower logo color so commands stand out from their descriptions.
+			lines = append(lines, prefix+m.palette.tower.Render(label), "  "+command.description)
 		}
 	case "radar-id":
 		lines = []string{"Radar · " + m.radar.command, "ID de Sesión (S123 o S1.11):", "> " + clean(m.radar.id)}

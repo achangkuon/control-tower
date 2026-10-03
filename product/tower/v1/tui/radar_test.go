@@ -496,3 +496,22 @@ func TestRadarReadOnlyShapesReachExecutor(t *testing.T) {
 		})
 	}
 }
+
+func TestRadarCommandTitlesUseTheTowerColor(t *testing.T) {
+	t.Setenv("TERM", "xterm-256color")
+	m := radarModel(t)
+	m.palette = newPalette(false)
+	view := m.View()
+	for _, command := range radarCommands {
+		if !strings.Contains(view, m.palette.tower.Render(radarLabel(command.name))) {
+			t.Fatalf("title %q is not rendered in the tower color:\n%s", command.name, view)
+		}
+		if strings.Contains(view, m.palette.tower.Render(command.description)) {
+			t.Fatalf("description %q must keep the default color", command.description)
+		}
+	}
+	m.palette = newPalette(true)
+	if strings.Contains(m.View(), "\x1b[") {
+		t.Fatal("no-color mode must not emit escape sequences")
+	}
+}
