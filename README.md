@@ -184,7 +184,7 @@ en la caché del operador; el constructor no descarga dependencias. Sustituya co
 
 ```bash
 bun product/tower/v1/release-build.mjs --commit '<COMMIT>' --out /ruta/externa/tower-v1.json --tag '<TAG>' --installer-out /ruta/externa/torre-install.mjs --tui-out-dir /ruta/externa/tui
-gh release create '<TAG>' --repo achangkuon/control-tower --target '<COMMIT>' /ruta/externa/tower-v1.json /ruta/externa/torre-install.mjs /ruta/externa/tui/torre-tui-linux-amd64 /ruta/externa/tui/torre-tui-linux-arm64 /ruta/externa/tui/torre-tui-darwin-amd64 /ruta/externa/tui/torre-tui-darwin-arm64
+gh release create '<TAG>' --repo achangkuon/control-tower --target '<COMMIT>' /ruta/externa/tower-v1.json /ruta/externa/tower-v1.json.sha256 /ruta/externa/torre-install.mjs /ruta/externa/tui/torre-tui-linux-amd64 /ruta/externa/tui/torre-tui-linux-arm64 /ruta/externa/tui/torre-tui-darwin-amd64 /ruta/externa/tui/torre-tui-darwin-arm64
 ```
 
 El constructor lee ambos contenidos del commit y exporta las fuentes Go de ese
