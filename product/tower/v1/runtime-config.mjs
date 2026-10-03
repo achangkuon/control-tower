@@ -163,7 +163,7 @@ function buildRadar({ env, runner, members }) {
   };
   try {
     const cwd = join(temporary, "radar"); mkdirSync(cwd);
-    for (const member of BUNDLE_MEMBERS.filter(m => m.destination.startsWith("radar/"))) {
+    for (const member of BUNDLE_MEMBERS.filter(m => m.destination.startsWith("radar/") && members.has(m.source))) {
       const target = join(cwd, member.destination.slice(6));
       mkdirSync(dirname(target), { recursive: true, mode: 0o755 });
       writeFileSync(target, members.get(member.source));
@@ -207,10 +207,20 @@ export function preflightRuntimeHome({ home }) {
 }
 
 /** Prepare all bounded reads, runtime conflict checks and offline build before global activation. */
-export function prepareRuntime({ home, members: releaseMembers, version, env = process.env, runner = spawnSync }) {
+export function prepareRuntime({ home, members: releaseMembers, vendorReleases = [], version, env = process.env, runner = spawnSync }) {
   home = homeFor(home); requireGentleAi({ runner, env: { ...env, HOME: home } });
   preflightRuntimeHome({ home });
   const prior = load(home), config = settings(home), members = new Map(releaseMembers.map(m => [m.path, Buffer.from(m.bytes)]));
+  const radar = "agent-workflows/tools/radar/", vendor = BUNDLE_MEMBERS.filter(m => m.source.startsWith(radar + "vendor/"));
+  if (vendor.every(m => !members.has(m.source))) {
+    // Donors are cached-release receipts verified by the global lifecycle. Only
+    // vendor bytes may be borrowed; all Radar program sources remain the target's.
+    const donor = vendorReleases.map(release => new Map(release.map(m => [m.path, Buffer.from(m.bytes)])))
+      .find(candidate => vendor.every(m => candidate.has(m.source)) && ["go.mod", "go.sum"]
+        .every(name => candidate.has(radar + name) && members.get(radar + name)?.equals(candidate.get(radar + name))));
+    if (!donor) fail("No se puede reconstruir Radar: falta vendor verificado con go.mod y go.sum idénticos");
+    for (const { source } of vendor) members.set(source, donor.get(source));
+  }
   for (const { source } of BUNDLE_MEMBERS) if (!members.has(source)) fail(`missing verified runtime member: ${source}`);
   const desired = [];
   const file = (path, bytes, component, mode = 0o644) => desired.push({ path, component, files: { "": { bytes: Buffer.from(bytes), mode } } });

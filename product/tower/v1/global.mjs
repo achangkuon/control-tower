@@ -491,12 +491,18 @@ export function rollbackGlobal(value) {
   let plan;
   if (options.home && before.state?.previous) {
     const id = before.state.previous, provenance = before.versions.get(id);
-    const wire = read(join(options.stateRoot, "versions", id, "release.json"), MAX_RELEASE_BYTES).bytes;
-    const receipt = bootstrapCachedRelease({ repository: provenance.repository, tag: provenance.tag,
-      asset: provenance.asset, sha256: id,
-      runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : wire }) });
+    const cachedMembers = sha => {
+      const p = before.versions.get(sha), wire = read(join(options.stateRoot, "versions", sha, "release.json"), MAX_RELEASE_BYTES).bytes;
+      return bootstrapCachedRelease({ repository: p.repository, tag: p.tag, asset: p.asset, sha256: sha,
+        runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : wire }) }).manifest.members;
+    };
+    const members = cachedMembers(id);
+    // inspect already verified every cached tree; reverify each donor's receipt,
+    // preferring the active release, without downloading or trusting loose files.
+    const vendorReleases = members.some(m => m.path.startsWith("agent-workflows/tools/radar/vendor/")) ? [] :
+      [...new Set([before.state.active, ...before.versions.keys()])].filter(sha => sha !== id).map(cachedMembers);
     plan = prepareRuntime({ home: options.home, env: options.env, runner: options.runner,
-      members: receipt.manifest.members, version: provenance.tag || id.slice(0, 12) });
+      members, vendorReleases, version: provenance.tag || id.slice(0, 12) });
   }
   if (options.home && before.state && !before.state.previous) uninstallRuntime({ home: options.home });
   const result = mutate(options, "rollback");

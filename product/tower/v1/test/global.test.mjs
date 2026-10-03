@@ -122,6 +122,52 @@ test("new installer can inspect and update a cached exact S194 release", () => {
   expect(doctorGlobal(options).previous).toBe(id);
 });
 
+for (const [count, changed] of [[72, null], [74, null], [74, "go.mod"], [74, "go.sum"]])
+  test(`historical runtime rollback ${count} members, changed ${changed ?? "none"}`, () => {
+    const home = process.env.HOME, builds = [], first = acquisition("historical", {}, true);
+    installGlobal({ ...options, acquire: first.acquire });
+    const old = JSON.parse(first.wire), vendorRoot = "agent-workflows/tools/radar/vendor/";
+    const removed = old.members.filter(m => m.path.startsWith(vendorRoot) || count === 72 &&
+      ["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path)).map(m => m.path);
+    old.members = old.members.filter(m => !removed.includes(m.path));
+    for (const name of ["main.go", ...(changed ? [changed] : [])]) {
+      const m = old.members.find(m => m.path === `agent-workflows/tools/radar/${name}`);
+      const bytes = Buffer.concat([Buffer.from(m.bytes, "base64"), Buffer.from("\n// historical fixture\n")]);
+      Object.assign(m, { bytes: bytes.toString("base64"), byteLength: bytes.length, sha256: hash(bytes) });
+      rewrite(join(version(first.id), m.path), bytes); fs.chmodSync(join(version(first.id), m.path), 0o400);
+    }
+    const wire = Buffer.from(JSON.stringify(old)), id = hash(wire), previous = state();
+    const provenance = { ...previous.provenance[0], sha256: id };
+    fs.renameSync(version(first.id), version(id));
+    for (const path of removed) fs.unlinkSync(join(version(id), path));
+    fs.rmSync(join(version(id), vendorRoot), { recursive: true }); // Disposable cache fixture only.
+    rewrite(join(version(id), "release.json"), wire); fs.chmodSync(join(version(id), "release.json"), 0o400);
+    rewrite(join(version(id), "provenance.json"), provenance); fs.chmodSync(join(version(id), "provenance.json"), 0o400);
+    rewrite(statePath(), { ...previous, active: id, provenance: [provenance] });
+    const config = { ...options, home, env: { HOME: home, PATH: process.env.PATH }, runner: (command, argv, opts) => {
+      if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+      expect(command).toBe("go"); expect(argv[0]).toBe("build");
+      expect(opts.env).toMatchObject({ GOFLAGS: "-mod=vendor", GOPROXY: "off", GOWORK: "off", GOENV: "off" });
+      for (const key of ["GOMODCACHE", "GOCACHE"]) expect(fs.readdirSync(opts.env[key])).toEqual([]);
+      for (const m of BUNDLE_MEMBERS.filter(m => m.destination.startsWith("radar/vendor/")))
+        expect(fs.readFileSync(join(opts.cwd, m.destination.slice(6)))).toEqual(fs.readFileSync(new URL(`../../../../${m.source}`, import.meta.url)));
+      builds.push(fs.readFileSync(join(opts.cwd, "main.go"), "utf8"));
+      fs.writeFileSync(argv[5], `radar-${builds.length}`, { mode: 0o755 }); return { status: 0 };
+    } };
+    installGlobal({ ...config, acquire: acquisition("new", {}, true).acquire });
+    const before = snapshot();
+    if (changed) {
+      expect(() => rollbackGlobal(config)).toThrow(/vendor verificado.*go.mod.*go.sum/);
+      expect(builds).toHaveLength(1); expect(snapshot()).toEqual(before);
+    } else {
+      expect(rollbackGlobal(config).active).toBe(id); expect(builds).toHaveLength(2);
+      expect(builds[1]).toContain("// historical fixture");
+      expect(fs.readFileSync(join(home, ".local/bin/radar"), "utf8")).toBe("radar-2");
+      expect(fs.readFileSync(join(home, ".claude/CLAUDE.md"), "utf8")).toContain("v1-historical");
+      expect(doctorGlobal(config).active).toBe(id);
+    }
+  });
+
 test("missing Gentle AI and invalid JSON stop global activation before changes", () => {
   const home = join(root, "home"); fs.mkdirSync(home, { mode: 0o700 });
   const release = acquisition("runtime-a", {}, true), before = snapshot();

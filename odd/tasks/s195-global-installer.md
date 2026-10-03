@@ -105,3 +105,13 @@ Isolated HOME, umask 022, EMPTY GOMODCACHE, real gh credentials via GH_CONFIG_DI
 - `uninstall`: all Tower resources removed; settings.json and CLAUDE.md restored byte-exact.
 - Real HOME settings.json / CLAUDE.md mtimes unchanged.
 - Follow-up (minor): uninstall leaves an empty ~/.codex/AGENTS.md that the installer had created.
+
+## Review corrections
+- review-e1deef756b528b07 (fabb2eb, in worktree): R3-settings-reinstall-data-loss fixed in 84db794,
+  cherry-picked to master as 51c1a3d; validator approved, authority burned.
+- review-01f6b53f58dd538e (1fbf0c3..HEAD): R3-historical-runtime-rollback — rollback to a cached
+  release without radar/vendor now borrows vendor bytes only from a verified cached release with
+  byte-identical radar go.mod/go.sum; otherwise fails cleanly. RED 4 fail without the fix, GREEN 4 pass;
+  full V1 suite 367 pass, 1 skip, 0 fail.
+- S204 vendor commit (11.5k third-party lines) exceeds the native lens budget; verified instead with
+  `go mod verify` (all modules verified) and byte-identical regeneration via `go mod vendor`.
