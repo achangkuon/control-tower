@@ -26,7 +26,8 @@ describe("S209 read-only release check", () => {
       const h = harness([{ status: 0, stdout: Buffer.alloc(0) }, { status: 0, stdout: Buffer.from(JSON.stringify({ tagName: latest })) }]);
       expect(checkLatestRelease({ repository: input.repository, installedTag: installed, runner: h.runner })).toEqual({ status, installed, latest });
       expect(h.calls.map(({ command, argv }) => [command, argv])).toEqual([["gh", auth], ["gh", ["release", "view", "--repo", input.repository, "--json", "tagName"]]]);
-      expect(h.calls.every(({ options }) => options.timeout > 0 && options.timeout <= 8000 && options.killSignal === "SIGKILL" && options.maxBuffer <= 1025)).toBe(true);
+      expect(h.calls.every(({ argv, options }) => options.timeout > 0 && options.timeout <= 8000 && options.killSignal === "SIGKILL" &&
+        options.maxBuffer <= (argv?.[0] === "auth" ? 64 * 1024 + 1 : 1025))).toBe(true);
       expect(h.calls[1].options.timeout).toBeLessThanOrEqual(h.calls[0].options.timeout);
     });
   }
