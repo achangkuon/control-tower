@@ -2193,7 +2193,7 @@ sesiones:
     resultado: "La interfaz muestra versiones legibles como v1.1.0, columnas alineadas con avisos al costado del menú y el estado de Gentle AI."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación las versiones legibles, el diseño en columnas y Gentle AI en el estado."
     depende_de: [S195]
-    archivos: [product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/tui/styles.go, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs]
+    archivos: [product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/tui/styles.go, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/test/cli.test.mjs]
     cimientos: []
     recurso: []
     encargo:
