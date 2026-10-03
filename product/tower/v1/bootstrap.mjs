@@ -66,7 +66,9 @@ function parseEnvelope(text) {
   return JSON.parse(text);
 }
 
-const S194_PATHS = new Set([...RELEASE_PATHS].filter(path => ![
+// Exact historical rosters, not the current bundle with a few required files missing.
+const S195_PATHS = new Set([...RELEASE_PATHS].filter(path => !path.startsWith("agent-workflows/tools/radar/vendor/")));
+const S194_PATHS = new Set([...S195_PATHS].filter(path => ![
   "product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs",
 ].includes(path)));
 
@@ -122,12 +124,12 @@ function bootstrap(options, cached = false) {
   } catch {
     throw new Error("Invalid release UTF8 or bounded JSON envelope");
   }
-  const paths = cached && envelope?.members?.length === S194_PATHS.size ? S194_PATHS : RELEASE_PATHS;
+  const paths = cached ? [RELEASE_PATHS, S195_PATHS, S194_PATHS].find(paths => paths.size === envelope?.members?.length) ?? RELEASE_PATHS : RELEASE_PATHS;
   const members = Object.freeze(validateMembers(envelope, paths));
   return Object.freeze({ bytes, manifest: Object.freeze({ schema: RELEASE_SCHEMA, members }) });
 }
 
 export function bootstrapVerifiedRelease(options) { return bootstrap(options); }
 // Offline cached versions retain their original independently pinned digest.
-// This admits only the exact S194 roster, never a subset or a new acquisition.
+// This admits only exact S194/S195 historical rosters, never arbitrary subsets or a new acquisition.
 export function bootstrapCachedRelease(options) { return bootstrap(options, true); }

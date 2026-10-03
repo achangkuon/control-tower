@@ -39,20 +39,26 @@ function rejects(value, pattern = /release/i) {
   expect(calls.length).toBe(2);
 }
 
-test("cached S194 exact 72-member releases remain digest-verified but new intake requires 74", () => {
-  const old = fixture(); old.members = old.members.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path));
-  const bytes = encode(old), options = { repository: "example/control-tower", tag: "v1-s194", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) };
-  expect(bootstrapCachedRelease(options).manifest.members.length).toBe(72);
-  expect(() => bootstrapVerifiedRelease(options)).toThrow(/membership/);
-  expect(() => bootstrapCachedRelease({ ...options, sha256: "0".repeat(64) })).toThrow(/SHA-256/);
-  old.members.pop(); const missing = encode(old);
-  expect(() => bootstrapCachedRelease({ ...options, sha256: digest(missing), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : missing }) })).toThrow(/membership/);
+test("cached exact S194/S195 72/74-member releases remain verified; new intake requires all 91", () => {
+  const preVendor = fixture().members.filter(m => !m.path.startsWith("agent-workflows/tools/radar/vendor/"));
+  for (const count of [72, 74]) {
+    const old = { schema, members: count === 74 ? preVendor : preVendor.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path)) };
+    const bytes = encode(old), options = { repository: "example/control-tower", tag: `v1-cache-${count}`, asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) };
+    expect(bootstrapCachedRelease(options).manifest.members.length).toBe(count);
+    expect(() => bootstrapVerifiedRelease(options)).toThrow(/membership/);
+    expect(() => bootstrapCachedRelease({ ...options, sha256: "0".repeat(64) })).toThrow(/SHA-256/);
+    old.members.pop(); const missing = encode(old);
+    expect(() => bootstrapCachedRelease({ ...options, sha256: digest(missing), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : missing }) })).toThrow(/membership/);
+  }
+  const hybrid = fixture(); hybrid.members = hybrid.members.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path));
+  const bytes = encode(hybrid);
+  expect(() => bootstrapCachedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) })).toThrow(/membership/);
 });
 
 describe("bounded verified global release intake", () => {
-  test("accepts exactly 74 canonical source-layout files independently of ordering", () => {
-    expect(BUNDLE_MEMBERS.length).toBe(64);
-    expect(new Set(paths).size).toBe(74);
+  test("accepts exactly 91 canonical source-layout files independently of ordering", () => {
+    expect(BUNDLE_MEMBERS.length).toBe(81);
+    expect(new Set(paths).size).toBe(91);
     for (const members of [fixture().members, fixture().members.reverse()]) {
       const bytes = encode({ schema, members });
       const original = Buffer.from(bytes);
@@ -60,7 +66,7 @@ describe("bounded verified global release intake", () => {
       const result = run();
       expect(result.manifest.schema).toBe(schema);
       expect(result.manifest.members.map(({ path }) => path).sort()).toEqual([...paths].sort());
-      expect(result.manifest.members.length).toBe(74);
+      expect(result.manifest.members.length).toBe(91);
       expect(Object.isFrozen(result)).toBe(true);
       expect(Object.isFrozen(result.manifest.members)).toBe(true);
       for (const entry of result.manifest.members) {
@@ -85,6 +91,16 @@ describe("bounded verified global release intake", () => {
       expect(result.manifest.members[1].bytes).toEqual(Buffer.from([0, 255, 1, 2]));
       expect(run).toThrow(/SHA-256 mismatch/);
     }
+  });
+
+  test("vendor membership rejects missing, substituted and extra vendor files before use", () => {
+    const vendor = fixture().members.filter(m => m.path.startsWith("agent-workflows/tools/radar/vendor/"));
+    expect(vendor).toHaveLength(17);
+    for (const member of vendor) {
+      const missing = fixture(); missing.members = missing.members.filter(m => m.path !== member.path); rejects(missing);
+      const changed = fixture(); changed.members.find(m => m.path === member.path).path += ".extra"; rejects(changed);
+    }
+    const extra = fixture(); extra.members.push(member("agent-workflows/tools/radar/vendor/extra.go")); rejects(extra);
   });
 
   test("requires global skills, templates and signature sources but rejects the personal Notion map", () => {

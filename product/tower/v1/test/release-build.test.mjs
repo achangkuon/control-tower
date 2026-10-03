@@ -182,6 +182,20 @@ test("installer flags and source admission fail before writing either output", (
   });
 });
 
+test("committed vendor drift is refused before envelope publication", () => {
+  for (const extra of ["extra.go", "gopkg.in/yaml.v3/extra.go", "gopkg.in/other/other.go"]) fixture(({ repo, out }) => {
+    expect(() => buildRelease({ repo, out })).toThrow(/member|vendor/);
+    expect(existsSync(out)).toBe(false);
+  }, repo => {
+    const path = join(repo, "agent-workflows/tools/radar/vendor", extra);
+    mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, "unreviewed vendor member");
+  });
+  fixture(({ repo, out }) => {
+    expect(() => buildRelease({ repo, out })).toThrow(/missing release member/);
+    expect(existsSync(out)).toBe(false);
+  }, repo => rmSync(join(repo, "agent-workflows/tools/radar/vendor/modules.txt")));
+});
+
 test("deterministic bytes, fixed keys and exact membership admitted by bootstrap", () => fixture(({ repo, commit, out, root }) => {
   const first = buildRelease({ repo, out }), second = buildRelease({ repo, commit, out: join(root, "second.json") });
   const bytes = readFileSync(out);
@@ -192,7 +206,7 @@ test("deterministic bytes, fixed keys and exact membership admitted by bootstrap
   const envelope = JSON.parse(bytes);
   expect(Object.keys(envelope)).toEqual(["schema", "members"]);
   expect(envelope.members.map(({ path }) => path)).toEqual(paths);
-  expect(envelope.members).toHaveLength(74);
+  expect(envelope.members).toHaveLength(91);
   expect(Object.keys(envelope.members[0])).toEqual(["path", "type", "encoding", "byteLength", "sha256", "bytes"]);
   const calls = [];
   const result = bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json",
@@ -222,7 +236,7 @@ test("release and installer pins carry global-only members and exclude the perso
   const excluded = "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json";
   expect(envelope.members.map(entry => entry.path)).not.toContain(excluded);
   expect(pinned.paths).not.toContain(excluded);
-  expect(pinned.paths).toHaveLength(74);
+  expect(pinned.paths).toHaveLength(91);
   expect(pinned.sha256).toBe(receipt.sha256);
 }, repo => {
   const excluded = join(repo, "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");

@@ -105,12 +105,14 @@ test("verified active release configures runtimes, updates pointers, reruns idem
 test("new installer can inspect and update a cached exact S194 release", () => {
   const first = install();
   const old = JSON.parse(first.wire);
-  const removed = ["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"];
+  const removed = ["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs",
+    ...old.members.filter(m => m.path.startsWith("agent-workflows/tools/radar/vendor/")).map(m => m.path)];
   old.members = old.members.filter(m => !removed.includes(m.path));
   const wire = Buffer.from(JSON.stringify(old)), id = hash(wire), previous = state();
   const provenance = { ...previous.provenance[0], sha256: id };
   fs.renameSync(version(first.id), version(id));
   for (const path of removed) fs.unlinkSync(join(version(id), path));
+  fs.rmSync(join(version(id), "agent-workflows/tools/radar/vendor"), { recursive: true }); // Only this disposable version fixture.
   rewrite(join(version(id), "release.json"), wire); fs.chmodSync(join(version(id), "release.json"), 0o400);
   rewrite(join(version(id), "provenance.json"), provenance); fs.chmodSync(join(version(id), "provenance.json"), 0o400);
   rewrite(statePath(), { ...previous, active: id, provenance: [provenance] });
@@ -128,7 +130,7 @@ test("missing Gentle AI and invalid JSON stop global activation before changes",
 });
 
 describe("isolated global V1 lifecycle", () => {
-  test("fresh installation stores 74 verified files and a stable non-eval launcher", () => {
+  test("fresh installation stores 91 verified files and a stable non-eval launcher", () => {
     const release = install();
     expect(release.calls.length).toBe(2);
     expect(state().active).toBe(release.id);

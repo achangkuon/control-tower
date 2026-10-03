@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, statSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS, BUNDLE_SCHEMA, validateBundle, validateDestination } from "../bundle.mjs";
@@ -8,7 +9,13 @@ import { BUNDLE_MEMBERS, BUNDLE_SCHEMA, validateBundle, validateDestination } fr
 const radar = "agent-workflows/tools/radar/";
 const skill = "product/tower/v1/skills/control-tower/";
 const go = ["archivar", "avance", "check", "encargo", "etapa", "faltan", "git", "ledger", "main", "partition", "plan", "render", "roadmap", "safety", "sesion", "snapshot", "state"];
-const radarNames = ["go.mod", "go.sum", ...go.map((name) => `${name}.go`)];
+const vendorNames = [
+  "vendor/modules.txt",
+  ...["LICENSE", "NOTICE", "README.md", "apic.go", "decode.go", "emitterc.go", "encode.go", "parserc.go",
+    "readerc.go", "resolve.go", "scannerc.go", "sorter.go", "writerc.go", "yaml.go", "yamlh.go", "yamlprivateh.go"]
+    .map(name => `vendor/gopkg.in/yaml.v3/${name}`),
+];
+const radarNames = ["go.mod", "go.sum", ...go.map((name) => `${name}.go`), ...vendorNames];
 const skillNames = ["SKILL.md", "references/adoption.md", "references/authority-and-questions.md"];
 // Independent reviewed roster: deliberately not derived from production membership.
 const workflowNames = [
@@ -80,6 +87,27 @@ function fixture(fn) {
 }
 const changed = (members, index, patch) => members.map((member, i) => i === index ? { ...member, ...patch } : member);
 
+(Bun.which("go") ? test : test.skip)("real bundled Radar compiles offline with empty module and build caches", () => {
+  const root = mkdtempSync(join(tmpdir(), "tower-vendor-build-"));
+  const cwd = join(root, "radar"), home = join(root, "home");
+  const env = { PATH: process.env.PATH, HOME: home, TMPDIR: join(root, "tmp"),
+    GOCACHE: join(root, "cache"), GOMODCACHE: join(root, "modules"), GOPATH: join(root, "gopath"),
+    GOFLAGS: "-mod=vendor", GOPROXY: "off", GOSUMDB: "off", GOWORK: "off", GOENV: "off",
+    GOTOOLCHAIN: "local", GOTELEMETRY: "off", CGO_ENABLED: "0" };
+  try {
+    for (const key of ["HOME", "TMPDIR", "GOCACHE", "GOMODCACHE", "GOPATH"]) mkdirSync(env[key]);
+    expect(readdirSync(env.GOMODCACHE)).toEqual([]); expect(readdirSync(env.GOCACHE)).toEqual([]);
+    for (const member of BUNDLE_MEMBERS.filter(m => m.destination.startsWith("radar/")))
+      put(cwd, member.destination.slice(6), readFileSync(new URL(`../../../../${member.source}`, import.meta.url)));
+    const binary = join(root, "radar-bin");
+    const result = spawnSync("go", ["build", "-trimpath", "-ldflags", "-s -w -buildid=", "-o", binary, "."], { cwd, env, encoding: "utf8", timeout: 180_000, maxBuffer: 1024 * 1024 });
+    expect(result.error).toBeUndefined(); expect(result.stderr).toBe(""); expect(result.status).toBe(0);
+    expect(statSync(binary).size).toBeGreaterThan(0);
+    expect(readdirSync(env.GOMODCACHE)).toEqual([]);
+    expect(spawnSync(binary, ["help"], { cwd, env, timeout: 10_000, maxBuffer: 64 * 1024 }).status).toBe(0);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+}, 180_000);
+
 describe("closed Tower V1 release bundle", () => {
   test("reviewed workflow roster is sorted and the real checkout has no missing or unlisted files", () => {
     expect(workflowNames).toEqual([...workflowNames].sort());
@@ -88,6 +116,24 @@ describe("closed Tower V1 release bundle", () => {
     expect(result.members.some(({ source }) => source === excluded)).toBe(false);
     expect(result.members.every(({ byteLength }) => byteLength <= 1024 * 1024)).toBe(true);
     expect(result.members.reduce((sum, entry) => sum + entry.byteLength, 0)).toBeLessThan(8 * 1024 * 1024);
+  });
+
+  test("every vendored file is required and vendor membership is closed against additions and links", () => {
+    for (const name of vendorNames) fixture(({ sources }) => {
+      rmSync(join(sources, radar + name)); expect(() => validateBundle(sources)).toThrow();
+    });
+    for (const extra of ["vendor/extra.txt", "vendor/gopkg.in/other/file.go", "vendor/gopkg.in/yaml.v3/extra.go"]) fixture(({ sources }) => {
+      put(sources, radar + extra); expect(() => validateBundle(sources)).toThrow();
+    });
+    fixture(({ sources }) => {
+      const target = join(sources, radar + "vendor/gopkg.in/yaml.v3/yaml.go");
+      rmSync(target); symlinkSync(join(sources, radar + "main.go"), target);
+      expect(() => validateBundle(sources)).toThrow();
+    });
+    fixture(({ sources, destination }) => {
+      const bundle = validateBundle(sources); put(destination, "radar/vendor/unlisted.go");
+      expect(() => validateDestination(destination, bundle)).toThrow();
+    });
   });
 
   test("every listed workflow file is required; every skill directory rejects unlisted files", () => {
@@ -107,7 +153,7 @@ describe("closed Tower V1 release bundle", () => {
   test("personal Notion map is optional, never bundled, and not an open-ended exclusion", () => fixture(({ sources }) => {
     put(sources, excluded, "not read or shipped");
     const result = validateBundle(sources);
-    expect(result.members).toHaveLength(64);
+    expect(result.members).toHaveLength(81);
     expect(result.members.some(({ source }) => source === excluded)).toBe(false);
     put(sources, workflows + "chanks-5-session-doc/assets/other.json");
     expect(() => validateBundle(sources)).toThrow();
@@ -125,7 +171,7 @@ describe("closed Tower V1 release bundle", () => {
   test("one versioned positive membership source yields exact, immutable, in-memory bytes", () => fixture(({ sources }) => {
     expect(BUNDLE_SCHEMA).toBe("tower.v1.bundle/1");
     expect(BUNDLE_MEMBERS.map(({ source, destination }) => [source, destination])).toEqual(expected);
-    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(64);
+    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(81);
     const result = validateBundle(sources);
     expect(result.schema).toBe(BUNDLE_SCHEMA);
     expect(Object.isFrozen(result)).toBe(true);

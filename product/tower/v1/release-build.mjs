@@ -133,10 +133,12 @@ export function buildRelease(options, deps = {}) {
   if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(sha)) fail("git returned an invalid commit");
   const entries = new Map();
   const readPaths = withInstaller ? [...paths, installerPath] : paths;
-  const tree = git(root, ["ls-tree", "-rlz", "--full-tree", sha, "--", ...readPaths]).toString("utf8");
+  // Include the whole vendor subtree in metadata admission so newly committed
+  // dependency files cannot be silently omitted by the explicit release roster.
+  const tree = git(root, ["ls-tree", "-rlz", "--full-tree", sha, "--", ...readPaths, "agent-workflows/tools/radar/vendor"]).toString("utf8");
   for (const record of tree.split("\0").filter(Boolean)) {
     const match = record.match(/^(100644|100755) blob [a-f0-9]+ +([0-9]+)\t(.+)$/);
-    if (!match || !readPaths.includes(match[3]) || entries.has(match[3])) fail("release member is not a regular file");
+    if (!match || !readPaths.includes(match[3]) || entries.has(match[3])) fail("unreviewed or non-regular release member");
     entries.set(match[3], Number(match[2]));
   }
   let aggregate = 0;

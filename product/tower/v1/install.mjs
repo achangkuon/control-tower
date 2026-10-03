@@ -53,7 +53,14 @@ const SIGNATURE_PATHS = new Set([
   "agent-workflows/tools/hooks/chanks-etapa.sh",
   "agent-workflows/tools/hooks/torre-firma.sh",
 ]);
+const RADAR_VENDOR_PATHS = new Set([
+  "agent-workflows/tools/radar/vendor/modules.txt",
+  ...["LICENSE", "NOTICE", "README.md", "apic.go", "decode.go", "emitterc.go", "encode.go", "parserc.go",
+    "readerc.go", "resolve.go", "scannerc.go", "sorter.go", "writerc.go", "yaml.go", "yamlh.go", "yamlprivateh.go"]
+    .map(name => `agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/${name}`),
+]);
 function canonicalSource(path) {
+  if (path === "agent-workflows/tools/radar/vendor" || path.startsWith("agent-workflows/tools/radar/vendor/")) return RADAR_VENDOR_PATHS.has(path);
   if (/^(?:product\/tower\/v1\/|agent-workflows\/tools\/radar\/)/.test(path) || SIGNATURE_PATHS.has(path) ||
       path === "agent-workflows/skills/_shared/plan-naming-convention.md") return true;
   return path.startsWith("agent-workflows/skills/") && WORKFLOW_SKILLS.has(path.split("/")[2]) &&

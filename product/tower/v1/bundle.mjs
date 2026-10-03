@@ -10,6 +10,13 @@ const radarNames = ["go.mod", "go.sum", ...[
   "archivar", "avance", "check", "encargo", "etapa", "faltan", "git", "ledger", "main",
   "partition", "plan", "render", "roadmap", "safety", "sesion", "snapshot", "state",
 ].map((name) => `${name}.go`)];
+// Explicit vendored dependency membership; never discover release files by traversal.
+const radarVendorNames = [
+  "vendor/modules.txt",
+  ...["LICENSE", "NOTICE", "README.md", "apic.go", "decode.go", "emitterc.go", "encode.go", "parserc.go",
+    "readerc.go", "resolve.go", "scannerc.go", "sorter.go", "writerc.go", "yaml.go", "yamlh.go", "yamlprivateh.go"]
+    .map(name => `vendor/gopkg.in/yaml.v3/${name}`),
+];
 const skillNames = ["SKILL.md", "references/adoption.md", "references/authority-and-questions.md"];
 const workflowRoot = "agent-workflows/skills";
 // Reviewed, bytewise-sorted V1 membership. Adding a file requires an explicit
@@ -56,7 +63,7 @@ const workflowNames = [
 // Maintainer's personal Notion IDs: optional in the checkout, never read/shipped.
 const excludedWorkflow = "chanks-5-session-doc/assets/project-notion-map.json";
 export const BUNDLE_MEMBERS = Object.freeze([
-  ...radarNames.map((name) => Object.freeze({ source: `${radarRoot}/${name}`, destination: `radar/${name}` })),
+  ...[...radarNames, ...radarVendorNames].map((name) => Object.freeze({ source: `${radarRoot}/${name}`, destination: `radar/${name}` })),
   ...skillNames.map((name) => Object.freeze({ source: `${skillRoot}/${name}`, destination: `skills/control-tower/${name}` })),
   ...workflowNames.map((name) => Object.freeze({ source: `${workflowRoot}/${name}`, destination: `skills/${name}` })),
   ...["global-pointer.md", "project-agents.md"].map((name) => Object.freeze({
@@ -128,6 +135,8 @@ function validateSourceTree(root) {
   for (const name of entries) {
     if (radarNames.includes(name)) {
       safeEntry(join(radar, name), false);
+    } else if (name === "vendor") {
+      closedTree(root, `${radarRoot}/vendor`, radarVendorNames.map(path => path.slice("vendor/".length)));
     } else if (name === "testdata") {
       safeEntry(join(radar, name), true);
     } else if (["README.md", "borrador-control-tower.yaml", "radar"].includes(name) || name.endsWith("_test.go")) {

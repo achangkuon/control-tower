@@ -10,13 +10,12 @@ function fixture(run) {
   const home = fs.mkdtempSync("/tmp/tower-runtime-");
   const savedHome = process.env.HOME;
   process.env.HOME = home;
-  const env = { PATH: process.env.PATH, HOME: home, GOFLAGS: "attacker", GOWORK: "/attacker", GOENV: "/attacker" };
+  const env = { PATH: process.env.PATH, HOME: home, GOFLAGS: "attacker", GOWORK: "/attacker", GOENV: "/attacker", GOMODCACHE: join(home, "ambient-modules"), GOCACHE: join(home, "ambient-cache") };
   const members = BUNDLE_MEMBERS.map(({ source: path }) => ({ path, bytes: fs.readFileSync(new URL(`../../../../${path}`, import.meta.url)) }));
   const calls = [];
   const runner = (command, argv, options) => {
     calls.push([command, argv, options]);
     if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0\n" };
-    if (argv[0] === "env") return { status: 0, stdout: join(home, "modules") };
     if (argv[0] === "build") fs.writeFileSync(argv[5], "fixture radar", { mode: 0o755 });
     return { status: 0, stdout: "" };
   };
@@ -66,13 +65,47 @@ test("backs up foreign skill directories, links and Radar and restores them on u
 test("Radar builds with the exact restricted environment and no inherited Go overrides", () => fixture(({ home, calls, install }) => {
   install();
   const builds = calls.filter(([command]) => command === "go");
-  expect(builds).toHaveLength(2);
+  expect(builds).toHaveLength(1);
   for (const [, , options] of builds) {
-    expect(options.env).toMatchObject({ GOWORK: "off", GOENV: "off", GOPROXY: "off", GOFLAGS: "-mod=readonly", GOTOOLCHAIN: "local" });
-    expect(Object.keys(options.env).sort()).toEqual(["PATH", "HOME", "TMPDIR", "GOCACHE", "GOPATH", "GOMODCACHE", "GOFLAGS", "GOPROXY", "GOSUMDB", "GOWORK", "GOTOOLCHAIN", "GOENV", "GOTELEMETRY", "CGO_ENABLED"].filter(k => k !== "TMPDIR" || options.env.TMPDIR).filter(k => k !== "GOCACHE" || options.env.GOCACHE).filter(k => k !== "GOPATH" || options.env.GOPATH).filter(k => k !== "GOMODCACHE" || options.env.GOMODCACHE).sort());
+    expect(options.env).toMatchObject({ GOWORK: "off", GOENV: "off", GOPROXY: "off", GOFLAGS: "-mod=vendor", GOTOOLCHAIN: "local" });
+    expect(Object.keys(options.env).sort()).toEqual(["PATH", "HOME", "TMPDIR", "GOCACHE", "GOPATH", "GOMODCACHE", "GOFLAGS", "GOPROXY", "GOSUMDB", "GOWORK", "GOTOOLCHAIN", "GOENV", "GOTELEMETRY", "CGO_ENABLED"].sort());
     expect(options.env.HOME).not.toBe("/home/emili");
+    expect(options.env.GOMODCACHE).not.toBe(join(home, "ambient-modules"));
+    expect(options.env.GOCACHE).not.toBe(join(home, "ambient-cache"));
+    expect(dirname(options.env.GOMODCACHE)).toBe(dirname(options.env.HOME));
+    expect(dirname(options.env.GOCACHE)).toBe(dirname(options.env.HOME));
+    expect(fs.existsSync(join(options.cwd, "vendor/modules.txt"))).toBe(false); // private build tree was cleaned
   }
   expect(fs.statSync(join(home, ".local/bin/radar")).mode & 0o777).toBe(0o755);
+}));
+
+(Bun.which("go") ? test : test.skip)("real runtime Radar build ignores ambient caches and compiles solely from vendored release members", () => fixture(({ home, options }) => {
+  options.runner = (command, argv, spawnOptions) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    expect(command).toBe("go"); expect(argv[0]).toBe("build");
+    expect(fs.readdirSync(spawnOptions.env.GOMODCACHE)).toEqual([]);
+    expect(fs.readdirSync(spawnOptions.env.GOCACHE)).toEqual([]);
+    expect(spawnOptions.env.GOMODCACHE).not.toBe(options.env.GOMODCACHE);
+    const result = spawnSync(command, argv, spawnOptions);
+    expect(String(result.stderr ?? "")).toBe(""); expect(result.status).toBe(0);
+    expect(fs.readdirSync(spawnOptions.env.GOMODCACHE)).toEqual([]);
+    return result;
+  };
+  const plan = prepareRuntime(options);
+  expect(plan.desired.find(item => item.path === ".local/bin/radar").files[""].bytes.length).toBeGreaterThan(0);
+  expect(fs.existsSync(join(home, "ambient-modules"))).toBe(false);
+  expect(fs.existsSync(join(home, "ambient-cache"))).toBe(false);
+}), 180_000);
+
+test("normalizing Radar build permissions never follows a substituted output symlink", () => fixture(({ home, options, write }) => {
+  write("sentinel", "unchanged"); fs.chmodSync(join(home, "sentinel"), 0o600);
+  options.runner = (command, argv) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    fs.symlinkSync(join(home, "sentinel"), argv[5]); return { status: 0 };
+  };
+  expect(() => prepareRuntime(options)).toThrow();
+  expect(read(home, "sentinel")).toBe("unchanged");
+  expect(fs.statSync(join(home, "sentinel")).mode & 0o777).toBe(0o600);
 }));
 
 test("signatures merge settings without duplicates; passive Pi imports the installed absolute URL", () => fixture(({ home, write, install }) => {

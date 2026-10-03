@@ -61,6 +61,26 @@ const unchangedFailure = (root, action) => {
   expect(snapshot(root)).toEqual(before);
 };
 
+(Bun.which("go") ? test : test.skip)("adopted project Radar includes the exact vendor tree and builds with an empty offline cache", () => fixture(({ projectRoot, base }) => {
+  initProject(trusted(projectRoot));
+  const vendor = BUNDLE_MEMBERS.filter(m => m.destination.startsWith("radar/vendor/"));
+  expect(vendor).toHaveLength(17);
+  for (const member of vendor) expect(readFileSync(join(projectRoot, targets[0], member.destination.slice(6))))
+    .toEqual(readFileSync(join(source, member.source)));
+  const build = join(base, "build"); mkdirSync(build);
+  const env = { PATH: process.env.PATH, HOME: join(build, "home"), TMPDIR: join(build, "tmp"),
+    GOCACHE: join(build, "cache"), GOMODCACHE: join(build, "modules"), GOPATH: join(build, "gopath"),
+    GOFLAGS: "-mod=vendor", GOPROXY: "off", GOSUMDB: "off", GOWORK: "off", GOENV: "off",
+    GOTOOLCHAIN: "local", GOTELEMETRY: "off", CGO_ENABLED: "0" };
+  for (const key of ["HOME", "TMPDIR", "GOCACHE", "GOMODCACHE", "GOPATH"]) mkdirSync(env[key]);
+  expect(readdirSync(env.GOMODCACHE)).toEqual([]);
+  const result = spawnSync("go", ["build", "-trimpath", "-o", join(build, "radar"), "."], { cwd: join(projectRoot, targets[0]), env, encoding: "utf8", timeout: 180_000, maxBuffer: 1024 * 1024 });
+  expect(result.error).toBeUndefined(); expect(result.stderr).toBe(""); expect(result.status).toBe(0);
+  expect(readdirSync(env.GOMODCACHE)).toEqual([]);
+  expect(doctorProject({ projectRoot }).status).toBe("healthy");
+  expect(uninstallProject({ projectRoot }).status).toBe("uninstalled");
+}), 180_000);
+
 describe("project-local lifecycle API", () => {
   test("expanded release members remain global-only during project adoption", () => fixture(({ projectRoot, env }) => {
     const bundlePath = resolve(import.meta.dir, "../bundle.mjs");
@@ -86,8 +106,8 @@ describe("project-local lifecycle API", () => {
       ]);
     }
     expect(readdirSync(join(projectRoot, targets[0])).sort()).toEqual(
-      BUNDLE_MEMBERS.filter(({ destination }) => destination.startsWith("radar/"))
-        .map(({ destination }) => destination.slice(6)).sort());
+      [...new Set(BUNDLE_MEMBERS.filter(({ destination }) => destination.startsWith("radar/"))
+        .map(({ destination }) => destination.slice(6).split("/")[0]))].sort());
     expect(doctorProject({ projectRoot })).toEqual({ status: "healthy" });
     expect(uninstallProject({ projectRoot })).toEqual({ status: "uninstalled" });
   }));
@@ -109,7 +129,7 @@ describe("project-local lifecycle API", () => {
       expect(readFileSync(join(projectRoot, destination, name))).toEqual(canonical);
       if (destination !== targets[0]) expect(readFileSync(join(projectRoot, targets[2], name))).toEqual(canonical);
     }
-    expect(readdirSync(join(projectRoot, targets[0])).length).toBe(19);
+    expect(readdirSync(join(projectRoot, targets[0])).length).toBe(20);
     for (const target of targets.slice(1)) {
       expect(readdirSync(join(projectRoot, target)).sort()).toEqual(["SKILL.md", "references"]);
       expect(readdirSync(join(projectRoot, target, "references")).sort()).toEqual(["adoption.md", "authority-and-questions.md"]);
@@ -152,21 +172,22 @@ describe("project-local lifecycle API", () => {
     unchangedFailure(projectRoot, () => initProject(trusted(projectRoot)));
   }));
 
-  test("doctor and uninstall reject missing, extra or divergent Radar and skill members without mutation", () => {
-    for (const [path, mutate] of [
-      [targets[0] + "/main.go", (p) => rmSync(p)],
-      [targets[0] + "/extra.go", (p) => writeFileSync(p, "extra")],
-      [targets[0] + "/main.go", (p) => writeFileSync(p, "drift")],
-      [targets[1] + "/SKILL.md", (p) => writeFileSync(p, "drift")],
-      [targets[2] + "/references/adoption.md", (p) => rmSync(p)],
-      [targets[2] + "/references/extra.md", (p) => writeFileSync(p, "extra")],
-      [targets[1] + "/references/authority-and-questions.md", (p) => writeFileSync(p, "divergent")],
-    ]) fixture(({ projectRoot }) => {
-      initProject(trusted(projectRoot)); mutate(join(projectRoot, path));
-      unchangedFailure(projectRoot, () => doctorProject({ projectRoot }));
-      unchangedFailure(projectRoot, () => uninstallProject({ projectRoot }));
-    });
-  });
+  // Each larger vendored-tree snapshot gets its own bounded test, rather than
+  // sharing Bun's default timeout across seven complete install/check round trips.
+  for (const [kind, path, mutate] of [
+    ["missing", targets[0] + "/main.go", (p) => rmSync(p)],
+    ["extra", targets[0] + "/extra.go", (p) => writeFileSync(p, "extra")],
+    ["modified", targets[0] + "/main.go", (p) => writeFileSync(p, "drift")],
+    ["modified", targets[1] + "/SKILL.md", (p) => writeFileSync(p, "drift")],
+    ["missing", targets[2] + "/references/adoption.md", (p) => rmSync(p)],
+    ["extra", targets[2] + "/references/extra.md", (p) => writeFileSync(p, "extra")],
+    ["modified", targets[1] + "/references/authority-and-questions.md", (p) => writeFileSync(p, "divergent")],
+    ["modified", targets[0] + "/vendor/gopkg.in/yaml.v3/yaml.go", (p) => writeFileSync(p, "drift")],
+  ]) test(`doctor and uninstall reject ${kind} ${path} without mutation`, () => fixture(({ projectRoot }) => {
+    initProject(trusted(projectRoot)); mutate(join(projectRoot, path));
+    unchangedFailure(projectRoot, () => doctorProject({ projectRoot }));
+    unchangedFailure(projectRoot, () => uninstallProject({ projectRoot }));
+  }));
 
   test("journal missing, extra, malformed schema and backup digest drift fail closed", () => {
     for (const mutate of [
