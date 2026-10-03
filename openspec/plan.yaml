@@ -2210,7 +2210,7 @@ sesiones:
     resultado: "Al abrir la Torre, si hay una versión publicada más nueva, la interfaz avisa que hay una actualización disponible, como el instalador de Gentle AI."
     autoridad: "Emilio pidió el 2026-10-03 en esta Conversación un aviso de actualización al estilo Gentle AI."
     depende_de: [S208]
-    archivos: [product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go]
+    archivos: [product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/tui/main.go, product/tower/v1/tui/radar.go, product/tower/v1/tui/wizard.go]
     cimientos: []
     recurso: []
     encargo:
