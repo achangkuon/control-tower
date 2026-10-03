@@ -57,6 +57,9 @@ class TowerMigrationTests(unittest.TestCase):
     PROTECTED = (
         b"unmarked prefix\xff\r\n"
         b"<!-- gentle-ai:persona -->\r\nmanaged bytes\r\n<!-- /gentle-ai:persona -->\r\n"
+        # Real gentle-ai blocks embed unpaired start/end comments; they are not owned nesting.
+        b"<!-- gentle-ai:orchestrator -->\n<!-- authority-first-terminal-procedure:start -->\nsteps\n"
+        b"<!-- authority-first-terminal-procedure:end -->\n<!-- /gentle-ai:orchestrator -->\n"
         b"<!-- control-tower:pointer -->\nTower bytes\n<!-- /control-tower:pointer -->\n"
         b"<!-- review-lifecycle-policy -->\nexternal owner\n<!-- /review-lifecycle-policy -->\n"
     )

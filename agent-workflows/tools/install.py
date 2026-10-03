@@ -610,11 +610,17 @@ def _transition_matches(content: bytes, path: Path):
     # allow an unrecognized personal block to be swallowed by a replacement.
     tokens = re.compile(rb"<!--\s*(/?)\s*([A-Za-z0-9_:.-]+)(?:"
                         + re.escape(MANUAL_ANNOTATION) + rb")?\s*-->")
+    # Only comments that open and close as a pair form blocks. Unpaired comments
+    # (e.g. gentle-ai's `...:start` / `...:end` notes) are text, not nesting.
+    found = [(bool(token.group(1)), token.group(2)) for token in tokens.finditer(content)]
+    paired = {name for closing, name in found if closing} & {name for closing, name in found if not closing}
     for match in (value for value in matches.values() if value is not None):
         name = re.search(rb"<!-- ([A-Za-z0-9_:.-]+)", match.group()).group(1)
         stack = []
         for token in tokens.finditer(content):
             token_name = token.group(2)
+            if token_name not in paired:
+                continue
             if not token.group(1):
                 if token_name == name and stack or token_name != name and match.start() < token.start() < match.end():
                     raise InstallError(f"nested owned marker in {path}: {name.decode()}")

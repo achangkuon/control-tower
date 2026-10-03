@@ -109,3 +109,11 @@ python3 agent-workflows/tools/install.py --migrate-to-tower --apply
 ```
 
 Review backup completeness and protected bytes, then separately verify fresh-session loading. Do not refresh or restore the external manual snapshot store as part of this migration. Run without concurrent writers: preflight/rechecks are not a lock or a transactional rollback guarantee. The known Pi environment failure remains outside scope.
+
+## Live dry-run finding (parent, 2026-10-03)
+The real ~/.claude/CLAUDE.md made the dry-run refuse: "nested owned marker ... SESSION-SKILL-ARCHITECTURE:MANUAL".
+Cause: gentle-ai's orchestrator block embeds unpaired `<!-- authority-first-terminal-procedure:start -->` /
+`...:end` comments, which the nesting scanner treated as unclosed blocks. Fix: only paired comments form
+blocks. RED: TowerMigrationTests 2 failures + 1 error with the real-shaped fixture; GREEN: test_install 184 OK;
+full temp-HOME suite 477 with only the known env failure. Live dry-run then exited 0 with 19 block edits and
+23 STOP_MANAGING lines; real files unchanged (sha256 compared).
