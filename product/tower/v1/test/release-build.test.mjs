@@ -13,6 +13,13 @@ const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
   "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)].sort();
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const projectPath = "product/tower/v1/instructions/project-agents.md";
+const pointerPath = "product/tower/v1/instructions/global-pointer.md";
+const bundlePath = "product/tower/v1/bundle.mjs";
+const radarPath = "agent-workflows/tools/radar/main.go";
+const instructionInputs = new Map([projectPath, pointerPath, bundlePath, radarPath].map(path =>
+  [path, readFileSync(new URL(`../../../../${path}`, import.meta.url), "utf8")]));
+const changeInput = (repo, path, transform) => writeFileSync(join(repo, path), transform(instructionInputs.get(path)));
 function git(repo, ...argv) {
   const result = childProcess.spawnSync("git", ["-C", repo, ...argv], {
     timeout: 10_000, maxBuffer: 2 * 1024 * 1024, encoding: "buffer",
@@ -34,6 +41,7 @@ function fixture(run, change = () => {}) {
       mkdirSync(dirname(join(repo, path)), { recursive: true });
       writeFileSync(join(repo, path), Buffer.from([0, 255, 1, 2]));
     }
+    for (const [path, text] of instructionInputs) writeFileSync(join(repo, path), text);
     const installer = "product/tower/v1/install.mjs";
     writeFileSync(join(repo, installer), readFileSync(new URL("../install.mjs", import.meta.url)));
     mkdirSync(join(repo, "product/tower/v1/tui"));
@@ -48,6 +56,92 @@ function fixture(run, change = () => {}) {
     rmSync(root, { recursive: true, force: true });
   }
 }
+
+const gateCases = [];
+for (const [path, marker] of [[projectPath, "project-workflow"], [pointerPath, "pointer"]]) {
+  const opening = `<!-- control-tower:${marker} -->`, closing = `<!-- /control-tower:${marker} -->`;
+  for (const [name, transform, error] of [
+    ["missing opening", text => text.replace(opening, ""), /marcadores/],
+    ["missing closing", text => text.replace(closing, ""), /marcadores/],
+    ["duplicate pair", text => `${text}${opening}\n${closing}\n`, /marcadores/],
+    ["reversed pair", text => text.replace(opening, "SENTINEL").replace(closing, opening).replace("SENTINEL", closing), /marcadores/],
+    ["missing version", text => text.replace("{{TOWER_VERSION}}", "v1.0.0"), /TOWER_VERSION/],
+    ["duplicate version", text => text + "{{TOWER_VERSION}}", /TOWER_VERSION/],
+  ]) gateCases.push([`${path}: ${name}`, path, transform, error]);
+  for (const term of ["jornada", "herdr", "admission", "admisión", "marcar", "session-kickoff", "Emilio", "Notion", "gentle-ai:"]) {
+    gateCases.push([`${path}: forbidden ${term}`, path, text => text.replace(closing, `${term}\n${closing}`), /término prohibido/]);
+  }
+}
+gateCases.push(
+  ["unknown skill", projectPath, text => text.replace("`skill-orchestrator`", "`chanks-9-inexistente`"), /chanks-9-inexistente.*roster/],
+  ["unshipped named skill", projectPath, text => text.replace("`skill-orchestrator`", "`unknown-skill`"), /unknown-skill.*roster/],
+  ["unshipped simple skill name", projectPath, text => text.replace("`skill-orchestrator`", "`unknown`"), /unknown.*roster/],
+  ["stage entry point omitted", projectPath, text => text.replaceAll("chanks-1-adopcion", "chanks-1-feature"), /falta.*chanks-1-adopcion/],
+  ["skill removed from shipped bundle", bundlePath, text => text.replace('"chanks-1-adopcion/SKILL.md",', ""), /chanks-1-adopcion.*roster/],
+  ["unknown Radar command", projectPath, text => text.replace("radar zonas", "radar inventado"), /radar inventado.*Radar/],
+  ["required Radar command omitted", projectPath, text => text.replaceAll("radar zonas", "radar status"), /falta.*radar zonas/],
+  ["Radar command missing from usage", radarPath, text => text.replace("radar zonas   ", "radar otra    "), /radar zonas.*uso/],
+  ["Radar command missing from switch", radarPath, text => text.replace('case "zonas":', 'case "otra":'), /radar zonas.*switch/],
+  ["unparseable shipped roster", bundlePath, () => "// sin roster", /roster.*bundle/],
+  ["unparseable shipped Radar", radarPath, () => "package main", /uso.*Radar/],
+);
+for (const skill of ["chanks-1-project-kickoff", "chanks-1-autoridad", "chanks-2-planificador-granular",
+  "chanks-3-paralelo", "chanks-4-puente", "chanks-5-politica-de-entrega", "chanks-5-session-doc", "chanks-0-session-context-loader"]) {
+  gateCases.push([`omitted stage ${skill}`, projectPath, text => text.replaceAll(skill, "chanks-1-feature"), new RegExp(`falta.*${skill}`)]);
+}
+for (const command of ["etapa", "faltan", "status", "sesion", "check", "render", "archivar"]) {
+  gateCases.push([`omitted command radar ${command}`, projectPath,
+    text => text.replaceAll(`radar ${command}`, "radar zonas"), new RegExp(`falta.*radar ${command}`)]);
+}
+for (const [name, path, transform, error] of gateCases) {
+  test(`instruction gate refuses ${name} before any release output`, () => fixture(({ repo, out, root }) => {
+    const installer = join(root, "installer.mjs"), tui = join(root, "tui");
+    let calls = 0;
+    expect(() => buildRelease({ repo, out, tag: "v1", "installer-out": installer, "tui-out-dir": tui },
+      { builder: () => { calls++; throw new Error("must not build TUI"); } })).toThrow(error);
+    expect(calls).toBe(0);
+    for (const output of [out, out + ".sha256", installer, tui]) expect(existsSync(output)).toBe(false);
+  }, repo => changeInput(repo, path, transform)));
+}
+
+test("instruction gate passes real templates and accepts additional shipped Radar commands", () => fixture(({ repo, out }) => {
+  expect(buildRelease({ repo, out }).sha256).toBe(digest(readFileSync(out)));
+}, repo => changeInput(repo, projectPath, text => text.replace("radar zonas", "radar zonas; radar roadmap"))));
+
+test("CLI lists every instruction problem in Spanish without truncation", () => fixture(({ repo, out }) => {
+  let stdout = "", stderr = "";
+  expect(main(["--repo", repo, "--out", out], {
+    stdout: { write: text => { stdout += text; } }, stderr: { write: text => { stderr += text; } },
+  })).toBe(1);
+  expect(stdout).toBe("");
+  for (const text of ["project-agents.md", "global-pointer.md", "TOWER_VERSION", "chanks-1-adopcion", "radar zonas",
+    "chanks-9-inexistente", "radar inventado", "Notion", "herdr"]) expect(stderr).toContain(text);
+  expect(stderr).toStartWith("No se pudo construir la release de Tower:");
+  expect(existsSync(out)).toBe(false);
+}, repo => {
+  changeInput(repo, projectPath, text => text.replace("{{TOWER_VERSION}}", "v1")
+    .replaceAll("chanks-1-adopcion", "chanks-9-inexistente").replaceAll("radar zonas", "radar inventado") + "Notion herdr");
+  changeInput(repo, pointerPath, text => text.replace("{{TOWER_VERSION}}", "v1") + "Notion herdr");
+}));
+
+test("CLI emits the exact actionable Spanish version error", () => fixture(({ repo, out }) => {
+  let stderr = "";
+  expect(main(["--repo", repo, "--out", out], {
+    stdout: { write: () => { throw new Error("no receipt on rejection"); } },
+    stderr: { write: text => { stderr += text; } },
+  })).toBe(1);
+  expect(stderr).toBe("No se pudo construir la release de Tower: Las instrucciones de la release no están al día:\n" +
+    "- global-pointer.md: debe tener exactamente un placeholder {{TOWER_VERSION}} (la versión se completa al instalar desde el tag).\n");
+  expect(existsSync(out)).toBe(false);
+}, repo => changeInput(repo, pointerPath, text => text.replace("{{TOWER_VERSION}}", "v1"))));
+
+test("instruction gate inspects the requested commit instead of newer clean templates", () => fixture(({ repo, commit, out }) => {
+  changeInput(repo, projectPath, text => text.replace("{{TOWER_VERSION}}", "v1"));
+  git(repo, "add", "."); git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "stale instructions");
+  expect(buildRelease({ repo, commit, out }).commit).toBe(commit);
+  expect(() => buildRelease({ repo, out: out + ".bad" })).toThrow(/TOWER_VERSION/);
+  expect(existsSync(out + ".bad")).toBe(false);
+}));
 
 test("clean committed checkout installs locally without publishing through the real release builder", () => fixture(({ repo, commit }) => {
   let stdout = "", stderr = "";
@@ -233,7 +327,8 @@ test("deterministic bytes, fixed keys and exact membership admitted by bootstrap
     } });
   expect(calls.map(([command]) => command)).toEqual(["gh", "gh"]);
   expect(calls[0][1]).toEqual(["auth", "status", "--active", "--hostname", "github.com"]);
-  expect(result.manifest.members.every(({ bytes }) => bytes.equals(Buffer.from([0, 255, 1, 2])))).toBe(true);
+  expect(result.manifest.members.every(({ path, bytes }) => bytes.equals(instructionInputs.has(path)
+    ? Buffer.from(instructionInputs.get(path)) : Buffer.from([0, 255, 1, 2])))).toBe(true);
 }));
 
 test("release and installer pins carry global-only members and exclude the personal Notion map", () => fixture(({ repo, root, out }) => {
@@ -304,7 +399,10 @@ test("accepts exact per-member and aggregate bounds with empty members", () => f
   expect(members[0].byteLength).toBe(1024 * 1024);
   expect(members.at(-1).bytes).toBe("");
 }, (repo) => {
-  paths.forEach((path, index) => writeFileSync(join(repo, path), Buffer.alloc(index < 8 ? 1024 * 1024 : 0)));
+  const inputBytes = [...instructionInputs.values()].reduce((sum, text) => sum + Buffer.byteLength(text), 0);
+  const paddingPaths = paths.filter(path => !instructionInputs.has(path));
+  paddingPaths.forEach((path, index) => writeFileSync(join(repo, path),
+    Buffer.alloc(index < 7 ? 1024 * 1024 : index === 7 ? 1024 * 1024 - inputBytes : 0)));
 }));
 
 test("bootstrap rejection occurs before the exclusive output write", () => fixture(({ repo, out }) => {

@@ -22,6 +22,82 @@ const paths = [...new Set([...BUNDLE_MEMBERS.map(({ source }) => source), ...[
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const fail = (reason) => { throw new Error(reason); };
 
+const stageSkills = [
+  "chanks-1-adopcion", "chanks-1-project-kickoff", "chanks-1-autoridad",
+  "chanks-2-planificador-granular", "chanks-3-paralelo", "chanks-4-puente",
+  "chanks-5-politica-de-entrega", "chanks-5-session-doc", "chanks-0-session-context-loader",
+];
+const requiredRadar = ["etapa", "faltan", "status", "sesion", "check", "render", "archivar", "zonas"];
+const forbiddenTerms = ["jornada", "herdr", "admission", "admisión", "marcar", "session-kickoff", "Emilio", "Notion", "gentle-ai:"];
+class InstructionsError extends Error {}
+
+/** Pure structural contract shared with tests. Parse the shipped source, never import/eval it.
+ * The roster is deliberately a literal workflowNames array; unsupported source shapes fail closed.
+ * Output order is fixed by rule/template order and bytewise-sorted unique references.
+ */
+export function instructionProblems({ project, pointer, bundleSource, radarSource }) {
+  const problems = [];
+  const add = (rule, message) => problems.push({ rule, message });
+  for (const [file, marker, text] of [["project-agents.md", "project-workflow", project], ["global-pointer.md", "pointer", pointer]]) {
+    const opening = `<!-- control-tower:${marker} -->`, closing = `<!-- /control-tower:${marker} -->`;
+    if (text.split(opening).length !== 2 || text.split(closing).length !== 2 ||
+        !text.startsWith(opening + "\n") || !text.endsWith(closing + "\n")) {
+      add("markers", `${file}: debe tener exactamente un par válido y ordenado de marcadores control-tower:${marker}.`);
+    }
+    if ((text.match(/\{\{TOWER_VERSION\}\}/g) ?? []).length !== 1) {
+      add("version", `${file}: debe tener exactamente un placeholder {{TOWER_VERSION}} (la versión se completa al instalar desde el tag).`);
+    }
+    for (const term of forbiddenTerms) if (text.toLowerCase().includes(term.toLowerCase())) {
+      add("forbidden", `${file}: término prohibido «${term}».`);
+    }
+  }
+
+  const declarations = [...bundleSource.matchAll(/\bconst workflowNames\s*=\s*\[([\s\S]*?)\];/g)];
+  let names;
+  try {
+    if (declarations.length !== 1 || !/\bconst workflowRoot\s*=\s*"agent-workflows\/skills";/.test(bundleSource)) throw new Error();
+    names = JSON.parse(`[${declarations[0][1].replace(/,\s*$/, "")}]`);
+    if (!Array.isArray(names) || !names.length || names.some(name => typeof name !== "string")) throw new Error();
+  } catch {
+    add("skills", "No se pudo leer el roster literal de skills V1 en bundle.mjs.");
+    names = [];
+  }
+  const roster = new Set(names.filter(name => /^[a-z0-9-]+\/SKILL\.md$/.test(name)).map(name => name.split("/")[0]));
+  // Chanks references may be bare; other skill names use inline-code kebab-case.
+  // The skill-loading table also admits simple names, without treating `check`
+  // and `render` shorthand elsewhere as skills.
+  const skillTable = /### Which skill to load\n([\s\S]*?)(?:\n### |$)/.exec(project)?.[1] ?? "";
+  const referencedSkills = new Set([
+    ...[...project.matchAll(/\b(chanks-[0-9]-[a-z0-9-]+)\b|`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g)]
+      .map(match => match[1] ?? match[2]),
+    ...[...skillTable.matchAll(/`([a-z][a-z0-9-]*)`/g)].map(match => match[1]),
+  ]);
+  for (const name of [...referencedSkills].sort()) if (!roster.has(name)) {
+    add("skills", `project-agents.md: la skill ${name} no está en el roster V1 de bundle.mjs.`);
+  }
+  for (const name of stageSkills) if (roster.has(name) && !referencedSkills.has(name)) {
+    add("skills", `project-agents.md: falta la skill de entrada de etapa ${name}.`);
+  }
+
+  const usages = [...radarSource.matchAll(/\bconst uso\s*=\s*`([\s\S]*?)`/g)];
+  const switches = [...radarSource.matchAll(/\bswitch comando\s*\{([\s\S]*?)\n\tdefault:/g)];
+  if (usages.length !== 1) add("radar", "No se pudo leer el uso de Radar en main.go.");
+  if (switches.length !== 1) add("radar", "No se pudo leer el switch de comandos de Radar en main.go.");
+  const radarReferences = text => [...text.matchAll(/\bradar[ \t]+([a-z][a-z0-9-]*)\b/g)].map(match => match[1]);
+  const documented = new Set(radarReferences(usages.length === 1 ? usages[0][1] : ""));
+  const implemented = new Set([...((switches.length === 1 ? switches[0][1] : "").matchAll(/\bcase "([a-z][a-z0-9-]*)":/g))]
+    .map(match => match[1]));
+  const referencedRadar = new Set(radarReferences(project + "\n" + pointer));
+  for (const command of [...referencedRadar].sort()) {
+    if (!documented.has(command)) add("radar", `radar ${command}: no existe en el uso de Radar publicado (main.go).`);
+    if (!implemented.has(command)) add("radar", `radar ${command}: no existe en el switch de Radar publicado (main.go).`);
+  }
+  for (const command of requiredRadar) if (!referencedRadar.has(command)) {
+    add("radar", `project-agents.md/global-pointer.md: falta el comando obligatorio radar ${command}.`);
+  }
+  return problems;
+}
+
 function git(repo, argv, maxBuffer = memberLimit + 1) {
   // Never let inherited Git overrides redirect commit reads or status inspection.
   // Optional locks off prevents status from refreshing the caller's index on disk.
@@ -155,6 +231,14 @@ export function buildRelease(options, deps = {}) {
     return { path, type: "file", encoding: "base64", byteLength: bytes.length,
       sha256: digest(bytes), bytes: bytes.toString("base64") };
   });
+  const text = path => Buffer.from(members.find(member => member.path === path).bytes, "base64").toString("utf8");
+  const problems = instructionProblems({
+    project: text("product/tower/v1/instructions/project-agents.md"),
+    pointer: text("product/tower/v1/instructions/global-pointer.md"),
+    bundleSource: text("product/tower/v1/bundle.mjs"),
+    radarSource: text("agent-workflows/tools/radar/main.go"),
+  });
+  if (problems.length) throw new InstructionsError(`Las instrucciones de la release no están al día:\n${problems.map(({ message }) => `- ${message}`).join("\n")}`);
   const bytes = Buffer.from(JSON.stringify({ schema: "tower.v1.release/1", members }));
   if (bytes.length > MAX_RELEASE_BYTES) fail("release encoded size limit");
   const sha256 = digest(bytes);
@@ -200,6 +284,10 @@ export function main(argv, io = {}) {
     stdout.write(`${JSON.stringify(buildRelease(options))}\n`);
     return 0;
   } catch (error) {
+    if (error instanceof InstructionsError) {
+      stderr.write(`No se pudo construir la release de Tower: ${error.message}\n`);
+      return 1;
+    }
     const message = String(error?.message ?? error).split(/[\r\n\u2028\u2029]/, 1)[0].slice(0, 440);
     stderr.write(`Invalid Tower release build: ${message || "operation failed"}\n`);
     return 1;

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { instructionProblems } from "../release-build.mjs";
 
 const instructionsRoot = new URL("../instructions/", import.meta.url);
 const workflowsRoot = new URL("../../../../agent-workflows/", import.meta.url);
@@ -12,42 +13,25 @@ const readTemplate = (file) => {
   expect(existsSync(path), `${file} template must exist`).toBe(true);
   return readFileSync(path, "utf8");
 };
-const documents = () => templates.map(({ file }) => readTemplate(file));
-const v1Skills = new Set([
-  "chanks-1-adopcion", "chanks-1-autoridad", "chanks-1-brain-dump",
-  "chanks-1-cierre-de-decisiones", "chanks-1-descubrimiento", "chanks-1-feature",
-  "chanks-1-heredado", "chanks-1-prd", "chanks-1-project-kickoff",
-  "chanks-1-requirements", "chanks-1-rfc", "chanks-1-terreno",
-  "chanks-2-planificador-granular", "chanks-3-paralelo", "chanks-4-puente",
-  "chanks-5-politica-de-entrega", "chanks-5-session-doc",
-  "chanks-0-explicalo-simple", "chanks-0-session-context-loader",
-  "chanks-0-mensajes-visibles", "chanks-0-skill-composer",
-  "analisis-por-tramos", "skill-orchestrator",
-]);
-const v1Commands = new Set([
-  "etapa", "faltan", "status", "sesion", "check", "render", "archivar", "zonas",
-]);
+const problems = (rule, file = "") => instructionProblems({
+  project: readTemplate("project-agents.md"), pointer: readTemplate("global-pointer.md"),
+  bundleSource: readFileSync(new URL("../bundle.mjs", import.meta.url), "utf8"),
+  radarSource: readFileSync(new URL("tools/radar/main.go", workflowsRoot), "utf8"),
+}).filter(problem => problem.rule === rule && problem.message.includes(file));
 
 describe("Control Tower V1 instruction templates", () => {
-  for (const { file, marker } of templates) {
+  for (const { file } of templates) {
     test(`${file} has exactly one bounded Control Tower block`, () => {
-      const text = readTemplate(file);
-      const opening = `<!-- control-tower:${marker} -->`;
-      const closing = `<!-- /control-tower:${marker} -->`;
-      expect(text.startsWith(`${opening}\n`)).toBe(true);
-      expect(text.endsWith(`${closing}\n`)).toBe(true);
-      expect(text.split(opening)).toHaveLength(2);
-      expect(text.split(closing)).toHaveLength(2);
+      expect(problems("markers", file)).toEqual([]);
     });
 
     test(`${file} has one version placeholder and no Gentle AI markers`, () => {
-      const text = readTemplate(file);
-      expect(text.match(/\{\{TOWER_VERSION\}\}/g) ?? []).toHaveLength(1);
-      expect(text).not.toMatch(/gentle-ai:/i);
+      expect(problems("version", file)).toEqual([]);
+      expect(problems("forbidden", file).filter(({ message }) => message.includes("gentle-ai:"))).toEqual([]);
     });
 
     test(`${file} excludes obsolete machinery and personal context`, () => {
-      expect(readTemplate(file)).not.toMatch(/jornada|herdr|admission|admisión|marcar|session-kickoff|Emilio|Notion/i);
+      expect(problems("forbidden", file)).toEqual([]);
     });
 
     test(`${file} ends with exactly one trailing newline`, () => {
@@ -71,36 +55,12 @@ describe("Control Tower V1 instruction templates", () => {
     }
   });
 
-  test("every referenced skill is an existing V1 skill directory", () => {
-    const text = documents().join("\n");
-    const referenced = [...text.matchAll(/`((?:chanks-[0-9]-[a-z0-9-]+)|analisis-por-tramos|skill-orchestrator)`/g)]
-      .map((match) => match[1]);
-    expect(referenced.length).toBeGreaterThan(0);
-    const directories = new Set(readdirSync(new URL("skills/", workflowsRoot), { withFileTypes: true })
-      .filter((entry) => entry.isDirectory()).map((entry) => entry.name));
-    for (const name of referenced) {
-      expect(v1Skills.has(name), `${name} must be in the V1 roster`).toBe(true);
-      expect(directories.has(name), `${name} must exist as a skill directory`).toBe(true);
-    }
+  test("referenced skills belong to the shipped V1 roster and cover its stage entry points", () => {
+    expect(problems("skills")).toEqual([]);
   });
 
-  test("every referenced Radar subcommand is V1 and documented in Radar usage", () => {
-    const text = documents().join("\n");
-    const referenced = [...text.matchAll(/\bradar[ \t]+([a-z][a-z0-9-]*)\b/g)]
-      .map((match) => match[1]);
-    expect(referenced.length).toBeGreaterThan(0);
-    const source = readFileSync(new URL("tools/radar/main.go", workflowsRoot), "utf8");
-    const usage = /const uso = `([\s\S]*?)`/.exec(source);
-    expect(usage, "Radar usage must exist").not.toBeNull();
-    const documented = new Set([...usage[1].matchAll(/\bradar[ \t]+([a-z][a-z0-9-]*)\b/g)]
-      .map((match) => match[1]));
-    for (const command of v1Commands) {
-      expect(documented.has(command), `radar ${command} must exist in usage`).toBe(true);
-    }
-    for (const command of referenced) {
-      expect(v1Commands.has(command), `radar ${command} must be a V1 command`).toBe(true);
-      expect(documented.has(command), `radar ${command} must exist in usage`).toBe(true);
-    }
+  test("Radar references exist in shipped usage and switch and cover required commands", () => {
+    expect(problems("radar")).toEqual([]);
   });
 
   test("project instructions defer to Gentle AI and bound plan reading", () => {
