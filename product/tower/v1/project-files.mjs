@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { closeSync, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmdirSync, rmSync, writeFileSync, chmodSync, constants } from "node:fs";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { isDeepStrictEqual } from "node:util";
+import { markerRange } from "./runtime-config.mjs";
 
 export const PROJECT_FILES_SCHEMA = "tower.v1.project-files/1";
 const fail = () => { throw new Error("Unsafe project file snapshot or filesystem entry"); };
@@ -131,6 +132,104 @@ export function captureProjectFiles(root, paths) {
 export function compareProjectFiles(root, snapshot) {
   validateProjectFiles(snapshot);
   return isDeepStrictEqual(captureProjectFiles(root, snapshot.destinations.map((entry) => entry.path)), snapshot);
+}
+
+const workflowMarker = "control-tower:project-workflow";
+const importMarker = "control-tower:claude-import";
+const importBlock = `<!-- ${importMarker} -->\n@AGENTS.md\n<!-- /${importMarker} -->`;
+const instructionPaths = ["AGENTS.md", "CLAUDE.md"];
+const separatorFor = bytes => !bytes.length || bytes.at(-1) === 10 && bytes.at(-2) === 10 ? "" : bytes.at(-1) === 10 ? "\n" : "\n\n";
+function fileBytes(tree) {
+  if (tree.type === "absent") return Buffer.alloc(0);
+  if (tree.type !== "file") throw new Error("Project instructions must be regular files");
+  return Buffer.from(tree.bytes, "base64");
+}
+function fileTree(bytes, mode = 0o644) {
+  return { type: "file", mode, encoding: "base64", bytes: bytes.toString("base64"), byteLength: bytes.length, sha256: hash(bytes) };
+}
+function instructionSnapshot(snapshot) {
+  validateProjectFiles(snapshot);
+  if (!isDeepStrictEqual(snapshot.destinations.map(e => e.path), instructionPaths)) fail();
+  for (const entry of snapshot.destinations) {
+    const text = fileBytes(entry.tree).toString("latin1");
+    markerRange(text, workflowMarker); markerRange(text, importMarker);
+  }
+}
+const rangeFor = (bytes, name) => markerRange(bytes.toString("latin1"), name);
+function spliceBlock(bytes, block, name) {
+  const range = rangeFor(bytes, name), rendered = Buffer.from(block);
+  return range ? Buffer.concat([bytes.subarray(0, range.begin), rendered, bytes.subarray(range.finish)]) :
+    Buffer.concat([bytes, Buffer.from(separatorFor(bytes)), rendered, Buffer.from("\n")]);
+}
+
+/** Pure, byte-preserving instruction planning; all markers are admitted before writes. */
+export function projectInstructionSnapshot(original, block) {
+  instructionSnapshot(original);
+  const rendered = Buffer.from(block), range = rangeFor(rendered, workflowMarker);
+  if (!range || range.begin !== 0 || range.finish !== rendered.length) throw new Error("Invalid project workflow template");
+  const installed = structuredClone(original);
+  for (const entry of installed.destinations) {
+    const bytes = fileBytes(entry.tree);
+    let next;
+    if (entry.path === "AGENTS.md") next = spliceBlock(bytes, block, workflowMarker);
+    else if (/^@AGENTS\.md\r?$/m.test(bytes.toString("latin1"))) continue;
+    else next = entry.tree.type === "absent" ? Buffer.from("@AGENTS.md\n") : spliceBlock(bytes, importBlock, importMarker);
+    entry.tree = fileTree(next, entry.tree.mode);
+  }
+  validateProjectFiles(installed);
+  return installed;
+}
+
+/** Compare only the owned workflow range, never unrelated user text. */
+export function projectInstructionState(live, installed) {
+  try {
+    instructionSnapshot(live); instructionSnapshot(installed);
+    const actual = fileBytes(live.destinations[0].tree), expected = fileBytes(installed.destinations[0].tree);
+    const a = rangeFor(actual, workflowMarker), e = rangeFor(expected, workflowMarker);
+    return !a ? "missing" : e && actual.subarray(a.begin, a.finish).equals(expected.subarray(e.begin, e.finish)) ? "ok" : "modified";
+  } catch { return "modified"; }
+}
+
+/** Surgically restore owned ranges; delete only an originally absent, now empty file. */
+export function removeProjectInstructions(live, original, installed) {
+  for (const value of [live, original, installed]) instructionSnapshot(value);
+  const next = structuredClone(live);
+  for (const [index, entry] of next.destinations.entries()) {
+    const beforeTree = original.destinations[index].tree, installedTree = installed.destinations[index].tree;
+    const before = fileBytes(beforeTree), expected = fileBytes(installedTree), bytes = fileBytes(entry.tree);
+    if (before.equals(expected) || entry.tree.type === "absent") continue;
+    const name = index === 0 ? workflowMarker : importMarker;
+    const owned = rangeFor(expected, name), range = rangeFor(bytes, name), prior = rangeFor(before, name);
+    let result;
+    if (!owned) {
+      // CLAUDE.md created with the single unmarked import; own that line only.
+      if (index !== 1 || beforeTree.type !== "absent" || !expected.equals(Buffer.from("@AGENTS.md\n"))) fail();
+      const match = /^@AGENTS\.md(?:\r?\n|$)/m.exec(bytes.toString("latin1"));
+      if (!match) throw new Error("Modified Tower CLAUDE import");
+      result = Buffer.concat([bytes.subarray(0, match.index), bytes.subarray(match.index + match[0].length)]);
+    } else {
+      if (!range) continue; // Already removed; do not resurrect the block.
+      if (!bytes.subarray(range.begin, range.finish).equals(expected.subarray(owned.begin, owned.finish))) throw new Error("Modified Tower instruction block or import");
+      let begin = range.begin, finish = range.finish;
+      if (!prior) {
+        const separator = Buffer.from(separatorFor(before));
+        if (begin >= separator.length && bytes.subarray(begin - separator.length, begin).equals(separator)) begin -= separator.length;
+        if (bytes[finish] === 10) finish++;
+      }
+      result = Buffer.concat([bytes.subarray(0, begin), prior ? before.subarray(prior.begin, prior.finish) : Buffer.alloc(0), bytes.subarray(finish)]);
+    }
+    entry.tree = beforeTree.type === "absent" && !result.length ? { type: "absent" } : fileTree(result, entry.tree.mode);
+  }
+  validateProjectFiles(next);
+  return next;
+}
+
+/** Refresh the stored baseline without claiming ownership of later edits elsewhere. */
+export function replaceProjectInstructionBlock(snapshot, block) {
+  instructionSnapshot(snapshot);
+  const next = structuredClone(snapshot), entry = next.destinations[0];
+  entry.tree = fileTree(spliceBlock(fileBytes(entry.tree), block, workflowMarker), entry.tree.mode);
+  return next;
 }
 
 function createTree(path, tree) {

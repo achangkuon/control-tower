@@ -468,7 +468,7 @@ export function main(argv, deps = {}) {
       }
       result = absent ? command === "uninstall" ? uninstallRuntime({ home }) :
         { status: "absent", active: null, previous: null, components: doctorRuntime({ home, env, runner }) } :
-        api[globals[command]]({ stateRoot, launcherPath, home, env, ...(runner ? { runner } : {}), ...(acquiring ? { acquire } : {}) });
+        api[globals[command]]({ stateRoot, launcherPath, home, env, ...(runner ? { runner } : {}), ...(acquiring ? { acquire, registryRoot } : {}) });
     }
     stdout.write(`${JSON.stringify(result)}\n`);
     if (command === "project" && result.registry.status === "failed") {

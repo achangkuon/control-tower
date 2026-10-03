@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { bootstrapVerifiedRelease, bootstrapCachedRelease } from "./bootstrap.mjs";
 import { MAX_RELEASE_BYTES } from "./release.mjs";
 import { prepareRuntime, installRuntime, doctorRuntime, uninstallRuntime } from "./runtime-config.mjs";
+import { refreshRegisteredProjects } from "./projects.mjs";
 
 const SCHEMA = "tower.v1.global/1";
 const RECORD_LIMIT = 16 * 1024;
@@ -95,7 +96,7 @@ function plain(value) {
 function optionsFor(value, operation) {
   const options = plain(value);
   const required = ["stateRoot", "launcherPath"];
-  const allowed = [...required, "knownLegacyRepository", "home", "env", "runner", ...(operation === "doctor" ? [] : ["fault"]),
+  const allowed = [...required, "knownLegacyRepository", "home", "env", "runner", ...(["install", "update"].includes(operation) ? ["registryRoot"] : []), ...(operation === "doctor" ? [] : ["fault"]),
     ...(["install", "update"].includes(operation) ? ["acquire"] : [])];
   if (required.some((key) => !(key in options)) || Object.keys(options).some((key) => !allowed.includes(key)) ||
       !canonical(options.stateRoot) || !canonical(options.launcherPath) ||
@@ -471,7 +472,16 @@ function configureRelease(options, operation) {
   const result = mutate(options, operation === "install" && before.state && options.home ? "update" : operation, release);
   // The exact acquired receipt is now the active, readback-verified release.
   if (plan) installRuntime(plan);
-  return result;
+  const version = release.provenance.tag || release.provenance.sha256.slice(0, 12);
+  const template = release.members.find(m => m.path === "product/tower/v1/instructions/project-agents.md");
+  // A project failure is informational only: activation is already successful.
+  let projects;
+  try {
+    const block = new TextDecoder("utf8", { fatal: true }).decode(template?.bytes ?? Buffer.alloc(0)).replaceAll("{{TOWER_VERSION}}", version).trimEnd();
+    projects = refreshRegisteredProjects({ registryRoot: options.registryRoot ??
+      (options.home ? join(options.home, ".local/share/torre-control/projects") : join(dirname(options.stateRoot), "projects")), version, block });
+  } catch (error) { projects = [{ projectRoot: null, status: `skipped:${String(error.message).split(/[\r\n]/, 1)[0]}` }]; }
+  return Object.freeze({ ...result, projects });
 }
 export function installGlobal(value) {
   return configureRelease(optionsFor(value, "install"), "install");

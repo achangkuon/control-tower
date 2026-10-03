@@ -29,12 +29,14 @@ function fixture(fn) {
     GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: "/dev/null" };
   expect(spawnSync("git", ["init", "--quiet", projectRoot], { env }).status).toBe(0);
   put(join(projectRoot, "AGENTS.md"), "unrelated project instructions");
-  const untouched = captureProjectFiles(base, ["home", "project/AGENTS.md"]);
+  const untouched = captureProjectFiles(base, ["home"]);
+  const originalAgents = readFileSync(join(projectRoot, "AGENTS.md"));
   const options = { projectRoot, registryRoot };
   const trusted = { ...options, trustResolution: "trusted" };
   try { return fn({ base, home, env, options, trusted, projectRoot, registryRoot }); }
   finally {
-    expect(captureProjectFiles(base, ["home", "project/AGENTS.md"])).toEqual(untouched);
+    expect(captureProjectFiles(base, ["home"])).toEqual(untouched);
+    expect(readFileSync(join(projectRoot, "AGENTS.md")).subarray(0, originalAgents.length)).toEqual(originalAgents);
     rmSync(base, { recursive: true, force: true });
   }
 }
@@ -54,7 +56,7 @@ test("empty list and live absent status never create storage or adopt", () => fi
 
 test("real init, doctor and uninstall delegate, retaining informational membership", () => fixture(({ options, trusted, registryRoot, projectRoot }) => {
   expect(initRegisteredProject(trusted)).toMatchObject({ localResult: { status: "installed" }, registry: { status: "recorded", published: true } });
-  expect(doctorRegisteredProject(options).localResult).toEqual({ status: "healthy" });
+  expect(doctorRegisteredProject(options).localResult).toEqual({ status: "healthy", instructions: "ok" });
   const before = snapshot(projectRoot), index = snapshot(registryRoot);
   expect(listProjects({ registryRoot })).toEqual([{ projectRoot, registered: true, status: "healthy" }]);
   expect(projectStatus(options).status).toBe("healthy");
@@ -69,6 +71,7 @@ test("cleanup delegates only for fully restored residue", () => fixture(({ optio
   initRegisteredProject(trusted);
   const state = JSON.parse(readFileSync(join(projectRoot, journal, "state.json")));
   restoreProjectFiles(projectRoot, state.original);
+  restoreProjectFiles(projectRoot, state.instructions.original);
   expect(cleanupRegisteredProject(options).localResult.status).toBe("cleaned");
   expect(projectStatus(options).status).toBe("unadopted");
   expect(() => cleanupRegisteredProject(options)).toThrow();
@@ -345,13 +348,15 @@ test("capacity and aggregate bounds reject before local installation", () => fix
 test("trusted copied release layout derives adoption sources from installed module location", () => fixture(({ base, trusted, env }) => {
   const release = join(base, "release");
   for (const path of [...BUNDLE_MEMBERS.map((member) => member.source),
-    ...["adoption", "bundle", "project-files", "projects"].map((name) => `product/tower/v1/${name}.mjs`)]) {
+    ...["adoption", "bundle", "project-files", "projects", "runtime-config"].map((name) => `product/tower/v1/${name}.mjs`)]) {
     mkdirSync(dirname(join(release, path)), { recursive: true });
     cpSync(join(source, path), join(release, path));
   }
+  put(join(release, "provenance.json"), JSON.stringify({ tag: "v1-copied", sha256: "a".repeat(64) }));
   const program = `import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject } from ${JSON.stringify(join(release, "product/tower/v1/projects.mjs"))};
     const options = ${JSON.stringify(trusted)};
     if (initRegisteredProject(options).localResult.status !== "installed") throw Error("init");
+    if (!await Bun.file(options.projectRoot + "/AGENTS.md").text().then(text => text.includes("Control Tower v1-copied;"))) throw Error("active tag");
     delete options.trustResolution;
     if (doctorRegisteredProject(options).localResult.status !== "healthy") throw Error("doctor");
     if (uninstallRegisteredProject(options).localResult.status !== "uninstalled") throw Error("uninstall");`;

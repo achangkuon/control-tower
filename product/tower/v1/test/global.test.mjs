@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
+import { initRegisteredProject, uninstallRegisteredProject } from "../projects.mjs";
+import { captureProjectFiles } from "../project-files.mjs";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "../global.mjs";
 
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -100,6 +102,49 @@ test("verified active release configures runtimes, updates pointers, reruns idem
   expect(fs.existsSync(options.launcherPath)).toBe(false);
   expect(fs.existsSync(join(home, ".agents/skills/control-tower"))).toBe(false);
   expect(doctorGlobal(config).status).toBe("absent");
+});
+
+test("S196 global activation refreshes registered healthy projects and isolates skips", () => {
+  const home = process.env.HOME, registryRoot = join(home, ".local/share/torre-control/projects");
+  fs.mkdirSync(dirname(registryRoot), { recursive: true, mode: 0o755 });
+  fs.chmodSync(dirname(registryRoot), 0o755);
+  const names = ["healthy", "modified", "drift", "unadopted", "denied", "missing", "unsafe"];
+  const roots = Object.fromEntries(names.map(name => [name, join(root, name)]));
+  for (const name of names.slice(0, 5)) {
+    fs.mkdirSync(roots[name]); fs.mkdirSync(join(roots[name], ".git"));
+    fs.writeFileSync(join(roots[name], ".git/HEAD"), "ref: refs/heads/master\n");
+    fs.writeFileSync(join(roots[name], "AGENTS.md"), "project rules\n");
+    initRegisteredProject({ registryRoot, projectRoot: roots[name], trustResolution: "trusted" });
+  }
+  uninstallRegisteredProject({ registryRoot, projectRoot: roots.unadopted });
+  fs.writeFileSync(join(roots.modified, "AGENTS.md"), fs.readFileSync(join(roots.modified, "AGENTS.md"), "utf8").replace("Who decides what", "user modified"));
+  fs.writeFileSync(join(roots.drift, ".control-tower/radar/main.go"), "drift");
+  fs.symlinkSync(roots.healthy, roots.unsafe);
+  fs.chmodSync(roots.denied, 0o000);
+  fs.writeFileSync(join(registryRoot, "registry.json"), JSON.stringify({ schema: "tower.v1.projects/1", roots: Object.values(roots).sort() }));
+  const runner = (command, argv) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    fs.writeFileSync(argv[5], "radar", { mode: 0o755 }); return { status: 0 };
+  };
+  const config = { ...options, home, env: { HOME: home, PATH: process.env.PATH }, runner };
+  const first = acquisition("s196-a", {}, true), second = acquisition("s196-b", {}, true);
+  const before = captureProjectFiles(root, ["modified", "drift", "unadopted"]);
+  try {
+    const installed = installGlobal({ ...config, acquire: first.acquire });
+    expect(installed.projects.find(p => p.projectRoot === roots.healthy).status).toBe("refreshed");
+    const repeated = installGlobal({ ...config, acquire: first.acquire });
+    expect(repeated.projects.find(p => p.projectRoot === roots.healthy).status).toBe("unchanged");
+    fs.appendFileSync(join(roots.healthy, "AGENTS.md"), "later user edit\n");
+    const updated = updateGlobal({ ...config, acquire: second.acquire });
+    expect(updated.active).toBe(second.id);
+    expect(updated.projects).toHaveLength(7);
+    for (const name of names.slice(1)) expect(updated.projects.find(p => p.projectRoot === roots[name]).status).toMatch(/^skipped:/);
+    expect(fs.readFileSync(join(roots.healthy, "AGENTS.md"), "utf8")).toContain("v1-s196-b");
+    expect(fs.readFileSync(join(roots.healthy, "AGENTS.md"), "utf8")).toEndWith("later user edit\n");
+    expect(captureProjectFiles(root, ["modified", "drift", "unadopted"])).toEqual(before);
+    uninstallRegisteredProject({ registryRoot, projectRoot: roots.healthy });
+    expect(fs.readFileSync(join(roots.healthy, "AGENTS.md"), "utf8")).toBe("project rules\nlater user edit\n");
+  } finally { fs.chmodSync(roots.denied, 0o700); }
 });
 
 test("new installer can inspect and update a cached exact S194 release", () => {

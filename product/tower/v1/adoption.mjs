@@ -1,15 +1,18 @@
+import { spawnSync } from "node:child_process";
+import { markerRange } from "./runtime-config.mjs";
 import { lstatSync, mkdirSync, readFileSync, rmSync, chmodSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { validateBundle } from "./bundle.mjs";
-import { captureProjectFiles, compareProjectFiles, restoreProjectFiles, validateProjectFiles, PROJECT_FILES_SCHEMA } from "./project-files.mjs";
+import { captureProjectFiles, compareProjectFiles, restoreProjectFiles, validateProjectFiles, PROJECT_FILES_SCHEMA,
+  projectInstructionSnapshot, projectInstructionState, removeProjectInstructions, replaceProjectInstructionBlock } from "./project-files.mjs";
 
 const SCHEMA = "tower.v1.adoption/1";
 const JOURNAL = ".control-tower-adoption-v1";
 const TARGETS = Object.freeze([".control-tower/radar", ".agents/skills/control-tower", ".claude/skills/control-tower"]);
 const PATHS = [...TARGETS].sort();
-const sourceRoot = fileURLToPath(new URL("../../../", import.meta.url));
+const sourceRoot = resolve(fileURLToPath(new URL("../../../", import.meta.url)));
 const fail = (reason) => { throw new Error(`Invalid Tower adoption: ${reason}`); };
 const keys = (value, names) => value && typeof value === "object" && !Array.isArray(value) &&
   Object.keys(value).sort().join() === names.sort().join();
@@ -77,6 +80,51 @@ function installedSnapshot(manifest) {
   validateProjectFiles(snapshot);
   return snapshot;
 }
+const INSTRUCTION_PATHS = ["AGENTS.md", "CLAUDE.md"];
+const versionOK = value => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
+function activeVersion() {
+  const tree = captureProjectFiles(sourceRoot, ["provenance.json"]).destinations[0].tree;
+  if (tree.type !== "absent") {
+    if (tree.type !== "file") fail("release provenance");
+    let provenance;
+    try { provenance = JSON.parse(Buffer.from(tree.bytes, "base64")); } catch { fail("release provenance JSON"); }
+    const version = provenance.tag || provenance.sha256?.slice(0, 12);
+    if (!versionOK(version)) fail("release version");
+    return version;
+  }
+  const result = spawnSync("git", ["-C", sourceRoot, "rev-parse", "--short=12", "HEAD"], {
+    env: { PATH: process.env.PATH, GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: "/dev/null" }, encoding: "utf8", timeout: 10_000,
+  });
+  if (result.status !== 0 || !/^[a-f0-9]{7,40}$/.test(result.stdout.trim())) fail("missing release version or Git sha");
+  return result.stdout.trim();
+}
+function renderInstructions(manifest, version) {
+  const member = manifest.members.find(m => m.destination === "instructions/project-agents.md");
+  if (!member) fail("missing project instructions template");
+  return new TextDecoder("utf8", { fatal: true }).decode(Buffer.from(member.bytes, "base64"))
+    .replaceAll("{{TOWER_VERSION}}", version).trimEnd();
+}
+function instructionBlock(snapshot) {
+  validateProjectFiles(snapshot);
+  const bytes = Buffer.from(snapshot.destinations[0].tree.bytes ?? "", "base64");
+  const range = markerRange(bytes.toString("latin1"), "control-tower:project-workflow");
+  if (!range) fail("installed instruction range");
+  return bytes.subarray(range.begin, range.finish).toString("utf8");
+}
+function validateState(state) {
+  if ((!keys(state, ["schema", "original", "installed"]) && !keys(state, ["schema", "original", "installed", "instructions"])) || state.schema !== SCHEMA) fail("journal schema");
+  snapshotPaths(state.original); snapshotPaths(state.installed);
+  if ("instructions" in state) {
+    const value = state.instructions;
+    if (!keys(value, ["version", "original", "installed"]) || !versionOK(value.version)) fail("instruction journal schema");
+    const expected = projectInstructionSnapshot(value.original, instructionBlock(value.installed));
+    if (!isDeepStrictEqual(expected, value.installed)) fail("instruction journal snapshot");
+  }
+}
+function writeState(projectRoot, state) {
+  // Admission above rejects links/hardlinks before updating our private journal.
+  writeFileSync(join(projectRoot, JOURNAL, "state.json"), JSON.stringify(state), { mode: 0o600 });
+}
 function preflight(projectRoot, requireCanonical = false) {
   gitRoot(projectRoot);
   const journal = captureProjectFiles(projectRoot, [JOURNAL]).destinations[0].tree;
@@ -86,9 +134,7 @@ function preflight(projectRoot, requireCanonical = false) {
   let state;
   try { state = JSON.parse(Buffer.from(journal.entries[0].tree.bytes, "base64").toString("utf8")); }
   catch { fail("journal JSON"); }
-  if (!keys(state, ["schema", "original", "installed"]) || state.schema !== SCHEMA) fail("journal schema");
-  snapshotPaths(state.original);
-  snapshotPaths(state.installed);
+  validateState(state);
   if (requireCanonical && !isDeepStrictEqual(state.installed, installedSnapshot(validateBundle(sourceRoot)))) {
     fail("installed journal snapshot");
   }
@@ -105,20 +151,25 @@ export function initProject(options) {
   const original = captureProjectFiles(projectRoot, TARGETS);
   if (captureProjectFiles(projectRoot, [JOURNAL]).destinations[0].tree.type !== "absent") fail("journal already exists");
   const installed = installedSnapshot(manifest);
+  const version = activeVersion(), instructionOriginal = captureProjectFiles(projectRoot, INSTRUCTION_PATHS);
+  const instructions = { version, original: instructionOriginal,
+    installed: projectInstructionSnapshot(instructionOriginal, renderInstructions(manifest, version)) };
   let ownsJournal = false;
   try {
     mkdirSync(join(projectRoot, JOURNAL), { mode: 0o700 });
     ownsJournal = true;
     chmodSync(join(projectRoot, JOURNAL), 0o700);
     restoreProjectFiles(projectRoot, installed);
-    if (!compareProjectFiles(projectRoot, installed)) fail("installation drift");
-    const state = { schema: SCHEMA, original, installed };
+    restoreProjectFiles(projectRoot, instructions.installed);
+    if (!compareProjectFiles(projectRoot, installed) || !compareProjectFiles(projectRoot, instructions.installed)) fail("installation drift");
+    const state = { schema: SCHEMA, original, installed, instructions };
     writeFileSync(join(projectRoot, JOURNAL, "state.json"), JSON.stringify(state), { flag: "wx", mode: 0o600 });
     chmodSync(join(projectRoot, JOURNAL, "state.json"), 0o600);
   } catch (error) {
     if (ownsJournal) {
       try {
         restoreProjectFiles(projectRoot, original);
+        restoreProjectFiles(projectRoot, instructionOriginal);
         rmSync(join(projectRoot, JOURNAL), { recursive: true });
       } catch (rollbackError) { throw new AggregateError([error, rollbackError], "Adoption rollback failed"); }
     }
@@ -130,18 +181,25 @@ export function initProject(options) {
 /** Strictly read-only verification of journal, installed bytes, modes, and membership. */
 export function doctorProject(options) {
   if (!keys(options, ["projectRoot"])) fail("doctor options");
-  preflight(options.projectRoot, true);
-  return Object.freeze({ status: "healthy" });
+  const state = preflight(options.projectRoot, true);
+  let instructions = state.instructions ? projectInstructionState(captureProjectFiles(options.projectRoot, INSTRUCTION_PATHS), state.instructions.installed) : "missing";
+  if (instructions === "ok" && (state.instructions.version !== activeVersion() ||
+      instructionBlock(state.instructions.installed) !== renderInstructions(validateBundle(sourceRoot), activeVersion()))) instructions = "outdated version";
+  return Object.freeze({ status: "healthy", instructions });
 }
 
 /** Refuse all drift before removing anything; restore the exact original destination trees. */
 export function uninstallProject(options) {
   if (!keys(options, ["projectRoot"])) fail("uninstall options");
-  const { original, installed } = preflight(options.projectRoot);
+  const { original, installed, instructions } = preflight(options.projectRoot);
+  const live = instructions ? captureProjectFiles(options.projectRoot, INSTRUCTION_PATHS) : null;
+  const removed = instructions ? removeProjectInstructions(live, instructions.original, instructions.installed) : null;
   try {
     restoreProjectFiles(options.projectRoot, original);
+    if (removed) restoreProjectFiles(options.projectRoot, removed);
   } catch (error) {
     try {
+      if (live) restoreProjectFiles(options.projectRoot, live);
       for (const destination of installed.destinations) {
         const snapshot = { schema: installed.schema, destinations: [destination] };
         if (!compareProjectFiles(options.projectRoot, snapshot)) restoreProjectFiles(options.projectRoot, snapshot);
@@ -168,13 +226,38 @@ export function cleanupProject(options) {
   let state;
   try { state = JSON.parse(Buffer.from(journal.entries[0].tree.bytes, "base64").toString("utf8")); }
   catch { fail("journal JSON"); }
-  if (!keys(state, ["schema", "original", "installed"]) || state.schema !== SCHEMA) fail("journal schema");
-  snapshotPaths(state.original);
-  snapshotPaths(state.installed);
+  validateState(state);
   if (isDeepStrictEqual(state.original, state.installed)) fail("identical snapshots");
-  if (!compareProjectFiles(projectRoot, state.original)) fail("original destination drift");
+  if (!compareProjectFiles(projectRoot, state.original) || state.instructions && !compareProjectFiles(projectRoot, state.instructions.original)) fail("original destination drift");
   rmSync(join(projectRoot, JOURNAL), { recursive: true });
   return Object.freeze({ status: "cleaned" });
+}
+
+/** Refresh only intact owned ranges after activation; journal publication participates in compensation. */
+export function refreshProjectInstructions(options) {
+  if (!keys(options, ["projectRoot", "version", "block"]) || !versionOK(options.version) || typeof options.block !== "string") fail("refresh options");
+  const { projectRoot, version, block } = options, state = preflight(projectRoot);
+  const live = captureProjectFiles(projectRoot, INSTRUCTION_PATHS);
+  const prior = state.instructions;
+  if (prior && projectInstructionState(live, prior.installed) !== "ok") fail("missing or modified project instruction block");
+  // Admit the CLAUDE import too without changing it; modified owned imports are
+  // not healthy adoption and must never be silently endorsed by an update.
+  if (prior) removeProjectInstructions(live, prior.original, prior.installed);
+  const original = prior?.original ?? live;
+  const baseline = prior ? replaceProjectInstructionBlock(prior.installed, block) : projectInstructionSnapshot(original, block);
+  const next = prior ? replaceProjectInstructionBlock(live, block) : baseline;
+  const instructions = { version, original, installed: baseline };
+  validateState({ ...state, instructions });
+  if (prior?.version === version && isDeepStrictEqual(prior.installed, baseline) && isDeepStrictEqual(live, next)) return { status: "unchanged" };
+  try {
+    restoreProjectFiles(projectRoot, next);
+    writeState(projectRoot, { ...state, instructions });
+  } catch (error) {
+    try { restoreProjectFiles(projectRoot, live); writeState(projectRoot, state); }
+    catch (rollbackError) { throw new AggregateError([error, rollbackError], "Instruction refresh rollback failed"); }
+    throw error;
+  }
+  return { status: "refreshed" };
 }
 
 // The positional CLI is deliberately closed: no source, global, or legacy override flags.

@@ -500,9 +500,24 @@ test("cleanup wrapper delegates for fully restored journal residue", () => {
   success(invoke(f, ["project", "init", "--project", path, "--trust", "trusted"]));
   const state = JSON.parse(readFileSync(join(path, ".control-tower-adoption-v1", "state.json")));
   restoreProjectFiles(path, state.original);
+  restoreProjectFiles(path, state.instructions.original);
   const result = invoke(f, ["project", "cleanup", "--project", path]);
   success(result);
   expect(result.value.localResult.status).toBe("cleaned");
+});
+
+test("S196 activation refreshes the explicit CLI registry rather than the default", () => {
+  const f = fixture(), path = project(f), registry = join(f.root, "index");
+  success(invoke(f, ["project", "init", "--registry", registry, "--project", path, "--trust", "trusted"]));
+  const r = release("s196");
+  const installed = invoke(f, [...pinned("install", r), "--registry", registry], { runner: r.runner });
+  success(installed);
+  expect(installed.value.projects).toEqual([{ projectRoot: path, status: "refreshed" }]);
+  expect(readFileSync(join(path, "AGENTS.md"), "utf8")).toContain("Control Tower v1-test;");
+  const updated = invoke(f, [...pinned("update", r), "--registry", registry], { runner: r.runner });
+  success(updated);
+  expect(updated.value.projects).toEqual([{ projectRoot: path, status: "unchanged" }]);
+  expect(existsSync(f.registry)).toBe(false);
 });
 
 test("registry override is exact; project root is never inferred or normalized", () => {

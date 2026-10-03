@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, opendirSync,
   readSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
-import { initProject, doctorProject, uninstallProject, cleanupProject } from "./adoption.mjs";
+import { initProject, doctorProject, uninstallProject, cleanupProject, refreshProjectInstructions } from "./adoption.mjs";
 
 const SCHEMA = "tower.v1.projects/1";
 const MAX_BYTES = 65536;
@@ -178,7 +178,8 @@ function liveStatus(projectRoot, registered) {
     if (!stat(join(projectRoot, JOURNAL))) return result("unadopted");
   } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "unsafe", error); }
   try {
-    doctorProject({ projectRoot });
+    const doctor = doctorProject({ projectRoot });
+    if (["missing", "modified"].includes(doctor.instructions)) return result("invalid", new Error(`Project instructions ${doctor.instructions}`));
     return result("healthy");
   } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "invalid", error); }
 }
@@ -188,6 +189,25 @@ export function listProjects(value) {
   const options = optionsFor(value, "list");
   return Object.freeze(load(options.registryRoot).roots.map((root) => liveStatus(root, true)));
 }
+/** Best-effort refresh: registration grants no adoption or overwrite authority. */
+export function refreshRegisteredProjects({ registryRoot, version, block }) {
+  let roots;
+  try {
+    if (!canonical(registryRoot)) fail("refresh registry path");
+    roots = load(registryRoot).roots;
+  } catch (error) {
+    return [{ projectRoot: null, status: `skipped:registry:${String(error.message).split(/[\r\n]/, 1)[0]}` }];
+  }
+  return roots.map(projectRoot => {
+    try {
+      const result = refreshProjectInstructions({ projectRoot, version, block });
+      return { projectRoot, status: result.status };
+    } catch (error) {
+      return { projectRoot, status: `skipped:${String(error.message).split(/[\r\n]/, 1)[0]}` };
+    }
+  });
+}
+
 export function projectStatus(value) {
   const options = optionsFor(value, "status");
   const { roots } = load(options.registryRoot);
