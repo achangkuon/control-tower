@@ -38,3 +38,7 @@ Consecuencias prácticas:
 
 En opencode, PI o cualquier otro agente el gate **no existe** — ver la tabla de
 alcance en [`AGENTS.md`](AGENTS.md).
+
+<!-- control-tower:claude-import -->
+@AGENTS.md
+<!-- /control-tower:claude-import -->
