@@ -17,7 +17,7 @@ const installerPath = "product/tower/v1/install.mjs";
 // ASCII paths: default sort is bytewise, never locale-sensitive. Serialization key order
 // is schema,members and path,type,encoding,byteLength,sha256,bytes; no timestamps/newline.
 const paths = [...new Set([...BUNDLE_MEMBERS.map(({ source }) => source), ...[
-  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli",
+  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)])].sort();
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const fail = (reason) => { throw new Error(reason); };

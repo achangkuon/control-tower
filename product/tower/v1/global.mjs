@@ -3,8 +3,9 @@ import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, opendi
   readSync, renameSync, rmdirSync, unlinkSync, writeFileSync, chmodSync } from "node:fs";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { bootstrapVerifiedRelease } from "./bootstrap.mjs";
+import { bootstrapVerifiedRelease, bootstrapCachedRelease } from "./bootstrap.mjs";
 import { MAX_RELEASE_BYTES } from "./release.mjs";
+import { prepareRuntime, installRuntime, doctorRuntime, uninstallRuntime } from "./runtime-config.mjs";
 
 const SCHEMA = "tower.v1.global/1";
 const RECORD_LIMIT = 16 * 1024;
@@ -94,7 +95,7 @@ function plain(value) {
 function optionsFor(value, operation) {
   const options = plain(value);
   const required = ["stateRoot", "launcherPath"];
-  const allowed = [...required, "knownLegacyRepository", ...(operation === "doctor" ? [] : ["fault"]),
+  const allowed = [...required, "knownLegacyRepository", "home", "env", "runner", ...(operation === "doctor" ? [] : ["fault"]),
     ...(["install", "update"].includes(operation) ? ["acquire"] : [])];
   if (required.some((key) => !(key in options)) || Object.keys(options).some((key) => !allowed.includes(key)) ||
       !canonical(options.stateRoot) || !canonical(options.launcherPath) ||
@@ -187,7 +188,7 @@ function validateVersion(path, id) {
   const wire = read(join(path, "release.json"), MAX_RELEASE_BYTES);
   if (!wire || wire.mode !== 0o400) fail("missing version release");
   // Cached revalidation uses the retained originally pinned identity, NOT fresh GitHub authentication.
-  const receipt = bootstrapVerifiedRelease({ repository: provenance.repository, tag: provenance.tag,
+  const receipt = bootstrapCachedRelease({ repository: provenance.repository, tag: provenance.tag,
     asset: provenance.asset, sha256: provenance.sha256,
     runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : wire.bytes }) });
   const files = new Map(receipt.manifest.members.map((member) => [member.path, member]));
@@ -335,7 +336,7 @@ function mutate(options, operation, release = null) {
   if (release && before.versions.has(id) && !encode(before.versions.get(id)).equals(encode(release.provenance))) fail("version provenance conflict");
   if (operation === "update" && before.state.active === id) return Object.freeze({ status: "unchanged", active: id });
   if (release && !before.versions.has(id) && before.versions.size >= VERSION_LIMIT) fail("version retention bound");
-  const next = operation === "rollback" ? before.state.previous === null ? null :
+  const next = operation === "uninstall" ? null : operation === "rollback" ? before.state.previous === null ? null :
     { ...before.state, active: before.state.previous, previous: before.state.active } :
     { schema: SCHEMA, active: id, previous: before.state?.active ?? null,
       original: before.state?.original ?? original(before.launcherRecord, options),
@@ -462,21 +463,65 @@ function mutate(options, operation, release = null) {
 }
 
 /** Acquisition and privately owned bootstrap validation precede every filesystem mutation. */
+function configureRelease(options, operation) {
+  const before = inspect(options);
+  const release = acquireRelease(options.acquire);
+  const plan = options.home ? prepareRuntime({ home: options.home, env: options.env, runner: options.runner,
+    members: release.members, version: release.provenance.tag || release.provenance.sha256.slice(0, 12) }) : null;
+  const result = mutate(options, operation === "install" && before.state && options.home ? "update" : operation, release);
+  // The exact acquired receipt is now the active, readback-verified release.
+  if (plan) installRuntime(plan);
+  return result;
+}
 export function installGlobal(value) {
-  const options = optionsFor(value, "install");
-  return mutate(options, "install", acquireRelease(options.acquire));
+  return configureRelease(optionsFor(value, "install"), "install");
 }
 export function updateGlobal(value) {
-  const options = optionsFor(value, "update");
-  inspect(options); // Existing bytes, pointers and launcher must be intact before acquisition.
-  return mutate(options, "update", acquireRelease(options.acquire));
+  return configureRelease(optionsFor(value, "update"), "update");
 }
 /** Read-only, offline verification; never repairs, activates, or imports legacy engine state. */
 export function doctorGlobal(value) {
   const result = inspect(optionsFor(value, "doctor"));
   return Object.freeze({ status: result.state ? "healthy" : "absent", active: result.state?.active ?? null,
-    previous: result.state?.previous ?? null });
+    previous: result.state?.previous ?? null,
+    ...(value.home ? { components: doctorRuntime({ home: value.home, env: value.env, runner: value.runner }) } : {}) });
 }
 export function rollbackGlobal(value) {
-  return mutate(optionsFor(value, "rollback"), "rollback");
+  const options = optionsFor(value, "rollback"), before = inspect(options);
+  let plan;
+  if (options.home && before.state?.previous) {
+    const id = before.state.previous, provenance = before.versions.get(id);
+    const wire = read(join(options.stateRoot, "versions", id, "release.json"), MAX_RELEASE_BYTES).bytes;
+    const receipt = bootstrapCachedRelease({ repository: provenance.repository, tag: provenance.tag,
+      asset: provenance.asset, sha256: id,
+      runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : wire }) });
+    plan = prepareRuntime({ home: options.home, env: options.env, runner: options.runner,
+      members: receipt.manifest.members, version: provenance.tag || id.slice(0, 12) });
+  }
+  if (options.home && before.state && !before.state.previous) uninstallRuntime({ home: options.home });
+  const result = mutate(options, "rollback");
+  if (plan) installRuntime(plan);
+  return result;
+}
+export function uninstallGlobal(value) {
+  const options = optionsFor(value, "uninstall"), before = inspect(options);
+  if (options.home) uninstallRuntime({ home: options.home });
+  if (!before.state) return { status: "absent", active: null };
+  mutate(options, "uninstall");
+  // Retire only trees validated byte-for-byte; never recursively delete unknown entries.
+  const retire = path => {
+    directory(path, true);
+    for (const name of names(path, 2048)) {
+      const child = join(path, name);
+      if (stat(child).isDirectory()) retire(child); else { read(child, MAX_RELEASE_BYTES); unlinkSync(child); }
+    }
+    rmdirSync(path);
+  };
+  for (const id of before.versions.keys()) {
+    validateVersion(join(options.stateRoot, "versions", id), id);
+    retire(join(options.stateRoot, "versions", id));
+  }
+  retire(join(options.stateRoot, "versions"));
+  if (!names(options.stateRoot).length) rmdirSync(options.stateRoot);
+  return { status: "uninstalled", active: null };
 }

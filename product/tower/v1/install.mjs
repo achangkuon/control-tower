@@ -19,7 +19,7 @@ function validatePins(pinned) {
     fail("unstamped installer or invalid pins");
   }
 }
-function prerequisites(runner) {
+function prerequisites(runner, env) {
   for (const [command, argv, brew] of [["gh", ["auth", "status", "--active", "--hostname", "github.com"], "gh"],
     ["bun", ["--version"], "oven-sh/bun/bun"], ["git", ["--version"], "git"], ["go", ["version"], "go"]]) {
     let result;
@@ -30,6 +30,11 @@ function prerequisites(runner) {
         `Linux: use your package manager or the official ${command} installation guide.` +
         (command === "gh" ? " Run gh auth login with private repository access." : ""));
     }
+  }
+  let gentle;
+  try { gentle = runner("gentle-ai", ["version"], { env, timeout: 10_000, maxBuffer: 64 * 1024 }); } catch {}
+  if (gentle?.error || gentle?.status !== 0 || !/^gentle-ai\s+\d+\.\d+\.\d+(?:[-+][\w.-]+)?\s*$/.test(String(gentle?.stdout ?? ""))) {
+    fail("Gentle AI es obligatorio. Instalá Gentle AI: https://github.com/Gentleman-Programming/gentle-ai y verificá `gentle-ai version`.");
   }
 }
 // This standalone asset has no repository imports. Stamped pinned.paths is the
@@ -145,7 +150,7 @@ export function main(argv, deps = {}) {
   try {
     validatePins(pinned);
     if (!Array.isArray(argv) || !(argv.length === 0 || argv.length === 1 && argv[0] === "--dry-run")) fail("Invalid installer arguments (only --dry-run allowed)");
-    prerequisites(runner);
+    prerequisites(runner, env);
     oldMask = process.umask(0o022);
     temporary = mkdtempSync(join(realpathSync(tempRoot), "torre-install-")); chmodSync(temporary, 0o700);
     // Bounded stdout avoids an unbounded download to disk. The private directory owns all intake/extraction.

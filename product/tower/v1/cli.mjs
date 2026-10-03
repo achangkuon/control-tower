@@ -1,18 +1,20 @@
 #!/usr/bin/env bun
-import { accessSync, chmodSync, closeSync, constants, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, readSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { accessSync, chmodSync, closeSync, constants, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, readSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { basename, delimiter, dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal } from "./global.mjs";
+import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "./global.mjs";
+import { requireGentleAi, doctorRuntime, preflightRuntimeHome, uninstallRuntime } from "./runtime-config.mjs";
+import { buildRelease } from "./release-build.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
   cleanupRegisteredProject, listProjects } from "./projects.mjs";
 
-const operations = { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal,
+const operations = { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal,
   initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
   cleanupRegisteredProject, listProjects };
-const globals = { install: "installGlobal", update: "updateGlobal", doctor: "doctorGlobal", rollback: "rollbackGlobal" };
+const globals = { install: "installGlobal", update: "updateGlobal", doctor: "doctorGlobal", rollback: "rollbackGlobal", uninstall: "uninstallGlobal" };
 const projects = { init: "initRegisteredProject", doctor: "doctorRegisteredProject",
   uninstall: "uninstallRegisteredProject", cleanup: "cleanupRegisteredProject" };
 const common = ["--state", "--launcher", "--registry"];
@@ -29,7 +31,8 @@ function parseArguments(argv) {
     subcommand = tail.shift();
     if (!owns(projects, subcommand)) usage("unknown or missing project command");
   } else if (!owns(globals, command) && !["list", "status"].includes(command)) usage("unknown command");
-  const required = command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
+  const fromCheckout = ["install", "update"].includes(command) && tail.includes("--from-checkout");
+  const required = fromCheckout ? ["--from-checkout"] : command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
     ["install", "update"].includes(command) ? ["--tag", "--asset", "--sha256"] : [];
   const allowed = new Set([...common, ...required]);
   const flags = Object.create(null);
@@ -135,7 +138,7 @@ export function collectStatus({ home, stateRoot, launcherPath, registryRoot, fla
   let engine, projectList;
   try {
     const result = absentGlobalDefaults(home, stateRoot, launcherPath, flags) ?
-      { status: "absent", active: null, previous: null } : api.doctorGlobal({ stateRoot, launcherPath });
+      { status: "absent", active: null, previous: null } : api.doctorGlobal({ stateRoot, launcherPath, home, env, ...(deps.runner ? { runner: deps.runner } : {}) });
     engine = { installed: result.status === "healthy", ...result };
   } catch (error) {
     engine = { installed: false, status: "error", active: null, previous: null, error: message(error) };
@@ -167,7 +170,8 @@ export function collectStatus({ home, stateRoot, launcherPath, registryRoot, fla
   const prerequisites = { gh,
     bun: prerequisite("bun", ["--version"], /^(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)/),
     git: prerequisite("git", ["--version"], /\bgit version\s+(\d+\.\d+(?:\.[\w.-]+)?)/),
-    go: prerequisite("go", ["version"], /\bgo version go(\d+\.\d+(?:\.\d+)?(?:rc\d+|beta\d+)?)/) };
+    go: prerequisite("go", ["version"], /\bgo version go(\d+\.\d+(?:\.\d+)?(?:rc\d+|beta\d+)?)/),
+    gentleAi: prerequisite("gentle-ai", ["version"], /^gentle-ai\s+(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)/) };
   const safe = (fn) => { try { return Boolean(fn()); } catch { return false; } };
   const agents = Object.fromEntries([["claude", ".claude"], ["pi", ".pi"], ["codex", ".codex"],
     ["opencode", ".config/opencode"]].map(([name, path]) => [name, {
@@ -399,7 +403,15 @@ function runTui(deps) {
  */
 export function main(argv, deps = {}) {
   const { env = process.env, stdout = process.stdout, stderr = process.stderr, runner } = deps;
+  let localTemporary;
   try {
+    if (Array.isArray(argv) && argv.length === 1 && ["--help", "help"].includes(argv[0])) {
+      stdout.write("torre-control install|update --tag <tag> --asset <asset> --sha256 <trusted-digest>\n" +
+        "torre-control install|update --from-checkout <repo>  (clean committed tree; offline release-build and digest verification)\n" +
+        "torre-control doctor | status | rollback | uninstall\n" +
+        "uninstall removes owned global resources and restores backups; Gentle AI and projects remain untouched.\n");
+      return 0;
+    }
     if (Array.isArray(argv) && argv.length === 0 &&
         (deps.stdin ?? process.stdin).isTTY === true && stdout.isTTY === true) {
       if (env.TOWER_MENU !== "plain") {
@@ -431,16 +443,32 @@ export function main(argv, deps = {}) {
         api[projects[subcommand]]({ registryRoot, projectRoot: flags["--project"],
           ...(subcommand === "init" ? { trustResolution: "trusted" } : {}) });
     } else {
-      const absent = command === "doctor" && absentGlobalDefaults(home, stateRoot, launcherPath, flags);
-      if (command !== "doctor") {
+      const absent = ["doctor", "uninstall"].includes(command) && absentGlobalDefaults(home, stateRoot, launcherPath, flags);
+      const acquiring = command === "install" || command === "update";
+      if (acquiring) {
+        requireGentleAi({ env, runner }); // Before parent preparation or local build.
+        for (const [flag, path] of [["--state", stateRoot], ["--launcher", launcherPath]])
+          if (!owns(flags, flag)) defaultParent(home, dirname(path), false);
+        preflightRuntimeHome({ home });
+      }
+      let acquire = acquiring ? { repository: "achangkuon/control-tower", tag: flags["--tag"],
+        asset: flags["--asset"], sha256: flags["--sha256"], ...(runner === undefined ? {} : { runner }) } : null;
+      if (flags["--from-checkout"]) {
+        localTemporary = mkdtempSync(join(tmpdir(), "tower-local-install-"));
+        const out = join(localTemporary, "tower-v1.json");
+        const receipt = (deps.buildRelease ?? buildRelease)({ repo: flags["--from-checkout"], out });
+        const bytes = readFileSync(out);
+        acquire = { repository: "achangkuon/control-tower", tag: `checkout-${receipt.commit.slice(0, 12)}`,
+          asset: "tower-v1.json", sha256: receipt.sha256,
+          runner: (_command, args) => ({ status: 0, stdout: args[0] === "auth" ? Buffer.alloc(0) : Buffer.from(bytes) }) };
+      }
+      if (command !== "doctor" && !absent) {
         if (!owns(flags, "--state")) defaultParent(home, dirname(stateRoot));
         if (!owns(flags, "--launcher")) defaultParent(home, dirname(launcherPath));
       }
-      const acquiring = command === "install" || command === "update";
-      const acquire = acquiring ? { repository: "achangkuon/control-tower", tag: flags["--tag"],
-        asset: flags["--asset"], sha256: flags["--sha256"], ...(runner === undefined ? {} : { runner }) } : null;
-      result = absent ? { status: "absent", active: null, previous: null } :
-        api[globals[command]]({ stateRoot, launcherPath, ...(acquiring ? { acquire } : {}) });
+      result = absent ? command === "uninstall" ? uninstallRuntime({ home }) :
+        { status: "absent", active: null, previous: null, components: doctorRuntime({ home, env, runner }) } :
+        api[globals[command]]({ stateRoot, launcherPath, home, env, ...(runner ? { runner } : {}), ...(acquiring ? { acquire } : {}) });
     }
     stdout.write(`${JSON.stringify(result)}\n`);
     if (command === "project" && result.registry.status === "failed") {
@@ -451,7 +479,7 @@ export function main(argv, deps = {}) {
   } catch (error) {
     reportError(stderr, error);
     return 1;
-  }
+  } finally { if (localTemporary) rmSync(localTemporary, { recursive: true, force: true }); }
 }
 
 if (import.meta.main) process.exitCode = await main(process.argv.slice(2));

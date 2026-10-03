@@ -9,7 +9,7 @@ import { main } from "../install.mjs";
 import { stampInstaller } from "../release-build.mjs";
 
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
-  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli",
+  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)].sort();
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 function envelope() {
@@ -31,6 +31,7 @@ function fixture(run, mutate = () => {}, overrides = {}) {
     const deps = { pinned, tempRoot: root, env: { ...process.env, HOME: join(root, "home") }, stdout: { write: (text) => { stdout += text; } },
       stderr: { write: (text) => { stderr += text; } }, runner: (command, argv, options) => {
         calls.push([command, argv, options]);
+        if (command === "gentle-ai") return { status: 0, stdout: Buffer.from("gentle-ai 4.0.0\n") };
         if (argv[0] === "release") return { status: 0, stdout: bytes };
         if (argv[1] === "doctor") return { status: 0, stdout: Buffer.from('{"status":"absent"}') };
         if (argv[1] === "install") {
@@ -44,6 +45,15 @@ function fixture(run, mutate = () => {}, overrides = {}) {
   } finally { process.umask(oldMask); rmSync(root, { recursive: true, force: true }); }
 }
 
+test("missing Gentle AI stops standalone installer before download or HOME changes", () => fixture(({ deps, calls, output }) => {
+  const original = deps.runner;
+  deps.runner = (command, argv, options) => command === "gentle-ai" ? { status: 1 } : original(command, argv, options);
+  expect(main([], deps)).toBe(1);
+  expect(output().stderr).toContain("Gentle AI");
+  expect(calls.some(([, argv]) => argv[0] === "release")).toBe(false);
+  expect(existsSync(deps.env.HOME)).toBe(false);
+}));
+
 test("expanded canonical release extracts every pinned skill, template and signature with no personal map", () => fixture(({ deps, calls, output }) => {
   for (const path of ["agent-workflows/skills/chanks-4-puente/scripts/prepare_new_change.py",
     "agent-workflows/skills/_shared/plan-naming-convention.md", "product/tower/v1/instructions/project-agents.md",
@@ -51,7 +61,7 @@ test("expanded canonical release extracts every pinned skill, template and signa
     "agent-workflows/tools/hooks/torre-firma.sh", "agent-workflows/tools/hooks/chanks-etapa.sh"]) {
     expect(deps.pinned.paths).toContain(path);
   }
-  expect(deps.pinned.paths).toHaveLength(72);
+  expect(deps.pinned.paths).toHaveLength(74);
   expect(deps.pinned.paths).not.toContain("agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");
   // The fixture's install runner checks exact extracted bytes for every member.
   expect(main([], deps)).toBe(0);
@@ -68,7 +78,7 @@ test("new canonical prefixes never admit unpinned siblings or near-matching sign
     fixture(({ deps, calls, output }) => {
       expect(main(["--dry-run"], deps)).toBe(1);
       expect(output().stderr).toContain("member path");
-      expect(calls).toHaveLength(5);
+      expect(calls).toHaveLength(6);
     }, envelope => { envelope.members[0].path = path; });
   }
 });
@@ -151,12 +161,12 @@ test("verified extraction hands exact pins to S174, inherits stdio, cleans and p
   process.umask(0o077);
   expect(main([], deps)).toBe(0);
   expect(process.umask()).toBe(0o077);
-  expect(calls.map(([command]) => command)).toEqual(["gh", "bun", "git", "go", "gh", "bun", "bun"]);
+  expect(calls.map(([command]) => command)).toEqual(["gh", "bun", "git", "go", "gentle-ai", "gh", "bun", "bun"]);
   expect(calls[0][1]).toEqual(["auth", "status", "--active", "--hostname", "github.com"]);
-  expect(calls[4][1]).toEqual(["release", "download", "v1.0.1", "--repo", deps.pinned.repository, "--pattern", "tower-v1.json", "--output", "-"]);
-  expect(calls[6][1].slice(1)).toEqual(["install", "--tag", "v1.0.1", "--asset", "tower-v1.json", "--sha256", deps.pinned.sha256]);
-  expect(calls[6][2].stdio).toBe("inherit");
-  expect(existsSync(calls[6][2].cwd)).toBe(false);
+  expect(calls[5][1]).toEqual(["release", "download", "v1.0.1", "--repo", deps.pinned.repository, "--pattern", "tower-v1.json", "--output", "-"]);
+  expect(calls[7][1].slice(1)).toEqual(["install", "--tag", "v1.0.1", "--asset", "tower-v1.json", "--sha256", deps.pinned.sha256]);
+  expect(calls[7][2].stdio).toBe("inherit");
+  expect(existsSync(calls[7][2].cwd)).toBe(false);
   expect(calls.every(([, , options]) => options.timeout > 0 && options.timeout <= 180_000)).toBe(true);
   expect(output().stdout).toContain('export PATH="$HOME/.local/bin:$PATH"');
   expect(output().stdout).toContain("--trust trusted"); expect(output().stdout).toContain("pi --approve");
@@ -164,13 +174,13 @@ test("verified extraction hands exact pins to S174, inherits stdio, cleans and p
 test("canonicalizes symlinked TMPDIR (macOS /var) and removes intake even on parse failure", () => fixture(({ root, deps, calls }) => {
   symlinkSync(root, join(root, "alias")); deps.tempRoot = join(root, "alias");
   expect(main(["--dry-run"], deps)).toBe(0);
-  expect(calls[4][2].cwd.startsWith(realpathSync(root) + "/torre-install-")).toBe(true);
+  expect(calls[5][2].cwd.startsWith(realpathSync(root) + "/torre-install-")).toBe(true);
   const original = deps.runner, malformed = Buffer.from("not JSON"); deps.pinned.sha256 = digest(malformed);
   deps.runner = (command, argv, options) => argv[0] === "release" ? { status: 0, stdout: malformed } : original(command, argv, options);
   expect(main([], deps)).toBe(1); expect(readdirSync(root)).toEqual(["alias"]);
 }));
 test("dry-run skips install; nonzero install status is propagated without success message", () => fixture(({ deps, calls, output }) => {
-  expect(main(["--dry-run"], deps)).toBe(0); expect(calls).toHaveLength(5);
+  expect(main(["--dry-run"], deps)).toBe(0); expect(calls).toHaveLength(6);
   const original = deps.runner;
   deps.runner = (command, argv, options) => argv[1] === "install" ? { status: 7 } : original(command, argv, options);
   expect(main([], deps)).toBe(7); expect(output().stdout).not.toContain("project init");
@@ -199,7 +209,7 @@ test("rejects checksum before JSON parsing, oversized/failed downloads, malforme
     e => { e.members[0].path = "product/tower/v1/extra.mjs"; }, e => { e.members[0].path = e.members[1].path; },
     e => { e.members[0].sha256 = "0".repeat(64); }, e => { e.members[0].bytes = "!!!!"; },
     e => { e.members[0].byteLength = 1024 * 1024 + 1; }]) fixture(({ deps, calls }) => {
-      expect(main([], deps)).toBe(1); expect(calls).toHaveLength(5);
+      expect(main([], deps)).toBe(1); expect(calls).toHaveLength(6);
     }, mutate);
 });
 test("standalone stamped asset runs offline dry-run with fake gh and disposable HOME", () => fixture(({ root, deps }) => {
@@ -208,6 +218,7 @@ test("standalone stamped asset runs offline dry-run with fake gh and disposable 
   writeFileSync(asset, JSON.stringify(envelope()));
   writeFileSync(installer, stampInstaller(readFileSync(new URL("../install.mjs", import.meta.url), "utf8"), deps.pinned));
   writeFileSync(join(bin, "gh"), `#!${process.execPath}\nimport {readFileSync} from 'node:fs';\nif(process.argv[2]==='release') process.stdout.write(readFileSync(${JSON.stringify(asset)}));\n`, { mode: 0o755 });
+  writeFileSync(join(bin, "gentle-ai"), '#!/bin/sh\nprintf "gentle-ai 4.0.0\\n"\n', { mode: 0o755 });
   const proxy = join(process.cwd(), "test/helpers/bin");
   const path = [proxy, bin, ...process.env.PATH.split(":").filter(entry => entry !== proxy)].join(":");
   const result = spawnSync(process.execPath, [installer, "--dry-run"], { timeout: 20_000, maxBuffer: 1024 * 1024,

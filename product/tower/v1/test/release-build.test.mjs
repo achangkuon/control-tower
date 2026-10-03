@@ -7,9 +7,10 @@ import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
 import { bootstrapVerifiedRelease } from "../bootstrap.mjs";
 import { buildRelease, main, stampInstaller } from "../release-build.mjs";
+import { main as towerCli } from "../cli.mjs";
 
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
-  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli",
+  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)].sort();
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 function git(repo, ...argv) {
@@ -24,6 +25,8 @@ function git(repo, ...argv) {
 }
 function fixture(run, change = () => {}) {
   const root = mkdtempSync(join(tmpdir(), "tower-release-build-")), repo = join(root, "repo");
+  const saved = process.env.HOME;
+  process.env.HOME = join(root, "home"); mkdirSync(process.env.HOME, { mode: 0o700 });
   try {
     mkdirSync(repo);
     git(repo, "init", "--quiet");
@@ -40,8 +43,31 @@ function fixture(run, change = () => {}) {
     git(repo, "add", ".");
     git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "fixture");
     return run({ root, repo, commit: git(repo, "rev-parse", "HEAD"), out: join(root, "tower-v1.json") });
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally {
+    if (saved === undefined) delete process.env.HOME; else process.env.HOME = saved;
+    rmSync(root, { recursive: true, force: true });
+  }
 }
+
+test("clean committed checkout installs locally without publishing through the real release builder", () => fixture(({ repo, commit }) => {
+  let stdout = "", stderr = "";
+  const env = { HOME: process.env.HOME, PATH: process.env.PATH };
+  const runner = (command, argv) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    if (command !== "go") throw new Error("local install must not acquire over GitHub");
+    if (argv[0] === "env") return { status: 0, stdout: join(env.HOME, "modules") };
+    writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 };
+  };
+  const deps = { env, runner, stdout: { write: text => { stdout += text; } }, stderr: { write: text => { stderr += text; } } };
+  expect(towerCli(["install", "--from-checkout", repo], deps)).toBe(0);
+  expect(stderr).toBe(""); expect(JSON.parse(stdout).status).toBe("installed");
+  expect(readFileSync(join(env.HOME, ".claude/CLAUDE.md"), "utf8")).toContain(`checkout-${commit.slice(0, 12)}`);
+  writeFileSync(join(repo, "untracked"), "dirty"); stdout = "";
+  expect(towerCli(["update", "--from-checkout", repo], deps)).toBe(1);
+  expect(stderr).toContain("clean worktree");
+}, repo => {
+  for (const path of paths) writeFileSync(join(repo, path), readFileSync(new URL(`../../../../${path}`, import.meta.url)));
+}));
 
 test("TUI builds exported commit sources offline and stamps deterministic binaries", () => fixture(({ repo, root, out, commit }) => {
   writeFileSync(join(repo, "product/tower/v1/tui/main.go"), "newer working source");
@@ -166,7 +192,7 @@ test("deterministic bytes, fixed keys and exact membership admitted by bootstrap
   const envelope = JSON.parse(bytes);
   expect(Object.keys(envelope)).toEqual(["schema", "members"]);
   expect(envelope.members.map(({ path }) => path)).toEqual(paths);
-  expect(envelope.members).toHaveLength(72);
+  expect(envelope.members).toHaveLength(74);
   expect(Object.keys(envelope.members[0])).toEqual(["path", "type", "encoding", "byteLength", "sha256", "bytes"]);
   const calls = [];
   const result = bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json",
@@ -196,7 +222,7 @@ test("release and installer pins carry global-only members and exclude the perso
   const excluded = "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json";
   expect(envelope.members.map(entry => entry.path)).not.toContain(excluded);
   expect(pinned.paths).not.toContain(excluded);
-  expect(pinned.paths).toHaveLength(72);
+  expect(pinned.paths).toHaveLength(74);
   expect(pinned.sha256).toBe(receipt.sha256);
 }, repo => {
   const excluded = join(repo, "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");

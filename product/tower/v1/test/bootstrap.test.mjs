@@ -2,11 +2,11 @@ import { describe, expect, test, spyOn } from "bun:test";
 import { createHash } from "node:crypto";
 import { BUNDLE_MEMBERS, BUNDLE_SCHEMA } from "../bundle.mjs";
 import { MAX_RELEASE_BYTES } from "../release.mjs";
-import { bootstrapVerifiedRelease } from "../bootstrap.mjs";
+import { bootstrapVerifiedRelease, bootstrapCachedRelease } from "../bootstrap.mjs";
 
 const schema = "tower.v1.release/1";
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
-  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli",
+  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)];
 const memberLimit = 1024 * 1024;
 const aggregateLimit = 8 * memberLimit;
@@ -39,10 +39,20 @@ function rejects(value, pattern = /release/i) {
   expect(calls.length).toBe(2);
 }
 
+test("cached S194 exact 72-member releases remain digest-verified but new intake requires 74", () => {
+  const old = fixture(); old.members = old.members.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path));
+  const bytes = encode(old), options = { repository: "example/control-tower", tag: "v1-s194", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) };
+  expect(bootstrapCachedRelease(options).manifest.members.length).toBe(72);
+  expect(() => bootstrapVerifiedRelease(options)).toThrow(/membership/);
+  expect(() => bootstrapCachedRelease({ ...options, sha256: "0".repeat(64) })).toThrow(/SHA-256/);
+  old.members.pop(); const missing = encode(old);
+  expect(() => bootstrapCachedRelease({ ...options, sha256: digest(missing), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : missing }) })).toThrow(/membership/);
+});
+
 describe("bounded verified global release intake", () => {
-  test("accepts exactly 72 canonical source-layout files independently of ordering", () => {
+  test("accepts exactly 74 canonical source-layout files independently of ordering", () => {
     expect(BUNDLE_MEMBERS.length).toBe(64);
-    expect(new Set(paths).size).toBe(72);
+    expect(new Set(paths).size).toBe(74);
     for (const members of [fixture().members, fixture().members.reverse()]) {
       const bytes = encode({ schema, members });
       const original = Buffer.from(bytes);
@@ -50,7 +60,7 @@ describe("bounded verified global release intake", () => {
       const result = run();
       expect(result.manifest.schema).toBe(schema);
       expect(result.manifest.members.map(({ path }) => path).sort()).toEqual([...paths].sort());
-      expect(result.manifest.members.length).toBe(72);
+      expect(result.manifest.members.length).toBe(74);
       expect(Object.isFrozen(result)).toBe(true);
       expect(Object.isFrozen(result.manifest.members)).toBe(true);
       for (const entry of result.manifest.members) {

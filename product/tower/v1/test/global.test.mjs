@@ -3,11 +3,11 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
-import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal } from "../global.mjs";
+import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "../global.mjs";
 
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
-  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli",
+  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)];
 const environmentKeys = ["HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME",
   "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GH_CONFIG_DIR"];
@@ -22,8 +22,9 @@ const version = (id) => join(options.stateRoot, "versions", id);
 function acquisition(label = "a", overrides = {}, runtime = false) {
   const members = paths.map((path) => {
     // Opaque fixtures are never executed; relocation scenarios opt in to real runtime modules.
-    const bytes = runtime && path.endsWith(".mjs") ?
-      fs.readFileSync(new URL(`../../../../${path}`, import.meta.url)) :
+    const bytes = runtime ?
+      Buffer.concat([fs.readFileSync(new URL(`../../../../${path}`, import.meta.url)),
+        path === "product/tower/v1/cli.mjs" ? Buffer.from(`\n// fixture ${label}\n`) : Buffer.alloc(0)]) :
       Buffer.from(`opaque fixture ${label}: ${path}\n`);
     return { path, type: "file", encoding: "base64", byteLength: bytes.length,
       sha256: hash(bytes), bytes: bytes.toString("base64") };
@@ -61,6 +62,7 @@ beforeEach(() => {
   root = fs.mkdtempSync(join(fs.realpathSync("/tmp"), "tower-global-test-"));
   environment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
   for (const key of environmentKeys) process.env[key] = join(root, key);
+  fs.mkdirSync(process.env.HOME, { mode: 0o700 });
   fs.mkdirSync(join(root, "bin"));
   options = { stateRoot: join(root, "v1"), launcherPath: join(root, "bin", "torre-control"),
     knownLegacyRepository: join(root, "independent", "agent-workflows") };
@@ -76,8 +78,57 @@ afterEach(() => {
   fs.rmSync(root, { recursive: true, force: true }); // Only this test's disposable root.
 });
 
+test("verified active release configures runtimes, updates pointers, reruns idempotently and globally uninstalls", () => {
+  const home = join(root, "home"); fs.mkdirSync(home, { mode: 0o700 });
+  const runner = (command, argv) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    if (argv[0] === "env") return { status: 0, stdout: join(root, "modules") };
+    if (argv[0] === "build") fs.writeFileSync(argv[5], "radar", { mode: 0o755 });
+    return { status: 0, stdout: "" };
+  };
+  const config = { ...options, home, env: { HOME: home, PATH: process.env.PATH }, runner };
+  const first = acquisition("runtime-a", {}, true), next = acquisition("runtime-b", {}, true);
+  installGlobal({ ...config, acquire: first.acquire });
+  expect(fs.existsSync(join(home, ".agents/skills/control-tower/SKILL.md"))).toBe(true);
+  expect(doctorGlobal(config).components.gentleAi.version).toBe("4.0.0");
+  expect(installGlobal({ ...config, acquire: first.acquire }).status).toBe("unchanged");
+  updateGlobal({ ...config, acquire: next.acquire });
+  expect(fs.readFileSync(join(home, ".claude/CLAUDE.md"), "utf8")).toContain("v1-runtime-b");
+  rollbackGlobal(config);
+  expect(fs.readFileSync(join(home, ".claude/CLAUDE.md"), "utf8")).toContain("v1-runtime-a");
+  expect(uninstallGlobal(config).status).toBe("uninstalled");
+  expect(fs.existsSync(options.launcherPath)).toBe(false);
+  expect(fs.existsSync(join(home, ".agents/skills/control-tower"))).toBe(false);
+  expect(doctorGlobal(config).status).toBe("absent");
+});
+
+test("new installer can inspect and update a cached exact S194 release", () => {
+  const first = install();
+  const old = JSON.parse(first.wire);
+  const removed = ["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"];
+  old.members = old.members.filter(m => !removed.includes(m.path));
+  const wire = Buffer.from(JSON.stringify(old)), id = hash(wire), previous = state();
+  const provenance = { ...previous.provenance[0], sha256: id };
+  fs.renameSync(version(first.id), version(id));
+  for (const path of removed) fs.unlinkSync(join(version(id), path));
+  rewrite(join(version(id), "release.json"), wire); fs.chmodSync(join(version(id), "release.json"), 0o400);
+  rewrite(join(version(id), "provenance.json"), provenance); fs.chmodSync(join(version(id), "provenance.json"), 0o400);
+  rewrite(statePath(), { ...previous, active: id, provenance: [provenance] });
+  expect(doctorGlobal(options).active).toBe(id);
+  const next = acquisition("b");
+  expect(updateGlobal({ ...options, acquire: next.acquire }).active).toBe(next.id);
+  expect(doctorGlobal(options).previous).toBe(id);
+});
+
+test("missing Gentle AI and invalid JSON stop global activation before changes", () => {
+  const home = join(root, "home"); fs.mkdirSync(home, { mode: 0o700 });
+  const release = acquisition("runtime-a", {}, true), before = snapshot();
+  expect(() => installGlobal({ ...options, home, env: { HOME: home }, runner: () => ({ status: 1 }), acquire: release.acquire })).toThrow(/Gentle AI/);
+  expect(snapshot()).toEqual(before);
+});
+
 describe("isolated global V1 lifecycle", () => {
-  test("fresh installation stores 72 verified files and a stable non-eval launcher", () => {
+  test("fresh installation stores 74 verified files and a stable non-eval launcher", () => {
     const release = install();
     expect(release.calls.length).toBe(2);
     expect(state().active).toBe(release.id);
@@ -137,7 +188,12 @@ describe("isolated global V1 lifecycle", () => {
       const invoke = (argv, runner) => {
         let stdout = "", stderr = "";
         const code = main([...argv, "--state", options.stateRoot, "--launcher", options.launcherPath], {
-          env: process.env, runner, stdout: { write: (text) => { stdout += text; } },
+          env: process.env, runner: (command, argv, spawnOptions) => {
+            if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+            if (command === "go" && argv[0] === "env") return { status: 0, stdout: join(root, "modules") };
+            if (command === "go" && argv[0] === "build") { fs.writeFileSync(argv[5], "radar", { mode: 0o755 }); return { status: 0 }; }
+            return runner?.(command, argv, spawnOptions) ?? { status: 1 };
+          }, stdout: { write: (text) => { stdout += text; } },
           stderr: { write: (text) => { stderr += text; } },
         });
         expect(stderr).toBe("");

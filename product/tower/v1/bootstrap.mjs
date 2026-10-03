@@ -8,7 +8,7 @@ const AGGREGATE_LIMIT = 8 * MEMBER_LIMIT;
 const ENCODED_LIMIT = 4 * Math.ceil(MEMBER_LIMIT / 3);
 const RELEASE_PATHS = new Set([
   ...BUNDLE_MEMBERS.map(({ source }) => source),
-  ...["adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli"]
+  ...["adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build"]
     .map((name) => `product/tower/v1/${name}.mjs`),
 ]);
 
@@ -66,9 +66,13 @@ function parseEnvelope(text) {
   return JSON.parse(text);
 }
 
-function validateMembers(envelope) {
+const S194_PATHS = new Set([...RELEASE_PATHS].filter(path => ![
+  "product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs",
+].includes(path)));
+
+function validateMembers(envelope, paths = RELEASE_PATHS) {
   if (!exactKeys(envelope, "members,schema") || envelope.schema !== RELEASE_SCHEMA ||
-      !Array.isArray(envelope.members) || envelope.members.length !== RELEASE_PATHS.size) {
+      !Array.isArray(envelope.members) || envelope.members.length !== paths.size) {
     throw new Error("Invalid global release schema or membership");
   }
   const seen = new Set();
@@ -76,7 +80,7 @@ function validateMembers(envelope) {
   // Check the complete manifest before any member Buffer.from(base64) allocation.
   for (const member of envelope.members) {
     if (!exactKeys(member, "byteLength,bytes,encoding,path,sha256,type") ||
-        typeof member.path !== "string" || !RELEASE_PATHS.has(member.path) || seen.has(member.path) ||
+        typeof member.path !== "string" || !paths.has(member.path) || seen.has(member.path) ||
         member.type !== "file" || member.encoding !== "base64" ||
         typeof member.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(member.sha256)) {
       throw new Error("Invalid global release member");
@@ -109,7 +113,7 @@ function validateMembers(envelope) {
  * Metadata is frozen; returned Buffers remain mutable and are isolated from runner-owned bytes.
  * Bounds: existing 16 MiB acquisition, 1 MiB/file, 8 MiB aggregate decoded bytes.
  */
-export function bootstrapVerifiedRelease(options) {
+function bootstrap(options, cached = false) {
   const bytes = acquireVerifiedRelease(options);
   let envelope;
   try {
@@ -118,6 +122,12 @@ export function bootstrapVerifiedRelease(options) {
   } catch {
     throw new Error("Invalid release UTF8 or bounded JSON envelope");
   }
-  const members = Object.freeze(validateMembers(envelope));
+  const paths = cached && envelope?.members?.length === S194_PATHS.size ? S194_PATHS : RELEASE_PATHS;
+  const members = Object.freeze(validateMembers(envelope, paths));
   return Object.freeze({ bytes, manifest: Object.freeze({ schema: RELEASE_SCHEMA, members }) });
 }
+
+export function bootstrapVerifiedRelease(options) { return bootstrap(options); }
+// Offline cached versions retain their original independently pinned digest.
+// This admits only the exact S194 roster, never a subset or a new acquisition.
+export function bootstrapCachedRelease(options) { return bootstrap(options, true); }

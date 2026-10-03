@@ -2,7 +2,7 @@ import { expect, spyOn, test as bunTest } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { PassThrough } from "node:stream";
-import { chmodSync, existsSync, fstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync,
+import { chmodSync, existsSync, fstatSync, lstatSync, readlinkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync,
   rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { main } from "../cli.mjs";
@@ -54,7 +54,7 @@ function ready(f) {
 function invoke(f, argv, extra = {}) {
   let stdout = "", stderr = "";
   const code = main(argv, { env: f.env, stdout: { write: (text) => { stdout += text; } },
-    stderr: { write: (text) => { stderr += text; } }, ...extra });
+    stderr: { write: (text) => { stderr += text; } }, runner: () => ({ status: 0, stdout: "gentle-ai 4.0.0" }), ...extra });
   return { code, stdout, stderr, value: stdout ? JSON.parse(stdout) : undefined };
 }
 function failed(result) {
@@ -70,16 +70,19 @@ function success(result) {
 }
 function release(label = "a") {
   const paths = [...BUNDLE_MEMBERS.map(({ source }) => source),
-    ...["adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli"]
+    ...["adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build"]
       .map((name) => `product/tower/v1/${name}.mjs`)];
   const members = paths.map((path) => {
-    const bytes = Buffer.from(`opaque ${label}: ${path}\n`);
+    const bytes = Buffer.concat([readFileSync(new URL(`../../../../${path}`, import.meta.url)), path.endsWith("/cli.mjs") ? Buffer.from(`\n// fixture ${label}\n`) : Buffer.alloc(0)]);
     return { path, type: "file", encoding: "base64", byteLength: bytes.length,
       sha256: digest(bytes), bytes: bytes.toString("base64") };
   });
   const wire = Buffer.from(JSON.stringify({ schema: "tower.v1.release/1", members }));
   const calls = [];
-  return { sha: digest(wire), calls, runner: (command, argv) => {
+  return { wire, sha: digest(wire), calls, runner: (command, argv) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    if (command === "go" && argv[0] === "env") return { status: 0, stdout: "/fixture/modules" };
+    if (command === "go" && argv[0] === "build") { writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 }; }
     calls.push([command, argv]);
     return { status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : wire };
   } };
@@ -93,7 +96,7 @@ function project(f) {
   return path;
 }
 
-const invalid = [[], ["unknown"], ["toString"], ["__proto__"], ["uninstall"], ["project"], ["project", "unknown"],
+const invalid = [[], ["unknown"], ["toString"], ["__proto__"], ["uninstall", "--unexpected", "x"], ["project"], ["project", "unknown"],
   ["doctor", "extra"], ["doctor", "--tag", "v1"], ["list", "--project", "/tmp/x"],
   ["install"], ["update", "--tag", "v1", "--asset", "tower.json"],
   ["install", "--tag", "--asset", "tower.json", "--sha256", "a".repeat(64)],
@@ -107,6 +110,56 @@ const invalid = [[], ["unknown"], ["toString"], ["__proto__"], ["uninstall"], ["
 for (const argv of invalid) test(`closed usage rejects ${JSON.stringify(argv)}`, () => {
   const f = fixture();
   failed(invoke(f, argv));
+  expect(readdirSync(f.home)).toEqual([]);
+});
+
+test("global uninstall on an absent installation is read-only and idempotent", () => {
+  const f = fixture(), before = snapshot(f);
+  success(invoke(f, ["uninstall"])); success(invoke(f, ["uninstall"]));
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("local checkout uses release-build receipt and the same digest verification; global uninstall round trip", () => {
+  const f = fixture(), r = release(); let builds = 0;
+  const result = invoke(f, ["install", "--from-checkout", f.root], { runner: r.runner, buildRelease: options => {
+    expect(options.repo).toBe(f.root); builds++;
+    writeFileSync(options.out, r.wire, { mode: 0o644 });
+    return { commit: "a".repeat(40), sha256: r.sha };
+  } });
+  success(result); expect(builds).toBe(1); expect(r.calls).toEqual([]);
+  expect(readFileSync(join(f.home, ".claude/CLAUDE.md"), "utf8")).toContain("checkout-aaaaaaaaaaaa");
+  success(invoke(f, ["uninstall"]));
+  expect(existsSync(f.launcher)).toBe(false); expect(existsSync(f.state)).toBe(false);
+  expect(existsSync(join(f.home, ".agents/skills/control-tower"))).toBe(false);
+  const other = fixture();
+  const mismatch = invoke(other, ["install", "--from-checkout", other.root], { runner: r.runner, buildRelease: options => {
+    writeFileSync(options.out, r.wire); return { commit: "a".repeat(40), sha256: "0".repeat(64) };
+  } });
+  failed(mismatch); expect(mismatch.stderr).toContain("SHA-256"); expect(existsSync(other.state)).toBe(false);
+  const dirty = fixture();
+  const refusal = invoke(dirty, ["install", "--from-checkout", dirty.root], { runner: r.runner, buildRelease: () => { throw new Error("a clean worktree is required"); } });
+  failed(refusal); expect(refusal.stderr).toContain("clean worktree"); expect(readdirSync(dirty.home)).toEqual([]);
+});
+
+test("help documents explicit clean-checkout installation and global uninstall", () => {
+  const f = fixture(); let output = "";
+  expect(main(["--help"], { env: f.env, stdout: { write: text => { output += text; } } })).toBe(0);
+  expect(output).toContain("--from-checkout"); expect(output).toContain("clean"); expect(output).toContain("uninstall");
+  expect(readdirSync(f.home)).toEqual([]);
+});
+
+test("invalid runtime settings refuse CLI install without preparing global parents", () => {
+  const f = fixture(), r = release();
+  mkdirSync(join(f.home, ".claude"), { mode: 0o755 });
+  writeFileSync(join(f.home, ".claude/settings.json"), "{invalid", { mode: 0o644 });
+  const before = snapshot(f), result = invoke(f, pinned("install", r), { runner: r.runner });
+  failed(result); expect(result.stderr).toContain("settings.json"); expect(snapshot(f)).toEqual(before);
+});
+
+test("CLI refuses missing Gentle AI before parent creation or dispatch", () => {
+  const f = fixture(), r = release(); let called = false;
+  const result = invoke(f, pinned("install", r), { runner: () => ({ status: 1 }), operations: { installGlobal: () => { called = true; } } });
+  expect(result.code).toBe(1); expect(result.stderr).toContain("Gentle AI"); expect(called).toBe(false);
   expect(readdirSync(f.home)).toEqual([]);
 });
 
@@ -161,7 +214,7 @@ test("verified interface ignores ambient TORRE_CONTROL_CLI for installed and che
 test("status reports the closed schema without changing disposable HOME", () => {
   const f = fixture(), before = snapshot(f), calls = [];
   const outputs = { gh: "gh version 2.90.1 (2026-01-01)", bun: "1.3.9\n",
-    git: "git version 2.54.0", go: "go version go1.26.4 linux/amd64" };
+    git: "git version 2.54.0", go: "go version go1.26.4 linux/amd64", "gentle-ai": "gentle-ai 4.0.0" };
   const result = invoke(f, ["status"], { bunVersion: null,
     runner: (command, args, options) => {
       calls.push([command, args]);
@@ -175,12 +228,12 @@ test("status reports the closed schema without changing disposable HOME", () => 
     engine: { installed: false, status: "absent", active: null, previous: null }, projects: [],
     prerequisites: { gh: { present: true, version: "2.90.1", authenticated: true },
       bun: { present: true, version: "1.3.9" }, git: { present: true, version: "2.54.0" },
-      go: { present: true, version: "1.26.4" } },
+      go: { present: true, version: "1.26.4" }, gentleAi: { present: true, version: "4.0.0" } },
     agents: { claude: { executable: false, config: false }, pi: { executable: true, config: true },
       codex: { executable: false, config: false }, opencode: { executable: false, config: false } },
     system: { os: process.platform, arch: process.arch, shell: null }, version: null });
   expect(calls).toEqual([["gh", ["--version"]], ["gh", ["auth", "status", "--hostname", "github.com"]],
-    ["bun", ["--version"]], ["git", ["--version"]], ["go", ["version"]]]);
+    ["bun", ["--version"]], ["git", ["--version"]], ["go", ["version"]], ["gentle-ai", ["version"]]]);
   expect(snapshot(f)).toEqual(before);
 });
 
@@ -203,8 +256,8 @@ test("status isolates failed probes, bounds errors and never calls registered do
   expect(result.value.projects.error).toHaveLength(440);
   expect(result.value.prerequisites).toEqual({ gh: { present: true, version: "2.9.0", authenticated: false,
     error: "gh probe failed (1)" }, bun: { present: true, version: "1.3.14" },
-    git: { present: true, error: "timeout" }, go: { present: false, error: "missing" } });
-  expect(calls.map(([name]) => name)).toEqual(["gh", "gh", "git", "go"]);
+    git: { present: true, error: "timeout" }, go: { present: false, error: "missing" }, gentleAi: { present: false, error: "missing" } });
+  expect(calls.map(([name]) => name)).toEqual(["gh", "gh", "git", "go", "gentle-ai"]);
   expect(snapshot(f)).toEqual(before);
 });
 
@@ -219,7 +272,7 @@ test("status overrides, engine identity and project projection are exact", () =>
   const argv = ["status", "--registry", registryRoot, "--launcher", launcherPath, "--state", stateRoot];
   const result = invoke(f, argv, { ...deps, enginePath: join(stateRoot, "versions", sha, "product/tower/v1/cli.mjs") });
   success(result);
-  expect(seen).toEqual([{ stateRoot, launcherPath }, { registryRoot }]);
+  expect(seen).toEqual([{ stateRoot, launcherPath, home: f.home, env: deps.env, runner: deps.runner }, { registryRoot }]);
   expect(result.value.engine.installed).toBe(true);
   expect(result.value.version).toBe(sha);
   expect(result.value.projects).toEqual([{ projectRoot: "/example", status: "missing" }]);
@@ -254,7 +307,8 @@ test("status live-reconciles installed engine and projects without changing any 
   const before = snapshot(f);
   const result = invoke(f, ["status"], { runner: () => ({ status: 0, stdout: "unknown" }) });
   success(result);
-  expect(result.value.engine).toEqual({ installed: true, status: "healthy", active: r.sha, previous: null });
+  expect(result.value.engine).toEqual({ installed: true, status: "healthy", active: r.sha, previous: null,
+    components: { skills: "ok", radar: "ok", signatures: "ok", pointers: "ok", gentleAi: { status: "missing", version: null } } });
   expect(result.value.projects).toEqual([{ projectRoot: root, status: "invalid" }]);
   expect(snapshot(f)).toEqual(before);
 });
@@ -274,11 +328,11 @@ test("status accepts alternate version formats and reports absent executables", 
   const result = invoke(f, ["status"], { bunVersion: null, runner: (name) => name === "git" ?
     { status: null, error: Object.assign(new Error("not found"), { code: "ENOENT" }) } :
     { status: 0, stdout: { gh: "gh version 2.90.1-pre.2 (date)", bun: " 1.4.0-canary.1\n",
-      go: "go version go1.27rc1 linux/amd64" }[name] } });
+      go: "go version go1.27rc1 linux/amd64", "gentle-ai": "gentle-ai 4.1.0-pre.1" }[name] } });
   success(result);
   expect(result.value.prerequisites).toEqual({ gh: { present: true, version: "2.90.1-pre.2", authenticated: true },
     bun: { present: true, version: "1.4.0-canary.1" }, git: { present: false, error: "not found" },
-    go: { present: true, version: "1.27rc1" } });
+    go: { present: true, version: "1.27rc1" }, gentleAi: { present: true, version: "4.1.0-pre.1" } });
 });
 
 test("status unexpected output errors exit 1", () => {
@@ -309,7 +363,10 @@ test("pinned install, update, offline doctor and rollback use real global lifecy
   const updated = invoke(f, pinned("update", second), { runner: second.runner });
   success(updated);
   expect(updated.value).toMatchObject({ active: second.sha, previous: first.sha });
-  const offline = { runner: () => { throw new Error("must not acquire"); } };
+  const offline = { runner: (command, ...args) => {
+    if (command === "gh") throw new Error("must not acquire");
+    return first.runner(command, ...args);
+  } };
   expect(invoke(f, ["doctor"], offline).value.status).toBe("healthy");
   const rolled = invoke(f, ["rollback"], offline);
   success(rolled);
@@ -347,7 +404,7 @@ test("global overrides are passed unchanged and missing override parents are nev
   success(invoke(f, argv, { runner: r.runner }));
   expect(existsSync(state)).toBe(true);
   expect(existsSync(launcher)).toBe(true);
-  expect(readdirSync(f.home)).toEqual([]);
+  expect(existsSync(join(f.home, ".agents/skills/control-tower/SKILL.md"))).toBe(true);
   const other = fixture();
   failed(invoke(other, ["doctor", "--state", join(other.root, "missing", "state"),
     "--launcher", join(other.root, "command")]));
@@ -518,7 +575,15 @@ test("real entrypoint: usage failure and empty list use only isolated environmen
   expect(existsSync(f.registry)).toBe(false);
 });
 
-const snapshot = (f) => captureProjectFiles(f.root, readdirSync(f.root));
+const snapshot = (f) => {
+  const tree = path => {
+    const stat = lstatSync(path);
+    if (stat.isSymbolicLink()) return { link: readlinkSync(path) };
+    if (stat.isDirectory()) return { mode: stat.mode & 0o777, entries: Object.fromEntries(readdirSync(path).sort().map(name => [name, tree(join(path, name))])) };
+    return { mode: stat.mode & 0o777, bytes: readFileSync(path).toString("base64") };
+  };
+  return tree(f.root);
+};
 async function menu(f, lines, extra = {}) {
   let stdout = "", stderr = "";
   const prompts = [];
@@ -534,7 +599,7 @@ test("fresh default doctor and list do not prepare HOME", () => {
   const f = fixture(), before = snapshot(f);
   const checked = invoke(f, ["doctor"]);
   success(checked);
-  expect(checked.value).toEqual({ status: "absent", active: null, previous: null });
+  expect(checked.value).toEqual({ status: "absent", active: null, previous: null, components: { skills: "missing", radar: "missing", signatures: "missing", pointers: "missing", gentleAi: { status: "ok", version: "4.0.0" } } });
   success(invoke(f, ["list"]));
   expect(snapshot(f)).toEqual(before);
 });
@@ -729,7 +794,7 @@ test("menu confirmation accepted dispatches a real rollback", async () => {
   const f = fixture(), first = release(), second = release("b");
   success(invoke(f, pinned("install", first), { runner: first.runner }));
   success(invoke(f, pinned("update", second), { runner: second.runner }));
-  const result = await menu(f, ["4", "ROLLBACK"]);
+  const result = await menu(f, ["4", "ROLLBACK"], { runner: second.runner });
   expect(result.code).toBe(0);
   expect(result.value).toMatchObject({ active: first.sha, previous: second.sha });
   expect(invoke(f, ["doctor"]).value.active).toBe(first.sha);
