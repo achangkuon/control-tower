@@ -77,6 +77,41 @@ describe("S196 project instructions", () => {
     expect(snapshot(projectRoot)).toEqual(before);
   }));
 
+  for (const { name, text, imported } of [
+    { name: "exact LF", text: "my rules\n@AGENTS.md\n", imported: true },
+    { name: "exact CRLF", text: "my rules\r\n@AGENTS.md\r\n", imported: true },
+    { name: "exact EOF", text: "@AGENTS.md", imported: true },
+    { name: "backtick fence", text: "```md\n@AGENTS.md\n```\n", imported: false },
+    { name: "tilde fence CRLF", text: "~~~markdown\r\n@AGENTS.md\r\n~~~\r\n", imported: false },
+    { name: "long fence with shorter inner fence", text: "````md\n```\n@AGENTS.md\n````\n", imported: false },
+    { name: "indented fence", text: "   ```md\n@AGENTS.md\n   ```\n", imported: false },
+    { name: "unclosed fence", text: "```\n@AGENTS.md\n", imported: false },
+    { name: "real import after fence", text: "```\n@AGENTS.md\n```\n@AGENTS.md\n", imported: true },
+    { name: "dot-relative alias", text: "@./AGENTS.md\n", imported: false },
+    { name: "different directory", text: "@docs/AGENTS.md\n", imported: false },
+    { name: "trailing text", text: "@AGENTS.md my rules\n", imported: false },
+    { name: "trailing whitespace", text: "@AGENTS.md \t\n", imported: false },
+    { name: "leading whitespace", text: " @AGENTS.md\n", imported: false },
+    { name: "inline code", text: "`@AGENTS.md`\n", imported: false },
+    { name: "comment", text: "<!-- example\n@AGENTS.md\n-->\n", imported: false },
+    { name: "real import after comment", text: "<!-- example\n@AGENTS.md\n-->\n@AGENTS.md\n", imported: true },
+    { name: "bare CR", text: "my rules\r@AGENTS.md\r", imported: false },
+  ]) test(`S206 CLAUDE import admission: ${name}`, () => fixture(({ projectRoot }) => {
+    put(projectRoot, "CLAUDE.md", text);
+    const mode = captureProjectFiles(projectRoot, ["CLAUDE.md"]).destinations[0].tree.mode;
+    initProject(trusted(projectRoot));
+    const installed = readFileSync(join(projectRoot, "CLAUDE.md"), "utf8");
+    expect(installed.startsWith(text)).toBe(true);
+    expect(installed.includes(importStart)).toBe(!imported);
+    if (imported) expect(installed).toBe(text);
+    else expect(installed).toContain(`${importStart}\n@AGENTS.md\n<!-- /control-tower:claude-import -->`);
+    expect(doctorProject({ projectRoot }).instructions).toBe("ok");
+    put(projectRoot, "CLAUDE.md", installed + "later user rule\n", mode);
+    uninstallProject({ projectRoot });
+    expect(readFileSync(join(projectRoot, "CLAUDE.md"), "utf8")).toBe(text + "later user rule\n");
+    expect(captureProjectFiles(projectRoot, ["CLAUDE.md"]).destinations[0].tree.mode).toBe(mode);
+  }));
+
   for (const created of [false, true]) test(`uninstall preserves later edits; created=${created}`, () => fixture(({ projectRoot }) => {
     if (created) { rmSync(join(projectRoot, "AGENTS.md")); rmSync(join(projectRoot, "CLAUDE.md")); }
     initProject(trusted(projectRoot));

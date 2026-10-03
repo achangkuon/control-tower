@@ -85,7 +85,7 @@ type clipboardProbe struct{ model }
 func (p clipboardProbe) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	next, cmd := p.model.Update(msg)
 	p.model = next.(model)
-	if strings.Contains(p.View(), "Copiado") {
+	if p.copyFeedback != "" {
 		return p, tea.Quit
 	}
 	return p, cmd
@@ -108,12 +108,38 @@ func TestProjectPromptClipboardOSC52ThroughBubbleTea(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			contains(t, result.View(), "Copiado")
+			contains(t, result.View(), "Enviado al portapapeles")
+			if strings.Contains(result.View(), "Copiado") {
+				t.Fatal("OSC52 emission claimed confirmed clipboard delivery")
+			}
 			want := "\x1b]52;c;" + base64.StdEncoding.EncodeToString([]byte(expectedProjectPrompt)) + "\x07"
 			if !strings.Contains(output.String(), want) {
 				t.Fatalf("OSC52 not emitted through Bubble Tea output: %q", output.String())
 			}
 		})
+	}
+}
+
+func TestProjectPromptClipboardFeedbackIsUnconfirmed(t *testing.T) {
+	m := openProjectPrompt(t)
+	_, cmd := key(m, "c")
+	if cmd == nil {
+		t.Fatal("copy did not request terminal clipboard emission")
+	}
+	next, _ := m.Update(clipboardResult{})
+	m = next.(model)
+	contains(t, m.View(), "Enviado al portapapeles de la terminal (si no aparece, seleccioná el texto)", expectedProjectPrompt)
+	if strings.Contains(m.View(), "Copiado") {
+		t.Fatal("unconfirmed clipboard delivery reported as copied")
+	}
+	m = keys(m, "esc", "enter")
+	if m.copyFeedback != "" {
+		t.Fatal("feedback survived reopening")
+	}
+	m = keys(m, "esc")
+	next, _ = m.Update(clipboardResult{})
+	if next.(model).copyFeedback != "" {
+		t.Fatal("late clipboard result changed another page")
 	}
 }
 

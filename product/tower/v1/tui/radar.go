@@ -116,7 +116,7 @@ type radarResult struct {
 func (m model) openRadar(root string) model {
 	m.page, m.offset = "radar-list", 0
 	m.radar = radarScreen{root: root}
-	return m
+	return m.focusRadarCommand()
 }
 
 func (m model) runRadar(args []string) (tea.Model, tea.Cmd) {
@@ -147,7 +147,7 @@ func (m model) radarKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			if !radarID.MatchString(m.radar.id) && !(m.radar.command == "etapa" && m.radar.id == "") {
 				m.radar.error = "ID no válido. Usá S123 o S1.11."
-				return m, nil
+				return m.focusRadarInput(), nil
 			}
 			args := []string{m.radar.command}
 			if m.radar.id != "" {
@@ -165,6 +165,9 @@ func (m model) radarKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.radar.id += " "
 		case tea.KeyCtrlC:
 			return m, tea.Quit
+		}
+		if m.page == "radar-id" {
+			m = m.focusRadarInput()
 		}
 		return m, nil
 	}
@@ -206,8 +209,10 @@ func (m model) radarKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "pgdown":
 		m.offset += max(1, m.height-1)
 	}
-	if m.page == "radar-list" && msg.String() != "pgup" && msg.String() != "pgdown" {
+	if m.page == "radar-list" {
 		m = m.focusRadarCommand()
+	} else if m.page == "radar-id" {
+		m = m.focusRadarInput()
 	}
 	m.offset = min(m.offset, m.maxOffset())
 	return m, nil
@@ -230,11 +235,21 @@ func (m model) focusRadarCommand() model {
 		block := len(m.wrap([]string{"  " + radarLabel(command.name), "  " + command.description}))
 		if i == m.radar.selected {
 			m.offset = min(m.offset, row)
-			m.offset = max(m.offset, min(row, row+block-max(1, m.height-1)))
+			m.offset = max(m.offset, min(row, row+block-max(1, m.viewportHeight())))
 			break
 		}
 		row += block
 	}
+	m.offset = min(m.offset, m.maxOffset())
+	return m
+}
+
+// Follow the end of the editable line when it wraps; the current input must
+// take priority over headings, optional help and validation errors.
+func (m model) focusRadarInput() model {
+	row := len(m.wrap([]string{"Radar · " + m.radar.command, "ID de Sesión (S123 o S1.11):"}))
+	end := row + len(m.wrap([]string{"> " + clean(m.radar.id)}))
+	m.offset = max(min(m.offset, row), end-max(1, m.viewportHeight()))
 	m.offset = min(m.offset, m.maxOffset())
 	return m
 }

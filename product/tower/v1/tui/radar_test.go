@@ -172,6 +172,49 @@ func TestRadarSessionIDsAndOptionalStage(t *testing.T) {
 	}
 }
 
+func TestRadarFocusOnSmallTerminals(t *testing.T) {
+	for _, size := range []tea.WindowSizeMsg{{Width: 12, Height: 2}, {Width: 28, Height: 3}, {Width: 12, Height: 1}} {
+		t.Run(fmt.Sprintf("%dx%d", size.Width, size.Height), func(t *testing.T) {
+			m := loaded(t, healthyJSON)
+			next, _ := m.Update(size)
+			m = next.(model).openRadar("/un/proyecto/con/una/ruta/muy/larga")
+			contains(t, m.View(), "> etapa [ID]")
+			for i := 0; i < len(radarCommands); i++ {
+				contains(t, m.View(), "> "+radarCommands[m.radar.selected].name)
+				next, _ = m.Update(tea.KeyMsg{Type: tea.KeyPgDown})
+				m = next.(model)
+				contains(t, m.View(), "> "+radarCommands[m.radar.selected].name)
+				m = keys(m, "down")
+			}
+			m = keys(m, "esc")
+			m = m.openRadar("/un/proyecto/con/una/ruta/muy/larga")
+			m = keys(m, "enter")
+			contains(t, m.View(), "> ")
+			m = keys(m, "S123456789123456789")
+			contains(t, m.View(), "789")
+		})
+	}
+	for _, command := range []string{"etapa", "sesion"} {
+		t.Run(command+"/edit-and-resize", func(t *testing.T) {
+			m := radarModel(t)
+			if command == "sesion" {
+				m = keys(m, "down", "down", "down")
+			}
+			m = keys(m, "enter", "S12")
+			next, _ := m.Update(tea.WindowSizeMsg{Width: 12, Height: 2})
+			m = next.(model)
+			contains(t, m.View(), "> S12")
+			m = keys(m, "!", "enter")
+			contains(t, m.View(), "> S12!")
+			next, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+			m = next.(model)
+			contains(t, m.View(), "> S12")
+			m = keys(m, "esc")
+			contains(t, m.View(), "> "+command)
+		})
+	}
+}
+
 func fakeRadarHome(t *testing.T) (string, string) {
 	t.Helper()
 	home := t.TempDir()

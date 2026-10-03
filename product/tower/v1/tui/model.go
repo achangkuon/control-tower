@@ -83,6 +83,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width, m.height = max(1, msg.Width), max(1, msg.Height)
 		if m.page == "radar-list" {
 			m = m.focusRadarCommand()
+		} else if m.page == "radar-id" {
+			m = m.focusRadarInput()
 		}
 	case radarResult:
 		if m.page == "radar-output" && m.radar.running && msg.id == m.sequence {
@@ -91,7 +93,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case clipboardResult:
 		if m.page == "project-prompt" {
-			m.copyFeedback = "Copiado"
+			m.copyFeedback = "Enviado al portapapeles de la terminal (si no aparece, seleccioná el texto)"
 			if msg.err != nil {
 				m.copyFeedback = "No se pudo copiar. Seleccioná el texto y copialo manualmente."
 			}
@@ -296,13 +298,21 @@ func (m model) pageLines() []string {
 	}
 	return body
 }
-func (m model) maxOffset() int { return max(0, len(m.pageLines())-max(1, m.height-1)) }
+func (m model) viewportHeight() int {
+	// With only one terminal row, interactive Radar content beats the footer.
+	if m.height == 1 && (m.page == "radar-list" || m.page == "radar-id") {
+		return 1
+	}
+	return max(0, m.height-1)
+}
+
+func (m model) maxOffset() int { return max(0, len(m.pageLines())-max(1, m.viewportHeight())) }
 func (m model) View() string {
 	if m.page == "home" {
 		return m.homeView()
 	}
 	body := m.pageLines()
-	space := max(0, m.height-1)
+	space := m.viewportHeight()
 	start := min(m.offset, m.maxOffset())
 	body = body[start:min(len(body), start+space)]
 	footer := "esc: volver · enter: continuar · ↑↓: desplazar"

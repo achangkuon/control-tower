@@ -162,6 +162,29 @@ function spliceBlock(bytes, block, name) {
     Buffer.concat([bytes, Buffer.from(separatorFor(bytes)), rendered, Buffer.from("\n")]);
 }
 
+// Admission is deliberately narrower than Markdown/path normalization: only an
+// exact standalone @AGENTS.md line, outside examples/comments, is an import.
+// CRLF is a line ending, not trailing content; aliases such as @./AGENTS.md are
+// left untouched and receive the canonical marked import instead.
+function hasAgentsImport(bytes) {
+  let fence = null, comment = false;
+  for (const line of bytes.toString("latin1").split(/\r?\n/)) {
+    const delimiter = /^[ \t]*(`{3,}|~{3,})(.*)$/.exec(line);
+    if (fence) {
+      if (delimiter && delimiter[1][0] === fence[0] && delimiter[1].length >= fence.length &&
+          /^[ \t]*$/.test(delimiter[2])) fence = null;
+      continue;
+    }
+    if (!comment && delimiter) { fence = delimiter[1]; continue; }
+    if (!comment && line === "@AGENTS.md") return true;
+    for (const match of line.matchAll(/<!--|-->/g)) {
+      if (match[0] === "<!--") comment = true;
+      else comment = false;
+    }
+  }
+  return false;
+}
+
 /** Pure, byte-preserving instruction planning; all markers are admitted before writes. */
 export function projectInstructionSnapshot(original, block) {
   instructionSnapshot(original);
@@ -172,7 +195,7 @@ export function projectInstructionSnapshot(original, block) {
     const bytes = fileBytes(entry.tree);
     let next;
     if (entry.path === "AGENTS.md") next = spliceBlock(bytes, block, workflowMarker);
-    else if (/^@AGENTS\.md\r?$/m.test(bytes.toString("latin1"))) continue;
+    else if (hasAgentsImport(bytes)) continue;
     else next = entry.tree.type === "absent" ? Buffer.from("@AGENTS.md\n") : spliceBlock(bytes, importBlock, importMarker);
     entry.tree = fileTree(next, entry.tree.mode);
   }
