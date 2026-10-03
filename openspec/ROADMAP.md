@@ -1268,7 +1268,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/tui/projects&#95;test.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs
+  - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/tui/projects&#95;test.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/test/cli.test.mjs
   - Depende de: S196, S199
   - Recursos: —
   - Ejecución: ODD nativo.

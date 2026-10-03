@@ -2197,7 +2197,7 @@ sesiones:
     resultado: "El instalador ofrece Sumar un proyecto con un prompt listo para copiar y muestra cada proyecto como Torre activa, Falta armar el plan o Solo skills."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el prompt único sin ruta y los tres estados de proyecto."
     depende_de: [S196, S199]
-    archivos: [product/tower/v1/tui/projects.go, product/tower/v1/tui/projects_test.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs]
+    archivos: [product/tower/v1/tui/projects.go, product/tower/v1/tui/projects_test.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/test/cli.test.mjs]
     cimientos: []
     recurso: []
     encargo:
