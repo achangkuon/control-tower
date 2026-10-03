@@ -4,14 +4,14 @@
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S183, S185, S186, S187, S188, S189, S191, S2.8, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: ninguno.
+- Próximo trabajo ejecutable: Producto Torre #1 → S192 — Los agentes de un proyecto con la Torre leen en su AGENTS.md el flujo V1 completo con su diagrama, el router de skills y el uso de Radar, sin chocar con Gentle AI..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Producto Torre #1 → S192 — Los agentes de un proyecto con la Torre leen en su AGENTS.md el flujo V1 completo con su diagrama, el router de skills y el uso de Radar, sin chocar con Gentle AI.
 
 ## Avance
-- **Total:** 89% (116/130 S)
+- **Total:** 81% (116/142 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,8 +24,8 @@
 - **Hosts:** 42% (3/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (40/42 S)
-- **Producto Torre:** 86% (13/15 S)
+- **Método:** 90% (40/44 S)
+- **Producto Torre:** 52% (13/25 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -63,9 +63,19 @@
 
 ### Método (metodo)
 1. **S176** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
+2. **S193** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · Las skills V1 y el canon funcionan solos, sin bloques personales y sin contradicciones de V2/V3.
+3. **S197** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · La máquina de Emilio pasa al instalador único: install.py sólo administra los bloques personales Generados por Chanks y migra los bloques viejos sin duplicar.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S192** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Los agentes de un proyecto con la Torre leen en su AGENTS.md el flujo V1 completo con su diagrama, el router de skills y el uso de Radar, sin chocar con Gentle AI.
+2. **S194** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · La release publicada trae las skills V1, el sistema de firmas y las plantillas de instrucciones, verificadas como el resto del paquete.
+3. **S195** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · Instalar o actualizar deja en la máquina skills V1, Radar, firmas e instrucción global en los cuatro agentes, verifica Gentle AI y desinstalar lo quita todo.
+4. **S196** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · Adoptar un proyecto escribe el bloque de la Torre en su AGENTS.md y un CLAUDE.md que lo importa, y actualizar refresca todos los proyectos adoptados.
+5. **S198** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · La interfaz muestra versiones legibles como v1.1.0, columnas alineadas con avisos al costado del menú y el estado de Gentle AI.
+6. **S199** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · Instalar o actualizar ya no pide versión: busca la última publicada y, si no hay nada nuevo, dice Todas las configuraciones al día.
+7. **S200** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · El instalador ofrece Sumar un proyecto con un prompt listo para copiar y muestra cada proyecto como Torre activa, Falta armar el plan o Solo skills.
+8. **S201** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · Dentro de un proyecto con la Torre activa se elige un comando de Radar de solo lectura, se ve su salida y se vuelve a elegir otro.
+9. **S202** · 📋 PLANIFICADO · espera-natural (S192) · prioridad Torre V1 · Adopción project-local reversible · No se puede publicar una release cuyo bloque de instrucciones no esté al día con esa versión.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1148,6 +1158,174 @@
   - Resultado y comportamiento: El constructor de releases compila la interfaz para Linux y macOS (amd64 y arm64) desde un commit limpio, como assets separados cuyos SHA-256 quedan fijados en el instalador sellado. El instalador baja y verifica sólo el binario de la plataforma antes de usarlo y lo instala junto a la versión activa. torre-control sin argumentos en una terminal abre la interfaz; si no está disponible o falla al iniciar, cae al menú actual. README y la guía para agentes se actualizan. Se publica la release v1.1.0 y se repite la prueba de socio de punta a punta; la prueba en Mac queda registrada.
   - Restricciones y decisiones: Se mantiene S174: gh autenticado, tag exacto, nada sin verificar. Release privado, decisión de publicar aparte. Sólo los archivos declarados y README.md como Cimiento. Pronóstico de 300–500 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
   - Referencias: release-build.mjs, install.mjs, global.mjs (lanzador y almacén de versiones), bootstrap.mjs límites de miembros; S184 pendiente de la prueba en Mac.
+
+### S192 — Los agentes de un proyecto con la Torre leen en su AGENTS.md el flujo V1 completo con su diagrama, el router de skills y el uso de Radar, sin chocar con Gentle AI.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/instructions/project-agents.md, product/tower/v1/instructions/global-pointer.md, product/tower/v1/test/instructions.test.mjs
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Los agentes no seguían el flujo de Emilio porque ningún archivo de instrucciones se lo describía al orquestador. Las instrucciones globales actuales mezclan Torre con configuración personal, contienen restos de V2/V3 y no enseñan cuándo usar cada comando de Radar ni qué skill cargar en cada etapa.
+  - Resultado y comportamiento: Existen dos plantillas versionadas con marcas propias de Control Tower. La del proyecto contiene el diagrama del flujo V1 (radar etapa → Etapa 1 Definir → Etapa 2 Preparar → radar check → radar status → Etapa 3 lote aprobado con subagentes → Etapa 4 Gentle AI → Etapa 5 entrega según política del repo → cierre archivar/check/render, con la rama Retomar), el router de skills por etapa, una guía de comandos de Radar y la frontera Chanks decide qué, Gentle AI decide cómo. La global, de pocas líneas, ordena leer el AGENTS.md del proyecto sólo cuando el proyecto tiene la Torre configurada. Antes de escribirlas se le presenta a Emilio el texto completo propuesto y él lo aprueba.
+  - Restricciones y decisiones: No contradice a Gentle AI: la entrega la decide el humano según la política del repo, ODD es evidencia técnica subordinada y la Torre no impone revisión ni commits propios. Sin jornada, admisión de Radar, cola de salida ni marcadores de despacho (V2/V3). Marcas con formato control-tower:NOMBRE, distintas de gentle-ai:NOMBRE. Texto en inglés como el resto de las instrucciones.
+  - Referencias: Diagrama del artifact de Emilio (2026-10-01) adaptado a V1; bloques gentle-ai en ~/.claude/CLAUDE.md como modelo de estructura; agent-workflows/templates/ session-routing.md y plan-naming.md como material a depurar.
+
+### S193 — Las skills V1 y el canon funcionan solos, sin bloques personales y sin contradicciones de V2/V3.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/templates/plan-naming.md, agent-workflows/templates/session-routing.md, agent-workflows/tools/radar/README.md, agent-workflows/skills/chanks-1-adopcion/SKILL.md, agent-workflows/skills/chanks-1-autoridad/SKILL.md, agent-workflows/skills/chanks-1-brain-dump/SKILL.md, agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md, agent-workflows/skills/chanks-1-descubrimiento/SKILL.md, agent-workflows/skills/chanks-1-feature/SKILL.md, agent-workflows/skills/chanks-1-heredado/SKILL.md, agent-workflows/skills/chanks-1-prd/SKILL.md, agent-workflows/skills/chanks-1-project-kickoff/SKILL.md, agent-workflows/skills/chanks-1-requirements/SKILL.md, agent-workflows/skills/chanks-1-rfc/SKILL.md, agent-workflows/skills/chanks-1-terreno/SKILL.md, agent-workflows/skills/chanks-2-planificador-granular/SKILL.md, agent-workflows/skills/chanks-3-paralelo/SKILL.md, agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/skills/chanks-5-politica-de-entrega/SKILL.md, agent-workflows/skills/chanks-0-explicalo-simple/SKILL.md, agent-workflows/skills/chanks-0-session-context-loader/SKILL.md, agent-workflows/skills/chanks-0-mensajes-visibles/SKILL.md, agent-workflows/skills/chanks-0-skill-composer/SKILL.md, agent-workflows/skills/analisis-por-tramos/SKILL.md, agent-workflows/skills/skill-orchestrator/SKILL.md
+  - Depende de: S192
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Un socio recibirá estas skills sin los bloques personales de Emilio. Hoy el canon exige "admisión fresca de Radar" mientras el ruteo dice que no hay admisión; el README de Radar aún menciona session-kickoff y marcadores de despacho; varias skills pueden apoyarse en reglas que sólo viven en el CLAUDE.md personal.
+  - Resultado y comportamiento: Cada skill V1 listada se lee y funciona con lo que viaja en el paquete: canon, plantilla del proyecto de S192 y las demás skills V1. Se eliminan las contradicciones de admisión, los conceptos de V2/V3 presentados como vigentes y las referencias a skills fuera de V1 o a herramientas personales. Las suites de agent-workflows quedan verdes.
+  - Restricciones y decisiones: Lista V1 cerrada: todas las chanks-1-&#42;, chanks-2-planificador-granular, chanks-3-paralelo, chanks-4-puente, chanks-5-politica-de-entrega, chanks-0-explicalo-simple, chanks-0-session-context-loader, chanks-0-mensajes-visibles, chanks-0-skill-composer, analisis-por-tramos, skill-orchestrator y &#95;shared. Fuera: jornada, despacho-herdr, unattended-implementation, coordinador-manual, session-kickoff, session-doc, agente-soporte. Sólo se tocan archivos que lo necesiten; no se renombran skills ni triggers.
+  - Referencias: Auditoría read-only de bloques del 2026-10-02 (Engram tower-v1/installer-skills-and-migration-audit); install.py:53-59 sobre session-kickoff diferida.
+
+### S194 — La release publicada trae las skills V1, el sistema de firmas y las plantillas de instrucciones, verificadas como el resto del paquete.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs, product/tower/v1/bootstrap.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs
+  - Depende de: S192, S193
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El paquete actual sólo lleva el código de Radar y la skill control-tower; las skills de Chanks, las firmas y las instrucciones nunca llegan a un socio.
+  - Resultado y comportamiento: La membresía cerrada del paquete incluye las skills V1 con sus referencias, el canon &#95;shared, las plantillas de S192 y las fuentes del sistema de firmas para Claude Code y Pi. La release se construye desde commit limpio y respeta los límites de tamaño, o se ajustan con justificación explícita.
+  - Restricciones y decisiones: Se mantiene el modelo de confianza: membresía explícita, rutas canónicas, verificación SHA-256. Ninguna skill fuera de la lista V1 entra. No se publica en esta Sesión.
+  - Referencias: bundle.mjs BUNDLE&#95;MEMBERS; bootstrap.mjs RELEASE&#95;PATHS y límites; agent-workflows/tools/hooks/torre-firma.sh, chanks-etapa.sh y agent-workflows/chanks/torre-firma.mjs como fuentes de firmas.
+
+### S195 — Instalar o actualizar deja en la máquina skills V1, Radar, firmas e instrucción global en los cuatro agentes, verifica Gentle AI y desinstalar lo quita todo.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs
+  - Depende de: S194
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Hoy las skills y bloques los instala agent-workflows/tools/install.py sólo en la máquina de Emilio; Radar no queda como comando y las firmas no se registran.
+  - Resultado y comportamiento: La instalación global copia las skills V1 a ~/.agents/skills y las expone a Claude Code, compila e instala Radar como comando, registra las firmas en Claude Code y Pi, y escribe el bloque global de S192 entre marcas control-tower en CLAUDE.md, los AGENTS.md de Codex y OpenCode y el APPEND&#95;SYSTEM de Pi. Verifica Gentle AI y su versión como requisito. Un modo local instala desde el checkout para probar antes de publicar. Desinstalar quita sólo lo de la Torre. Todo es idempotente.
+  - Restricciones y decisiones: Nunca toca bloques gentle-ai ni bloques personales de Chanks. Compilación de Go con el entorno restringido ya aprobado (GOWORK=off, GOENV=off). No pisa skills ajenas con el mismo nombre sin respaldo. Las pruebas usan HOME aislado.
+  - Referencias: install.py (copias, enlaces de Claude, inyección de bloques) como antecedente; tools/install-radar.sh; captura del instalador de septiembre con gentle-ai.
+
+### S196 — Adoptar un proyecto escribe el bloque de la Torre en su AGENTS.md y un CLAUDE.md que lo importa, y actualizar refresca todos los proyectos adoptados.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs
+  - Depende de: S195
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Codex, OpenCode y Pi leen solos el AGENTS.md del proyecto; Claude Code lee CLAUDE.md. La adopción actual no escribe instrucciones.
+  - Resultado y comportamiento: project init inserta el bloque de proyecto de S192 entre marcas en AGENTS.md y asegura un CLAUDE.md con @AGENTS.md, preservando el texto propio del proyecto. Desinstalar quita sólo esos bloques y restaura el estado original. Al actualizar la Torre, cada proyecto registrado y sano recibe el bloque nuevo y el resultado informa qué proyectos cambiaron.
+  - Restricciones y decisiones: No commitea en el proyecto: el cambio queda visible para el humano. Mantiene confianza explícita y el journal de adopción reversible. Un proyecto inaccesible o con bloque alterado se informa y no se fuerza.
+  - Referencias: adoption.mjs (journal, snapshots); projects.mjs (registro); Engram tower-v1/installer-skills-and-migration.
+
+### S197 — La máquina de Emilio pasa al instalador único: install.py sólo administra los bloques personales Generados por Chanks y migra los bloques viejos sin duplicar.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tests/test&#95;install.py, agent-workflows/README.md, agent-workflows/templates/doc-guard-rule.md, agent-workflows/templates/explain-to-maintainer.md, agent-workflows/templates/agent-propagation-map.md
+  - Depende de: S195, S196
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Si install.py y la Torre escriben las mismas skills y bloques, el último en correr gana. Los bloques actuales están marcados MANUAL y mezclan Torre con configuración personal.
+  - Resultado y comportamiento: install.py deja de instalar lo que ahora entrega la Torre y sólo administra los bloques personales con marcas propias de Chanks. Una migración única reemplaza los bloques MANUAL viejos por bloques Torre o Chanks sin duplicar ni perder texto, con respaldo previo. La guía de propagación personal refleja el nuevo flujo.
+  - Restricciones y decisiones: Requiere autorización explícita antes de tocar los archivos personales reales. Parte del árbol vigente: los cambios de avisos Pi ya entregados por otro agente se conservan. Nunca toca bloques gentle-ai.
+  - Referencias: install.py MANUAL&#95;BLOCKS (176-187) y RETIRED; ~/.claude/.skill-backups/ manual-blocks.py; bloque review-lifecycle-policy.
+
+### S198 — La interfaz muestra versiones legibles como v1.1.0, columnas alineadas con avisos al costado del menú y el estado de Gentle AI.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/tui/styles.go, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs
+  - Depende de: S195
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Inicio y Diagnóstico muestran 2e2dfcf, el prefijo de la huella del paquete, que no dice qué versión es; el tag ya está guardado en provenance.json.
+  - Resultado y comportamiento: doctor expone el tag de la versión activa y anterior, y el estado de Gentle AI. Inicio y Diagnóstico muestran "v1.1.0 · Anterior: v1.0.2" y caen a la huella sólo si no hay tag. El estado se dibuja en columnas alineadas y cada opción del menú admite un aviso a la derecha, como el instalador de septiembre.
+  - Restricciones y decisiones: Sólo lectura de provenance existente; no cambia identidad ni verificación de releases. Interfaz en español; se conserva el comportamiento responsive de S191.
+  - Referencias: home.go:22-26, 44-49, 115-137; global.mjs:171-186, 475-479; capturas del 2026-09-09 y 2026-10-02.
+
+### S199 — Instalar o actualizar ya no pide versión: busca la última publicada y, si no hay nada nuevo, dice Todas las configuraciones al día.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard&#95;test.go, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs
+  - Depende de: S198
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El asistente pide etiqueta, asset y SHA-256 a mano y rechaza latest; para alguien no técnico es fricción pura.
+  - Resultado y comportamiento: La actualización consulta la última release publicada del repo privado, la compara con el tag instalado y, si es más nueva, la baja y verifica con la huella publicada junto a esa misma release. Si no hay nada nuevo muestra "Todas las configuraciones al día". La opción manual por tag queda para casos avanzados.
+  - Restricciones y decisiones: Riesgo aceptado por Emilio: huella del mismo origen, mitigado por repo privado y gh autenticado. Toda descarga se verifica antes de usarse. La release publica su huella en un asset propio.
+  - Referencias: release.mjs:39-49; wizard.go:29-31, 113-122, 204-246; Engram tower-v1/tui-patch-2026-10.
+
+### S200 — El instalador ofrece Sumar un proyecto con un prompt listo para copiar y muestra cada proyecto como Torre activa, Falta armar el plan o Solo skills.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/tui/projects&#95;test.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs
+  - Depende de: S196, S199
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La adopción mecánica la hace el instalador, pero armar el plan exige criterio y conversación; un socio no técnico necesita que el instalador le diga qué pedirle a su agente.
+  - Resultado y comportamiento: Una opción del inicio abre una pantalla con un solo prompt copiable, sin ruta: pide al agente preguntar qué proyecto usar (el actual u otro), si hacer migración completa o sólo lo que falta (recomendando lo que falta), adoptar el proyecto y armar su plan sin guardar nada sin aprobación. La lista de proyectos muestra 🟢 Torre activa (adoptado con openspec/plan.yaml), 🟡 Falta armar el plan (con el mismo prompt a mano) o ⚪ Solo skills.
+  - Restricciones y decisiones: El instalador no migra planes ni decide por el humano. Copiar al portapapeles es opcional; el texto siempre queda seleccionable.
+  - Referencias: projects.go:9-49, 80-89; projects.mjs:167-190; skill chanks-1-adopcion.
+
+### S201 — Dentro de un proyecto con la Torre activa se elige un comando de Radar de solo lectura, se ve su salida y se vuelve a elegir otro.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/radar.go, product/tower/v1/tui/radar&#95;test.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/projects&#95;test.go, product/tower/v1/tui/model.go
+  - Depende de: S195, S200
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Emilio quiere que la interfaz sea también una guía de Radar para quien no sabe sus comandos.
+  - Resultado y comportamiento: El detalle de un proyecto activo lista check, status, faltan, sesion, etapa, zonas y roadmap, cada uno con una línea que explica qué hace. sesion pide un ID y etapa lo acepta opcional. La salida se muestra con desplazamiento y al salir se vuelve a la lista para correr otro.
+  - Restricciones y decisiones: Excluidos archivar, marcar, desmarcar y render porque modifican el plan. Usa el Radar instalado por S195, ejecutado en la raíz del proyecto, sin shell.
+  - Referencias: agent-workflows/tools/radar/main.go:12-33, 70-171.
+
+### S202 — No se puede publicar una release cuyo bloque de instrucciones no esté al día con esa versión.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S192)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/test/instructions.test.mjs
+  - Depende de: S194
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Si la Torre cambia y su bloque no, los agentes siguen un flujo viejo.
+  - Resultado y comportamiento: El constructor de releases rechaza construir si las plantillas no declaran la versión que se publica o si no nombran cada comando de torre-control y Radar que la versión expone. La prueba lo cubre.
+  - Restricciones y decisiones: Chequeo estructural determinista; no evalúa calidad del texto. Errores en español claro.
+  - Referencias: release-build.mjs; plantillas de S192.
+
+### S203 — Cada proyecto puede prender o apagar la Torre desde el instalador.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/projects.mjs
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: V1 no tiene interruptor: adoptar un proyecto equivale a prenderla. Lo que de verdad se prende y apaga es la Pista de V2, que todavía no existe.
+  - Resultado y comportamiento: Desde el detalle de un proyecto adoptado se prende o apaga la Torre para ese proyecto, y el estado se ve en la lista de proyectos.
+  - Restricciones y decisiones: Se prepara cuando existan las Sesiones de la Pista V2; hasta entonces queda diferida; los archivos se confirman al prepararla.
+  - Referencias: docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:
@@ -3962,7 +4140,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
