@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +19,114 @@ import (
 )
 
 const taggedJSON = `{"schema":"tower.v1.status/1","engine":{"installed":true,"status":"healthy","active":"123456789abcdef","previous":"abcdef123456789","activeTag":"v1.1.0","previousTag":"v1.0.2","components":{"gentleAi":{"status":"ok","version":"4.0.0"}}},"projects":[{"projectRoot":"/proyecto","status":"healthy"}],"prerequisites":{"gh":{"present":true,"version":"2.90.0","authenticated":true},"bun":{"present":true,"version":"1.3.0"},"git":{"present":true,"version":"2.50.0"},"go":{"present":true,"version":"1.26.4"}},"agents":{"claude":{"executable":true},"pi":{"config":true}},"system":{"os":"linux","arch":"x64","shell":"bash"}}`
+
+const expectedProjectPrompt = "Quiero usar la Torre de Control en un proyecto. Preguntame en cuál: el que tenés abierto u otro.\n" +
+	"Después preguntame si hago una migración completa o solo lo que falta, y recomendame solo lo que falta.\n" +
+	"Instalá la Torre en ese proyecto con `torre-control project init` y armá su plan con la skill\n" +
+	"chanks-1-adopcion (o chanks-1-project-kickoff si el proyecto está vacío). No guardes nada sin mi aprobación."
+
+func openProjectPrompt(t *testing.T) model {
+	t.Helper()
+	m := loaded(t, healthyJSON)
+	m.width = 140
+	index := slices.Index(menu, "Sumar un proyecto")
+	if index < 0 {
+		t.Fatal("Home lacks Sumar un proyecto")
+	}
+	m.selected = index
+	contains(t, m.View(), "Sumar un proyecto", "(prompt para tu agente)")
+	m, cmd := key(m, "enter")
+	if cmd != nil {
+		t.Fatal("prompt screen executed an operation")
+	}
+	return m
+}
+
+func TestProjectPromptExactSelectableAndNarrow(t *testing.T) {
+	m := openProjectPrompt(t)
+	view := m.View()
+	contains(t, view, expectedProjectPrompt, "Copiá este texto y pegáselo a tu agente (Claude Code, Codex, OpenCode o Pi), abierto en cualquier carpeta.", "c: copiar", "esc")
+	if strings.Count(view, "Quiero usar la Torre") != 1 || strings.Contains(view, "/proyecto") || strings.ContainsAny(view, "│─┌┐└┘") {
+		t.Fatal("prompt is duplicated, path-bound or boxed")
+	}
+	t.Log("Prompt screen:\n" + view)
+	for _, size := range []tea.WindowSizeMsg{{Width: 28, Height: 12}, {Width: 10, Height: 3}, {Width: 1, Height: 1}} {
+		next, _ := m.Update(size)
+		m = next.(model)
+		if len(strings.Split(m.View(), "\n")) > size.Height {
+			t.Fatal("height overflow")
+		}
+		for _, line := range strings.Split(m.View(), "\n") {
+			if ansi.StringWidth(line) > size.Width {
+				t.Fatal("width overflow")
+			}
+		}
+		if size.Width == 28 {
+			contains(t, strings.Join(m.pageLines(), "\n"), "Quiero usar la Torre de", "chanks-1-adopcion")
+			m = keys(m, "down", "down")
+			if m.offset == 0 {
+				t.Fatal("narrow prompt cannot scroll")
+			}
+		}
+	}
+	m = keys(m, "esc")
+	if m.page != "home" {
+		t.Fatal("prompt did not return home")
+	}
+	// This passive prompt must remain available even when status cannot load.
+	m.width = 140
+	m.loading, m.statusError = true, "sin conexión"
+	m = keys(m, "enter")
+	contains(t, strings.Join(m.pageLines(), "\n"), "Quiero")
+}
+
+type clipboardProbe struct{ model }
+
+func (p clipboardProbe) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	next, cmd := p.model.Update(msg)
+	p.model = next.(model)
+	if strings.Contains(p.View(), "Copiado") {
+		return p, tea.Quit
+	}
+	return p, cmd
+}
+
+func TestProjectPromptClipboardOSC52ThroughBubbleTea(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		width int
+	}{{"wide", 140}, {"narrow", 28}} {
+		t.Run(tt.name, func(t *testing.T) {
+			m := openProjectPrompt(t)
+			m.width, m.height = tt.width, 12
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			var output bytes.Buffer
+			program := tea.NewProgram(clipboardProbe{m}, tea.WithContext(ctx), tea.WithInput(strings.NewReader("")), tea.WithOutput(&output), tea.WithAltScreen(), tea.WithoutSignalHandler())
+			go program.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+			result, err := program.Run()
+			if err != nil {
+				t.Fatal(err)
+			}
+			contains(t, result.View(), "Copiado")
+			want := "\x1b]52;c;" + base64.StdEncoding.EncodeToString([]byte(expectedProjectPrompt)) + "\x07"
+			if !strings.Contains(output.String(), want) {
+				t.Fatalf("OSC52 not emitted through Bubble Tea output: %q", output.String())
+			}
+		})
+	}
+}
+
+func TestProjectPromptClipboardFailureStaysSelectable(t *testing.T) {
+	m := openProjectPrompt(t)
+	next, _ := m.Update(clipboardResult{errors.New("output unavailable")})
+	m = next.(model)
+	contains(t, m.View(), "No se pudo copiar", expectedProjectPrompt)
+	m = keys(m, "esc", "enter")
+	if strings.Contains(m.View(), "No se pudo copiar") {
+		t.Fatal("stale copy feedback on reopening")
+	}
+}
 
 func TestReadableVersions(t *testing.T) {
 	for _, tt := range []struct{ name, data, active, previous string }{
@@ -240,7 +351,7 @@ func TestNavigation(t *testing.T) {
 			t.Fatalf("%s: not a quit message", k)
 		}
 	}
-	m.selected = 5
+	m.selected = len(menu) - 1
 	_, cmd := key(m, "enter")
 	if _, ok := cmd().(tea.QuitMsg); !ok {
 		t.Fatal("Salir did not quit")
@@ -309,9 +420,9 @@ func TestBoundariesAndLateDiagnostic(t *testing.T) {
 	if m.selected != 0 {
 		t.Fatal("selection escaped top boundary")
 	}
-	m.selected = 5
+	m.selected = len(menu) - 1
 	m, _ = key(m, "down")
-	if m.selected != 5 {
+	if m.selected != len(menu)-1 {
 		t.Fatal("selection escaped bottom boundary")
 	}
 	m.selected = 3

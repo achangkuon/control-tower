@@ -532,9 +532,9 @@ test("registered init, doctor, list and uninstall preserve local results and rec
   success(checked);
   expect(checked.value.localResult.status).toBe("healthy");
   const before = readFileSync(join(f.registry, "registry.json"));
-  expect(invoke(f, ["list"]).value).toEqual([{ projectRoot: path, registered: true, status: "healthy" }]);
+  expect(invoke(f, ["list"]).value).toEqual([{ projectRoot: path, registered: true, status: "healthy", towerState: "needs-plan" }]);
   success(invoke(f, local("uninstall")));
-  expect(invoke(f, ["list"]).value[0].status).toBe("unadopted");
+  expect(invoke(f, ["list"]).value).toEqual([{ projectRoot: path, registered: true, status: "unadopted", towerState: "skills-only" }]);
   expect(readFileSync(join(f.registry, "registry.json"))).toEqual(before);
   expect(readFileSync(join(path, "sentinel"), "utf8")).toBe("unrelated");
   // Uninstall already removed the journal: cleanup must fail closed, not invent residue.

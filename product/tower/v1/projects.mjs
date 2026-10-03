@@ -165,7 +165,8 @@ export const uninstallRegisteredProject = (options) => registeredOperation(optio
 export const cleanupRegisteredProject = (options) => registeredOperation(options, "cleanup", cleanupProject);
 
 function liveStatus(projectRoot, registered) {
-  const result = (status, error) => Object.freeze({ projectRoot, registered, status, ...(error ? { error } : {}) });
+  const result = (status, error, towerState) => Object.freeze({ projectRoot, registered, status,
+    ...(towerState ? { towerState } : {}), ...(error ? { error } : {}) });
   let current = parse(projectRoot).root;
   try {
     for (const part of projectRoot.slice(current.length).split(sep)) {
@@ -175,13 +176,22 @@ function liveStatus(projectRoot, registered) {
       if (!entry.isDirectory()) return result("unsafe", new Error(`Unsafe project root component: ${current}`));
       if (!(entry.mode & 0o444) || !(entry.mode & 0o111)) return result("inaccessible", new Error(`Inaccessible project root component: ${current}`));
     }
-    if (!stat(join(projectRoot, JOURNAL))) return result("unadopted");
+    if (!stat(join(projectRoot, JOURNAL))) return result("unadopted", null, registered ? "skills-only" : undefined);
   } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "unsafe", error); }
   try {
     const doctor = doctorProject({ projectRoot });
     if (["missing", "modified"].includes(doctor.instructions)) return result("invalid", new Error(`Project instructions ${doctor.instructions}`));
-    return result("healthy");
   } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "invalid", error); }
+  try {
+    // Inspect each component without following links; plan contents are not needed.
+    const directory = stat(join(projectRoot, "openspec"));
+    if (!directory) return result("healthy", null, "needs-plan");
+    if (!directory.isDirectory()) return result("unsafe", new Error("Unsafe openspec directory"));
+    if (!(directory.mode & 0o444) || !(directory.mode & 0o111)) return result("inaccessible", new Error("Inaccessible openspec directory"));
+    const plan = stat(join(projectRoot, "openspec/plan.yaml"));
+    if (plan && !plan.isFile()) return result("unsafe", new Error("Unsafe plan.yaml file"));
+    return result("healthy", null, plan ? "active" : "needs-plan");
+  } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "unsafe", error); }
 }
 
 /** Read-only live reconciliation; membership grants neither trust nor cached health. */

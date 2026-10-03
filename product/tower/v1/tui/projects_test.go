@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ func TestProjectActions(t *testing.T) {
 			m, calls := actionModel(t, true)
 			m.selected = 2
 			m = keys(m, "enter")
-			contains(t, m.View(), "/proyecto", "sano", "Adoptar un proyecto nuevo")
+			contains(t, m.View(), "/proyecto", "sano", "Sumar un proyecto")
 			m = keys(m, "enter")
 			for n := 0; n < i; n++ {
 				m = keys(m, "down")
@@ -45,8 +46,8 @@ func TestProjectActions(t *testing.T) {
 }
 func TestAdoptProject(t *testing.T) {
 	m, calls := actionModel(t, true)
-	m.selected = 2
-	m = keys(m, "enter", "down", "enter")
+	// Retain coverage for the existing manual adoption workflow, no longer a menu entry.
+	m.page, m.flow = "wizard", workflow{action: "init", step: 1}
 	for _, path := range []string{"", "relative"} {
 		m.flow.root = path
 		m = keys(m, "enter")
@@ -79,6 +80,61 @@ func TestAdoptProject(t *testing.T) {
 	}
 	contains(t, m.View(), "La operación en el proyecto se completó, pero no se pudo actualizar la lista de proyectos", "denied")
 }
+func TestTowerProjectStatesAndPlanPrompt(t *testing.T) {
+	m := loaded(t, healthyJSON)
+	m.status.Projects = json.RawMessage(`[{"projectRoot":"/activo","status":"healthy","towerState":"active"},{"projectRoot":"/sin-plan","status":"healthy","towerState":"needs-plan"},{"projectRoot":"/skills","status":"unadopted","towerState":"skills-only"}]`)
+	m.selected = 2
+	m = keys(m, "enter")
+	contains(t, m.View(), "🟢 Torre activa", "🟡 Falta armar el plan", "⚪ Solo skills", "Sumar un proyecto")
+	t.Log("Three-state project list:\n" + m.View())
+	m = keys(m, "down", "enter")
+	contains(t, m.View(), "Ver el prompt para armar el plan", "Revisar", "Desinstalar", "Limpiar residuos")
+	m = keys(m, "enter")
+	contains(t, m.View(), "Quiero usar la Torre de Control")
+	m = keys(m, "esc")
+	if m.page != "projects" || !m.projectMenu {
+		t.Fatal("prompt did not return to plan actions")
+	}
+	m = keys(m, "esc", "down", "down", "enter")
+	contains(t, m.View(), "Quiero usar la Torre de Control")
+	m = keys(m, "esc")
+	if m.page != "projects" {
+		t.Fatal("prompt lost project list origin")
+	}
+}
+
+func TestTowerStateDoesNotHideProjectErrors(t *testing.T) {
+	for _, tt := range []struct{ status, label string }{{"missing", "ausente"}, {"unsafe", "inseguro"}, {"inaccessible", "inaccesible"}, {"invalid", "inválido"}} {
+		t.Run(tt.status, func(t *testing.T) {
+			m := loaded(t, healthyJSON)
+			m.status.Projects = json.RawMessage(`[{"projectRoot":"/proyecto","status":"` + tt.status + `","towerState":"active"}]`)
+			m.page = "projects"
+			contains(t, m.View(), tt.label)
+			if strings.Contains(m.View(), "Torre activa") {
+				t.Fatal("Tower state hid an error")
+			}
+		})
+	}
+}
+
+func TestNeedsPlanKeepsLifecycleActions(t *testing.T) {
+	for i, action := range []string{"doctor", "uninstall", "cleanup"} {
+		t.Run(action, func(t *testing.T) {
+			m := loaded(t, healthyJSON)
+			m.status.Projects = json.RawMessage(`[{"projectRoot":"/sin-plan","status":"healthy","towerState":"needs-plan"}]`)
+			m.page = "projects"
+			m = keys(m, "enter")
+			for n := 0; n <= i; n++ {
+				m = keys(m, "down")
+			}
+			m = keys(m, "enter")
+			if m.page != "wizard" || m.flow.action != action || m.flow.root != "/sin-plan" {
+				t.Fatalf("wrong lifecycle action: %+v", m.flow)
+			}
+		})
+	}
+}
+
 func TestStaleDiagnosticAndScroll(t *testing.T) {
 	m, _ := actionModel(t, true)
 	m.selected = 3

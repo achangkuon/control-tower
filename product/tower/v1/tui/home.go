@@ -17,7 +17,7 @@ const towerLogo = `        ╷
  ╭─┴─────────┴─╮
 ─────────────────`
 
-var menu = []string{"Instalar o actualizar", "Volver a la versión anterior", "Proyectos", "Diagnóstico", "Ayuda", "Salir"}
+var menu = []string{"Instalar o actualizar", "Volver a la versión anterior", "Proyectos", "Diagnóstico", "Ayuda", "Sumar un proyecto", "Salir"}
 
 func short(version string) string {
 	if version == "" {
@@ -83,7 +83,7 @@ func (m model) statusLines(compact bool) []string {
 	} else {
 		entries := []string{statusRow("Proyectos", fmt.Sprint(len(projects)))}
 		for _, project := range projects {
-			entries = append(entries, "  "+clean(project.ProjectRoot)+": "+m.health(project.Status))
+			entries = append(entries, "  "+clean(project.ProjectRoot)+": "+m.projectHealth(project))
 		}
 		if compact {
 			lines = append(lines, strings.Join(entries, " · "))
@@ -132,7 +132,7 @@ func (m model) statusLines(compact bool) []string {
 	systemLine := statusRow("Sistema", clean(system.OS+"/"+system.Arch+" · "+system.Shell))
 	if compact {
 		// Keep the system summary in the short layout; detailed rows follow if space permits.
-		lines = append(lines[1:], systemLine)
+		lines = append([]string{systemLine}, lines[1:]...)
 		return append(lines, statusRow("Requisitos", strings.Join(requirements[1:], " · ")), statusRow("Agentes", strings.Join(agents[1:], " · ")))
 	}
 	lines = append(lines, requirements...)
@@ -150,7 +150,7 @@ func (m model) homeView() string {
 		version = readableVersion(m.status.Engine.ActiveTag, m.status.Engine.Active)
 	}
 	header := []string{m.palette.tower.Render("Torre de Control V1"), m.palette.dim.Render("Versión: " + version)}
-	hints := map[int]string{}
+	hints := map[int]string{5: "prompt para tu agente"}
 	if !m.loading && m.statusError == "" && m.status.Schema != "" {
 		if m.height >= 18 {
 			header = append(header, m.palette.dim.Render(activationLine(m.status.Engine)))
@@ -165,7 +165,7 @@ func (m model) homeView() string {
 	}
 	tail := append([]string{""}, m.menuLines(hints)...)
 	tail = append(tail, "", "↑↓ o j/k mover · enter elegir · a: Versión específica (avanzado) · r refrescar · q salir")
-	if m.height < 11 {
+	if m.height < 12 {
 		tail = append(tail[1:len(tail)-2], tail[len(tail)-1])
 		header = header[:min(len(header), max(0, m.height-len(tail)))]
 	}

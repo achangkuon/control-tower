@@ -58,7 +58,7 @@ test("real init, doctor and uninstall delegate, retaining informational membersh
   expect(initRegisteredProject(trusted)).toMatchObject({ localResult: { status: "installed" }, registry: { status: "recorded", published: true } });
   expect(doctorRegisteredProject(options).localResult).toEqual({ status: "healthy", instructions: "ok" });
   const before = snapshot(projectRoot), index = snapshot(registryRoot);
-  expect(listProjects({ registryRoot })).toEqual([{ projectRoot, registered: true, status: "healthy" }]);
+  expect(listProjects({ registryRoot })).toEqual([{ projectRoot, registered: true, status: "healthy", towerState: "needs-plan" }]);
   expect(projectStatus(options).status).toBe("healthy");
   expect(snapshot(projectRoot)).toEqual(before);
   expect(snapshot(registryRoot)).toEqual(index);
@@ -66,6 +66,45 @@ test("real init, doctor and uninstall delegate, retaining informational membersh
   expect(listProjects({ registryRoot })[0].status).toBe("unadopted");
   expect(readFileSync(join(registryRoot, "registry.json"), "utf8")).toBe(encode([projectRoot]));
 }));
+
+test("Tower states reconcile plans and retained skills without writing", () => fixture(({ options, trusted, registryRoot, projectRoot }) => {
+  initRegisteredProject(trusted);
+  const index = snapshot(registryRoot), local = snapshot(projectRoot);
+  expect(projectStatus(options)).toMatchObject({ status: "healthy", towerState: "needs-plan" });
+  expect(listProjects({ registryRoot })[0].towerState).toBe("needs-plan");
+  expect(snapshot(projectRoot)).toEqual(local);
+  put(join(projectRoot, "openspec/plan.yaml"), "sesiones: []\n");
+  const planned = snapshot(projectRoot);
+  expect(projectStatus(options)).toMatchObject({ status: "healthy", towerState: "active" });
+  expect(listProjects({ registryRoot })[0].towerState).toBe("active");
+  expect(snapshot(projectRoot)).toEqual(planned);
+  uninstallRegisteredProject(options);
+  expect(projectStatus(options)).toMatchObject({ status: "unadopted", towerState: "skills-only" });
+  expect(listProjects({ registryRoot })[0].towerState).toBe("skills-only");
+  expect(snapshot(registryRoot)).toEqual(index);
+}));
+
+for (const kind of ["plan-symlink", "openspec-symlink", "plan-directory"]) {
+  test(`Tower state refuses unsafe ${kind} instead of claiming an active plan`, () => fixture(({ base, options, trusted, registryRoot, projectRoot }) => {
+    initRegisteredProject(trusted);
+    const external = join(base, "external");
+    put(join(external, "plan.yaml"), "sesiones: []\n");
+    if (kind === "openspec-symlink") symlinkSync(external, join(projectRoot, "openspec"));
+    else {
+      mkdirSync(join(projectRoot, "openspec"));
+      if (kind === "plan-symlink") symlinkSync(join(external, "plan.yaml"), join(projectRoot, "openspec/plan.yaml"));
+      else mkdirSync(join(projectRoot, "openspec/plan.yaml"));
+    }
+    const before = readdirSync(join(projectRoot, "openspec")), index = snapshot(registryRoot), outside = snapshot(external);
+    for (const row of [projectStatus(options), ...listProjects({ registryRoot })]) {
+      expect(row.status).toBe("unsafe");
+      expect(row.towerState).toBeUndefined();
+    }
+    expect(readdirSync(join(projectRoot, "openspec"))).toEqual(before);
+    expect(snapshot(registryRoot)).toEqual(index);
+    expect(snapshot(external)).toEqual(outside);
+  }));
+}
 
 test("cleanup delegates only for fully restored residue", () => fixture(({ options, trusted, projectRoot }) => {
   initRegisteredProject(trusted);
@@ -297,7 +336,7 @@ test("Node rejects malformed Unicode options and persisted roots without alias m
       writeFileSync(registryFile, original);
     }
     assert.deepEqual(listProjects({ registryRoot: unicodeRegistry }),
-      [{ projectRoot: unicodeProject, registered: true, status: "unadopted" }]);
+      [{ projectRoot: unicodeProject, registered: true, status: "unadopted", towerState: "skills-only" }]);
     assert.equal(projectStatus({ registryRoot: unicodeRegistry, projectRoot: unicodeProject }).status, "unadopted");`;
   const child = spawnSync("node", ["--input-type=module", "--eval", program,
     join(source, "product/tower/v1/projects.mjs"), JSON.stringify([base, trusted, unicodeProject, unicodeRegistry])], { env, cwd: base });

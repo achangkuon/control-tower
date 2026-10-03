@@ -1,12 +1,67 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"io"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 var projectActions = []string{"Revisar", "Desinstalar", "Limpiar residuos"}
+
+const projectPrompt = "Quiero usar la Torre de Control en un proyecto. Preguntame en cuál: el que tenés abierto u otro.\n" +
+	"Después preguntame si hago una migración completa o solo lo que falta, y recomendame solo lo que falta.\n" +
+	"Instalá la Torre en ese proyecto con `torre-control project init` y armá su plan con la skill\n" +
+	"chanks-1-adopcion (o chanks-1-project-kickoff si el proyecto está vacío). No guardes nada sin mi aprobación."
+
+type clipboardResult struct{ err error }
+
+// Exec uses Bubble Tea's configured output, including when the alternate screen is active.
+// OSC 52 needs no external clipboard process or terminal response.
+type clipboardCommand struct{ output io.Writer }
+
+func (c *clipboardCommand) SetStdin(io.Reader)    {}
+func (c *clipboardCommand) SetStderr(io.Writer)   {}
+func (c *clipboardCommand) SetStdout(w io.Writer) { c.output = w }
+func (c *clipboardCommand) Run() error {
+	_, err := io.WriteString(c.output, "\x1b]52;c;"+base64.StdEncoding.EncodeToString([]byte(projectPrompt))+"\x07")
+	return err
+}
+
+func (m model) openProjectPrompt() model {
+	m.promptOrigin, m.page, m.offset, m.copyFeedback = m.page, "project-prompt", 0, ""
+	return m
+}
+
+func (m model) promptLines() []string {
+	lines := []string{"Sumar un proyecto", "Copiá este texto y pegáselo a tu agente (Claude Code, Codex, OpenCode o Pi), abierto en cualquier carpeta.", ""}
+	lines = append(lines, strings.Split(projectPrompt, "\n")...)
+	return m.wrap(lines)
+}
+
+func (m model) projectHealth(p projectState) string {
+	if p.Status == "healthy" {
+		switch p.TowerState {
+		case "active":
+			return "🟢 Torre activa"
+		case "needs-plan":
+			return "🟡 Falta armar el plan"
+		}
+	}
+	if (p.Status == "unadopted" || p.Status == "uninstalled") && p.TowerState == "skills-only" {
+		return "⚪ Solo skills"
+	}
+	return m.health(p.Status)
+}
+
+func actionsForProject(p projectState) []string {
+	if p.Status == "healthy" && p.TowerState == "needs-plan" {
+		return append([]string{"Ver el prompt para armar el plan"}, projectActions...)
+	}
+	return projectActions
+}
 
 func (m model) projectList() ([]projectState, bool) {
 	if m.loading || m.statusError != "" {
@@ -27,7 +82,7 @@ func (m model) projectLines() []string {
 	}
 	if m.projectMenu && m.projectSelected < len(projects) {
 		lines = append(lines, clean(projects[m.projectSelected].ProjectRoot))
-		for i, label := range projectActions {
+		for i, label := range actionsForProject(projects[m.projectSelected]) {
 			prefix := "  "
 			if i == m.projectAction {
 				prefix = "> "
@@ -40,13 +95,13 @@ func (m model) projectLines() []string {
 			if i == m.projectSelected {
 				prefix = "> "
 			}
-			lines = append(lines, prefix+clean(p.ProjectRoot)+" · "+m.health(p.Status))
+			lines = append(lines, prefix+clean(p.ProjectRoot)+" · "+m.projectHealth(p))
 		}
 		prefix := "  "
 		if m.projectSelected == len(projects) {
 			prefix = "> "
 		}
-		lines = append(lines, prefix+"Adoptar un proyecto nuevo")
+		lines = append(lines, prefix+"Sumar un proyecto")
 	}
 	return lines
 }
@@ -71,7 +126,9 @@ func (m model) projectsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	case "down", "j":
 		if m.projectMenu {
-			m.projectAction = min(2, m.projectAction+1)
+			if m.projectSelected < len(projects) {
+				m.projectAction = min(len(actionsForProject(projects[m.projectSelected]))-1, m.projectAction+1)
+			}
 		} else {
 			m.projectSelected = min(len(projects), m.projectSelected+1)
 		}
@@ -80,12 +137,20 @@ func (m model) projectsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if m.projectSelected == len(projects) {
-			m.page, m.flow = "wizard", workflow{action: "init", step: 1}
+			m = m.openProjectPrompt()
 		} else if !m.projectMenu {
 			m.projectMenu = true
 			m.projectAction = 0
 		} else {
-			m.page, m.flow = "wizard", workflow{action: []string{"doctor", "uninstall", "cleanup"}[m.projectAction], root: projects[m.projectSelected].ProjectRoot, step: 4}
+			project := projects[m.projectSelected]
+			actions := actionsForProject(project)
+			m.projectAction = min(m.projectAction, len(actions)-1)
+			if len(actions) > len(projectActions) && m.projectAction == 0 {
+				m = m.openProjectPrompt()
+			} else {
+				index := m.projectAction - (len(actions) - len(projectActions))
+				m.page, m.flow = "wizard", workflow{action: []string{"doctor", "uninstall", "cleanup"}[index], root: project.ProjectRoot, step: 4}
+			}
 		}
 	}
 	if m.page == "projects" {

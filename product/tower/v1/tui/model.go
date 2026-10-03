@@ -18,7 +18,7 @@ type prerequisite struct {
 	Version, Error         string
 }
 type agentState struct{ Executable, Config bool }
-type projectState struct{ ProjectRoot, Status string }
+type projectState struct{ ProjectRoot, Status, TowerState string }
 type snapshot struct {
 	Schema        string
 	Engine        engineState
@@ -48,6 +48,7 @@ type model struct {
 	projectSelected, projectAction  int
 	projectMenu                     bool
 	statusError, diagnosticError    string
+	promptOrigin, copyFeedback      string
 }
 
 func newModel(run runner, noColor bool) model {
@@ -76,6 +77,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = max(1, msg.Width), max(1, msg.Height)
+	case clipboardResult:
+		if m.page == "project-prompt" {
+			m.copyFeedback = "Copiado"
+			if msg.err != nil {
+				m.copyFeedback = "No se pudo copiar. Seleccioná el texto y copialo manualmente."
+			}
+		}
 	case progressTick:
 		if m.page == "wizard" && m.flow.step == 5 && msg.id == m.sequence {
 			m.flow.frame++
@@ -162,6 +170,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.page == "projects" {
 			return m.projectsKey(msg)
 		}
+		if m.page == "project-prompt" {
+			switch msg.String() {
+			case "c":
+				return m, tea.Exec(&clipboardCommand{}, func(err error) tea.Msg { return clipboardResult{err} })
+			case "esc":
+				m.page, m.offset = m.promptOrigin, 0
+				return m, nil
+			}
+		}
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -221,6 +238,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case 4:
 				m.page = "help"
 			case 5:
+				m = m.openProjectPrompt()
+			case 6:
 				return m, tea.Quit
 			}
 		}
@@ -237,6 +256,9 @@ func (m model) pageLines() []string {
 	if m.page == "projects" {
 		return m.projectLines()
 	}
+	if m.page == "project-prompt" {
+		return m.promptLines()
+	}
 	switch m.page {
 	case "doctor":
 		body = []string{"Diagnóstico", "Comprobación global de sólo lectura."}
@@ -251,7 +273,7 @@ func (m model) pageLines() []string {
 	case "help":
 		body = []string{"Ayuda", "↑/↓ o j/k: mover la selección; enter: elegir.", "esc: volver; r: refrescar el estado; q o Ctrl-C: salir.",
 			"Instalar o actualizar: buscar la última versión publicada, sin preguntas.", "a sobre esa opción: Versión específica (avanzado).", "Volver a la versión anterior: restaurar el motor.",
-			"Proyectos: gestionar proyectos.", "Diagnóstico: comprobar el motor, sin modificarlo.", "Ayuda: consultar esta guía. Salir: cerrar la interfaz.",
+			"Proyectos: gestionar proyectos.", "Sumar un proyecto: copiar un prompt para tu agente.", "Diagnóstico: comprobar el motor, sin modificarlo.", "Ayuda: consultar esta guía. Salir: cerrar la interfaz.",
 			"Datos: TORRE_CONTROL_CLI (por defecto torre-control).", "status: motor, proyectos, requisitos, agentes y sistema.", "doctor: integridad global del motor; no repara ni activa versiones."}
 	}
 	return body
@@ -266,7 +288,12 @@ func (m model) View() string {
 	start := min(m.offset, m.maxOffset())
 	body = body[start:min(len(body), start+space)]
 	footer := "esc: volver · enter: continuar · ↑↓: desplazar"
-	if m.operationRunning() {
+	if m.page == "project-prompt" {
+		footer = "c: copiar · esc: volver · ↑↓: desplazar"
+		if m.copyFeedback != "" {
+			footer = m.copyFeedback + " · esc: volver"
+		}
+	} else if m.operationRunning() {
 		footer = "q / Ctrl-C / esc: solicitar salida"
 	} else if m.quitAfter {
 		footer = "Operación finalizada · enter / q: salir"
