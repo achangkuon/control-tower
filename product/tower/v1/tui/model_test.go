@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -198,6 +201,104 @@ func TestBoundariesAndLateDiagnostic(t *testing.T) {
 	contains(t, next.(model).View(), "respuesta de diagnóstico no válida")
 	if got := clean("\x1b[31mtexto\x1b[0m\n\x07"); got != "texto  " {
 		t.Fatalf("unsafe output: %q", got)
+	}
+}
+
+func TestStatusDependentActionsWait(t *testing.T) {
+	for _, selection := range []int{0, 1, 2} {
+		for _, state := range []string{"loading", "failed"} {
+			t.Run(menu[selection]+"/"+state, func(t *testing.T) {
+				m := loaded(t, healthyJSON)
+				m.selected = selection
+				m.loading = state == "loading"
+				if state == "failed" {
+					m.statusError = "No se pudo cargar el estado"
+				}
+				m, cmd := key(m, "enter")
+				if m.page != "home" || cmd != nil {
+					t.Fatal("action used unavailable or stale status")
+				}
+				if state == "loading" {
+					contains(t, m.View(), "Cargando estado…")
+				}
+			})
+		}
+	}
+}
+
+func TestStatusRequestOrdering(t *testing.T) {
+	m := loaded(t, healthyJSON)
+	old := m.Init()()
+	m, cmd := key(m, "r")
+	latest := cmd()
+	next, _ := m.Update(old)
+	m = next.(model)
+	if !m.loading {
+		t.Fatal("old status response ended latest request")
+	}
+	next, _ = m.Update(latest)
+	m = next.(model)
+	if m.loading {
+		t.Fatal("latest status response ignored")
+	}
+	next, _ = m.Update(commandResult{action: "status", data: []byte(`{}`)})
+	if next.(model).statusError != "" {
+		t.Fatal("late invalid response replaced valid status")
+	}
+}
+
+func TestStatusOutputDegradation(t *testing.T) {
+	for _, data := range []string{"not JSON", strings.Repeat(" ", outputLimit+1) + healthyJSON} {
+		m := loaded(t, data)
+		contains(t, m.View(), "No se pudo cargar el estado")
+		if len(data) > outputLimit {
+			contains(t, m.View(), "límite")
+		}
+		if len(strings.Split(m.View(), "\n")) > m.height {
+			t.Fatal("status error broke layout")
+		}
+	}
+}
+
+func TestInterfaceDrainsOnTeardown(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	started, release, returned := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	defer close(release)
+	go func() {
+		runInterface(func([]string) execution {
+			close(started)
+			<-release
+			return execution{stdout: []byte(healthyJSON)}
+		}, true, tea.WithContext(ctx), tea.WithInput(nil), tea.WithOutput(io.Discard), tea.WithoutRenderer())
+		close(returned)
+	}()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("injected runner did not start")
+	}
+	cancel()
+	select {
+	case <-returned:
+		t.Fatal("interface returned with an outstanding child")
+	case <-time.After(30 * time.Millisecond):
+	}
+	release <- struct{}{}
+	select {
+	case <-returned:
+	case <-time.After(time.Second):
+		t.Fatal("interface did not return after the child finished")
+	}
+}
+
+func TestRunnerRejectsCommandsAfterDrain(t *testing.T) {
+	calls := 0
+	run, wait := drainingRunner(func([]string) execution { calls++; return execution{} })
+	run([]string{"status"})
+	wait()
+	if result := run([]string{"rollback"}); result.err == nil || calls != 1 {
+		t.Fatal("late command crossed the closed process boundary")
 	}
 }
 

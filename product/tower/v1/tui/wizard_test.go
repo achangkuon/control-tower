@@ -51,7 +51,7 @@ func TestReleaseWizard(t *testing.T) {
 				t.Fatal("SHA prefilled")
 			}
 			m = keys(m, "abc", "enter")
-			contains(t, m.View(), "64", "minúsculas", "canal distinto de GitHub")
+			contains(t, m.View(), "64", "minúsculas", "Solicite este código a quien mantiene la Torre por un canal distinto de GitHub.")
 			m = keys(m, "esc")
 			contains(t, m.View(), "tower-v1.json")
 			m = keys(m, "enter")
@@ -61,7 +61,7 @@ func TestReleaseWizard(t *testing.T) {
 			next, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlU})
 			m = next.(model)
 			m = keys(m, strings.Repeat("a", 64), "enter")
-			contains(t, m.View(), "Revisión", action, "v9.9.9")
+			contains(t, m.View(), "Revisión", map[string]string{"install": "instalar", "update": "actualizar"}[action], "v9.9.9")
 			if action == "update" {
 				m = keys(m, "WRONG", "enter")
 				if len(*calls) != 0 {
@@ -91,7 +91,7 @@ func TestWizardValidationAndInput(t *testing.T) {
 	m, calls := actionModel(t, false)
 	m.status.Prerequisites["go"] = prerequisite{}
 	m = keys(m, "enter", "enter")
-	contains(t, m.View(), "Go", "Instalá")
+	contains(t, m.View(), "Go", "Instale")
 	if m.flow.step != 0 {
 		t.Fatal("missing prerequisite passed")
 	}
@@ -200,6 +200,67 @@ func TestOperationFailurePaths(t *testing.T) {
 	}
 	if result := cliRunner("must-not-run")([]string{"list"}); result.err == nil {
 		t.Fatal("adapter accepted forbidden argv")
+	}
+}
+
+func TestOperationQuitWaitsAndRefreshes(t *testing.T) {
+	for _, exitKey := range []string{"q", "ctrl+c", "esc"} {
+		t.Run(exitKey, func(t *testing.T) {
+			m, calls := actionModel(t, true)
+			m.page, m.flow = "wizard", workflow{action: "rollback", step: 4, confirm: "ROLLBACK"}
+			m, operation := key(m, "enter")
+			m, cmd := key(m, exitKey)
+			if cmd != nil {
+				t.Fatal("quit detached a running operation")
+			}
+			contains(t, m.View(), "Hay una operación en curso", "enter", "esc")
+			m, _ = key(m, "esc")
+			m, _ = key(m, exitKey)
+			m, cmd = key(m, "enter")
+			if cmd != nil {
+				t.Fatal("confirmation quit before child completion")
+			}
+			contains(t, m.View(), "Esperando", "sin interrumpir")
+			batch := operation().(tea.BatchMsg)
+			next, refresh := m.Update(batch[0]())
+			m = next.(model)
+			if refresh == nil || !m.loading || m.flow.step != 6 {
+				t.Fatal("completion did not reload status")
+			}
+			if refresh().(commandResult).action != "status" || len(*calls) != 2 {
+				t.Fatal("unexpected completion refresh")
+			}
+			contains(t, m.View(), "Operación completada")
+			_, cmd = key(m, "q")
+			if cmd == nil {
+				t.Fatal("completed operation prevented exit")
+			}
+			if _, ok := cmd().(tea.QuitMsg); !ok {
+				t.Fatal("completed operation did not quit")
+			}
+		})
+	}
+}
+
+func TestPartialSuccessAndRecovery(t *testing.T) {
+	for _, localStatus := range []string{"success", "installed", "uninstalled", "cleaned", "failed"} {
+		t.Run(localStatus, func(t *testing.T) {
+			registryJSON := `,"registry":{"status":"failed"}`
+			if localStatus == "success" {
+				registryJSON = ""
+			}
+			r := execution{code: 1, stdout: []byte(`{"localResult":{"status":"` + localStatus + `"}` + registryJSON + `}`), stderr: []byte("local operation succeeded but registry publication failed: denied\n{\"type\":\"tower.cli.recovery/1\",\"errors\":[\"retained evidence\"],\"omitted\":2}\n")}
+			view := strings.Join(resultLines(r), "\n")
+			if localStatus == "failed" {
+				contains(t, view, "No se pudo completar")
+			} else {
+				contains(t, view, "se completó", "Advertencia", "lista de proyectos")
+				if strings.Contains(view, "No se pudo completar") {
+					t.Fatal("local success presented as total failure")
+				}
+			}
+			contains(t, view, "denied", "evidencia de recuperación", "retained evidence", "omitidos: 2")
+		})
 	}
 }
 

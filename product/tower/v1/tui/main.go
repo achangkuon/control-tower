@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -73,16 +74,52 @@ func cliRunner(cli string) runner {
 			}
 		}
 		if ctx.Err() != nil {
-			err = fmt.Errorf("se agotó el tiempo del comando")
+			err = fmt.Errorf("se agotó el tiempo del comando; la operación se interrumpió. Compruebe el estado con Diagnóstico")
 		}
 		if out.truncated || errout.truncated {
-			err = fmt.Errorf("la salida del comando excedió el límite")
+			err = fmt.Errorf("la salida excedió el límite de 64 KiB")
 			if code == 0 {
 				code = -1
 			}
 		}
 		return execution{stdout: out.data, stderr: errout.data, code: code, err: err}
 	}
+}
+
+// Close admission before waiting, so even late Bubble Tea commands cannot detach a child.
+func drainingRunner(run runner) (runner, func()) {
+	var mu sync.Mutex
+	var children sync.WaitGroup
+	closed := false
+	guarded := func(args []string) execution {
+		mu.Lock()
+		if closed {
+			mu.Unlock()
+			return execution{code: -1, err: fmt.Errorf("la interfaz se está cerrando")}
+		}
+		children.Add(1)
+		mu.Unlock()
+		defer children.Done()
+		return run(args)
+	}
+	wait := func() {
+		mu.Lock()
+		closed = true
+		mu.Unlock()
+		children.Wait()
+	}
+	return guarded, wait
+}
+func runInterface(run runner, noColor bool, options ...tea.ProgramOption) (tea.Model, error) {
+	guarded, wait := drainingRunner(run)
+	defer wait()
+	options = append(options, tea.WithFilter(func(current tea.Model, msg tea.Msg) tea.Msg {
+		if _, quitting := msg.(tea.QuitMsg); quitting && current.(model).operationRunning() {
+			return tea.KeyMsg{Type: tea.KeyCtrlC}
+		}
+		return msg
+	}))
+	return tea.NewProgram(newModel(guarded, noColor), options...).Run()
 }
 func main() {
 	if !term.IsTerminal(os.Stdin.Fd()) || !term.IsTerminal(os.Stdout.Fd()) {
@@ -94,7 +131,7 @@ func main() {
 		cli = "torre-control"
 	}
 	_, noColor := os.LookupEnv("NO_COLOR")
-	if _, err := tea.NewProgram(newModel(cliRunner(cli), noColor), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := runInterface(cliRunner(cli), noColor, tea.WithAltScreen()); err != nil {
 		fmt.Fprintln(os.Stderr, "No se pudo iniciar la interfaz de terminal.")
 		os.Exit(1)
 	}

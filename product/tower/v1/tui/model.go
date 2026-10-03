@@ -40,7 +40,8 @@ type model struct {
 	loading, diagnosing             bool
 	status                          snapshot
 	diagnostic                      engineState
-	sequence                        uint64
+	sequence, statusSequence        uint64
+	quitConfirm, quitAfter          bool
 	flow                            workflow
 	projectSelected, projectAction  int
 	projectMenu                     bool
@@ -48,16 +49,26 @@ type model struct {
 }
 
 func newModel(run runner, noColor bool) model {
-	return model{run: run, palette: newPalette(noColor), page: "home", width: 100, height: 40, loading: true}
+	return model{run: run, palette: newPalette(noColor), page: "home", width: 100, height: 40, loading: true, statusSequence: 1}
 }
 
 func (m model) command(action string) tea.Cmd {
+	id := m.sequence
+	if action == "status" {
+		id = m.statusSequence
+	}
 	return func() tea.Msg {
 		result := m.run([]string{action})
-		return commandResult{action: action, data: result.stdout, err: result.err, id: m.sequence, result: result}
+		return commandResult{action: action, data: result.stdout, err: result.err, id: id, result: result}
 	}
 }
 func (m model) Init() tea.Cmd { return m.command("status") }
+func (m *model) reloadStatus() tea.Cmd {
+	m.statusSequence++
+	m.loading = true
+	return m.command("status")
+}
+func (m model) operationRunning() bool { return m.page == "wizard" && m.flow.step == 5 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -72,6 +83,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.action == "operation" {
 			if m.page == "wizard" && m.flow.step == 5 && msg.id == m.sequence {
 				m.flow.step, m.flow.lines = 6, resultLines(msg.result)
+				m.quitConfirm = false
+				refresh := m.reloadStatus()
+				return m, refresh
 			}
 			return m, nil
 		}
@@ -79,11 +93,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			msg.err = fmt.Errorf("%s", firstLine(string(msg.result.stderr)))
 		}
 		if msg.action == "status" {
+			if msg.id != m.statusSequence {
+				return m, nil
+			}
 			m.loading = false
 			var state snapshot
 			err := msg.err
-			if err == nil && (json.Unmarshal(msg.data, &state) != nil || state.Schema != "tower.v1.status/1") {
-				err = fmt.Errorf("respuesta de estado no válida")
+			if len(msg.data) > outputLimit {
+				err = fmt.Errorf("la salida excedió el límite de 64 KiB")
+			} else if err == nil && (json.Unmarshal(msg.data, &state) != nil || state.Schema != "tower.v1.status/1") {
+				err = fmt.Errorf("respuesta de estado no válida; actualice el estado o consulte Diagnóstico")
 			}
 			m.statusError = ""
 			if err != nil {
@@ -107,8 +126,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.diagnostic = state
 			}
+			refresh := m.reloadStatus()
+			return m, refresh
 		}
 	case tea.KeyMsg:
+		if m.operationRunning() {
+			switch msg.String() {
+			case "enter":
+				if m.quitConfirm {
+					m.quitConfirm, m.quitAfter = false, true
+				}
+			case "esc":
+				if !m.quitAfter {
+					m.quitConfirm = !m.quitConfirm
+				}
+			case "q", "ctrl+c":
+				m.quitConfirm = !m.quitAfter
+			}
+			return m, nil
+		}
+		if m.quitAfter && m.page == "wizard" && m.flow.step == 6 {
+			switch msg.String() {
+			case "enter", "q", "ctrl+c", "esc":
+				return m, tea.Quit
+			}
+		}
 		if msg.Type == tea.KeyCtrlC {
 			return m, tea.Quit
 		}
@@ -129,8 +171,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sequence++
 		case "r":
 			if m.page == "home" && !m.loading {
-				m.loading = true
-				return m, m.command("status")
+				refresh := m.reloadStatus()
+				return m, refresh
 			}
 		case "up", "k":
 			if m.page == "home" {
@@ -151,6 +193,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.page, m.offset = "home", 0
 				m.sequence++
+				return m, nil
+			}
+			if m.selected <= 2 && (m.loading || m.statusError != "" || m.status.Schema == "") {
 				return m, nil
 			}
 			switch m.selected {
@@ -216,5 +261,11 @@ func (m model) View() string {
 	space := max(0, m.height-1)
 	start := min(m.offset, m.maxOffset())
 	body = body[start:min(len(body), start+space)]
-	return m.fit(append(body, "esc: volver · enter: continuar · ↑↓: desplazar"))
+	footer := "esc: volver · enter: continuar · ↑↓: desplazar"
+	if m.operationRunning() {
+		footer = "q / Ctrl-C / esc: solicitar salida"
+	} else if m.quitAfter {
+		footer = "Operación finalizada · enter / q: salir"
+	}
+	return m.fit(append(body, footer))
 }

@@ -9,15 +9,21 @@ import (
 var projectActions = []string{"Revisar", "Desinstalar", "Limpiar residuos"}
 
 func (m model) projectList() ([]projectState, bool) {
+	if m.loading || m.statusError != "" {
+		return nil, false
+	}
 	var projects []projectState
 	err := json.Unmarshal(m.status.Projects, &projects)
-	return projects, err == nil && !m.loading && m.statusError == ""
+	return projects, err == nil
 }
 func (m model) projectLines() []string {
 	projects, ok := m.projectList()
 	lines := []string{"Proyectos"}
+	if m.loading {
+		return append(lines, "Cargando estado…")
+	}
 	if !ok {
-		lines = append(lines, "No se pudo consultar la lista de proyectos. Volvé al inicio y refrescá el estado.")
+		return append(lines, "No se pudo consultar la lista de proyectos. Vuelva al inicio y actualice el estado.")
 	}
 	if m.projectMenu && m.projectSelected < len(projects) {
 		lines = append(lines, clean(projects[m.projectSelected].ProjectRoot))
