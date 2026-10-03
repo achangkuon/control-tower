@@ -303,6 +303,57 @@ Use `--check` to fail when runtime copies drift. Use `--dry-run` to print the
 planned changes without writing anything. Both modes accept `--home PATH` for
 isolated verification.
 
+### Avisos pasivos de Chanks en Pi
+
+`install.py` genera `~/.pi/agent/extensions/chanks-notices.ts`, separado del
+control retirado. Usa sólo el evento público `tool_result` y `ctx.ui.notify`:
+
+| Resultado exitoso observado | Aviso |
+|---|---|
+| `read` del `SKILL.md` exacto de una skill de `CHANKS_SKILLS` instalada en `~/.agents/skills/<nombre>/SKILL.md` | `💪 Chanks · <nombre> · lectura completada` |
+| `bash` con una llamada directa a Radar reconocida por `radarDirecto` | `🗼 Torre · radar <subcomando>` |
+
+También observa los resultados reales anidados de codemode: cada hijo tiene su
+propio `input`, ID y `parentToolCallId`; el resultado agregado de codemode no se
+interpreta. No anuncia solicitudes antes del resultado, comandos compuestos,
+pipelines, otras herramientas, skills ajenas/diferidas ni copias del checkout.
+Admite rutas absolutas, relativas a `ctx.cwd` y `~/`, pero exige el archivo regular
+canónico instalado; rechaza aliases y symlinks que redirigen la raíz o la skill.
+Errores de herramienta, ausencia de UI y fallas cosméticas no cambian el resultado.
+No conserva estado de llamadas: cada resultado elegible genera un aviso.
+
+**No hay admisión, locks, etapas, prompts, herramientas nuevas, subprocesos ni
+mutación de argumentos/resultados.** No depende de la API privada de annotations
+ni reactiva `chanks-controls.ts`. Importa sólo `radarDirecto` desde
+`chanks/torre-firma.mjs`, mediante una URL absoluta de este checkout: éste debe
+seguir disponible; moverlo exige regenerar el archivo.
+
+Para un despliegue aislado **con autorización operativa separada**, desde la raíz
+del repositorio:
+
+```bash
+python3 agent-workflows/tools/install.py --pi-notices-only --dry-run
+python3 agent-workflows/tools/install.py --pi-notices-only
+python3 agent-workflows/tools/install.py --pi-notices-only --check
+```
+
+Ese modo/helper `install_pi_notices(home, root)` sólo crea/reemplaza atómicamente
+`chanks-notices.ts` (y sus directorios si faltan), conserva el modo existente,
+rechaza destinos symlink/wrong-type y no reescribe bytes ya correctos. No toca
+skills, instrucciones, settings, hooks, npm, overlay ni controles retirados.
+`--check` informa `DRIFT pi-notices`; `--dry-run` no escribe. Ambos aceptan
+`--home PATH` para fixtures. **El instalador completo sí tiene efectos amplios**:
+skills, bloques manuales, launchers/hooks existentes, npm/settings, herramientas
+del overlay y archivos retirados. No usarlo para desplegar sólo estos avisos.
+
+Prueba visual pendiente hasta instalar con permiso: `/reload` o una sesión nueva
+carga la extensión. Leer una skill instalada y ejecutar un Radar directo debe
+mostrar los dos avisos; repetir mediante codemode debe mostrarlos para los hijos.
+Un README ajeno o un comando compuesto no debe anunciarlos. En el SDK codemode
+no se carga automáticamente: la prueba anidada debe cargarlo explícitamente.
+Tests con handlers/fixtures y `--check` prueban lógica/bytes, no la carga ni la
+visualización real en una conversación nueva.
+
 ### Control pieces deferred to later versions
 
 The installer no longer writes two control pieces. Their sources stay in this

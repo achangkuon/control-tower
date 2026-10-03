@@ -1356,6 +1356,271 @@ if __name__ == "__main__":
     unittest.main()
 
 
+RUN_NOTICE_SOURCE = """
+const extension = (await import(process.argv[2])).default
+const scenario = JSON.parse(process.argv[3])
+const handlers = {}
+const messages = []
+const returns = []
+const pi = { on(name, handler) { (handlers[name] ??= []).push(handler) } }
+// Deliberately no tool, prompt, annotation, subprocess, or session-control API.
+extension(pi)
+const ctx = { cwd: scenario.cwd, hasUI: scenario.hasUI !== false,
+  ui: { notify(message, level) {
+    if (scenario.throwUI) throw new Error('cosmetic UI failure')
+    messages.push({ message, level })
+  } } }
+const before = JSON.stringify(scenario.events)
+for (const event of scenario.events) {
+  for (const handler of handlers[event.type] ?? []) {
+    const result = await handler(event, ctx)
+    returns.push(result === undefined ? 'undefined' : result)
+  }
+}
+console.log(JSON.stringify({ handlers: Object.keys(handlers), messages, returns,
+  unchanged: before === JSON.stringify(scenario.events) }))
+"""
+
+
+class PiNoticeTests(unittest.TestCase):
+    """Passive result observer; no controls or private overlay API are available."""
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name) / "home"
+        self.home.mkdir()
+        self.skill = self.home / ".agents/skills/chanks-4-puente/SKILL.md"
+        self.skill.parent.mkdir(parents=True)
+        self.skill.write_text("# installed skill\n", encoding="utf8")
+
+    def result(self, tool, input, id="call-1", **extra):
+        return {"type": "tool_result", "toolName": tool, "input": input,
+                "toolCallId": id, "content": [{"type": "text", "text": "original result"}],
+                "details": {"original": True}, "structuredContent": {"keep": True},
+                "isError": False, **extra}
+
+    def run_notice(self, events, **extra):
+        INSTALLER.install_pi_notices(self.home, ROOT)
+        runner = self.home / "run-notices.mjs"
+        runner.write_text(RUN_NOTICE_SOURCE, encoding="utf8")
+        run = subprocess.run(
+            ["bun", str(runner), str(INSTALLER.pi_notices_path(self.home)),
+             json.dumps({"cwd": str(self.home), "events": events, **extra})],
+            env={**os.environ, "HOME": str(self.home)}, cwd=self.home,
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(run.returncode, 0, run.stderr)
+        output = json.loads(run.stdout)
+        self.assertTrue(output["unchanged"])
+        self.assertTrue(all(value == "undefined" for value in output["returns"]))
+        self.assertEqual(output["handlers"], ["tool_result"])
+        return [message["message"] for message in output["messages"]]
+
+    def snapshot(self):
+        return {str(p.relative_to(self.home)): p.read_bytes()
+                for p in self.home.rglob("*") if p.is_file()}
+
+    def test_successful_owned_read_and_direct_radar_results_including_nested_ids(self):
+        events = [
+            self.result("read", {"path": str(self.skill)}),
+            self.result("bash", {"command": "radar status --json -C ."}, "call-2"),
+            self.result("read", {"path": "~/.agents/skills/chanks-4-puente/SKILL.md"},
+                        "codemode-3/1", parentToolCallId="codemode-3"),
+            self.result("bash", {"command": '"$HOME/.local/bin/radar" faltan S148'},
+                        "codemode-3/2", parentToolCallId="codemode-3"),
+            self.result("codemode", {"code": "await tools.bash(...)"}, "codemode-3"),
+        ]
+        self.assertEqual(self.run_notice(events), [
+            "💪 Chanks · chanks-4-puente · lectura completada", "🗼 Torre · radar status",
+            "💪 Chanks · chanks-4-puente · lectura completada", "🗼 Torre · radar faltan",
+        ])
+
+    def test_all_roster_skills_and_relative_canonical_paths(self):
+        events = []
+        for index, name in enumerate(INSTALLER.CHANKS_SKILLS):
+            path = self.home / ".agents/skills" / name / "SKILL.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# installed", encoding="utf8")
+            events.append(self.result("read", {"path": str(path.relative_to(self.home))}, str(index)))
+        self.assertEqual(len(self.run_notice(events)), len(INSTALLER.CHANKS_SKILLS))
+
+    def test_failures_no_ui_and_throwing_ui_are_cosmetic(self):
+        events = [self.result("read", {"path": str(self.skill)}),
+                  self.result("bash", {"command": "radar check"}, "nested/1", parentToolCallId="nested")]
+        self.assertEqual(self.run_notice([{**event, "isError": True} for event in events]), [])
+        self.assertEqual(self.run_notice(events, hasUI=False, throwUI=True), [])
+        self.assertEqual(self.run_notice(events, throwUI=True), [])
+
+    def test_compounds_other_tools_and_unrelated_reads_do_not_notify(self):
+        commands = ["false && radar status", "radar status; true", "radar status | head",
+                    "echo $(radar status)", "radar status > out", "radar status # comment",
+                    "radar status\ntrue", "bash -c 'radar status'", "echo radar status",
+                    "env radar status", "jornada.sh", "radar unknown"]
+        events = [self.result("bash", {"command": command}, str(i)) for i, command in enumerate(commands)]
+        # Real impostor/support/deferred files must still be excluded by exact ownership.
+        for name in ("chanks-4-puente-impostor", "analisis-por-tramos", "chanks-3-session-kickoff"):
+            path = self.home / ".agents/skills" / name / "SKILL.md"
+            path.parent.mkdir()
+            path.write_text("# not an installed Chanks roster skill", encoding="utf8")
+        for i, path in enumerate(["README.md", str(ROOT / "skills/chanks-4-puente/SKILL.md"),
+                                  str(self.skill.parent / "references/guide.md"),
+                                  str(self.home / ".agents/skills/chanks-3-session-kickoff/SKILL.md"),
+                                  str(self.home / ".agents/skills/analisis-por-tramos/SKILL.md"),
+                                  str(self.home / ".agents/skills/chanks-4-puente-impostor/SKILL.md")]):
+            events.append(self.result("read", {"path": path}, f"read-{i}"))
+        events += [self.result(tool, {"path": str(self.skill), "command": "radar status"}, tool)
+                   for tool in ("write", "edit", "grep", "codemode")]
+        self.assertEqual(self.run_notice(events), [])
+
+    def test_symlink_alias_escaped_skill_and_symlinked_root_are_not_owned_reads(self):
+        outside = self.home / "outside.md"
+        outside.write_text("# impostor", encoding="utf8")
+        escaped = self.home / ".agents/skills/chanks-1-prd/SKILL.md"
+        escaped.parent.mkdir()
+        escaped.symlink_to(outside)
+        alias = self.home / "alias.md"
+        alias.symlink_to(self.skill)
+        linked_dir = self.home / ".agents/skills/chanks-1-rfc"
+        linked_dir.symlink_to(self.skill.parent, target_is_directory=True)
+        self.assertEqual(self.run_notice([
+            self.result("read", {"path": str(p)}, str(i))
+            for i, p in enumerate([alias, escaped, linked_dir / "SKILL.md"])
+        ]), [])
+        installed = self.home / ".agents/skills"
+        relocated = self.home / "relocated"
+        installed.rename(relocated)
+        installed.symlink_to(relocated, target_is_directory=True)
+        self.assertEqual(self.run_notice([self.result("read", {"path": str(self.skill)})]), [])
+
+    def test_lifecycle_and_tool_calls_do_not_enforce_or_change_prompts(self):
+        events = [{"type": name, "input": {"path": "openspec/plan.yaml", "command": "radar status"},
+                   "systemPrompt": "keep original", "toolName": "write", "toolCallId": "same"}
+                  for name in ("session_start", "before_agent_start", "tool_call", "agent_end", "session_shutdown")]
+        self.assertEqual(self.run_notice(events), [])
+
+    def test_invalid_read_inputs_missing_files_directories_and_escape_paths_are_quiet(self):
+        directory = self.home / ".agents/skills/chanks-1-prd/SKILL.md"
+        directory.mkdir(parents=True)
+        outside = self.home / "SKILL.md"
+        outside.write_text("# outside", encoding="utf8")
+        paths = [None, 17, {}, str(directory), str(self.home / ".agents/skills/chanks-1-rfc/SKILL.md"),
+                 ".agents/skills/chanks-4-puente/../../../SKILL.md"]
+        self.assertEqual(self.run_notice([
+            self.result("read", {"path": path}, str(i)) for i, path in enumerate(paths)
+        ]), [])
+
+    def test_atomic_write_failure_preserves_existing_file_and_leaves_no_temporary(self):
+        INSTALLER.install_pi_notices(self.home, ROOT)
+        target = INSTALLER.pi_notices_path(self.home)
+        target.write_bytes(b"previous extension")
+        with mock.patch.object(INSTALLER.os, "replace", side_effect=OSError("rename failed")):
+            with self.assertRaises(OSError):
+                INSTALLER.install_pi_notices(self.home, ROOT)
+        self.assertEqual(target.read_bytes(), b"previous extension")
+        self.assertEqual(list(target.parent.iterdir()), [target])
+
+    def test_template_uses_only_public_types_and_isolated_parser_dependency(self):
+        body = INSTALLER.desired_pi_notices(ROOT).decode("utf8")
+        self.assertIn("ExtensionAPI", body)
+        self.assertIn("ToolResultEvent", body)
+        self.assertIn("import { radarDirecto }", body)
+        self.assertIn((ROOT / "chanks/torre-firma.mjs").resolve().as_uri(), body)
+        for forbidden in ("registerTool", "registerCommand", "registerToolCallAnnotation", "tool_call",
+                          "child_process", "pi-admission", "pi-authority", "pi-switch", "firmaHerramienta",
+                          "before_agent_start", "observeStage", "setActiveTools"):
+            self.assertNotIn(forbidden, body)
+        self.assertNotIn("any", body)
+
+    def test_standalone_helper_is_atomic_idempotent_and_touches_only_notice_file(self):
+        before = self.snapshot()
+        target = self.home / ".pi/agent/extensions/chanks-notices.ts"
+        self.assertEqual(INSTALLER.pi_notices_path(self.home), target)
+        self.assertEqual(INSTALLER.pi_notices_changes(self.home, ROOT), [INSTALLER.Change(target, "pi-notices")])
+        INSTALLER.install_pi_notices(self.home, ROOT)
+        self.assertEqual(self.snapshot(), {**before, str(target.relative_to(self.home)): INSTALLER.desired_pi_notices(ROOT)})
+        target.chmod(0o640)
+        with mock.patch.object(INSTALLER, "_atomic_write", wraps=INSTALLER._atomic_write) as write:
+            INSTALLER.install_pi_notices(self.home, ROOT)
+            write.assert_not_called()
+        target.write_bytes(b"stale")
+        INSTALLER.install_pi_notices(self.home, ROOT)
+        self.assertEqual(target.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(list(target.parent.iterdir()), [target])
+
+    def test_full_installer_plan_dry_run_apply_check_and_drift(self):
+        InstallerTests._seed_runtime(self)
+        target = INSTALLER.pi_notices_path(self.home)
+        before = self.snapshot()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(INSTALLER.main(["--dry-run", "--home", str(self.home)]), 0)
+        self.assertIn(f"WOULD_UPDATE pi-notices: {target}", output.getvalue())
+        self.assertEqual(self.snapshot(), before)
+        INSTALLER.apply(self.home, ROOT)
+        self.assertEqual(target.read_bytes(), INSTALLER.desired_pi_notices(ROOT))
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(INSTALLER.main(["--check", "--home", str(self.home)]), 0)
+        target.write_bytes(b"stale")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(INSTALLER.main(["--check", "--home", str(self.home)]), 1)
+        self.assertIn(f"DRIFT pi-notices: {target}", output.getvalue())
+        self.assertEqual(target.read_bytes(), b"stale")
+        self.assertFalse(INSTALLER.pi_extension_path(self.home).exists())
+
+    def test_notice_only_cli_never_calls_full_install_or_changes_other_surfaces(self):
+        before = self.snapshot()
+        args = ["--pi-notices-only", "--home", str(self.home)]
+        with mock.patch.object(INSTALLER, "build_plan", side_effect=AssertionError("full plan")), \
+             mock.patch.object(INSTALLER, "apply", side_effect=AssertionError("full install")), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(INSTALLER.main([*args, "--dry-run"]), 0)
+            self.assertEqual(self.snapshot(), before)
+            self.assertEqual(INSTALLER.main([*args, "--check"]), 1)
+            self.assertEqual(INSTALLER.main(args), 0)
+            self.assertEqual(INSTALLER.main([*args, "--check"]), 0)
+        target = INSTALLER.pi_notices_path(self.home)
+        self.assertEqual(self.snapshot(), {**before, str(target.relative_to(self.home)): target.read_bytes()})
+
+    def test_unsafe_destinations_fail_before_any_full_or_standalone_writes(self):
+        for kind in ("file-link", "dangling-link", "directory", "parent-link", "parent-file"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as location:
+                home = Path(location) / "home"
+                home.mkdir()
+                InstallerTests._seed_runtime(self, home)
+                outside = Path(location) / "outside"
+                outside.mkdir()
+                sentinel = outside / "sentinel"
+                sentinel.write_bytes(b"protected")
+                target = home / ".pi/agent/extensions/chanks-notices.ts"
+                if kind.startswith("parent"):
+                    if kind == "parent-link":
+                        target.parent.symlink_to(outside, target_is_directory=True)
+                    else:
+                        target.parent.write_bytes(b"wrong type")
+                else:
+                    target.parent.mkdir()
+                    if kind == "directory":
+                        target.mkdir()
+                    else:
+                        target.symlink_to(sentinel if kind == "file-link" else outside / "missing")
+                before = {str(p): p.read_bytes() for p in home.rglob("*") if p.is_file()}
+                for action in (INSTALLER.preflight, INSTALLER.build_plan, INSTALLER.apply,
+                               INSTALLER.pi_notices_changes, INSTALLER.install_pi_notices):
+                    with self.assertRaises(INSTALLER.InstallError):
+                        action(home, ROOT)
+                self.assertEqual({str(p): p.read_bytes() for p in home.rglob("*") if p.is_file()}, before)
+                self.assertEqual(sentinel.read_bytes(), b"protected")
+                self.assertEqual(list(outside.iterdir()), [sentinel])
+
+    def test_missing_parser_does_not_create_broken_extension(self):
+        with self.assertRaises(INSTALLER.InstallError):
+            INSTALLER.install_pi_notices(self.home, self.home / "missing-source")
+        self.assertFalse((self.home / ".pi").exists())
+
+
 class PiExtensionTests(unittest.TestCase):
     """S144: Pi auto-discovers only *.ts, so the .mjs adapters need a shim.
 
@@ -2302,7 +2567,7 @@ class RetiredControlFileTests(unittest.TestCase):
         self.seed_installed_copies()
         INSTALLER.apply(self.home, ROOT)
         extensions = self.home / ".pi/agent/extensions"
-        self.assertEqual(list(extensions.rglob("*.ts")), [])
+        self.assertEqual(list(extensions.rglob("*.ts")), [INSTALLER.pi_notices_path(self.home)])
 
     def test_a_second_retirement_never_overwrites_an_earlier_backup(self):
         self.seed_installed_copies()
