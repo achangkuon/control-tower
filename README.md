@@ -23,11 +23,14 @@ conversaciones independientes ni impone un turno de entrega entre ellas.
 
 Se necesita Bun para ejecutar el instalador y el lanzador, Git para el proyecto
 y GitHub CLI (`gh`) autenticado en `github.com` con acceso al repositorio privado
-`achangkuon/control-tower`. Radar se distribuye como fuentes Go; su compilación
-requiere Go y sus dependencias disponibles.
+`achangkuon/control-tower`. Radar se distribuye como fuentes Go con su dependencia
+incluida (`vendor/`); se compila sin internet y sólo requiere Go.
 
 Las versiones se publican como Releases privados de `achangkuon/control-tower`
-(la vigente es `v1.1.0`). Los ejemplos usan marcadores como `<TAG>`; nunca
+(la vigente es `v1.2.0`). Una vez instalada, `torre-control update --latest` (o
+«Instalar o actualizar» en la interfaz) busca sola la última versión publicada y
+la verifica con la huella `tower-v1.json.sha256` que se publica junto al paquete.
+Los ejemplos usan marcadores como `<TAG>`; nunca
 tome valores de seguridad de esta página. Para instalar sin checkout, el mantenedor
 comunica el tag exacto y **un SHA-256 del instalador** por un segundo canal de
 confianza. El instalador verificado fija a su vez el digest del manifiesto y
