@@ -11,7 +11,7 @@
 - Producto Torre #1 → S184 — Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
 
 ## Avance
-- **Total:** 89% (115/129 S)
+- **Total:** 88% (115/130 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +25,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 95% (40/42 S)
-- **Producto Torre:** 85% (12/14 S)
+- **Producto Torre:** 80% (12/15 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -66,7 +66,8 @@
 
 ### Producto Torre (producto-torre)
 1. **S184** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio.
-2. **S190** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0.
+2. **S191** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · La interfaz Go no abandona operaciones en curso, informa bien los éxitos parciales y habla en español neutro.
+3. **S190** · 📋 PLANIFICADO · espera-natural (S191) · prioridad Torre V1 · Adopción project-local reversible · La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1122,12 +1123,26 @@
   - Restricciones y decisiones: Sólo los archivos declarados. Cada acción ejecuta exactamente un comando cerrado de torre-control; ningún valor de seguridad se completa automáticamente; el progreso no inventa porcentajes. Pruebas con go test y comandos simulados. Pronóstico de 350–550 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
   - Referencias: gentle-ai v4.0.0 screens/review.go, installing.go y complete.go; cli.mjs comandos cerrados y confirmaciones.
 
-### S190 — La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0.
+### S191 — La interfaz Go no abandona operaciones en curso, informa bien los éxitos parciales y habla en español neutro.
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, README.md, product/tower/v1/INSTALL-AGENTS.md
+  - Archivos autorizados: product/tower/v1/tui/model.go, product/tower/v1/tui/wizard.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/home.go, product/tower/v1/tui/main.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/tui/wizard&#95;test.go, product/tower/v1/tui/projects&#95;test.go
   - Depende de: S189
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La revisión de S189 aprobó la interfaz con seis advertencias: una operación puede quedar corriendo si se sale de la interfaz (model.go 112–114), un éxito parcial puede mostrarse como fallo (wizard.go 294–295), estado viejo tras una acción (model.go 125–127), acción disponible mientras carga (model.go 157–161), degradación con estados muy grandes (main.go 78–82) y legibilidad (wizard.go 315–320). Algunos textos usan voseo.
+  - Resultado y comportamiento: Mientras una operación corre, salir pide confirmación y, si se confirma, espera a que termine o la cancela de forma ordenada informando el estado; nunca queda un proceso huérfano sin aviso. Un éxito local con fallo del registro se muestra como éxito con advertencia. Tras cada acción el estado se recarga y las acciones que dependen del estado esperan a que cargue. Un estado demasiado grande se informa sin romper la pantalla. Todos los textos visibles quedan en español neutro y profesional, sin voseo.
+  - Restricciones y decisiones: Sólo los archivos declarados; sin dependencias nuevas ni acciones nuevas. Pruebas con go test y ejecutor simulado. Pronóstico de 150–350 líneas authored; el tamaño sigue la guía nativa de Gentle AI y no es una restricción de esta Sesión.
+  - Referencias: Revisión review-0d310ab006e3e7ee (R4-detached-operation, R3-partial-success, R3-stale-status, R3-loading-action, R4-large-status-degradation, R2-001); odd/tasks/tower-v1-final-four-sessions.md, evidencia de S189.
+
+### S190 — La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S191)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, README.md, product/tower/v1/INSTALL-AGENTS.md
+  - Depende de: S191
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
