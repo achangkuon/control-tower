@@ -137,7 +137,11 @@ export function markerRange(text, name = "control-tower:pointer") {
   const start = `<!-- ${name} -->`, end = `<!-- /${name} -->`;
   const label = name.split(":").at(-1);
   const markerFail = reason => fail(reason.replaceAll("pointer", label));
-  const tokens = [...text.matchAll(/<!--\s*(\/?)\s*([\w-]+:[\w:.-]+)[^>]*-->/g)];
+  const all = [...text.matchAll(/<!--\s*(\/?)\s*([\w-]+:[\w:.-]+)[^>]*-->/g)];
+  // Only comments that open and close as a pair form blocks; unpaired notes such as
+  // gentle-ai's `...:start` / `...:end` are plain text. The owned name is always checked.
+  const paired = new Set(all.filter(t => t[1]).map(t => t[2]).filter(n => all.some(t => !t[1] && t[2] === n)));
+  const tokens = all.filter(t => t[2] === name || paired.has(t[2]));
   const stack = []; let range = null, count = 0;
   for (const token of tokens) {
     const owned = token[2] === name;

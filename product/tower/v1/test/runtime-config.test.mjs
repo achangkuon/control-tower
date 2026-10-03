@@ -268,3 +268,18 @@ test("Gentle AI is required before any change; doctor exposes its version and co
   expect(() => uninstallRuntime({ home })).toThrow(/modified/);
   expect(read(home, ".agents/skills/chanks-1-prd/SKILL.md")).toBe("edited");
 }));
+
+test("pointer insertion tolerates real gentle-ai blocks with unpaired start/end notes and nesting", () => fixture(({ home, write, install }) => {
+  const claude = "<!-- gentle-ai:orchestrator -->\n<!-- authority-first-terminal-procedure:start -->\nsteps\n" +
+    "<!-- authority-first-terminal-procedure:end -->\n<!-- /gentle-ai:orchestrator -->\n" +
+    "<!-- gentle-ai:agent-routing -->\nrouting\n<!-- gentle-ai:remote-authorization -->\nremote\n" +
+    "<!-- /gentle-ai:remote-authorization -->\n<!-- /gentle-ai:agent-routing -->\n" +
+    "<!-- chanks:doc-guard-rule -->\npersonal\n<!-- /chanks:doc-guard-rule -->\n";
+  write(".claude/CLAUDE.md", claude);
+  install();
+  const after = read(home, ".claude/CLAUDE.md");
+  expect(after.startsWith(claude)).toBe(true);
+  expect(after.match(/<!-- control-tower:pointer -->/g)).toHaveLength(1);
+  uninstallRuntime({ home });
+  expect(read(home, ".claude/CLAUDE.md")).toBe(claude);
+}));
