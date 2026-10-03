@@ -117,3 +117,28 @@ Cause: gentle-ai's orchestrator block embeds unpaired `<!-- authority-first-term
 blocks. RED: TowerMigrationTests 2 failures + 1 error with the real-shaped fixture; GREEN: test_install 184 OK;
 full temp-HOME suite 477 with only the known env failure. Live dry-run then exited 0 with 19 block edits and
 23 STOP_MANAGING lines; real files unchanged (sha256 compared).
+
+## Published-release cache compatibility fix (live S197 follow-up)
+
+Read-only inspection of the cached `release.json` files proves that **v1.0.0, v1.0.1, v1.0.2 and v1.1.0 all have the same exact 30 unique paths**, schema `tower.v1.release/1`. Their retained digests begin `e4be8288`, `7385d30d`, `4f7eb498` and `2e2dfcf9`. The roster consists of 19 Radar source/module files, eight lifecycle modules and three `control-tower` skill/reference files. The complete literal roster is pinned independently in `bootstrap.mjs` and the two fixture tests; it is not inferred from today's bundle or relaxed to a count-only rule.
+
+- Cached bootstrap verification now admits this published roster while preserving all schema, exact-path, duplicate, size, base64, per-member SHA-256 and outer pinned-digest checks. Fresh acquisition still requires the current 91-member roster.
+- Unpublished 72/74-member S194/S195 rosters remain solely for existing cached-version compatibility tests: bootstrap intake, S194 doctor/update and offline runtime rollback (including mismatched `go.mod`/`go.sum` donor refusal). No evidence from the four real published caches requires them; their existing tests do.
+- Updating 30→91 follows normal runtime preparation/installation. Rolling back 91→30 activates the verified older release without runtime admission, donor lookup, build, uninstall or configuration writes and reports `runtime: "kept"`. Skills, Radar, signatures, settings, ownership manifest and global pointers retain their bytes and modes. The capability distinction uses the verified pointer-template member, not absence of `runtime-config.mjs`: S194 lacks that module but still has runtime content and retains its rebuild behavior.
+- Independent synthetic fixtures reproduce all 30 paths and the real retained-wire/provenance/materialized-tree verification path. Tests cover update/configuration, read-only doctor, rollback preservation with zero runner calls, tampered materialized bytes, forged member hashes, altered schemas, duplicate/missing/extra/substituted paths and cached-only admission.
+
+### Test-first and validation evidence
+
+- **RED:** `HOME=$(mktemp -d) bun test product/tower/v1/test/bootstrap.test.mjs product/tower/v1/test/global.test.mjs` — **68 passed, 4 failed**, 1961 expectations. All four new tests failed on the old `Invalid global release schema or membership` rejection (the tamper test expected the subsequent byte-integrity check).
+- **GREEN:** same command — **72 passed, 0 failed**, 1994 expectations. Existing 72/74 rollback/donor tests remain green.
+- **Full suite:** `HOME=$(mktemp -d) bun test product/tower/v1` — **469 passed, 1 skipped, 0 failed**, 7670 expectations across 14 files. The skip is the existing optional real tiny Go cross-build.
+- `git diff --check` — passed.
+
+### Copied real-cache smoke (not a live installation)
+
+With umask 022, `cp -a /home/emili/.local/share/torre-control` preserved cache modes under temporary HOME `/tmp/tmp.OfodKoewOg/.local/share/`. The stable launcher was rendered from the current local `global.mjs` template into that HOME's `.local/bin/torre-control`, changing only its embedded state-root to the copied location; the real launcher was not read or modified. HOME and XDG locations were isolated; `GH_CONFIG_DIR=/home/emili/.config/gh` was supplied only to the requested commands, without inspecting credentials. Installed Gentle AI was available on PATH (version 4.0.0).
+
+- `HOME=/tmp/tmp.OfodKoewOg GH_CONFIG_DIR=/home/emili/.config/gh bun product/tower/v1/cli.mjs doctor` (with isolated XDG variables) — **exit 0, healthy**, active `v1.1.0` (`2e2dfcf9…`), previous `v1.0.2` (`4f7eb498…`). This validated all four real retained releases and their materialized trees. Runtime components correctly report missing because only the cache, not personal runtime directories, was copied.
+- `HOME=/tmp/tmp.OfodKoewOg GH_CONFIG_DIR=/home/emili/.config/gh bun product/tower/v1/cli.mjs update --from-checkout /home/emili/projects/control-tower/Main` (same isolated XDG variables) — **exit 1**, `Invalid Tower CLI: a clean worktree is required (tracked or untracked changes found)`. The fixes must remain uncommitted, so the real release builder's deliberate dirty-checkout gate prevents this smoke from reaching activation/build. No successful copied-cache update or live deployment is claimed. Rerun this smoke after the parent supplies a clean committed candidate; the fixture suite proves the update behavior separately.
+
+Only the authorized product files/tests and this appended task section changed. No commit or push was performed and no real HOME writes were performed. The temporary smoke copy remains available for parent inspection.

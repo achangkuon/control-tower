@@ -8,6 +8,40 @@ const schema = "tower.v1.release/1";
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
   "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)];
+// Exact source-layout roster shared by published v1.0.0, v1.0.1, v1.0.2 and v1.1.0.
+// Independent of bootstrap's allowlist so a future roster change cannot change this fixture.
+const publishedPaths = [
+  "agent-workflows/tools/radar/archivar.go",
+  "agent-workflows/tools/radar/avance.go",
+  "agent-workflows/tools/radar/check.go",
+  "agent-workflows/tools/radar/encargo.go",
+  "agent-workflows/tools/radar/etapa.go",
+  "agent-workflows/tools/radar/faltan.go",
+  "agent-workflows/tools/radar/git.go",
+  "agent-workflows/tools/radar/go.mod",
+  "agent-workflows/tools/radar/go.sum",
+  "agent-workflows/tools/radar/ledger.go",
+  "agent-workflows/tools/radar/main.go",
+  "agent-workflows/tools/radar/partition.go",
+  "agent-workflows/tools/radar/plan.go",
+  "agent-workflows/tools/radar/render.go",
+  "agent-workflows/tools/radar/roadmap.go",
+  "agent-workflows/tools/radar/safety.go",
+  "agent-workflows/tools/radar/sesion.go",
+  "agent-workflows/tools/radar/snapshot.go",
+  "agent-workflows/tools/radar/state.go",
+  "product/tower/v1/adoption.mjs",
+  "product/tower/v1/bootstrap.mjs",
+  "product/tower/v1/bundle.mjs",
+  "product/tower/v1/cli.mjs",
+  "product/tower/v1/global.mjs",
+  "product/tower/v1/project-files.mjs",
+  "product/tower/v1/projects.mjs",
+  "product/tower/v1/release.mjs",
+  "product/tower/v1/skills/control-tower/SKILL.md",
+  "product/tower/v1/skills/control-tower/references/adoption.md",
+  "product/tower/v1/skills/control-tower/references/authority-and-questions.md",
+];
 const memberLimit = 1024 * 1024;
 const aggregateLimit = 8 * memberLimit;
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -53,6 +87,35 @@ test("cached exact S194/S195 72/74-member releases remain verified; new intake r
   const hybrid = fixture(); hybrid.members = hybrid.members.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path));
   const bytes = encode(hybrid);
   expect(() => bootstrapCachedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) })).toThrow(/membership/);
+});
+
+test("published 30-member receipts are cached-only and retain exact membership and digest checks", () => {
+  const cached = (value, overrides = {}) => {
+    const bytes = encode(value);
+    return { repository: "example/control-tower", tag: "v1.1.0", asset: "tower-v1.json",
+      sha256: digest(bytes), runner: (_command, argv) => ({ status: 0,
+        stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }), ...overrides };
+  };
+  const published = () => ({ schema, members: publishedPaths.map(path => member(path)) });
+  for (const reverse of [false, true]) {
+    const old = published(); if (reverse) old.members.reverse();
+    expect(bootstrapCachedRelease(cached(old)).manifest.members.map(m => m.path).sort()).toEqual(publishedPaths);
+    expect(() => bootstrapVerifiedRelease(cached(old))).toThrow(/membership/);
+    expect(() => bootstrapCachedRelease(cached(old, { sha256: "0".repeat(64) }))).toThrow(/SHA-256/);
+  }
+  for (const change of [
+    old => { old.schema = "unknown"; },
+    old => { old.members.pop(); },
+    old => { old.members.push(member("extra.mjs")); },
+    old => { old.members[0].path = old.members[1].path; },
+    old => { old.members[0].path = "product/tower/v1/runtime-config.mjs"; },
+    old => { old.members[0].path = "../archivar.go"; },
+    old => { old.members[0].type = "symlink"; },
+    old => { old.members[0].sha256 = "0".repeat(64); },
+  ]) {
+    const old = published(); change(old);
+    expect(() => bootstrapCachedRelease(cached(old))).toThrow(/release/i);
+  }
 });
 
 describe("bounded verified global release intake", () => {

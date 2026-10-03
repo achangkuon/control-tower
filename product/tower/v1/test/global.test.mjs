@@ -11,6 +11,39 @@ const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
   "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
 ].map((name) => `product/tower/v1/${name}.mjs`)];
+// Independent fixture copied from the four published v1.0.0–v1.1.0 manifests.
+const publishedPaths = [
+  "agent-workflows/tools/radar/archivar.go",
+  "agent-workflows/tools/radar/avance.go",
+  "agent-workflows/tools/radar/check.go",
+  "agent-workflows/tools/radar/encargo.go",
+  "agent-workflows/tools/radar/etapa.go",
+  "agent-workflows/tools/radar/faltan.go",
+  "agent-workflows/tools/radar/git.go",
+  "agent-workflows/tools/radar/go.mod",
+  "agent-workflows/tools/radar/go.sum",
+  "agent-workflows/tools/radar/ledger.go",
+  "agent-workflows/tools/radar/main.go",
+  "agent-workflows/tools/radar/partition.go",
+  "agent-workflows/tools/radar/plan.go",
+  "agent-workflows/tools/radar/render.go",
+  "agent-workflows/tools/radar/roadmap.go",
+  "agent-workflows/tools/radar/safety.go",
+  "agent-workflows/tools/radar/sesion.go",
+  "agent-workflows/tools/radar/snapshot.go",
+  "agent-workflows/tools/radar/state.go",
+  "product/tower/v1/adoption.mjs",
+  "product/tower/v1/bootstrap.mjs",
+  "product/tower/v1/bundle.mjs",
+  "product/tower/v1/cli.mjs",
+  "product/tower/v1/global.mjs",
+  "product/tower/v1/project-files.mjs",
+  "product/tower/v1/projects.mjs",
+  "product/tower/v1/release.mjs",
+  "product/tower/v1/skills/control-tower/SKILL.md",
+  "product/tower/v1/skills/control-tower/references/adoption.md",
+  "product/tower/v1/skills/control-tower/references/authority-and-questions.md",
+];
 const environmentKeys = ["HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME",
   "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GH_CONFIG_DIR"];
 let root, options, environment;
@@ -102,6 +135,77 @@ test("verified active release configures runtimes, updates pointers, reruns idem
   expect(fs.existsSync(options.launcherPath)).toBe(false);
   expect(fs.existsSync(join(home, ".agents/skills/control-tower"))).toBe(false);
   expect(doctorGlobal(config).status).toBe("absent");
+});
+
+function cachePublishedRelease() {
+  // Use the real lifecycle to create the stable launcher, then seed an independently
+  // pinned published cache just as an older CLI would. No old release code is executed.
+  install();
+  const members = publishedPaths.map(path => {
+    const bytes = Buffer.from(`published fixture: ${path}\n`);
+    return { path, type: "file", encoding: "base64", byteLength: bytes.length,
+      sha256: hash(bytes), bytes: bytes.toString("base64") };
+  });
+  const wire = Buffer.from(JSON.stringify({ schema: "tower.v1.release/1", members })), id = hash(wire);
+  const previous = state(), provenance = { ...previous.provenance[0], tag: "v1.1.0", sha256: id };
+  fs.mkdirSync(version(id), { mode: 0o700 });
+  for (const [path, bytes] of [
+    ["release.json", wire], ["provenance.json", Buffer.from(JSON.stringify(provenance))],
+    ...members.map(m => [m.path, Buffer.from(m.bytes, "base64")]),
+  ]) {
+    fs.mkdirSync(dirname(join(version(id), path)), { recursive: true, mode: 0o700 });
+    fs.writeFileSync(join(version(id), path), bytes, { mode: 0o400 });
+  }
+  rewrite(statePath(), { ...previous, active: id,
+    provenance: [...previous.provenance, provenance].sort((a, b) => a.sha256.localeCompare(b.sha256)) });
+  return id;
+}
+function publishedTransitionConfig() {
+  const home = process.env.HOME, calls = [];
+  return { calls, config: { ...options, home, env: { HOME: home, PATH: process.env.PATH },
+    runner: (command, argv) => {
+      calls.push([command, argv]);
+      if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+      expect(command).toBe("go"); expect(argv[0]).toBe("build");
+      fs.writeFileSync(argv[5], "new radar", { mode: 0o755 }); return { status: 0 };
+    } } };
+}
+
+test("update from a published 30-member cache configures the new runtime", () => {
+  const old = cachePublishedRelease(), { config, calls } = publishedTransitionConfig();
+  const before = snapshot();
+  expect(doctorGlobal(options)).toMatchObject({ status: "healthy", active: old, activeTag: "v1.1.0" });
+  expect(snapshot()).toEqual(before);
+  const next = acquisition("published-transition", {}, true);
+  expect(updateGlobal({ ...config, acquire: next.acquire })).toMatchObject({ status: "activated", active: next.id, previous: old });
+  expect(calls.filter(([command]) => command === "go")).toHaveLength(1);
+  expect(doctorGlobal(config).components).toMatchObject({ skills: "ok", radar: "ok", signatures: "ok", pointers: "ok" });
+  expect(fs.readFileSync(join(config.home, ".claude/CLAUDE.md"), "utf8")).toContain("v1-published-transition");
+});
+
+test("rollback to a published 30-member cache keeps every installed runtime byte and mode", () => {
+  const old = cachePublishedRelease(), { config, calls } = publishedTransitionConfig();
+  const next = acquisition("published-rollback", {}, true);
+  updateGlobal({ ...config, acquire: next.acquire });
+  const runtimeBefore = snapshot(config.home), oldBefore = snapshot(version(old));
+  calls.length = 0;
+  expect(rollbackGlobal(config)).toMatchObject({ status: "activated", active: old, previous: next.id, runtime: "kept" });
+  expect(calls).toEqual([]); // Not even Gentle AI admission or a Radar donor/build probe.
+  expect(snapshot(config.home)).toEqual(runtimeBefore);
+  expect(snapshot(version(old))).toEqual(oldBefore);
+  expect(doctorGlobal(options).active).toBe(old);
+});
+
+test("tampered published cache is rejected before update or rollback writes", () => {
+  const old = cachePublishedRelease(), { config } = publishedTransitionConfig();
+  const next = acquisition("published-tamper", {}, true);
+  const path = join(version(old), publishedPaths[0]), bytes = fs.readFileSync(path);
+  bytes[0] ^= 1; rewrite(path, bytes); fs.chmodSync(path, 0o400);
+  const before = snapshot();
+  for (const run of [() => doctorGlobal(config), () => updateGlobal({ ...config, acquire: next.acquire }),
+    () => rollbackGlobal(config)]) expect(run).toThrow(/byte or mode drift/);
+  expect(next.calls).toEqual([]);
+  expect(snapshot()).toEqual(before);
 });
 
 test("S198 doctor exposes provenance tags without changing release identity or files", () => {

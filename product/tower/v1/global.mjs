@@ -500,8 +500,8 @@ export function doctorGlobal(value) {
 }
 export function rollbackGlobal(value) {
   const options = optionsFor(value, "rollback"), before = inspect(options);
-  let plan;
-  if (options.home && before.state?.previous) {
+  let plan, runtimeKept = false;
+  if (before.state?.previous) {
     const id = before.state.previous, provenance = before.versions.get(id);
     const cachedMembers = sha => {
       const p = before.versions.get(sha), wire = read(join(options.stateRoot, "versions", sha, "release.json"), MAX_RELEASE_BYTES).bytes;
@@ -509,17 +509,24 @@ export function rollbackGlobal(value) {
         runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : wire }) }).manifest.members;
     };
     const members = cachedMembers(id);
-    // inspect already verified every cached tree; reverify each donor's receipt,
-    // preferring the active release, without downloading or trusting loose files.
-    const vendorReleases = members.some(m => m.path.startsWith("agent-workflows/tools/radar/vendor/")) ? [] :
-      [...new Set([before.state.active, ...before.versions.keys()])].filter(sha => sha !== id).map(cachedMembers);
-    plan = prepareRuntime({ home: options.home, env: options.env, runner: options.runner,
-      members, vendorReleases, version: provenance.tag || id.slice(0, 12) });
+    // Exact cached-roster validation already ran in inspect. Only the published
+    // pre-runtime roster lacks the pointer template; S194's missing runtime-config
+    // module does NOT imply it lacks runtime content. Older CLIs cannot manage the
+    // installed runtime, so leave it wholly untouched, without admission or builds.
+    runtimeKept = !members.some(m => m.path === "product/tower/v1/instructions/global-pointer.md");
+    if (options.home && !runtimeKept) {
+      // Reverify each donor's receipt, preferring the active release, without
+      // downloading or trusting loose files.
+      const vendorReleases = members.some(m => m.path.startsWith("agent-workflows/tools/radar/vendor/")) ? [] :
+        [...new Set([before.state.active, ...before.versions.keys()])].filter(sha => sha !== id).map(cachedMembers);
+      plan = prepareRuntime({ home: options.home, env: options.env, runner: options.runner,
+        members, vendorReleases, version: provenance.tag || id.slice(0, 12) });
+    }
   }
   if (options.home && before.state && !before.state.previous) uninstallRuntime({ home: options.home });
   const result = mutate(options, "rollback");
   if (plan) installRuntime(plan);
-  return result;
+  return runtimeKept ? Object.freeze({ ...result, runtime: "kept" }) : result;
 }
 export function uninstallGlobal(value) {
   const options = optionsFor(value, "uninstall"), before = inspect(options);

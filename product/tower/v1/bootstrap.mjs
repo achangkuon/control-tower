@@ -66,7 +66,42 @@ function parseEnvelope(text) {
   return JSON.parse(text);
 }
 
-// Exact historical rosters, not the current bundle with a few required files missing.
+// All four published releases v1.0.0–v1.1.0 share this exact pre-runtime roster.
+// Keep it independent of today's bundle: historical membership must never grow with it.
+const PUBLISHED_PATHS = new Set([
+  "agent-workflows/tools/radar/archivar.go",
+  "agent-workflows/tools/radar/avance.go",
+  "agent-workflows/tools/radar/check.go",
+  "agent-workflows/tools/radar/encargo.go",
+  "agent-workflows/tools/radar/etapa.go",
+  "agent-workflows/tools/radar/faltan.go",
+  "agent-workflows/tools/radar/git.go",
+  "agent-workflows/tools/radar/go.mod",
+  "agent-workflows/tools/radar/go.sum",
+  "agent-workflows/tools/radar/ledger.go",
+  "agent-workflows/tools/radar/main.go",
+  "agent-workflows/tools/radar/partition.go",
+  "agent-workflows/tools/radar/plan.go",
+  "agent-workflows/tools/radar/render.go",
+  "agent-workflows/tools/radar/roadmap.go",
+  "agent-workflows/tools/radar/safety.go",
+  "agent-workflows/tools/radar/sesion.go",
+  "agent-workflows/tools/radar/snapshot.go",
+  "agent-workflows/tools/radar/state.go",
+  "product/tower/v1/adoption.mjs",
+  "product/tower/v1/bootstrap.mjs",
+  "product/tower/v1/bundle.mjs",
+  "product/tower/v1/cli.mjs",
+  "product/tower/v1/global.mjs",
+  "product/tower/v1/project-files.mjs",
+  "product/tower/v1/projects.mjs",
+  "product/tower/v1/release.mjs",
+  "product/tower/v1/skills/control-tower/SKILL.md",
+  "product/tower/v1/skills/control-tower/references/adoption.md",
+  "product/tower/v1/skills/control-tower/references/authority-and-questions.md",
+]);
+// Unpublished S194/S195 caches remain supported for the existing offline rollback tests.
+// Exact historical rosters, not arbitrary subsets of the current bundle.
 const S195_PATHS = new Set([...RELEASE_PATHS].filter(path => !path.startsWith("agent-workflows/tools/radar/vendor/")));
 const S194_PATHS = new Set([...S195_PATHS].filter(path => ![
   "product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs",
@@ -124,12 +159,12 @@ function bootstrap(options, cached = false) {
   } catch {
     throw new Error("Invalid release UTF8 or bounded JSON envelope");
   }
-  const paths = cached ? [RELEASE_PATHS, S195_PATHS, S194_PATHS].find(paths => paths.size === envelope?.members?.length) ?? RELEASE_PATHS : RELEASE_PATHS;
+  const paths = cached ? [RELEASE_PATHS, S195_PATHS, S194_PATHS, PUBLISHED_PATHS].find(paths => paths.size === envelope?.members?.length) ?? RELEASE_PATHS : RELEASE_PATHS;
   const members = Object.freeze(validateMembers(envelope, paths));
   return Object.freeze({ bytes, manifest: Object.freeze({ schema: RELEASE_SCHEMA, members }) });
 }
 
 export function bootstrapVerifiedRelease(options) { return bootstrap(options); }
 // Offline cached versions retain their original independently pinned digest.
-// This admits only exact S194/S195 historical rosters, never arbitrary subsets or a new acquisition.
+// This admits only exact published and S194/S195 historical rosters, never arbitrary subsets or a new acquisition.
 export function bootstrapCachedRelease(options) { return bootstrap(options, true); }
