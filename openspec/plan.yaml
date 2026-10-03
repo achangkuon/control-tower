@@ -2195,7 +2195,7 @@ sesiones:
     resultado: "Instalar o actualizar ya no pide versión: busca la última publicada y, si no hay nada nuevo, dice Todas las configuraciones al día."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación la actualización sin preguntas y confiar en la huella publicada en su repo privado."
     depende_de: [S198]
-    archivos: [product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard_test.go, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs]
+    archivos: [product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard_test.go, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/tui/main.go, product/tower/v1/tui/model.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model_test.go]
     cimientos: []
     recurso: []
     encargo:
