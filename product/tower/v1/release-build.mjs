@@ -66,14 +66,18 @@ export function instructionProblems({ project, pointer, bundleSource, radarSourc
   // Chanks references may be bare; other skill names use inline-code kebab-case.
   // The skill-loading table also admits simple names, without treating `check`
   // and `render` shorthand elsewhere as skills.
+  const skillReferences = text => [...text.matchAll(/\b(chanks-[0-9]-[a-z0-9-]+)\b|`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g)]
+    .map(match => match[1] ?? match[2]);
   const skillTable = /### Which skill to load\n([\s\S]*?)(?:\n### |$)/.exec(project)?.[1] ?? "";
   const referencedSkills = new Set([
-    ...[...project.matchAll(/\b(chanks-[0-9]-[a-z0-9-]+)\b|`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g)]
-      .map(match => match[1] ?? match[2]),
+    ...skillReferences(project),
     ...[...skillTable.matchAll(/`([a-z][a-z0-9-]*)`/g)].map(match => match[1]),
   ]);
-  for (const name of [...referencedSkills].sort()) if (!roster.has(name)) {
-    add("skills", `project-agents.md: la skill ${name} no está en el roster V1 de bundle.mjs.`);
+  // Both templates are shipped instructions: every skill either names must exist.
+  for (const [file, names] of [["project-agents.md", referencedSkills], ["global-pointer.md", new Set(skillReferences(pointer))]]) {
+    for (const name of [...names].sort()) if (!roster.has(name)) {
+      add("skills", `${file}: la skill ${name} no está en el roster V1 de bundle.mjs.`);
+    }
   }
   for (const name of stageSkills) if (roster.has(name) && !referencedSkills.has(name)) {
     add("skills", `project-agents.md: falta la skill de entrada de etapa ${name}.`);
@@ -85,7 +89,9 @@ export function instructionProblems({ project, pointer, bundleSource, radarSourc
   if (switches.length !== 1) add("radar", "No se pudo leer el switch de comandos de Radar en main.go.");
   const radarReferences = text => [...text.matchAll(/\bradar[ \t]+([a-z][a-z0-9-]*)\b/g)].map(match => match[1]);
   const documented = new Set(radarReferences(usages.length === 1 ? usages[0][1] : ""));
-  const implemented = new Set([...((switches.length === 1 ? switches[0][1] : "").matchAll(/\bcase "([a-z][a-z0-9-]*)":/g))]
+  // Commented-out cases are not dispatched; strip Go comments before reading labels.
+  const switchBody = (switches.length === 1 ? switches[0][1] : "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  const implemented = new Set([...switchBody.matchAll(/\bcase "([a-z][a-z0-9-]*)":/g)]
     .map(match => match[1]));
   const referencedRadar = new Set(radarReferences(project + "\n" + pointer));
   for (const command of [...referencedRadar].sort()) {

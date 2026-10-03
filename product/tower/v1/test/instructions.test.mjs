@@ -75,3 +75,26 @@ describe("Control Tower V1 instruction templates", () => {
     expect(text.trimEnd().split("\n").length).toBeLessThanOrEqual(8);
   });
 });
+
+describe("instruction gate review regressions", () => {
+  const real = () => ({
+    project: readTemplate("project-agents.md"), pointer: readTemplate("global-pointer.md"),
+    bundleSource: readFileSync(new URL("../bundle.mjs", import.meta.url), "utf8"),
+    radarSource: readFileSync(new URL("tools/radar/main.go", workflowsRoot), "utf8"),
+  });
+
+  test("a commented-out Radar case does not count as an implemented command", () => {
+    const inputs = real();
+    inputs.radarSource = inputs.radarSource.replace(/\n(\t*)case "zonas":/, "\n$1// case \"zonas\":");
+    expect(inputs.radarSource).toContain('// case "zonas":');
+    expect(instructionProblems(inputs).map(p => p.message))
+      .toContain("radar zonas: no existe en el switch de Radar publicado (main.go).");
+  });
+
+  test("skills referenced in the global pointer are checked against the V1 roster", () => {
+    const inputs = real();
+    inputs.pointer = inputs.pointer.replace("Otherwise ignore", "Load `chanks-9-unpublished`. Otherwise ignore");
+    expect(instructionProblems(inputs).map(p => p.message))
+      .toContain("global-pointer.md: la skill chanks-9-unpublished no está en el roster V1 de bundle.mjs.");
+  });
+});
