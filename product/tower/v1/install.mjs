@@ -32,6 +32,28 @@ function prerequisites(runner) {
     }
   }
 }
+// This standalone asset has no repository imports. Stamped pinned.paths is the
+// exact reviewed file roster; these guards additionally bound canonical layouts.
+const WORKFLOW_SKILLS = new Set([
+  "analisis-por-tramos", "chanks-0-explicalo-simple", "chanks-0-mensajes-visibles",
+  "chanks-0-session-context-loader", "chanks-0-skill-composer", "chanks-1-adopcion",
+  "chanks-1-autoridad", "chanks-1-brain-dump", "chanks-1-cierre-de-decisiones",
+  "chanks-1-descubrimiento", "chanks-1-feature", "chanks-1-heredado", "chanks-1-prd",
+  "chanks-1-project-kickoff", "chanks-1-requirements", "chanks-1-rfc", "chanks-1-terreno",
+  "chanks-2-planificador-granular", "chanks-3-paralelo", "chanks-4-puente",
+  "chanks-5-politica-de-entrega", "chanks-5-session-doc", "skill-orchestrator",
+]);
+const SIGNATURE_PATHS = new Set([
+  "agent-workflows/chanks/torre-firma.mjs",
+  "agent-workflows/tools/hooks/chanks-etapa.sh",
+  "agent-workflows/tools/hooks/torre-firma.sh",
+]);
+function canonicalSource(path) {
+  if (/^(?:product\/tower\/v1\/|agent-workflows\/tools\/radar\/)/.test(path) || SIGNATURE_PATHS.has(path) ||
+      path === "agent-workflows/skills/_shared/plan-naming-convention.md") return true;
+  return path.startsWith("agent-workflows/skills/") && WORKFLOW_SKILLS.has(path.split("/")[2]) &&
+    path !== "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json";
+}
 function members(bytes, pinned) {
   // Only the already authenticated envelope is interpreted. S174 validates again before activation.
   const envelope = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
@@ -42,7 +64,7 @@ function members(bytes, pinned) {
     const path = member?.path;
     if (typeof path !== "string" || !pinned.paths.includes(path) || seen.has(path) ||
         path.startsWith("/") || path.includes("\\") || path.split("/").some(p => !p || p === "." || p === "..") ||
-        !/^(?:product\/tower\/v1\/|agent-workflows\/tools\/radar\/)/.test(path) ||
+        path.includes("\0") || !canonicalSource(path) ||
         member.type !== "file" || member.encoding !== "base64" ||
         !Number.isSafeInteger(member.byteLength) || member.byteLength < 0 || member.byteLength > MEMBER_LIMIT ||
         typeof member.bytes !== "string" || member.bytes.length !== 4 * Math.ceil(member.byteLength / 3) ||

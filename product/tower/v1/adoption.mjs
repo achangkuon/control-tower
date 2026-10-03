@@ -39,6 +39,9 @@ function expectedTrees(manifest) {
   const trees = new Map(TARGETS.map((path) => [path, { type: "directory", mode: 0o755, entries: [] }]));
   for (const member of manifest.members) {
     const radar = member.destination.startsWith("radar/");
+    // The release also ships global skills, instructions and signatures. These are
+    // not project-local adoption targets, even when they share a skills/ prefix.
+    if (!radar && !member.destination.startsWith("skills/control-tower/")) continue;
     const name = radar ? member.destination.slice("radar/".length) : member.destination.slice("skills/control-tower/".length);
     const file = { type: "file", mode: 0o644, encoding: "base64", bytes: member.bytes,
       byteLength: member.byteLength, sha256: member.sha256 };

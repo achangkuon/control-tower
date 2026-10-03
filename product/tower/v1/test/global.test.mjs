@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, spyOn } from "bun:test";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal } from "../global.mjs";
 
@@ -77,7 +77,7 @@ afterEach(() => {
 });
 
 describe("isolated global V1 lifecycle", () => {
-  test("fresh installation stores 30 verified files and a stable non-eval launcher", () => {
+  test("fresh installation stores 72 verified files and a stable non-eval launcher", () => {
     const release = install();
     expect(release.calls.length).toBe(2);
     expect(state().active).toBe(release.id);
@@ -117,6 +117,7 @@ describe("isolated global V1 lifecycle", () => {
       const moduleRoot = join(checkout, "product", "tower", "v1");
       fs.mkdirSync(moduleRoot, { recursive: true });
       for (const path of paths.filter((path) => path.endsWith(".mjs"))) {
+        fs.mkdirSync(dirname(join(checkout, path)), { recursive: true });
         fs.copyFileSync(new URL(`../../../../${path}`, import.meta.url), join(checkout, path));
       }
       const checkoutAPI = await import(join(moduleRoot, "global.mjs"));

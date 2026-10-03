@@ -40,9 +40,9 @@ function rejects(value, pattern = /release/i) {
 }
 
 describe("bounded verified global release intake", () => {
-  test("accepts exactly 30 canonical source-layout files independently of ordering", () => {
-    expect(BUNDLE_MEMBERS.length).toBe(22);
-    expect(new Set(paths).size).toBe(30);
+  test("accepts exactly 72 canonical source-layout files independently of ordering", () => {
+    expect(BUNDLE_MEMBERS.length).toBe(64);
+    expect(new Set(paths).size).toBe(72);
     for (const members of [fixture().members, fixture().members.reverse()]) {
       const bytes = encode({ schema, members });
       const original = Buffer.from(bytes);
@@ -50,7 +50,7 @@ describe("bounded verified global release intake", () => {
       const result = run();
       expect(result.manifest.schema).toBe(schema);
       expect(result.manifest.members.map(({ path }) => path).sort()).toEqual([...paths].sort());
-      expect(result.manifest.members.length).toBe(30);
+      expect(result.manifest.members.length).toBe(72);
       expect(Object.isFrozen(result)).toBe(true);
       expect(Object.isFrozen(result.manifest.members)).toBe(true);
       for (const entry of result.manifest.members) {
@@ -75,6 +75,28 @@ describe("bounded verified global release intake", () => {
       expect(result.manifest.members[1].bytes).toEqual(Buffer.from([0, 255, 1, 2]));
       expect(run).toThrow(/SHA-256 mismatch/);
     }
+  });
+
+  test("requires global skills, templates and signature sources but rejects the personal Notion map", () => {
+    const required = ["agent-workflows/skills/chanks-4-puente/scripts/prepare_new_change.py",
+      "agent-workflows/skills/_shared/plan-naming-convention.md",
+      "product/tower/v1/instructions/project-agents.md", "product/tower/v1/instructions/global-pointer.md",
+      "agent-workflows/chanks/torre-firma.mjs", "agent-workflows/tools/hooks/chanks-etapa.sh",
+      "agent-workflows/tools/hooks/torre-firma.sh"];
+    for (const path of required) {
+      expect(paths).toContain(path);
+      const value = fixture();
+      value.members = value.members.filter(entry => entry.path !== path);
+      rejects(value);
+    }
+    const excluded = "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json";
+    expect(paths).not.toContain(excluded);
+    const value = fixture();
+    value.members[0] = member(excluded);
+    rejects(value);
+    const tampered = fixture();
+    tampered.members.find(entry => entry.path === required[0]).sha256 = "0".repeat(64);
+    rejects(tampered, /SHA-256/);
   });
 
   test("rejects outer digest mismatch before UTF8 decoding or JSON parsing", () => {

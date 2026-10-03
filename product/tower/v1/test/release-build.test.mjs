@@ -166,7 +166,7 @@ test("deterministic bytes, fixed keys and exact membership admitted by bootstrap
   const envelope = JSON.parse(bytes);
   expect(Object.keys(envelope)).toEqual(["schema", "members"]);
   expect(envelope.members.map(({ path }) => path)).toEqual(paths);
-  expect(envelope.members).toHaveLength(30);
+  expect(envelope.members).toHaveLength(72);
   expect(Object.keys(envelope.members[0])).toEqual(["path", "type", "encoding", "byteLength", "sha256", "bytes"]);
   const calls = [];
   const result = bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json",
@@ -177,6 +177,31 @@ test("deterministic bytes, fixed keys and exact membership admitted by bootstrap
   expect(calls.map(([command]) => command)).toEqual(["gh", "gh"]);
   expect(calls[0][1]).toEqual(["auth", "status", "--active", "--hostname", "github.com"]);
   expect(result.manifest.members.every(({ bytes }) => bytes.equals(Buffer.from([0, 255, 1, 2])))).toBe(true);
+}));
+
+test("release and installer pins carry global-only members and exclude the personal Notion map", () => fixture(({ repo, root, out }) => {
+  const receipt = buildRelease({ repo, out, tag: "v1", "installer-out": join(root, "installer.mjs") });
+  const envelope = JSON.parse(readFileSync(out));
+  const pinned = JSON.parse(readFileSync(join(root, "installer.mjs"), "utf8").match(/^const PINNED = (.+);$/m)[1]);
+  const expected = ["agent-workflows/skills/chanks-1-adopcion/SKILL.md",
+    "agent-workflows/skills/chanks-4-puente/scripts/prepare_new_change.py",
+    "agent-workflows/skills/_shared/plan-naming-convention.md",
+    "product/tower/v1/instructions/project-agents.md", "product/tower/v1/instructions/global-pointer.md",
+    "agent-workflows/chanks/torre-firma.mjs", "agent-workflows/tools/hooks/torre-firma.sh",
+    "agent-workflows/tools/hooks/chanks-etapa.sh"];
+  for (const path of expected) {
+    expect(envelope.members.map(entry => entry.path)).toContain(path);
+    expect(pinned.paths).toContain(path);
+  }
+  const excluded = "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json";
+  expect(envelope.members.map(entry => entry.path)).not.toContain(excluded);
+  expect(pinned.paths).not.toContain(excluded);
+  expect(pinned.paths).toHaveLength(72);
+  expect(pinned.sha256).toBe(receipt.sha256);
+}, repo => {
+  const excluded = join(repo, "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");
+  mkdirSync(dirname(excluded), { recursive: true });
+  writeFileSync(excluded, "never shipped");
 }));
 
 test("reads the requested commit, not clean but newer working files", () => fixture(({ repo, commit, out }) => {

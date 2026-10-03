@@ -12,6 +12,10 @@ const RELEASE_PATHS = new Set([
     .map((name) => `product/tower/v1/${name}.mjs`),
 ]);
 
+// Six keys and five string values per member, plus two envelope keys/schema.
+// Scale the structural bound with the closed roster, not a fixed old file count.
+const STRING_LIMIT = RELEASE_PATHS.size * 11 + 3;
+
 // Wire format: {schema, members:[{path,type:"file",encoding:"base64",byteLength,sha256,bytes}]}.
 // Only canonical source-layout paths are admitted; this is not a general extractor.
 function exactKeys(value, keys) {
@@ -37,7 +41,7 @@ function parseEnvelope(text) {
         if (text[index] === "\\") index++;
         index++;
       }
-      if (index >= text.length || ++strings > 400) throw new Error("Invalid release JSON strings");
+      if (index >= text.length || ++strings > STRING_LIMIT) throw new Error("Invalid release JSON strings");
       let next = index + 1;
       while (next < text.length && whitespace(text[next])) next++;
       if (text[next] === ":") {

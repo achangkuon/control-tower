@@ -10,8 +10,54 @@ const skill = "product/tower/v1/skills/control-tower/";
 const go = ["archivar", "avance", "check", "encargo", "etapa", "faltan", "git", "ledger", "main", "partition", "plan", "render", "roadmap", "safety", "sesion", "snapshot", "state"];
 const radarNames = ["go.mod", "go.sum", ...go.map((name) => `${name}.go`)];
 const skillNames = ["SKILL.md", "references/adoption.md", "references/authority-and-questions.md"];
+// Independent reviewed roster: deliberately not derived from production membership.
+const workflowNames = [
+  "_shared/plan-naming-convention.md",
+  "analisis-por-tramos/SKILL.md",
+  "analisis-por-tramos/references/estructura.md",
+  "analisis-por-tramos/references/medios.md",
+  "chanks-0-explicalo-simple/SKILL.md",
+  "chanks-0-explicalo-simple/references/formato.md",
+  "chanks-0-mensajes-visibles/SKILL.md",
+  "chanks-0-session-context-loader/SKILL.md",
+  "chanks-0-skill-composer/SKILL.md",
+  "chanks-1-adopcion/SKILL.md",
+  "chanks-1-adopcion/references/errores-conocidos.md",
+  "chanks-1-autoridad/SKILL.md",
+  "chanks-1-brain-dump/SKILL.md",
+  "chanks-1-cierre-de-decisiones/SKILL.md",
+  "chanks-1-cierre-de-decisiones/assets/resolution-entry.md",
+  "chanks-1-cierre-de-decisiones/references/decision-extraction.md",
+  "chanks-1-descubrimiento/SKILL.md",
+  "chanks-1-feature/SKILL.md",
+  "chanks-1-heredado/SKILL.md",
+  "chanks-1-heredado/references/ubicacion-y-cruces.md",
+  "chanks-1-prd/SKILL.md",
+  "chanks-1-project-kickoff/SKILL.md",
+  "chanks-1-requirements/SKILL.md",
+  "chanks-1-rfc/SKILL.md",
+  "chanks-1-terreno/SKILL.md",
+  "chanks-2-planificador-granular/SKILL.md",
+  "chanks-2-planificador-granular/references/juicio-de-ruta.md",
+  "chanks-3-paralelo/SKILL.md",
+  "chanks-4-puente/SKILL.md",
+  "chanks-4-puente/references/session-readiness.md",
+  "chanks-4-puente/scripts/prepare_new_change.py",
+  "chanks-5-politica-de-entrega/SKILL.md",
+  "chanks-5-session-doc/SKILL.md",
+  "chanks-5-session-doc/assets/session-doc.schema.json",
+  "chanks-5-session-doc/references/notion-closure.md",
+  "skill-orchestrator/SKILL.md",
+  "skill-orchestrator/references/ejemplar.md",
+];
+const workflows = "agent-workflows/skills/";
+const excluded = workflows + "chanks-5-session-doc/assets/project-notion-map.json";
 const expected = [...radarNames.map((name) => [radar + name, "radar/" + name]),
-  ...skillNames.map((name) => [skill + name, "skills/control-tower/" + name])];
+  ...skillNames.map((name) => [skill + name, "skills/control-tower/" + name]),
+  ...workflowNames.map((name) => [workflows + name, "skills/" + name]),
+  ...["global-pointer.md", "project-agents.md"].map((name) => ["product/tower/v1/instructions/" + name, "instructions/" + name]),
+  ["agent-workflows/chanks/torre-firma.mjs", "signatures/torre-firma.mjs"],
+  ...["chanks-etapa.sh", "torre-firma.sh"].map((name) => ["agent-workflows/tools/hooks/" + name, "signatures/" + name])];
 
 function put(root, path, content = path) {
   const full = join(root, path);
@@ -34,11 +80,52 @@ function fixture(fn) {
 }
 const changed = (members, index, patch) => members.map((member, i) => i === index ? { ...member, ...patch } : member);
 
-describe("project-local Tower V1 bundle", () => {
+describe("closed Tower V1 release bundle", () => {
+  test("reviewed workflow roster is sorted and the real checkout has no missing or unlisted files", () => {
+    expect(workflowNames).toEqual([...workflowNames].sort());
+    const result = validateBundle(new URL("../../../..", import.meta.url).pathname);
+    expect(result.members.map(({ source, destination }) => [source, destination])).toEqual(expected);
+    expect(result.members.some(({ source }) => source === excluded)).toBe(false);
+    expect(result.members.every(({ byteLength }) => byteLength <= 1024 * 1024)).toBe(true);
+    expect(result.members.reduce((sum, entry) => sum + entry.byteLength, 0)).toBeLessThan(8 * 1024 * 1024);
+  });
+
+  test("every listed workflow file is required; every skill directory rejects unlisted files", () => {
+    for (const name of workflowNames) fixture(({ sources }) => {
+      rmSync(join(sources, workflows + name));
+      expect(() => validateBundle(sources)).toThrow();
+    });
+    for (const name of new Set(workflowNames.filter(name => !name.startsWith("_shared/"))
+      .map(name => name.split("/")[0]))) {
+      for (const extra of ["unlisted.md", "new/nested.md", "references/unlisted.md"]) fixture(({ sources }) => {
+        put(sources, `${workflows}${name}/${extra}`);
+        expect(() => validateBundle(sources)).toThrow();
+      });
+    }
+  });
+
+  test("personal Notion map is optional, never bundled, and not an open-ended exclusion", () => fixture(({ sources }) => {
+    put(sources, excluded, "not read or shipped");
+    const result = validateBundle(sources);
+    expect(result.members).toHaveLength(64);
+    expect(result.members.some(({ source }) => source === excluded)).toBe(false);
+    put(sources, workflows + "chanks-5-session-doc/assets/other.json");
+    expect(() => validateBundle(sources)).toThrow();
+  }));
+
+  test("new workflow members reject symlinks and non-regular files", () => {
+    for (const kind of ["link", "directory"]) fixture(({ sources }) => {
+      const path = join(sources, workflows + "chanks-4-puente/scripts/prepare_new_change.py");
+      rmSync(path);
+      if (kind === "link") symlinkSync(join(sources, radar + "main.go"), path);
+      else mkdirSync(path);
+      expect(() => validateBundle(sources)).toThrow();
+    });
+  });
   test("one versioned positive membership source yields exact, immutable, in-memory bytes", () => fixture(({ sources }) => {
     expect(BUNDLE_SCHEMA).toBe("tower.v1.bundle/1");
     expect(BUNDLE_MEMBERS.map(({ source, destination }) => [source, destination])).toEqual(expected);
-    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(22);
+    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(64);
     const result = validateBundle(sources);
     expect(result.schema).toBe(BUNDLE_SCHEMA);
     expect(Object.isFrozen(result)).toBe(true);

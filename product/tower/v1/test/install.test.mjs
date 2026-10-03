@@ -44,6 +44,48 @@ function fixture(run, mutate = () => {}, overrides = {}) {
   } finally { process.umask(oldMask); rmSync(root, { recursive: true, force: true }); }
 }
 
+test("expanded canonical release extracts every pinned skill, template and signature with no personal map", () => fixture(({ deps, calls, output }) => {
+  for (const path of ["agent-workflows/skills/chanks-4-puente/scripts/prepare_new_change.py",
+    "agent-workflows/skills/_shared/plan-naming-convention.md", "product/tower/v1/instructions/project-agents.md",
+    "product/tower/v1/instructions/global-pointer.md", "agent-workflows/chanks/torre-firma.mjs",
+    "agent-workflows/tools/hooks/torre-firma.sh", "agent-workflows/tools/hooks/chanks-etapa.sh"]) {
+    expect(deps.pinned.paths).toContain(path);
+  }
+  expect(deps.pinned.paths).toHaveLength(72);
+  expect(deps.pinned.paths).not.toContain("agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");
+  // The fixture's install runner checks exact extracted bytes for every member.
+  expect(main([], deps)).toBe(0);
+  expect(calls.some(([, argv]) => argv[1] === "install")).toBe(true);
+  expect(output().stderr).toBe("");
+}));
+
+test("new canonical prefixes never admit unpinned siblings or near-matching signatures", () => {
+  for (const path of ["agent-workflows/skills/chanks-1-adopcion/extra.md",
+    "agent-workflows/skills/chanks-6-unlisted/SKILL.md", "agent-workflows/skills/_shared/other.md",
+    "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json",
+    "agent-workflows/chanks/other.mjs", "agent-workflows/tools/hooks/other.sh",
+    "agent-workflows/tools/hooks/torre-firma.sh/extra", "agent-workflows/chanks/torre-firma.mjs-extra"]) {
+    fixture(({ deps, calls, output }) => {
+      expect(main(["--dry-run"], deps)).toBe(1);
+      expect(output().stderr).toContain("member path");
+      expect(calls).toHaveLength(5);
+    }, envelope => { envelope.members[0].path = path; });
+  }
+});
+
+test("layout guard rejects non-V1 sources even when supplied as an exact test pin", () => {
+  for (const path of ["agent-workflows/skills/chanks-6-unlisted/SKILL.md",
+    "agent-workflows/skills/_shared/other.md",
+    "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json",
+    "agent-workflows/chanks/other.mjs", "agent-workflows/tools/hooks/other.sh",
+    "agent-workflows/tools/hooks/torre-firma.sh/extra", "agent-workflows/chanks/torre-firma.mjs-extra"]) {
+    fixture(({ deps, output }) => {
+      expect(main(["--dry-run"], deps)).toBe(1);
+      expect(output().stderr).toContain("member path");
+    }, envelope => { envelope.members[0].path = path; }, { paths: [path, ...paths.slice(1)] });
+  }
+});
+
 test("verified TUI installs beside global state; rerunning updates even when unchanged", () => fixture(({ root, deps, calls }) => {
   const binary = Buffer.from("verified native binary"), sha256 = digest(binary);
   deps.platform = "linux"; deps.arch = "x64";

@@ -62,6 +62,36 @@ const unchangedFailure = (root, action) => {
 };
 
 describe("project-local lifecycle API", () => {
+  test("expanded release members remain global-only during project adoption", () => fixture(({ projectRoot, env }) => {
+    const bundlePath = resolve(import.meta.dir, "../bundle.mjs");
+    const adoptionPath = resolve(import.meta.dir, "../adoption.mjs");
+    // Mock only in a fresh process: no source-tree mutation or shared module mocks.
+    const script = `
+      import { mock } from "bun:test";
+      const bundle = await import(${JSON.stringify(bundlePath)});
+      const manifest = bundle.validateBundle(${JSON.stringify(source)});
+      const extras = ["skills/chanks-1-adopcion/SKILL.md", "skills/_shared/plan-naming-convention.md",
+        "instructions/project-agents.md", "signatures/torre-firma.mjs", "skills/control-tower-other/SKILL.md"];
+      mock.module(${JSON.stringify(bundlePath)}, () => ({ ...bundle,
+        validateBundle: () => ({ ...manifest, members: [...manifest.members,
+          ...extras.map(destination => ({ ...manifest.members[0], destination }))] }) }));
+      const { initProject } = await import(${JSON.stringify(adoptionPath)});
+      initProject({ projectRoot: ${JSON.stringify(projectRoot)}, trustResolution: "trusted" });
+    `;
+    const run = spawnSync(process.execPath, ["-e", script], { env, encoding: "utf8" });
+    expect(run.status).toBe(0);
+    for (const target of targets.slice(1)) {
+      expect(readdirSync(join(projectRoot, target), { recursive: true }).sort()).toEqual([
+        "SKILL.md", "references", "references/adoption.md", "references/authority-and-questions.md",
+      ]);
+    }
+    expect(readdirSync(join(projectRoot, targets[0])).sort()).toEqual(
+      BUNDLE_MEMBERS.filter(({ destination }) => destination.startsWith("radar/"))
+        .map(({ destination }) => destination.slice(6)).sort());
+    expect(doctorProject({ projectRoot })).toEqual({ status: "healthy" });
+    expect(uninstallProject({ projectRoot })).toEqual({ status: "uninstalled" });
+  }));
+
   test("trusted absent-destination round trip installs exact bundle and leaves host instructions and HOME untouched", () => fixture(({ projectRoot }) => {
     const before = snapshot(projectRoot);
     const manifest = validateBundle(source);
@@ -71,7 +101,8 @@ describe("project-local lifecycle API", () => {
     expect(state.schema).toBe("tower.v1.adoption/1");
     expect(state.original.destinations.map((d) => d.path)).toEqual([...targets].sort());
     expect(state.installed.destinations.map((d) => d.path)).toEqual([...targets].sort());
-    for (const member of BUNDLE_MEMBERS) {
+    for (const member of BUNDLE_MEMBERS.filter(({ destination }) =>
+      destination.startsWith("radar/") || destination.startsWith("skills/control-tower/"))) {
       const destination = member.destination.startsWith("radar/") ? targets[0] : targets[1];
       const name = member.destination.startsWith("radar/") ? member.destination.slice(6) : member.destination.slice("skills/control-tower/".length);
       const canonical = readFileSync(join(source, member.source));
@@ -352,7 +383,7 @@ describe("project-local CLI (real isolated Bun processes)", () => {
     const before = snapshot(projectRoot);
     success(runCli(env, "init", "--project", projectRoot, "--trust", "trusted"), "installed");
     const manifest = validateBundle(source);
-    for (const member of manifest.members.filter((entry) => entry.destination.startsWith("skills/"))) {
+    for (const member of manifest.members.filter((entry) => entry.destination.startsWith("skills/control-tower/"))) {
       const name = member.destination.slice("skills/control-tower/".length);
       const canonical = readFileSync(join(source, member.source));
       expect(readFileSync(join(projectRoot, targets[1], name))).toEqual(canonical);
