@@ -24,9 +24,9 @@ const hooks = [
   { event: "PreToolUse", matcher: "Bash", hook: { type: "command", command: 'sh "$HOME/.claude/hooks/torre-firma.sh"', timeout: 15 } },
 ];
 function stat(path) { try { return lstatSync(path); } catch (e) { if (e.code === "ENOENT") return null; throw e; } }
-function homeFor(home) {
+function homeFor(home, check = true) {
   if (typeof home !== "string" || !isAbsolute(home) || resolve(home) !== home || home === parse(home).root || /[\0\r\n\\]/.test(home)) fail("unsafe HOME");
-  safe(home, home); return home;
+  if (check) safe(home, home); return home;
 }
 function safe(home, path, leafLink = false) {
   let current = parse(path).root;
@@ -200,8 +200,99 @@ function buildRadar({ env, runner, members }) {
   } finally { rmSync(temporary, { recursive: true, force: true }); }
 }
 
-/** Read-only destination admission, also used before CLI prepares lifecycle parents. */
-export function preflightRuntimeHome({ home }) {
+// Separate discovery from safe(): admission never relaxes its permission rule.
+// Only selected destinations and their ancestors are inspected, not unrelated HOME siblings.
+function permissionPaths(home, { stateRoot, launcherPath, registryRoot }) {
+  const writable = new Map(); let count = 0;
+  const check = (path, leafLink = false) => {
+    let current = parse(path).root;
+    const parts = path.slice(current.length).split(sep);
+    for (const [index, part] of parts.entries()) {
+      current = join(current, part);
+      const s = stat(current); if (!s) continue;
+      const leaf = index === parts.length - 1, inside = current === home || current.startsWith(home + sep);
+      if (s.isSymbolicLink() && !(leaf && leafLink) || !leaf && !s.isDirectory() || inside && s.uid !== process.getuid()) fail(`unsafe path or symlink: ${current}`);
+      if (inside && !s.isSymbolicLink() && s.mode & 0o022) {
+        if (!s.isDirectory() && (!s.isFile() || s.nlink !== 1)) fail(`unsafe path or symlink: ${current}`);
+        writable.set(current, s);
+      }
+    }
+  };
+  const visit = (path, tree = false, leafLink = false) => {
+    if (++count > 65536) fail("permission tree membership bound");
+    check(path, leafLink);
+    if (tree && stat(path)?.isDirectory()) for (const name of readdirSync(path).sort()) visit(join(path, name), true);
+  };
+  visit(home);
+  for (const path of [manifestPath, settingsPath, `${share}/backups`, ...pointerPaths]) visit(join(home, path));
+  for (const [path] of allowedEntries()) visit(join(home, path), true, path.startsWith(".claude/skills/"));
+  for (const path of [stateRoot, launcherPath, registryRoot]) {
+    if (!path) continue;
+    if (typeof path !== "string" || !isAbsolute(path) || resolve(path) !== path || /[\0\r\n\\]/.test(path)) fail("unsafe lifecycle destination");
+    visit(path);
+  }
+  if (registryRoot && stat(registryRoot) && !stat(registryRoot).isDirectory()) fail("unsafe registry directory");
+  if (stateRoot && stat(stateRoot)) {
+    if (!stat(stateRoot).isDirectory()) fail("unsafe state directory");
+    const rootNames = readdirSync(stateRoot);
+    if (rootNames.some(name => !["state.json", "versions"].includes(name))) fail("unknown state-root entry or recovery evidence");
+    visit(join(stateRoot, "state.json"));
+    const store = join(stateRoot, "versions"); visit(store);
+    if (stat(store)) {
+      if (!stat(store).isDirectory()) fail("unsafe version store");
+      const ids = readdirSync(store).sort();
+      if (ids.length > 16 || ids.some(id => !/^[a-f0-9]{64}$/.test(id))) fail("unknown version-store entry or membership bound");
+      // Every supported cached roster is a subset of this closed source layout.
+      // Never repair an extra file that normal lifecycle admission would reject.
+      const files = new Set(["provenance.json", "release.json", ...BUNDLE_MEMBERS.map(m => m.source),
+        ...["adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build"].map(name => `product/tower/v1/${name}.mjs`)]);
+      const parents = new Set([""]);
+      for (const file of files) { let parent = dirname(file); while (parent !== ".") { parents.add(parent); parent = dirname(parent); } }
+      const version = (path, relative = "") => {
+        visit(path);
+        const s = stat(path);
+        if (s?.isDirectory() && parents.has(relative)) for (const name of readdirSync(path).sort()) version(join(path, name), relative ? `${relative}/${name}` : name);
+        else if (!s?.isFile() || !files.has(relative)) fail("unknown version member");
+      };
+      for (const id of ids) version(join(store, id));
+    }
+  }
+  return [...writable].sort(([a], [b]) => a.localeCompare(b));
+}
+function repairPermissions(home, paths, destinations) {
+  const descriptors = [];
+  try {
+    // Rewalk all ancestors before opening no-follow descriptors. Validate every
+    // inode before the first chmod, including regular-file hardlink isolation.
+    const current = permissionPaths(home, destinations);
+    if (current.length !== paths.length || current.some(([path, s], i) => path !== paths[i][0] || s.dev !== paths[i][1].dev || s.ino !== paths[i][1].ino || s.mode !== paths[i][1].mode)) fail("permission preflight changed");
+    for (const [path, before] of paths) {
+      const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+      descriptors.push(fd);
+      const s = fstatSync(fd);
+      if (s.dev !== before.dev || s.ino !== before.ino || s.mode !== before.mode || s.uid !== process.getuid() ||
+          !s.isDirectory() && (!s.isFile() || s.nlink !== 1)) fail(`unsafe path or symlink: ${path}`);
+    }
+    for (const [index, [, s]] of paths.entries()) fchmodSync(descriptors[index], (s.mode & 0o7777) & ~0o022);
+  } finally { for (const fd of descriptors) closeSync(fd); }
+}
+
+/** Read-only destination admission unless the caller explicitly requests go-w repair. */
+export function preflightRuntimeHome({ home, fixPermissions = false, onPermissionsFixed, ...destinations }) {
+  home = homeFor(home, false);
+  if (onPermissionsFixed !== undefined && typeof onPermissionsFixed !== "function") fail("invalid permission reporter");
+  const paths = permissionPaths(home, destinations);
+  if (paths.length && !fixPermissions) {
+    const error = new Error("Tower runtime: Permisos inseguros: estas rutas permiten escritura de grupo u otros.\n" +
+      paths.map(([path]) => `- ${path}\n  chmod go-w '${path.replaceAll("'", "'\\''")}'`).join("\n") +
+      "\nCorregí los permisos y volvé a intentar, o ejecutá el mismo comando con --fix-permissions.");
+    error.permissionPaths = paths.map(([path]) => path);
+    throw error;
+  }
+  if (paths.length) {
+    repairPermissions(home, paths, destinations);
+    onPermissionsFixed?.(paths.map(([path]) => path));
+  }
   home = homeFor(home);
   if (stat(join(home, share, ".runtime-lock"))) fail("runtime lock or recovery evidence exists");
   const prior = load(home);
@@ -215,12 +306,13 @@ export function preflightRuntimeHome({ home }) {
     const bytes = read(home, join(home, path));
     if (bytes) pointerRange(new TextDecoder("utf8", { fatal: true }).decode(bytes));
   }
+  return paths.map(([path]) => path);
 }
 
 /** Prepare all bounded reads, runtime conflict checks and offline build before global activation. */
 export function prepareRuntime({ home, members: releaseMembers, vendorReleases = [], version, env = process.env, runner = spawnSync }) {
-  home = homeFor(home); requireGentleAi({ runner, env: { ...env, HOME: home } });
   preflightRuntimeHome({ home });
+  home = homeFor(home); requireGentleAi({ runner, env: { ...env, HOME: home } });
   const prior = load(home), config = settings(home), members = new Map(releaseMembers.map(m => [m.path, Buffer.from(m.bytes)]));
   const radar = "agent-workflows/tools/radar/", vendor = BUNDLE_MEMBERS.filter(m => m.source.startsWith(radar + "vendor/"));
   if (vendor.every(m => !members.has(m.source))) {

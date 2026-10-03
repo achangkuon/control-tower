@@ -137,6 +137,67 @@ test("verified active release configures runtimes, updates pointers, reruns idem
   expect(doctorGlobal(config).status).toBe("absent");
 });
 
+test("S205 verified published provenance promotes a checkout cache without changing pointers or package bytes", () => {
+  const first = acquisition("checkout", { tag: "checkout-abcdef123456" });
+  installGlobal({ ...options, acquire: first.acquire });
+  const second = acquisition("second");
+  updateGlobal({ ...options, acquire: second.acquire }); // Promote a retained previous version too.
+  const before = state(), wire = fs.readFileSync(join(version(first.id), "release.json"));
+  const published = { ...first.acquire, tag: "v1.2.0" };
+  expect(updateGlobal({ ...options, acquire: published })).toMatchObject({ status: "promoted", tag: "v1.2.0", active: second.id, previous: first.id });
+  expect(state().active).toBe(before.active); expect(state().previous).toBe(before.previous);
+  expect(fs.readFileSync(join(version(first.id), "release.json"))).toEqual(wire);
+  expect(fs.statSync(join(version(first.id), "provenance.json")).mode & 0o777).toBe(0o400);
+  expect(doctorGlobal(options).previousTag).toBe("v1.2.0");
+  rollbackGlobal(options);
+  expect(updateGlobal({ ...options, acquire: published }).status).toBe("unchanged");
+});
+
+test("S205 install promotes an existing checkout and does not rebuild or reinstall runtime resources", () => {
+  const { config, calls } = publishedTransitionConfig();
+  const first = acquisition("promote-runtime", { tag: "checkout-abcdef123456" }, true);
+  installGlobal({ ...config, acquire: first.acquire });
+  const runtimeBefore = snapshot(config.home); calls.length = 0;
+  expect(installGlobal({ ...config, acquire: { ...first.acquire, tag: "v1.2.0" } })).toMatchObject({ status: "promoted", active: first.id, previous: null, tag: "v1.2.0" });
+  expect(snapshot(config.home)).toEqual(runtimeBefore); expect(calls).toEqual([]);
+  expect(doctorGlobal(options).activeTag).toBe("v1.2.0");
+});
+
+for (const boundary of ["provenance-promoted", "state-active", "readback", "finish"]) test(`S205 promotion compensates at ${boundary}`, () => {
+  const first = acquisition("promote-fault", { tag: "checkout-abcdef123456" });
+  installGlobal({ ...options, acquire: first.acquire });
+  const before = snapshot();
+  expect(() => updateGlobal({ ...options, acquire: { ...first.acquire, tag: "v1.2.0" }, fault: failure(boundary) })).toThrow(`injected ${boundary}`);
+  expect(snapshot()).toEqual(before); expect(doctorGlobal(options).activeTag).toBe(first.acquire.tag);
+});
+
+test("S205 equal digests with non-checkout or checkout target provenance still conflict", () => {
+  const first = acquisition("conflict"); installGlobal({ ...options, acquire: first.acquire });
+  const before = snapshot();
+  for (const tag of ["v1.2.0", "checkout-abcdef123456"]) {
+    expect(() => updateGlobal({ ...options, acquire: { ...first.acquire, tag } })).toThrow("version provenance conflict");
+    expect(snapshot()).toEqual(before);
+  }
+});
+
+test("S205 checkout-to-checkout provenance remains a conflict", () => {
+  const first = acquisition("checkout-conflict", { tag: "checkout-abcdef123456" });
+  installGlobal({ ...options, acquire: first.acquire }); const before = snapshot();
+  expect(() => updateGlobal({ ...options, acquire: { ...first.acquire, tag: "checkout-bbbbbbbbbbbb" } })).toThrow("version provenance conflict");
+  expect(snapshot()).toEqual(before);
+});
+
+test("S205 a different verified digest installs separately and cannot relabel the checkout cache", () => {
+  const first = acquisition("different-a", { tag: "checkout-abcdef123456" });
+  installGlobal({ ...options, acquire: first.acquire });
+  const next = acquisition("different-b", { tag: "v1.2.0" });
+  expect(updateGlobal({ ...options, acquire: next.acquire })).toMatchObject({ status: "activated", active: next.id, previous: first.id });
+  expect(JSON.parse(fs.readFileSync(join(version(first.id), "provenance.json"))).tag).toBe(first.acquire.tag);
+  const before = snapshot();
+  expect(() => updateGlobal({ ...options, acquire: { ...next.acquire, sha256: first.id } })).toThrow(/digest|SHA-256/);
+  expect(snapshot()).toEqual(before);
+});
+
 function cachePublishedRelease() {
   // Use the real lifecycle to create the stable launcher, then seed an independently
   // pinned published cache just as an older CLI would. No old release code is executed.

@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, test, spyOn } from "bun:test";
 import * as fs from "node:fs";
 import { join, dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
-import { prepareRuntime, installRuntime, doctorRuntime, uninstallRuntime } from "../runtime-config.mjs";
+import { prepareRuntime, installRuntime, doctorRuntime, uninstallRuntime, preflightRuntimeHome } from "../runtime-config.mjs";
 
 function fixture(run) {
   const home = fs.mkdtempSync("/tmp/tower-runtime-");
@@ -30,6 +30,93 @@ function fixture(run) {
 }
 const read = (home, path) => fs.readFileSync(join(home, path), "utf8");
 const manifest = (home) => JSON.parse(read(home, ".local/share/torre-control/runtime-ownership.json"));
+
+test("S205 preflight lists every writable owned destination with exact shell-quoted fixes, without chmod", () => fixture(({ home, write }) => {
+  write(".claude/settings.json", "{}");
+  write(".agents/skills/chanks-1-prd/personal's.md", "keep");
+  const paths = [join(home, ".claude"), join(home, ".claude/settings.json"), join(home, ".agents/skills/chanks-1-prd/personal's.md")].sort();
+  for (const path of paths) fs.chmodSync(path, 0o777);
+  let error; try { preflightRuntimeHome({ home }); } catch (e) { error = e; }
+  expect(error?.message).toBe("Tower runtime: Permisos inseguros: estas rutas permiten escritura de grupo u otros.\n" +
+    paths.map(path => `- ${path}\n  chmod go-w '${path.replaceAll("'", "'\\''")}'`).join("\n") +
+    "\nCorregí los permisos y volvé a intentar, o ejecutá el mismo comando con --fix-permissions.");
+  for (const path of paths) expect(fs.statSync(path).mode & 0o777).toBe(0o777);
+}));
+
+test("S205 fix removes only go-w bits from admitted paths, preserving unrelated siblings", () => fixture(({ home, write, install }) => {
+  write(".claude/settings.json", "{}"); write(".claude/unrelated", "keep");
+  fs.chmodSync(join(home, ".claude"), 0o777);
+  fs.chmodSync(join(home, ".claude/settings.json"), 0o662);
+  fs.chmodSync(join(home, ".claude/unrelated"), 0o666);
+  const changed = preflightRuntimeHome({ home, fixPermissions: true });
+  expect(changed).toEqual([join(home, ".claude"), join(home, ".claude/settings.json")]);
+  expect(fs.statSync(join(home, ".claude")).mode & 0o777).toBe(0o755);
+  expect(fs.statSync(join(home, ".claude/settings.json")).mode & 0o777).toBe(0o640);
+  expect(fs.statSync(join(home, ".claude/unrelated")).mode & 0o777).toBe(0o666);
+  install();
+}));
+
+test("S205 explicit repair reports changes before the normal preflight can reject settings", () => fixture(({ home, write }) => {
+  write(".claude/settings.json", "{bad"); fs.chmodSync(join(home, ".claude/settings.json"), 0o666);
+  const reported = [];
+  expect(() => preflightRuntimeHome({ home, fixPermissions: true, onPermissionsFixed: paths => reported.push(paths) })).toThrow(/JSON/);
+  expect(reported).toEqual([[join(home, ".claude/settings.json")]]);
+  expect(fs.statSync(join(home, ".claude/settings.json")).mode & 0o777).toBe(0o644);
+}));
+
+test("S205 repairs HOME and global destinations but not unrelated siblings or paths outside HOME", () => fixture(({ home, write }) => {
+  write(".local/share/torre-control/v1/state.json", "{}"); write("sentinel", "keep");
+  const stateRoot = join(home, ".local/share/torre-control/v1"), stateFile = join(stateRoot, "state.json");
+  const outside = fs.mkdtempSync("/tmp/tower-outside-");
+  try {
+    for (const path of [home, stateRoot, stateFile, join(home, "sentinel"), outside]) fs.chmodSync(path, 0o777);
+    expect(preflightRuntimeHome({ home, stateRoot, launcherPath: join(outside, "launcher"), fixPermissions: true })).toEqual([home, stateRoot, stateFile]);
+    for (const path of [home, stateRoot, stateFile]) expect(fs.statSync(path).mode & 0o777).toBe(0o755);
+    expect(fs.statSync(join(home, "sentinel")).mode & 0o777).toBe(0o777);
+    expect(fs.statSync(outside).mode & 0o777).toBe(0o777);
+  } finally { fs.rmSync(outside, { recursive: true, force: true }); }
+}));
+
+test("S205 no-follow repair refuses replaced or hardlinked files before chmod", () => fixture(({ home, write }) => {
+  write(".claude/settings.json", "{}"); write("sentinel", "keep");
+  const path = join(home, ".claude/settings.json"), sentinel = join(home, "sentinel");
+  fs.chmodSync(path, 0o666); fs.chmodSync(sentinel, 0o666);
+  const open = fs.openSync;
+  const spy = spyOn(fs, "openSync").mockImplementation((target, ...args) => {
+    if (target === path) { fs.unlinkSync(path); fs.symlinkSync(sentinel, path); }
+    return open(target, ...args);
+  });
+  try { expect(() => preflightRuntimeHome({ home, fixPermissions: true })).toThrow(); }
+  finally { spy.mockRestore(); }
+  expect(fs.statSync(sentinel).mode & 0o777).toBe(0o666);
+  fs.unlinkSync(path); fs.linkSync(sentinel, path);
+  expect(() => preflightRuntimeHome({ home, fixPermissions: true })).toThrow(/unsafe/);
+  expect(fs.statSync(sentinel).mode & 0o777).toBe(0o666);
+}));
+
+test("S205 permission repair refuses unknown global entries before touching their modes", () => fixture(({ home, write }) => {
+  write(".local/share/torre-control/v1/unrelated", "keep");
+  const stateRoot = join(home, ".local/share/torre-control/v1"), unrelated = join(stateRoot, "unrelated");
+  fs.chmodSync(unrelated, 0o666);
+  expect(() => preflightRuntimeHome({ home, stateRoot, fixPermissions: true })).toThrow(/unknown/);
+  expect(fs.statSync(unrelated).mode & 0o777).toBe(0o666);
+}));
+
+test("S205 hard refusals never offer or apply permission repairs", () => {
+  for (const foreign of [false, true]) fixture(({ home, write }) => {
+    write(".claude/settings.json", "{}"); fs.chmodSync(join(home, ".claude"), 0o777);
+    if (!foreign) fs.symlinkSync("/tmp", join(home, ".agents"));
+    const owner = foreign ? spyOn(process, "getuid").mockReturnValue(process.getuid() + 1) : null;
+    try {
+      for (const fixPermissions of [false, true]) {
+        let error; try { preflightRuntimeHome({ home, fixPermissions }); } catch (e) { error = e; }
+        expect(error?.message).toContain("unsafe path or symlink:");
+        expect(error?.message).not.toContain("chmod"); expect(error?.message).not.toContain("--fix-permissions");
+        expect(fs.statSync(join(home, ".claude")).mode & 0o777).toBe(0o777);
+      }
+    } finally { owner?.mockRestore(); }
+  });
+});
 
 test("installs exact V1 skills and relative Claude links, adopts identical content, never touches other skills", () => fixture(({ home, write, install }) => {
   write(".agents/skills/gentle-ai/SKILL.md", "gentle sentinel");

@@ -36,11 +36,11 @@ function parseArguments(argv) {
   const fromCheckout = ["install", "update"].includes(command) && tail.includes("--from-checkout");
   const required = latest ? ["--latest"] : fromCheckout ? ["--from-checkout"] : command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
     ["install", "update"].includes(command) ? ["--tag", "--asset", "--sha256"] : [];
-  const allowed = new Set([...common, ...required]);
+  const allowed = new Set([...common, ...required, ...(["install", "update"].includes(command) ? ["--fix-permissions"] : [])]);
   const flags = Object.create(null);
   for (let index = 0; index < tail.length;) {
     const flag = tail[index], value = tail[index + 1];
-    if (flag === "--latest" && latest && !owns(flags, flag)) {
+    if ((flag === "--latest" && latest || flag === "--fix-permissions" && allowed.has(flag)) && !owns(flags, flag)) {
       flags[flag] = true;
       index++;
       continue;
@@ -119,7 +119,7 @@ function message(error) {
 }
 const failure = (stderr, text) => stderr.write(`Invalid Tower CLI: ${text}\n`);
 function reportError(stderr, error, prefix = "") {
-  failure(stderr, prefix + message(error));
+  failure(stderr, prefix + (Array.isArray(error?.permissionPaths) ? error.message : message(error)));
   if (error instanceof AggregateError) {
     const errors = error.errors.slice(0, 8).map((inner) =>
       String(inner?.message ?? inner).split(/[\r\n\u2028\u2029]/, 1)[0].slice(0, 240));
@@ -417,6 +417,7 @@ export function main(argv, deps = {}) {
       stdout.write("torre-control install|update --latest  (authenticated published checksum)\n" +
         "torre-control install|update --tag <tag> --asset <asset> --sha256 <trusted-digest>\n" +
         "torre-control install|update --from-checkout <repo>  (clean committed tree; offline release-build and digest verification)\n" +
+        "Agregá --fix-permissions a install|update para quitar sólo go-w de las rutas propias informadas dentro de HOME.\n" +
         "torre-control doctor | status | rollback | uninstall\n" +
         "uninstall removes owned global resources and restores backups; Gentle AI and projects remain untouched.\n");
       return 0;
@@ -454,6 +455,15 @@ export function main(argv, deps = {}) {
     } else {
       const absent = ["doctor", "uninstall"].includes(command) && absentGlobalDefaults(home, stateRoot, launcherPath, flags);
       const acquiring = command === "install" || command === "update";
+      if (acquiring) {
+        for (const path of [stateRoot, launcherPath, registryRoot]) homePath({ HOME: path });
+        if (stateRoot === launcherPath || stateRoot.startsWith(launcherPath + sep) || launcherPath.startsWith(stateRoot + sep)) usage("overlapping paths");
+      }
+      // Permission admission (and explicit repair) precedes probes, acquisition,
+      // checkout builds and default-parent creation, including --latest's fast path.
+      const permissionsChanged = acquiring ? preflightRuntimeHome({ home, stateRoot, launcherPath, registryRoot,
+        fixPermissions: flags["--fix-permissions"] === true,
+        onPermissionsFixed: paths => stderr.write(`Permisos corregidos (sólo go-w):\n${paths.map(path => `- ${path}`).join("\n")}\n`) }) : [];
       let latestRelease;
       if (flags["--latest"]) {
         const missing = absentGlobalDefaults(home, stateRoot, launcherPath, flags);
@@ -463,7 +473,8 @@ export function main(argv, deps = {}) {
           installedTag: installed.status === "healthy" ? installed.activeTag : null,
           ...(runner === undefined ? {} : { runner }) });
         if (latestRelease.status === "up-to-date") {
-          stdout.write(`${JSON.stringify({ status: "up-to-date", tag: latestRelease.tag })}\n`);
+          stdout.write(`${JSON.stringify({ status: "up-to-date", tag: latestRelease.tag,
+            ...(flags["--fix-permissions"] ? { permissionsChanged } : {}) })}\n`);
           return 0;
         }
       }
@@ -471,7 +482,6 @@ export function main(argv, deps = {}) {
         requireGentleAi({ env, runner }); // Before parent preparation or local build.
         for (const [flag, path] of [["--state", stateRoot], ["--launcher", launcherPath]])
           if (!owns(flags, flag)) defaultParent(home, dirname(path), false);
-        preflightRuntimeHome({ home });
       }
       let acquire = acquiring ? { repository: "achangkuon/control-tower", tag: flags["--tag"],
         asset: flags["--asset"], sha256: flags["--sha256"], ...(runner === undefined ? {} : { runner }) } : null;
@@ -506,6 +516,7 @@ export function main(argv, deps = {}) {
         { status: "absent", active: null, previous: null, components: doctorRuntime({ home, env, runner }) } :
         api[globals[command]]({ stateRoot, launcherPath, home, env, ...(runner ? { runner } : {}), ...(acquiring ? { acquire, registryRoot } : {}) });
       if (latestRelease) result = { ...result, tag: latestRelease.tag };
+      if (flags["--fix-permissions"]) result = { ...result, permissionsChanged };
     }
     stdout.write(`${JSON.stringify(result)}\n`);
     if (command === "project" && result.registry.status === "failed") {

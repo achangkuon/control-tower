@@ -5,7 +5,7 @@ import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootstrapVerifiedRelease, bootstrapCachedRelease } from "./bootstrap.mjs";
 import { MAX_RELEASE_BYTES } from "./release.mjs";
-import { prepareRuntime, installRuntime, doctorRuntime, uninstallRuntime } from "./runtime-config.mjs";
+import { prepareRuntime, installRuntime, doctorRuntime, uninstallRuntime, preflightRuntimeHome } from "./runtime-config.mjs";
 import { refreshRegisteredProjects } from "./projects.mjs";
 
 const SCHEMA = "tower.v1.global/1";
@@ -324,27 +324,40 @@ function transactionFor(options, operation, before, next) {
   const journal = encode({ schema: "tower.v1.transaction/1", operation, token,
     stateRoot: options.stateRoot, launcherPath: options.launcherPath, temporaryLauncher,
     beforeState: before.stateRecord?.bytes.toString("base64") ?? null,
+    beforeProvenance: before.promotionProvenance ?? null,
     beforeLauncher: before.launcherRecord ? { bytes: before.launcherRecord.bytes.toString("base64"), mode: before.launcherRecord.mode } : null,
     nextState: next ? encode(next).toString("base64") : null });
   if (journal.length > 128 * 1024) fail("recovery record bound");
   return { owned, verify, guard, notify, remember, makeDirectory, write, move, remove,
     transactionPath, temporaryLauncher, journal };
 }
+function promotesCheckout(before, release) {
+  const prior = before.versions.get(release?.provenance.sha256);
+  return Boolean(before.state && prior && prior.tag.startsWith("checkout-") &&
+    !release.provenance.tag.startsWith("checkout-"));
+}
 function mutate(options, operation, release = null) {
   const before = inspect(options);
-  if (operation === "install" ? before.state !== null : before.state === null) fail("installation state for operation");
+  const promotion = promotesCheckout(before, release);
+  if (operation === "install" ? before.state !== null && !promotion : before.state === null) fail("installation state for operation");
   const id = release?.provenance.sha256;
-  if (release && before.versions.has(id) && !encode(before.versions.get(id)).equals(encode(release.provenance))) fail("version provenance conflict");
-  if (operation === "update" && before.state.active === id) return Object.freeze({ status: "unchanged", active: id });
+  if (release && before.versions.has(id) && !encode(before.versions.get(id)).equals(encode(release.provenance)) && !promotion) fail("version provenance conflict");
+  if (!promotion && operation === "update" && before.state.active === id) return Object.freeze({ status: "unchanged", active: id });
   if (release && !before.versions.has(id) && before.versions.size >= VERSION_LIMIT) fail("version retention bound");
-  const next = operation === "uninstall" ? null : operation === "rollback" ? before.state.previous === null ? null :
+  const next = promotion ? { ...before.state,
+    provenance: before.state.provenance.map(p => p.sha256 === id ? release.provenance : p) } :
+    operation === "uninstall" ? null : operation === "rollback" ? before.state.previous === null ? null :
     { ...before.state, active: before.state.previous, previous: before.state.active } :
     { schema: SCHEMA, active: id, previous: before.state?.active ?? null,
       original: before.state?.original ?? original(before.launcherRecord, options),
       provenance: [...before.versions.values(), ...(before.versions.has(id) ? [] : [release.provenance])]
         .sort((a, b) => a.sha256.localeCompare(b.sha256)) };
   if (next && encode(next).length > RECORD_LIMIT) fail("state record bound");
+  const provenancePath = promotion ? join(options.stateRoot, "versions", id, "provenance.json") : null;
+  const beforeProvenance = promotion ? read(provenancePath, 1024) : null;
+  if (promotion) before.promotionProvenance = { path: provenancePath, bytes: beforeProvenance.bytes.toString("base64"), mode: beforeProvenance.mode };
   const t = transactionFor(options, operation, before, next);
+  let afterProvenance = beforeProvenance;
   const statePath = join(options.stateRoot, "state.json");
   const store = join(options.stateRoot, "versions");
   const published = id ? join(store, id) : null;
@@ -399,6 +412,11 @@ function mutate(options, operation, release = null) {
       t.notify("published");
     } else t.notify("stage");
     t.notify("activation");
+    if (promotion) {
+      afterProvenance = replace(provenancePath, encode(release.provenance), beforeProvenance.mode,
+        afterProvenance, join(t.transactionPath, "provenance.next"));
+      t.notify("provenance-promoted");
+    }
     if (next === null) {
       // First rollback: restore/remove command first, then retire state; compensate in reverse.
       t.notify("launcher");
@@ -424,7 +442,8 @@ function mutate(options, operation, release = null) {
     const retained = new Set([options.stateRoot, store]);
     const cleanup = [...t.owned.keys()].filter((path) => !retained.has(path) && !(publishedNew && (path === published || path.startsWith(published + sep))));
     t.remove(cleanup);
-    return Object.freeze({ status: next ? operation === "install" ? "installed" : "activated" : "restored",
+    return Object.freeze({ status: promotion ? "promoted" : next ? operation === "install" ? "installed" : "activated" : "restored",
+      ...(promotion ? { tag: release.provenance.tag } : {}),
       active: next?.active ?? null, previous: next?.previous ?? null });
   } catch (error) {
     if (!t.owned.size) throw error;
@@ -443,6 +462,8 @@ function mutate(options, operation, release = null) {
           else assertCurrent(options.launcherPath, afterLauncher);
         };
         if (next === null) { restoreState(); restoreLauncher(); } else { restoreLauncher(); restoreState(); }
+        if (promotion && !equalRecord(afterProvenance, beforeProvenance, true)) afterProvenance = replace(provenancePath,
+          beforeProvenance.bytes, beforeProvenance.mode, afterProvenance, join(t.transactionPath, "provenance.restore"));
       }
       // Check created containers before releasing any evidence or locks.
       if (ownsStore) t.verify(store);
@@ -465,9 +486,11 @@ function mutate(options, operation, release = null) {
 
 /** Acquisition and privately owned bootstrap validation precede every filesystem mutation. */
 function configureRelease(options, operation) {
+  if (options.home) preflightRuntimeHome(options);
   const before = inspect(options);
   const release = acquireRelease(options.acquire);
-  const plan = options.home ? prepareRuntime({ home: options.home, env: options.env, runner: options.runner,
+  const promotion = promotesCheckout(before, release);
+  const plan = options.home && !promotion ? prepareRuntime({ home: options.home, env: options.env, runner: options.runner,
     members: release.members, version: release.provenance.tag || release.provenance.sha256.slice(0, 12) }) : null;
   const result = mutate(options, operation === "install" && before.state && options.home ? "update" : operation, release);
   // The exact acquired receipt is now the active, readback-verified release.

@@ -141,6 +141,65 @@ test("latest install and update retain verified provenance; equal tag never down
   expect(invoke(f, ["doctor"]).value.activeTag).toBe("v2-test");
 });
 
+test("S205 checkout promotion by latest becomes up-to-date on the next invocation", () => {
+  const f = fixture(), r = release();
+  success(invoke(f, ["install", "--from-checkout", f.root], { runner: r.runner, buildRelease: options => {
+    writeFileSync(options.out, r.wire); return { commit: "a".repeat(40), sha256: r.sha };
+  } }));
+  const latest = latestRunner(r, "v1.2.0");
+  const promoted = invoke(f, ["update", "--latest"], { runner: latest.runner });
+  success(promoted); expect(promoted.value).toMatchObject({ status: "promoted", tag: "v1.2.0", active: r.sha, previous: null });
+  const before = snapshot(f), again = latestRunner(r, "v1.2.0");
+  const unchanged = invoke(f, ["update", "--latest"], { runner: again.runner });
+  success(unchanged); expect(unchanged.value.status).toBe("up-to-date");
+  expect(again.calls.some(args => args[1] === "download")).toBe(false);
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("S205 permission fixes run before acquisition for pinned, latest and checkout install/update", () => {
+  for (const mode of ["pinned", "latest", "checkout"]) for (const command of ["install", "update"]) {
+    const f = fixture(), r = release(), dir = join(f.home, ".claude"), settings = join(dir, "settings.json");
+    if (command === "update") success(invoke(f, pinned("install", r), { runner: r.runner }));
+    else { mkdirSync(dir); writeFileSync(settings, "{}"); }
+    writeFileSync(join(dir, "unrelated"), "keep");
+    chmodSync(dir, 0o777); chmodSync(settings, 0o662); chmodSync(join(dir, "unrelated"), 0o666);
+    let builds = 0;
+    const h = latestRunner(r, "v1-test");
+    const argv = mode === "pinned" ? pinned(command, r) : mode === "latest" ? [command, "--latest"] : [command, "--from-checkout", f.root];
+    const extra = { runner: (...args) => {
+      expect(statSync(dir).mode & 0o777).toBe(0o755);
+      expect(statSync(settings).mode & 0o777).toBe(0o640);
+      return (mode === "latest" ? h.runner : r.runner)(...args);
+    }, buildRelease: options => {
+      builds++; writeFileSync(options.out, r.wire); return { commit: "a".repeat(40), sha256: r.sha };
+    }, ...(command === "update" && mode === "checkout" ? { operations: { updateGlobal: () => ({ status: "unchanged" }) } } : {}) };
+    const before = snapshot(f), refusal = invoke(f, argv, extra);
+    expect(refusal.code).toBe(1); expect(refusal.stderr).toContain(`chmod go-w '${dir}'`);
+    expect(refusal.stderr).toContain(`chmod go-w '${settings}'`); expect(snapshot(f)).toEqual(before);
+    const fixed = invoke(f, [...argv, "--fix-permissions"], extra);
+    expect(fixed.code).toBe(0);
+    expect(fixed.stderr).toBe(`Permisos corregidos (sólo go-w):\n- ${dir}\n- ${settings}\n`);
+    expect(fixed.value.permissionsChanged).toEqual([dir, settings]);
+    expect(statSync(join(dir, "unrelated")).mode & 0o777).toBe(0o666);
+    expect(builds).toBe(mode === "checkout" ? 1 : 0);
+  }
+});
+
+test("S205 CLI reports explicit repairs even when the rerun refuses invalid settings", () => {
+  const f = fixture(), r = release(), dir = join(f.home, ".claude"), path = join(dir, "settings.json");
+  mkdirSync(dir, { mode: 0o755 }); writeFileSync(path, "{bad"); chmodSync(path, 0o666);
+  const result = invoke(f, [...pinned("install", r), "--fix-permissions"], { runner: r.runner });
+  expect(result.code).toBe(1); expect(result.stdout).toBe("");
+  expect(result.stderr).toBe(`Permisos corregidos (sólo go-w):\n- ${path}\nInvalid Tower CLI: Tower runtime: settings.json no es JSON válido; no se escribió nada\n`);
+  expect(statSync(path).mode & 0o777).toBe(0o644); expect(r.calls).toEqual([]);
+});
+
+test("S205 fix flag is valueless, unique and restricted to install/update", () => {
+  for (const argv of [["doctor", "--fix-permissions"], ["install", "--latest", "--fix-permissions", "yes"], ["update", "--latest", "--fix-permissions", "--fix-permissions"]]) {
+    const f = fixture(); failed(invoke(f, argv)); expect(readdirSync(f.home)).toEqual([]);
+  }
+});
+
 test("latest refusals preserve both fresh and installed homes", () => {
   for (const installed of [false, true]) for (const options of [{ missing: true }, { checksum: "malformed" }, { checksum: `${"0".repeat(64)}  tower-v1.json\n` }, { tag: "latest" }, { tag: "v..2" }]) {
     const f = fixture(), r = release();
@@ -483,7 +542,7 @@ test("writable default directories name the path, mode and fix without changing 
     mkdirSync(path);
     chmodSync(path, mode);
     const before = snapshot(f);
-    for (const argv of [pinned("install", r), ["doctor"], ["list"]]) {
+    for (const argv of [["doctor"], ["list"]]) {
       const result = invoke(f, argv, { runner: r.runner });
       failed(result);
       expect(result.stderr).toBe(`Invalid Tower CLI: default directory ${path} is group- or world-writable ` +
