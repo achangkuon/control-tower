@@ -2191,32 +2191,7 @@ sesiones:
 
   - {id: S199, entrega: {commit: 5c601cdfd75ea1fc17eca46efa1a24f53c098cd3}, historico: openspec/archive/sesiones/S199.md}
 
-  - id: S200
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "El instalador ofrece Sumar un proyecto con un prompt listo para copiar y muestra cada proyecto como Torre activa, Falta armar el plan o Solo skills."
-    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el prompt único sin ruta y los tres estados de proyecto."
-    depende_de: [S196, S199]
-    archivos: [product/tower/v1/tui/projects.go, product/tower/v1/tui/projects_test.go, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/test/cli.test.mjs]
-    cimientos: []
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        La adopción mecánica la hace el instalador, pero armar el plan exige criterio y
-        conversación; un socio no técnico necesita que el instalador le diga qué pedirle
-        a su agente.
-      resultado_comportamiento: >-
-        Una opción del inicio abre una pantalla con un solo prompt copiable, sin ruta:
-        pide al agente preguntar qué proyecto usar (el actual u otro), si hacer migración
-        completa o sólo lo que falta (recomendando lo que falta), adoptar el proyecto y
-        armar su plan sin guardar nada sin aprobación. La lista de proyectos muestra 🟢
-        Torre activa (adoptado con openspec/plan.yaml), 🟡 Falta armar el plan (con el
-        mismo prompt a mano) o ⚪ Solo skills.
-      restricciones_decisiones: >-
-        El instalador no migra planes ni decide por el humano. Copiar al portapapeles es
-        opcional; el texto siempre queda seleccionable.
-      referencias: >-
-        projects.go:9-49, 80-89; projects.mjs:167-190; skill chanks-1-adopcion.
+  - {id: S200, entrega: {commit: 37a31fad10938d79a4bffb7d0f82a20068cb5d20}, historico: openspec/archive/sesiones/S200.md}
 
   - id: S201
     zona: producto-torre
