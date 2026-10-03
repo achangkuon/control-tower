@@ -93,3 +93,15 @@ Three real Radar compilations ran successfully: release bundle, runtime staging 
 ## Remaining validation limits
 
 No real-HOME acceptance run, commit, push or publishing was attempted. The unrelated optional TUI cross-build remains skipped. Historical cache admission preserves inspection/update compatibility; historical payloads do not retroactively gain vendored bytes. A clean committed temporary repository exercised local install through the real release builder. Beyond copying and verifying the vendor tree, S196 lifecycle work remains out of scope.
+
+## Parent sandbox smoke (2026-10-03, commit 85251d2)
+Isolated HOME, umask 022, EMPTY GOMODCACHE, real gh credentials via GH_CONFIG_DIR, gentle-ai 4.0.0.
+- `install --from-checkout`: installed; 24 skills + _shared (no Notion map), 24 relative Claude links,
+  Radar compiled offline from vendor and `radar check` ran; Pi extension imports installed torre-firma.mjs;
+  both Claude hooks registered once; unrelated hook and "theme" preserved; gentle-ai block intact;
+  pointer block in all four runtimes with the version filled.
+- Second install: `unchanged`; byte-identical snapshot (idempotent).
+- `doctor`: healthy; skills/radar/signatures/pointers ok; gentleAi ok 4.0.0.
+- `uninstall`: all Tower resources removed; settings.json and CLAUDE.md restored byte-exact.
+- Real HOME settings.json / CLAUDE.md mtimes unchanged.
+- Follow-up (minor): uninstall leaves an empty ~/.codex/AGENTS.md that the installer had created.
