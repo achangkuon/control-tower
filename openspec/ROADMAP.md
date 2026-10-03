@@ -2,16 +2,17 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: Producto Torre #1 → S208 — Actualizar la Torre también pone al día las piezas de cada proyecto adoptado, un proyecto atrasado se ve como desactualizado y no inválido, y ninguna versión se muestra como código..
+- Próximo trabajo ejecutable: Método #2 → S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- Producto Torre #1 → S208 — Actualizar la Torre también pone al día las piezas de cada proyecto adoptado, un proyecto atrasado se ve como desactualizado y no inválido, y ninguna versión se muestra como código.
+- Método #2 → S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
+- Producto Torre #1 → S209 — Al abrir la Torre, si hay una versión publicada más nueva, la interfaz avisa que hay una actualización disponible, como el instalador de Gentle AI.
 
 ## Avance
-- **Total:** 89% (131/147 S)
+- **Total:** 88% (132/149 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,8 +25,8 @@
 - **Hosts:** 42% (3/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (43/45 S)
-- **Producto Torre:** 86% (25/29 S)
+- **Método:** 93% (43/46 S)
+- **Producto Torre:** 86% (26/30 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -63,9 +64,10 @@
 
 ### Método (metodo)
 1. **S176** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
+2. **S210** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
 
 ### Producto Torre (producto-torre)
-1. **S208** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Actualizar la Torre también pone al día las piezas de cada proyecto adoptado, un proyecto atrasado se ve como desactualizado y no inválido, y ninguna versión se muestra como código.
+1. **S209** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Al abrir la Torre, si hay una versión publicada más nueva, la interfaz avisa que hay una actualización disponible, como el instalador de Gentle AI.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1375,7 +1377,7 @@
 
 ### S208 — Actualizar la Torre también pone al día las piezas de cada proyecto adoptado, un proyecto atrasado se ve como desactualizado y no inválido, y ninguna versión se muestra como código.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/projects&#95;test.go, product/tower/v1/cli.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard&#95;test.go
   - Depende de: —
@@ -1386,6 +1388,34 @@
   - Resultado y comportamiento: Al actualizar, cada proyecto registrado cuya copia instalada coincide sin cambios con lo que instaló una versión anterior se actualiza a la versión actual (skill control-tower y Radar con vendor) y su diario se renueva, manteniendo la desinstalación reversible al estado original. El diagnóstico y la lista muestran desactualizado (con la acción para actualizarlo) en vez de inválido cuando la copia es de una versión anterior sin cambios del usuario; inválido queda sólo para alteraciones reales. La interfaz muestra versión local de prueba para tags checkout-&#42; y nunca un hash o código como versión.
   - Restricciones y decisiones: Nunca se pisa una copia modificada por el usuario: se informa y se deja. Sin commits en los proyectos. Seguridad de rutas y diario igual que hoy.
   - Referencias: adoption.mjs:115-143 (preflight requireCanonical); capturas del 2026-10-03.
+
+### S209 — Al abrir la Torre, si hay una versión publicada más nueva, la interfaz avisa que hay una actualización disponible, como el instalador de Gentle AI.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go
+  - Depende de: S208
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Hoy el usuario sólo se entera de una versión nueva si entra a Instalar o actualizar; Gentle AI avisa al abrir que hay una actualización.
+  - Resultado y comportamiento: Un comando de sólo lectura (por ejemplo torre-control update --check) consulta la última versión publicada y la compara con la instalada sin descargar nada. La interfaz lo consulta al abrir, sin bloquear la pantalla, y si hay una más nueva muestra un aviso visible (Hay una actualización disponible: vX.Y.Z · elegí Instalar o actualizar) y la marca en el menú; sin red o sin gh no muestra error, sólo omite el aviso.
+  - Restricciones y decisiones: Sólo lectura; nunca actualiza solo. Tiempo de espera corto. Mismas validaciones de tag que S199.
+  - Referencias: release.mjs latest discovery (S199); captura de Gentle AI como referencia.
+
+### S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tests/test&#95;install.py, agent-workflows/README.md
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Las fuentes de chanks-0-jornada, chanks-3-session-kickoff, chanks-3-coordinador-manual, chanks-0-agente-soporte, chanks-3-despacho-herdr y chanks-4-unattended-implementation siguen mezcladas con las de V1 en agent-workflows/skills/.
+  - Resultado y comportamiento: Esas fuentes se mueven a agent-workflows/skills-diferidas/v2/ (jornada, session-kickoff, coordinador-manual, agente-soporte) y agent-workflows/skills-diferidas/v3/ (despacho-herdr, unattended-implementation), con un README que explica por qué cada una está diferida. Ningún instalador las instala; las pruebas y referencias se ajustan a las nuevas rutas; los archivos de la Sesión se completan al prepararla.
+  - Restricciones y decisiones: Mover sin cambiar contenido (git mv); no se borra ninguna skill; la Torre y su roster V1 no cambian.
+  - Referencias: install.py DEFERRED&#95;SKILLS/RETIRED&#95;SKILLS; docs/architecture/definiciones-v1-v2-v3.md.
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:
@@ -4200,7 +4230,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

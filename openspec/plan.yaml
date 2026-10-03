@@ -2202,35 +2202,61 @@ sesiones:
 
   - {id: S207, entrega: {commit: 3c8a4b27afdfeadf2ea03d27f35abff938635f46}, historico: openspec/archive/sesiones/S207.md}
 
-  - id: S208
+  - {id: S208, entrega: {commit: 145f2dfa378daf31bb8e373d5145d14b32db98a3}, historico: openspec/archive/sesiones/S208.md}
+
+  - id: S209
     zona: producto-torre
     prioridad: torre-v1
-    resultado: "Actualizar la Torre también pone al día las piezas de cada proyecto adoptado, un proyecto atrasado se ve como desactualizado y no inválido, y ninguna versión se muestra como código."
-    autoridad: "Emilio detectó el 2026-10-03 en esta Conversación que torre-demo quedó inválido tras actualizar y que se ven versiones como código; aprobó corregirlo y adoptar control-tower y ecom-ecuador después."
-    depende_de: []
-    archivos: [product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/projects.mjs, product/tower/v1/test/projects.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/projects_test.go, product/tower/v1/cli.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard_test.go]
+    resultado: "Al abrir la Torre, si hay una versión publicada más nueva, la interfaz avisa que hay una actualización disponible, como el instalador de Gentle AI."
+    autoridad: "Emilio pidió el 2026-10-03 en esta Conversación un aviso de actualización al estilo Gentle AI."
+    depende_de: [S208]
+    archivos: [product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go]
     cimientos: []
     recurso: []
     encargo:
       pedido_contexto: >-
-        torre-demo, adoptado con v1.1.0, aparece inválido tras actualizar a v1.2.1: el
-        refresco sólo renueva el bloque de AGENTS.md y el diagnóstico exige que la skill
-        y Radar del proyecto coincidan con la versión actual. La interfaz además muestra
-        la versión anterior como checkout-936b75f16227.
+        Hoy el usuario sólo se entera de una versión nueva si entra a Instalar o
+        actualizar; Gentle AI avisa al abrir que hay una actualización.
       resultado_comportamiento: >-
-        Al actualizar, cada proyecto registrado cuya copia instalada coincide sin cambios
-        con lo que instaló una versión anterior se actualiza a la versión actual (skill
-        control-tower y Radar con vendor) y su diario se renueva, manteniendo la
-        desinstalación reversible al estado original. El diagnóstico y la lista muestran
-        desactualizado (con la acción para actualizarlo) en vez de inválido cuando la
-        copia es de una versión anterior sin cambios del usuario; inválido queda sólo
-        para alteraciones reales. La interfaz muestra versión local de prueba para tags
-        checkout-* y nunca un hash o código como versión.
+        Un comando de sólo lectura (por ejemplo torre-control update --check) consulta
+        la última versión publicada y la compara con la instalada sin descargar nada.
+        La interfaz lo consulta al abrir, sin bloquear la pantalla, y si hay una más
+        nueva muestra un aviso visible (Hay una actualización disponible: vX.Y.Z ·
+        elegí Instalar o actualizar) y la marca en el menú; sin red o sin gh no muestra
+        error, sólo omite el aviso.
       restricciones_decisiones: >-
-        Nunca se pisa una copia modificada por el usuario: se informa y se deja. Sin
-        commits en los proyectos. Seguridad de rutas y diario igual que hoy.
+        Sólo lectura; nunca actualiza solo. Tiempo de espera corto. Mismas validaciones
+        de tag que S199.
       referencias: >-
-        adoption.mjs:115-143 (preflight requireCanonical); capturas del 2026-10-03.
+        release.mjs latest discovery (S199); captura de Gentle AI como referencia.
+
+  - id: S210
+    zona: metodo
+    prioridad: torre-v1
+    resultado: "Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse."
+    autoridad: "Emilio pidió el 2026-10-03 en esta Conversación mover las skills fuera de V1 a una carpeta de diferido según V2 o V3."
+    depende_de: []
+    archivos: [agent-workflows/tools/install.py, agent-workflows/tests/test_install.py, agent-workflows/README.md]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Las fuentes de chanks-0-jornada, chanks-3-session-kickoff,
+        chanks-3-coordinador-manual, chanks-0-agente-soporte,
+        chanks-3-despacho-herdr y chanks-4-unattended-implementation siguen mezcladas
+        con las de V1 en agent-workflows/skills/.
+      resultado_comportamiento: >-
+        Esas fuentes se mueven a agent-workflows/skills-diferidas/v2/ (jornada,
+        session-kickoff, coordinador-manual, agente-soporte) y
+        agent-workflows/skills-diferidas/v3/ (despacho-herdr,
+        unattended-implementation), con un README que explica por qué cada una está
+        diferida. Ningún instalador las instala; las pruebas y referencias se ajustan
+        a las nuevas rutas; los archivos de la Sesión se completan al prepararla.
+      restricciones_decisiones: >-
+        Mover sin cambiar contenido (git mv); no se borra ninguna skill; la Torre y su
+        roster V1 no cambian.
+      referencias: >-
+        install.py DEFERRED_SKILLS/RETIRED_SKILLS; docs/architecture/definiciones-v1-v2-v3.md.
 
   - id: S175
     prioridad: resolucion-problemas-generales
