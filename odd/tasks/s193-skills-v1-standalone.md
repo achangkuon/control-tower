@@ -1,6 +1,6 @@
 # S193 — Skills V1 y canon standalone
 
-**Resultado:** textos corregidos y verificación estructural satisfactoria; entrega pendiente de revisión. La suite Python no está verde: tres tests conservan assertions incompatibles con la corrección y uno necesita checkouts locales ausentes. No se modificaron tests, Go, el plan ni el bloque aprobado. Sin commits ni push.
+**Resultado final:** entregado en a8a024f. El parent restauró la referencia a `references/errores-conocidos.md` en chanks-1-adopcion y, con aprobación humana de ampliar el alcance (4104e03), actualizó `tests/test_mensajes_visibles.py` a las firmas V1. Suite Python: 473 tests, 1 falla preexistente de entorno (`test_personal_pi_composition`, checkouts locales ausentes; igual en el árbol base). Revisión nativa review-793ba2dde0be2662 aprobada (medium, reliability). El resto de este registro es el historial del writer.
 
 Contrato: `radar sesion S193` (LISTO), contrastado con `product/tower/v1/instructions/project-agents.md`. Árbol inicial limpio. CodeGraph presente y actualizado; `codegraph query 'plan-naming'` localizó canon/plantilla y tests del instalador. Se leyeron las 23 skills V1 y sus referencias relevantes; ninguna lectura completa de `openspec/plan.yaml`.
 
