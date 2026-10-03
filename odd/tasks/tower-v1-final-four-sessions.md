@@ -418,3 +418,10 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 - `status` prints one `tower.v1.status/1` line: engine (read-only `doctorGlobal`), projects (`listProjects`, live and read-only), prerequisites gh (version + authenticated), bun, git, go, agents claude/pi/codex/opencode (PATH executable vs HOME config), system (os, arch, shell), version. Probes are bounded (2 s, SIGKILL), failures reported in place; never calls registered project doctor or prepares directories (byte-identical HOME test).
 - Real read-only run on the maintainer machine: engine healthy v1.0.2, demo project healthy, gh 2.95.0 authenticated, bun 1.3.14, git 2.54.0, go 1.26.4, all four agents present; installation hash unchanged.
 - Native review `review-a9b4c52a13d2cca5`: medium/reliability, approved without findings and acknowledged.
+
+### S188 evidence
+
+- Writer: seven new files under `product/tower/v1/tui/` (650 authored lines excluding go.sum), Bubbletea v1.3.10 and Lipgloss v1.1.0, no Bubbles. RED compile failure; GREEN `go vet` and `go test` pass, including layouts at 45x16, 28x12 and 28x9 and NO_COLOR.
+- Home: tower logo, version, Estado from `torre-control status` (engine, projects, prerequisites, agents, system), Spanish menu; Diagnóstico (read-only `doctor`) and Ayuda functional; mutating entries show "Disponible en la próxima versión". Non-TTY exits 2 with a Spanish message.
+- Parent pty found the first build blocked on an unanswered OSC 11 background query (blank screen). Fixed by configuring Lipgloss explicitly (dark background, profile from NO_COLOR/TERM/COLORTERM): no terminal queries at all, title in 0.022 s, status in 0.97 s without answering anything.
+- Native review `review-7d5dde4afe9c674b`: high (process boundary and dependencies), four lenses, approved and acknowledged. Non-blocking, carried to S189: `R3-diagnostic-order`, `R4-stale-diagnostic` (`model.go:118-122`), `R3-scroll-boundary` (`model.go:108-113`), `R3-height-boundary` (`styles.go:49-53`).
