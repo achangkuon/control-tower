@@ -2204,31 +2204,7 @@ sesiones:
 
   - {id: S208, entrega: {commit: 145f2dfa378daf31bb8e373d5145d14b32db98a3}, historico: openspec/archive/sesiones/S208.md}
 
-  - id: S209
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "Al abrir la Torre, si hay una versión publicada más nueva, la interfaz avisa que hay una actualización disponible, como el instalador de Gentle AI."
-    autoridad: "Emilio pidió el 2026-10-03 en esta Conversación un aviso de actualización al estilo Gentle AI."
-    depende_de: [S208]
-    archivos: [product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/tui/home.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/tui/main.go, product/tower/v1/tui/radar.go, product/tower/v1/tui/wizard.go]
-    cimientos: []
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        Hoy el usuario sólo se entera de una versión nueva si entra a Instalar o
-        actualizar; Gentle AI avisa al abrir que hay una actualización.
-      resultado_comportamiento: >-
-        Un comando de sólo lectura (por ejemplo torre-control update --check) consulta
-        la última versión publicada y la compara con la instalada sin descargar nada.
-        La interfaz lo consulta al abrir, sin bloquear la pantalla, y si hay una más
-        nueva muestra un aviso visible (Hay una actualización disponible: vX.Y.Z ·
-        elegí Instalar o actualizar) y la marca en el menú; sin red o sin gh no muestra
-        error, sólo omite el aviso.
-      restricciones_decisiones: >-
-        Sólo lectura; nunca actualiza solo. Tiempo de espera corto. Mismas validaciones
-        de tag que S199.
-      referencias: >-
-        release.mjs latest discovery (S199); captura de Gentle AI como referencia.
+  - {id: S209, entrega: {commit: 54e60e12d3a5d9672fa286779e765a9db7c6e3ab}, historico: openspec/archive/sesiones/S209.md}
 
   - id: S210
     zona: metodo
