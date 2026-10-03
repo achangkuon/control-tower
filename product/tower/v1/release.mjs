@@ -5,8 +5,8 @@ import { isAbsolute, join, parse, resolve, sep } from "node:path";
 
 export const MAX_RELEASE_BYTES = 16 * 1024 * 1024;
 
-const defaultRunner = (command, argv, { maxBuffer }) =>
-  spawnSync(command, argv, { maxBuffer, timeout: 60_000, encoding: "buffer" });
+const defaultRunner = (command, argv, { maxBuffer, timeout = 60_000, killSignal }) =>
+  spawnSync(command, argv, { maxBuffer, timeout, killSignal, encoding: "buffer", stdio: ["ignore", "pipe", "pipe"] });
 
 function validOptions(options) {
   if (options === null || typeof options !== "object" || Array.isArray(options) || Object.getPrototypeOf(options) !== Object.prototype || Object.getOwnPropertySymbols(options).length) return false;
@@ -35,7 +35,7 @@ function execute(runner, argv, limit = MAX_RELEASE_BYTES) {
   } catch {
     throw new Error("GitHub Release command failed");
   }
-  if (!result || result.status !== 0 || !Buffer.isBuffer(result.stdout) || result.stdout.length > limit) throw new Error("GitHub Release command failed");
+  if (!result || result.error || result.status !== 0 || !Buffer.isBuffer(result.stdout) || result.stdout.length > limit) throw new Error("GitHub Release command failed");
   return result.stdout;
 }
 
@@ -173,7 +173,7 @@ export function updateTui({ home, repository, tag, runner = defaultRunner, check
  * Discover once, pin that exact tag, and verify raw package bytes before returning.
  * No filesystem effects or interpretation of package contents occur here.
  */
-export function acquireLatestRelease(options) {
+function latestOptions(options) {
   const allowed = ["repository", "installedTag", "runner"];
   if (!options || Object.getPrototypeOf(options) !== Object.prototype ||
       Object.getOwnPropertySymbols(options).length || Reflect.ownKeys(options).some(key =>
@@ -183,11 +183,45 @@ export function acquireLatestRelease(options) {
   const { repository, installedTag = null, runner = defaultRunner } = options;
   const identity = { repository, tag: installedTag ?? "v1", asset: latestAsset, sha256: "0".repeat(64), runner };
   if (!validOptions(identity)) throw new TypeError("Invalid latest GitHub Release options");
-  execute(runner, ["auth", "status", "--active", "--hostname", "github.com"]);
+  return { identity, installedTag, runner };
+}
+
+function discoverLatestTag(identity, runner) {
+  const { repository } = identity;
+  execute(runner, ["auth", "status", "--active", "--hostname", "github.com"], 1024);
   const metadata = execute(runner, ["release", "view", "--repo", repository, "--json", "tagName"], 1024);
   let tag;
   try { tag = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(metadata)).tagName; } catch {}
   if (!validOptions({ ...identity, tag })) throw new Error("La última release tiene una etiqueta de versión no válida.");
+  return tag;
+}
+
+/** Metadata only, with an eight-second total subprocess budget. Any different
+ * valid tag (including checkout-* or an older published tag) is available;
+ * equality alone means up-to-date. This is not semantic-version ordering.
+ */
+export function checkLatestRelease(options) {
+  try {
+    const { identity, installedTag, runner } = latestOptions(options);
+    if (!installedTag) return Object.freeze({ status: "unknown", reason: "No hay una versión instalada conocida." });
+    const deadline = performance.now() + 8000;
+    const boundedRunner = (command, argv, spawnOptions) => {
+      const timeout = Math.floor(deadline - performance.now());
+      if (timeout <= 0) throw new Error("Update check timed out");
+      return runner(command, argv, { ...spawnOptions, timeout, killSignal: "SIGKILL" });
+    };
+    const latest = discoverLatestTag(identity, boundedRunner);
+    return Object.freeze({ status: latest === installedTag ? "up-to-date" : "available", installed: installedTag, latest });
+  } catch {
+    // Do not expose gh auth output or turn best-effort discovery into a CLI error.
+    return Object.freeze({ status: "unknown", reason: "No se pudo consultar una versión publicada válida (gh, sesión, red o tiempo de espera)." });
+  }
+}
+
+export function acquireLatestRelease(options) {
+  const { identity, installedTag, runner } = latestOptions(options);
+  const { repository } = identity;
+  const tag = discoverLatestTag(identity, runner);
   if (tag === installedTag) return Object.freeze({ status: "up-to-date", tag });
   let checksum;
   try {

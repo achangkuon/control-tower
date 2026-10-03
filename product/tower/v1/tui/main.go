@@ -39,7 +39,7 @@ func allowedArgs(a []string) bool {
 		return a[0] == "status" || a[0] == "doctor" || a[0] == "rollback"
 	}
 	if len(a) == 2 && (a[0] == "install" || a[0] == "update") {
-		return a[1] == "--latest"
+		return a[1] == "--latest" || (a[0] == "update" && a[1] == "--check")
 	}
 	if len(a) == 7 && (a[0] == "install" || a[0] == "update") {
 		return a[1] == "--tag" && validTag(a[2]) && a[3] == "--asset" && validValue(a[4]) && a[5] == "--sha256" && validSHA(a[6])
@@ -53,6 +53,9 @@ func allowedArgs(a []string) bool {
 	return false
 }
 func commandTimeout(a []string) time.Duration {
+	if len(a) == 2 && a[0] == "update" && a[1] == "--check" {
+		return 10 * time.Second
+	}
 	if a[0] == "install" || a[0] == "update" {
 		return 5 * time.Minute
 	}

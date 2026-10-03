@@ -166,12 +166,17 @@ func (m model) homeView() string {
 			hints[2] = fmt.Sprint(len(projects))
 		}
 	}
+	if m.updateNotice != "" {
+		header = append(header, m.palette.warn.Bold(true).Render("⬆ Hay una actualización disponible: "+m.updateNotice+" · elegí «Instalar o actualizar»"))
+		hints[0] = m.updateNotice + " disponible"
+	}
 	tail := append([]string{""}, m.menuLines(hints)...)
 	tail = append(tail, "", "↑↓ o j/k mover · enter elegir · a: Versión específica (avanzado) · r refrescar · q salir")
 	if m.height < 12 {
 		tail = append(tail[1:len(tail)-2], tail[len(tail)-1])
-		header = header[:min(len(header), max(0, m.height-len(tail)))]
 	}
+	// The notice must never displace the menu or its exit hint on short screens.
+	header = header[:min(len(header), max(0, m.height-len(tail)))]
 	status := m.statusLines(false)
 	logo := strings.Split(m.palette.tower.Render(towerLogo), "\n")
 	if m.width >= 50 && len(logo)+len(header)+len(status)+len(tail) <= m.height {

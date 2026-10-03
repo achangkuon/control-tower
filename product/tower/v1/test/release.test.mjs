@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { acquireLatestRelease, acquireVerifiedRelease, MAX_RELEASE_BYTES, updateTui } from "../release.mjs";
+import { checkLatestRelease, acquireLatestRelease, acquireVerifiedRelease, MAX_RELEASE_BYTES, updateTui } from "../release.mjs";
 
 const bytes = Buffer.from([0, 255, 10, 31, 0x1f, 0x8b]);
 const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -19,6 +19,49 @@ function harness(responses = [{ status: 0, stdout: Buffer.from("private auth out
   };
   return { calls, runner };
 }
+
+describe("S209 read-only release check", () => {
+  for (const [installed, latest, status] of [["v1.2.1", "v1.2.2", "available"], ["v1.2.2", "v1.2.2", "up-to-date"], ["checkout-abc123", "v1.2.2", "available"], ["checkout-abc123", "checkout-abc123", "up-to-date"], ["v2", "v1", "available"]]) {
+    test(`${installed} versus ${latest}: ${status}, metadata only`, () => {
+      const h = harness([{ status: 0, stdout: Buffer.alloc(0) }, { status: 0, stdout: Buffer.from(JSON.stringify({ tagName: latest })) }]);
+      expect(checkLatestRelease({ repository: input.repository, installedTag: installed, runner: h.runner })).toEqual({ status, installed, latest });
+      expect(h.calls.map(({ command, argv }) => [command, argv])).toEqual([["gh", auth], ["gh", ["release", "view", "--repo", input.repository, "--json", "tagName"]]]);
+      expect(h.calls.every(({ options }) => options.timeout > 0 && options.timeout <= 8000 && options.killSignal === "SIGKILL" && options.maxBuffer <= 1025)).toBe(true);
+      expect(h.calls[1].options.timeout).toBeLessThanOrEqual(h.calls[0].options.timeout);
+    });
+  }
+  test("discovery receives only the time left after authentication", () => {
+    const timeouts = [];
+    const result = checkLatestRelease({ repository: input.repository, installedTag: "v1", runner: (_command, argv, options) => {
+      timeouts.push(options.timeout);
+      if (argv[0] === "auth") { Bun.sleepSync(30); return { status: 0, stdout: Buffer.alloc(0) }; }
+      return { status: 0, stdout: Buffer.from('{"tagName":"v2"}') };
+    } });
+    expect(result.status).toBe("available");
+    expect(timeouts[1]).toBeLessThan(timeouts[0] - 20);
+  });
+  test("missing gh, offline, unauthenticated and timeout silently become unknown", () => {
+    for (const result of [{ status: null, error: { code: "ENOENT" } }, { status: 1, stdout: Buffer.from("SECRET") }, { status: null, error: { code: "ETIMEDOUT" } }, { status: 0, stdout: Buffer.alloc(0), error: { code: "ETIMEDOUT" } }]) {
+      for (const stage of [0, 1]) {
+        const h = harness(stage ? [{ status: 0, stdout: Buffer.alloc(0) }, result] : [result]);
+        const value = checkLatestRelease({ repository: input.repository, installedTag: "v1", runner: h.runner });
+        expect(value.status).toBe("unknown"); expect(value.reason).toBeString();
+        expect(JSON.stringify(value)).not.toContain("SECRET"); expect(h.calls).toHaveLength(stage + 1);
+      }
+    }
+    expect(checkLatestRelease({ repository: input.repository, installedTag: "v1", runner: () => { throw new Error("SECRET"); } }).status).toBe("unknown");
+  });
+  test("invalid discovery output and tags never fall through to download", () => {
+    for (const value of ["not JSON", JSON.stringify({}), ...["latest", "LATEST", "-v2", "v..2", "v2.", "v/2", "v*", "v2\n", "v".repeat(129)].map(tagName => JSON.stringify({ tagName })), " ".repeat(1025)]) {
+      const h = harness([{ status: 0, stdout: Buffer.alloc(0) }, { status: 0, stdout: Buffer.from(value) }]);
+      expect(checkLatestRelease({ repository: input.repository, installedTag: "v1", runner: h.runner }).status).toBe("unknown");
+      expect(h.calls).toHaveLength(2);
+    }
+    const h = harness();
+    expect(checkLatestRelease({ repository: input.repository, installedTag: "latest", runner: h.runner }).status).toBe("unknown");
+    expect(h.calls).toEqual([]);
+  });
+});
 
 describe("latest private release", () => {
   function latest({ tag = "v2", checksum = `${sha256}  tower-v1.json\n`, missing = false, wire = bytes } = {}) {

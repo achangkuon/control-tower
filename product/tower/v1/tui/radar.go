@@ -102,10 +102,10 @@ func installedRadarRunner(root string, args []string) execution {
 
 type radarScreen struct {
 	root, command, id, error string
-	selected                int
-	running                 bool
-	lines                   []string
-	code                    int
+	selected                 int
+	running                  bool
+	lines                    []string
+	code                     int
 }
 
 type radarResult struct {

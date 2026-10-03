@@ -292,6 +292,131 @@ func TestS208VersionLabelsAcrossScreens(t *testing.T) {
 	}
 }
 
+func TestS209StartupCheckIsAsynchronous(t *testing.T) {
+	calls := 0
+	m := newModel(func(args []string) execution {
+		calls++
+		if slices.Equal(args, []string{"update", "--check"}) {
+			return execution{stdout: []byte(`{"status":"available","installed":"v1.2.1","latest":"v1.2.2"}`)}
+		}
+		if !slices.Equal(args, []string{"status"}) {
+			t.Fatalf("unexpected startup args: %v", args)
+		}
+		return execution{stdout: []byte(taggedJSON)}
+	}, true)
+	cmd := m.Init()
+	contains(t, m.View(), "Torre de Control V1", "Cargando estado…", "Instalar o actualizar")
+	if calls != 0 {
+		t.Fatal("startup blocked on runner")
+	}
+	batch, ok := cmd().(tea.BatchMsg)
+	if !ok || len(batch) != 2 {
+		t.Fatal("startup must schedule status and check independently")
+	}
+	for _, child := range batch {
+		next, _ := m.Update(child())
+		m = next.(model)
+	}
+	if calls != 2 || m.loading {
+		t.Fatal("startup results were not consumed")
+	}
+	contains(t, m.View(), "⬆ Hay una actualización disponible: v1.2.2 · elegí «Instalar o actualizar»", "(v1.2.2 disponible)")
+}
+
+func TestS209UpdateNoticeAndNarrowHome(t *testing.T) {
+	m := loaded(t, taggedJSON)
+	m.width = 110
+	next, _ := m.Update(commandResult{action: "update-check", data: []byte(`{"status":"available","installed":"v1.2.1","latest":"v1.2.2"}`)})
+	m = next.(model)
+	contains(t, m.View(), "⬆ Hay una actualización disponible: v1.2.2 · elegí «Instalar o actualizar»", "(v1.2.2 disponible)")
+	t.Log("Home with notice:\n" + m.View())
+	t.Setenv("TERM", "xterm-256color")
+	m.palette = newPalette(false)
+	contains(t, m.View(), m.palette.warn.Bold(true).Render("⬆ Hay una actualización disponible: v1.2.2 · elegí «Instalar o actualizar»"))
+	m.palette = newPalette(true)
+	for _, size := range []tea.WindowSizeMsg{{Width: 40, Height: 40}, {Width: 31, Height: 16}, {Width: 28, Height: 12}, {Width: 28, Height: 9}, {Width: 10, Height: 2}, {Width: 1, Height: 1}} {
+		next, _ = m.Update(size)
+		m = next.(model)
+		view := m.View()
+		if len(strings.Split(view, "\n")) > size.Height {
+			t.Fatal("height overflow")
+		}
+		for _, line := range strings.Split(view, "\n") {
+			if ansi.StringWidth(line) > size.Width {
+				t.Fatal("width overflow")
+			}
+		}
+		if size.Height >= 9 {
+			contains(t, view, "Instalar o actualizar", "Salir", "q salir")
+		}
+		if strings.Contains(view, "(v1.2.2 disponible)") {
+			t.Fatal("hint not dropped in narrow Home")
+		}
+	}
+}
+
+func TestS209UnknownCheckIsSilent(t *testing.T) {
+	for _, result := range []commandResult{
+		{data: []byte(`{"status":"unknown","reason":"offline"}`)},
+		{data: []byte(`{"status":"up-to-date","installed":"v1.2.2","latest":"v1.2.2"}`)},
+		{err: errors.New("offline")}, {result: execution{code: 1}}, {data: []byte(`broken`)},
+		{data: []byte(`{"status":"available","latest":"latest"}`)},
+		{data: []byte(`{"status":"available","latest":"\u001b[31mv2"}`)},
+		{data: []byte(strings.Repeat(" ", outputLimit+1))},
+	} {
+		m := loaded(t, taggedJSON)
+		before := m.View()
+		result.action = "update-check"
+		next, _ := m.Update(result)
+		if next.(model).View() != before {
+			t.Fatal("unknown or failed check changed Home")
+		}
+	}
+}
+
+func TestS209SuccessfulUpdateClearsNoticeAndLateCheck(t *testing.T) {
+	for _, tt := range []struct {
+		action  string
+		result  execution
+		cleared bool
+	}{
+		{"update", execution{stdout: []byte(`{"status":"updated"}`)}, true},
+		{"install", execution{stdout: []byte(`{"status":"installed"}`)}, true},
+		{"update", execution{stdout: []byte(`{"status":"up-to-date"}`)}, true},
+		{"update", execution{code: 1}, false},
+		{"update", execution{err: errors.New("failed")}, false},
+		{"rollback", execution{}, false},
+	} {
+		t.Run(tt.action+string(tt.result.stdout), func(t *testing.T) {
+			m := loaded(t, taggedJSON)
+			check := commandResult{action: "update-check", data: []byte(`{"status":"available","latest":"v1.2.2"}`)}
+			next, _ := m.Update(check)
+			m = next.(model)
+			m.page, m.flow = "wizard", workflow{action: tt.action, step: 5}
+			next, _ = m.Update(commandResult{action: "operation", id: m.sequence, result: tt.result})
+			m = next.(model)
+			m.page = "home"
+			next, _ = m.Update(check)
+			m = next.(model)
+			if strings.Contains(m.View(), "Hay una actualización disponible") == tt.cleared {
+				t.Fatal("wrong notice lifetime")
+			}
+		})
+	}
+}
+
+func TestS209RunnerAllowsReadOnlyCheckWithShortTimeout(t *testing.T) {
+	if !allowedArgs([]string{"update", "--check"}) {
+		t.Fatal("check cannot cross real runner")
+	}
+	if allowedArgs([]string{"install", "--check"}) {
+		t.Fatal("unexpected install check")
+	}
+	if timeout := commandTimeout([]string{"update", "--check"}); timeout > 10*time.Second {
+		t.Fatal("check inherits update's five-minute timeout")
+	}
+}
+
 func TestHomeRenderingSample(t *testing.T) {
 	m := loaded(t, taggedJSON)
 	t.Log("Home fixture:\n" + m.View())
@@ -320,13 +445,16 @@ func key(m model, value string) (model, tea.Cmd) {
 func loaded(t *testing.T, data string) model {
 	t.Helper()
 	m := newModel(func(args []string) execution {
+		if slices.Equal(args, []string{"update", "--check"}) {
+			return execution{stdout: []byte(`{"status":"unknown"}`)}
+		}
 		action := args[0]
 		if action != "status" {
 			t.Fatalf("unexpected command: %s", action)
 		}
 		return execution{stdout: []byte(data)}
 	}, true)
-	next, _ := m.Update(m.Init()())
+	next, _ := m.Update(m.command("status")())
 	return next.(model)
 }
 
@@ -420,7 +548,7 @@ func TestLoadingFailureAndRefresh(t *testing.T) {
 	calls := 0
 	m := newModel(func([]string) execution { calls++; return execution{code: 1, err: errors.New("fallo simulado")} }, true)
 	contains(t, m.View(), "Cargando estado…")
-	next, _ := m.Update(m.Init()())
+	next, _ := m.Update(m.command("status")())
 	m = next.(model)
 	contains(t, m.View(), "No se pudo cargar el estado", "fallo simulado")
 	m, cmd := key(m, "r")
@@ -516,7 +644,7 @@ func TestStatusDependentActionsWait(t *testing.T) {
 
 func TestStatusRequestOrdering(t *testing.T) {
 	m := loaded(t, healthyJSON)
-	old := m.Init()()
+	old := m.command("status")()
 	m, cmd := key(m, "r")
 	latest := cmd()
 	next, _ := m.Update(old)
@@ -554,7 +682,10 @@ func TestInterfaceDrainsOnTeardown(t *testing.T) {
 	started, release, returned := make(chan struct{}), make(chan struct{}), make(chan struct{})
 	defer close(release)
 	go func() {
-		runInterface(func([]string) execution {
+		runInterface(func(args []string) execution {
+			if slices.Equal(args, []string{"update", "--check"}) {
+				return execution{stdout: []byte(`{"status":"unknown"}`)}
+			}
 			close(started)
 			<-release
 			return execution{stdout: []byte(healthyJSON)}

@@ -130,6 +130,31 @@ function latestRunner(r, tag, { checksum = `${r.sha}  tower-v1.json\n`, missing 
   } };
 }
 
+test("S209 check reports tags without writes, downloads, prerequisites or lifecycle mutation", () => {
+  const f = fixture(), r = release();
+  success(invoke(f, pinned("install", r), { runner: r.runner }));
+  for (const [tag, status] of [["v1.2.2", "available"], ["v1-test", "up-to-date"]]) {
+    const before = snapshot(f), h = latestRunner(r, tag);
+    const checked = invoke(f, ["update", "--check"], { runner: h.runner,
+      operations: { updateGlobal: () => { throw new Error("must not update"); } } });
+    success(checked); expect(checked.value).toEqual({ status, installed: "v1-test", latest: tag });
+    expect(snapshot(f)).toEqual(before);
+    expect(h.calls.map(args => args.slice(0, 2))).toEqual([["auth", "status"], ["release", "view"]]);
+  }
+  const before = snapshot(f);
+  const unknown = invoke(f, ["update", "--check"], { runner: () => ({ status: null, error: { code: "ETIMEDOUT" } }) });
+  success(unknown); expect(unknown.value.status).toBe("unknown"); expect(unknown.value.reason).toBeString();
+  expect(snapshot(f)).toEqual(before);
+});
+
+test("S209 check with no installation is unknown and never prepares default parents", () => {
+  const f = fixture(), before = snapshot(f);
+  const result = invoke(f, ["update", "--check"], { runner: () => { throw new Error("must not probe absent installation"); } });
+  success(result); expect(result.value.status).toBe("unknown");
+  expect(snapshot(f)).toEqual(before); expect(readdirSync(f.home)).toEqual([]);
+  for (const argv of [["install", "--check"], ["update", "--check", "--latest"], ["update", "--check", "--fix-permissions"], ["update", "--check", "--tag", "v1"], ["update", "--check", "--check"]]) failed(invoke(f, argv));
+});
+
 test("S207 latest installs and switches verified TUI even when engine tag is already current", async () => {
   const f = fixture(), r = release(), first = Buffer.from("first interface"), second = Buffer.from("second interface");
   const install = invoke(f, ["install", "--latest"], { runner: latestRunner(r, "v1-test", { tui: first }).runner });

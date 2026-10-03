@@ -14,10 +14,10 @@ import (
 
 type workflow struct {
 	action, tag, asset, sha, root, confirm, issue string
-	step, frame                                 int
-	advanced                                    bool
-	started                                     time.Time
-	lines                                       []string
+	step, frame                                   int
+	advanced                                      bool
+	started                                       time.Time
+	lines                                         []string
 }
 type progressTick struct{ id uint64 }
 
@@ -326,8 +326,8 @@ func firstLine(s string) string { return clean(strings.Split(strings.TrimSpace(s
 func resultLines(r execution) []string {
 	var result struct {
 		Status, Active, Previous, ActiveTag, PreviousTag, Tag, Tui string
-		LocalResult                                             *struct{ Status string }
-		Registry                                                struct{ Status string }
+		LocalResult                                                *struct{ Status string }
+		Registry                                                   struct{ Status string }
 	}
 	parsed := json.Unmarshal(r.stdout, &result) == nil && (result.Status != "" || (result.LocalResult != nil && result.LocalResult.Status != ""))
 	raw := firstLine(string(r.stderr))

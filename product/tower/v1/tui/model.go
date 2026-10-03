@@ -11,7 +11,9 @@ type engineState struct {
 	Installed                bool
 	Status, Active, Previous string
 	ActiveTag, PreviousTag   string
-	Components               struct{ GentleAi struct{ Status, Version string } }
+	Components               struct {
+		GentleAi struct{ Status, Version string }
+	}
 }
 type prerequisite struct {
 	Present, Authenticated bool
@@ -47,6 +49,8 @@ type model struct {
 	flow                            workflow
 	projectSelected, projectAction  int
 	projectMenu                     bool
+	updateNotice                    string
+	updateCheckDismissed            bool
 	statusError, diagnosticError    string
 	promptOrigin, copyFeedback      string
 	radarRun                        radarRunFunc
@@ -63,11 +67,17 @@ func (m model) command(action string) tea.Cmd {
 		id = m.statusSequence
 	}
 	return func() tea.Msg {
-		result := m.run([]string{action})
+		args := []string{action}
+		if action == "update-check" {
+			args = []string{"update", "--check"}
+		}
+		result := m.run(args)
 		return commandResult{action: action, data: result.stdout, err: result.err, id: id, result: result}
 	}
 }
-func (m model) Init() tea.Cmd { return m.command("status") }
+func (m model) Init() tea.Cmd {
+	return tea.Batch(m.command("status"), m.command("update-check"))
+}
 func (m *model) reloadStatus() tea.Cmd {
 	m.statusSequence++
 	m.loading = true
@@ -106,6 +116,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commandResult:
 		if msg.action == "operation" {
 			if m.page == "wizard" && m.flow.step == 5 && msg.id == m.sequence {
+				if (m.flow.action == "update" || m.flow.action == "install") &&
+					msg.err == nil && msg.result.err == nil && msg.result.code == 0 {
+					// A startup check arriving after this success is stale too.
+					m.updateNotice, m.updateCheckDismissed = "", true
+				}
 				m.flow.step, m.flow.lines = 6, resultLines(msg.result)
 				m.quitConfirm = false
 				refresh := m.reloadStatus()
@@ -115,6 +130,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if msg.result.code != 0 && msg.err == nil {
 			msg.err = fmt.Errorf("%s", firstLine(string(msg.result.stderr)))
+		}
+		if msg.action == "update-check" {
+			var check struct{ Status, Latest string }
+			if !m.updateCheckDismissed && msg.err == nil && msg.result.err == nil && len(msg.data) <= outputLimit &&
+				json.Unmarshal(msg.data, &check) == nil && check.Status == "available" && validTag(check.Latest) {
+				m.updateNotice = check.Latest
+			}
+			return m, nil
 		}
 		if msg.action == "status" {
 			if msg.id != m.statusSequence {

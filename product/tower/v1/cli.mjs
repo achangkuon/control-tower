@@ -9,7 +9,7 @@ import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlo
 import { requireGentleAi, doctorRuntime, preflightRuntimeHome, uninstallRuntime } from "./runtime-config.mjs";
 import { buildRelease } from "./release-build.mjs";
 import { validateBundle } from "./bundle.mjs";
-import { acquireLatestRelease, updateTui } from "./release.mjs";
+import { acquireLatestRelease, checkLatestRelease, updateTui } from "./release.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
   cleanupRegisteredProject, updateRegisteredProject, listProjects, refreshRegisteredProjects } from "./projects.mjs";
 
@@ -35,13 +35,14 @@ function parseArguments(argv) {
   } else if (!owns(globals, command) && !["list", "status"].includes(command)) usage("unknown command");
   const latest = ["install", "update"].includes(command) && tail.includes("--latest");
   const fromCheckout = ["install", "update"].includes(command) && tail.includes("--from-checkout");
-  const required = latest ? ["--latest"] : fromCheckout ? ["--from-checkout"] : command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
+  const check = command === "update" && tail.includes("--check");
+  const required = check ? ["--check"] : latest ? ["--latest"] : fromCheckout ? ["--from-checkout"] : command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
     ["install", "update"].includes(command) ? ["--tag", "--asset", "--sha256"] : [];
-  const allowed = new Set([...common, ...required, ...(["install", "update"].includes(command) ? ["--fix-permissions"] : [])]);
+  const allowed = new Set([...common, ...required, ...(!check && ["install", "update"].includes(command) ? ["--fix-permissions"] : [])]);
   const flags = Object.create(null);
   for (let index = 0; index < tail.length;) {
     const flag = tail[index], value = tail[index + 1];
-    if ((flag === "--latest" && latest || flag === "--fix-permissions" && allowed.has(flag)) && !owns(flags, flag)) {
+    if ((flag === "--check" && check || flag === "--latest" && latest && !check || flag === "--fix-permissions" && allowed.has(flag)) && !owns(flags, flag)) {
       flags[flag] = true;
       index++;
       continue;
@@ -420,6 +421,7 @@ export function main(argv, deps = {}) {
         "torre-control install|update --tag <tag> --asset <asset> --sha256 <trusted-digest>\n" +
         "torre-control install|update --from-checkout <repo>  (clean committed tree; offline release-build and digest verification)\n" +
         "Agregá --fix-permissions a install|update para quitar sólo go-w de las rutas propias informadas dentro de HOME.\n" +
+        "torre-control update --check  (read-only JSON, 8s metadata budget; different tags count as available, including checkout-*)\n" +
         "torre-control doctor | status | rollback | uninstall\n" +
         "torre-control project update --project <absolute-path>\n" +
         "uninstall removes owned global resources and restores backups; Gentle AI and projects remain untouched.\n");
@@ -443,7 +445,19 @@ export function main(argv, deps = {}) {
     const registryRoot = flags["--registry"] ?? join(share, "projects");
     const api = { ...operations, ...deps.operations };
     let result;
-    if (command === "status") {
+    if (flags["--check"]) {
+      try {
+        // Inspect only the engine receipt: no runtime/prerequisite probes or writes.
+        const installed = absentGlobalDefaults(home, stateRoot, launcherPath, flags) ?
+          { status: "absent" } : api.doctorGlobal({ stateRoot, launcherPath });
+        result = checkLatestRelease({ repository: "achangkuon/control-tower",
+          installedTag: installed.status === "healthy" ? installed.activeTag : null,
+          runner: runner ?? ((command, args, options) => spawnSync(command, args,
+            { ...options, env, encoding: "buffer", stdio: ["ignore", "pipe", "pipe"] })) });
+      } catch {
+        result = { status: "unknown", reason: "No se pudo determinar la versión instalada." };
+      }
+    } else if (command === "status") {
       for (const path of [stateRoot, launcherPath, registryRoot]) homePath({ HOME: path });
       if (stateRoot === launcherPath || stateRoot.startsWith(launcherPath + sep) ||
           launcherPath.startsWith(stateRoot + sep)) usage("overlapping paths");
