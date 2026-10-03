@@ -2196,6 +2196,62 @@ sesiones:
 
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
+  - id: S205
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "Instalar o actualizar explica y ofrece arreglar los permisos de grupo, y una versión publicada idéntica reemplaza la etiqueta de una instalación local."
+    autoridad: "Emilio aprobó el 2026-10-03 en esta Conversación una Sesión de mejoras de instalación para no dejar deuda tras publicar v1.2.0."
+    depende_de: []
+    archivos: [product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs, product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Al aplicar v1.2.0 en la máquina de Emilio el instalador frenó por archivos con
+        escritura de grupo (umask 002 de Ubuntu) con un mensaje técnico; y como la versión
+        local se instaló desde el checkout, actualizar desde GitHub al mismo contenido
+        frena por conflicto de procedencia.
+      resultado_comportamiento: >-
+        Cuando una ruta propia o de destino tiene escritura de grupo u otros, el error
+        lista cada ruta y el comando exacto para corregirla, en español; con
+        --fix-permissions el instalador quita sólo esa escritura (go-w) de exactamente
+        esas rutas dentro de HOME, nunca sigue enlaces y vuelve a verificar. Si la
+        versión publicada tiene el mismo digest que una instalada con procedencia
+        checkout-*, la procedencia se actualiza al tag publicado sin reinstalar y el
+        resultado lo informa.
+      restricciones_decisiones: >-
+        No se relaja la regla de seguridad ni se tocan rutas fuera de HOME o ajenas a la
+        Torre; sin cambios de permisos automáticos sin la bandera explícita. La
+        promoción sólo ocurre con digest idéntico y verificado.
+      referencias: >-
+        runtime-config.mjs:40 (safe); global.mjs provenance; Engram tower-v1/release-v1.2.0.
+
+  - id: S206
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "Se corrigen las tres observaciones de la revisión: el ID visible en el menú de Radar, el aviso de copiado honesto y la validación del import en CLAUDE.md."
+    autoridad: "Emilio aprobó el 2026-10-03 en esta Conversación resolver las observaciones informativas de la revisión para no dejar deuda."
+    depende_de: []
+    archivos: [product/tower/v1/tui/radar.go, product/tower/v1/tui/radar_test.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        La revisión nativa dejó observaciones informativas: en terminales angostas el
+        campo del ID y la selección inicial del menú de Radar pueden quedar fuera de
+        vista (radar.go:117-119, 169); el aviso Copiado se muestra aunque el terminal no
+        confirme la copia (model.go:82); y la admisión del import @AGENTS.md en
+        CLAUDE.md tiene un caso borde (adoption.mjs:245).
+      resultado_comportamiento: >-
+        El campo del ID y el ítem seleccionado siempre quedan visibles al desplazar en
+        pantallas angostas; tras copiar se muestra un aviso que no afirma lo que no se
+        puede confirmar (por ejemplo, Enviado al portapapeles del terminal); y el
+        import se valida sin aceptar variantes ambiguas, con pruebas de cada caso.
+      restricciones_decisiones: >-
+        Cambios acotados a esas observaciones; sin cambios de comportamiento ajenos.
+      referencias: >-
+        Revisiones review-de9db1527e4bd4a0, review-4d9eb12b098477a2 y review-90ff8d096a0977e0.
+
   - id: S175
     prioridad: resolucion-problemas-generales
     zona: cimientos
