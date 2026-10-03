@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install and verify the user-owned session skill family."""
+"""Install personal Chanks configuration; Tower owns the product runtime."""
 
 from __future__ import annotations
 
@@ -19,9 +19,8 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 
-# Shared conventions read by several skills. Installed like a skill directory
-# but carries no SKILL.md of its own, so it must stay first: a skill that lands
-# without its conventions is a skill with no source of truth.
+# Public source inventory, also consumed by the separate Hermes migration.
+# Runtime writes use PERSONAL_SKILLS below, not this historical inventory.
 SHARED = ("_shared",)
 
 # Chanks planning family — terrain, discovery, requirements, and plan↔SDD bridge.
@@ -80,9 +79,16 @@ SUPPORT_SKILLS = (
 # The maintainer's own skills: one real copy each in the central folder, reached
 # from Claude Code through per-skill symlinks. Gentle AI skills are not part of
 # this roster and stay per runtime under `gentle-ai`.
+# Mirror runtime-config.mjs / bundle.mjs's reviewed V1 membership. A fixture
+# test checks this boundary against the product export, without installing Tower.
+TOWER_V1_SKILLS = tuple(sorted(
+    tuple(name for name in CHANKS_SKILLS if name != "chanks-0-agente-soporte")
+    + SUPPORT_SKILLS + ("control-tower",)
+))
+STOP_MANAGING_SKILLS = tuple(sorted(set(CHANKS_SKILLS + SUPPORT_SKILLS) & set(TOWER_V1_SKILLS)))
 OWN_SKILLS = CHANKS_SKILLS + SUPPORT_SKILLS
-
 SKILLS = SHARED + OWN_SKILLS
+PERSONAL_SKILLS = tuple(name for name in OWN_SKILLS if name not in TOWER_V1_SKILLS)
 
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
@@ -138,16 +144,12 @@ RETIRED_SKILL_FILES = MappingProxyType({
     }),
 })
 
-# Control pieces deferred to later versions (maintainer decision B4, 2026-10-01): the Pi
-# write lock belongs to V2 and the Claude Tower signature hook to V3. Their sources stay in
-# the repository; the installer no longer writes them, and a copy already installed is
-# moved under the runtime's archive directory, never deleted. Each entry is
-# (runtime root, path inside it). The archive sits outside `extensions/` so Pi cannot
-# auto-discover an archived shim.
+# The deferred Pi write lock still retires reversibly. The Claude signature
+# hook is now Tower-owned and must never be archived by the personal installer.
+# The archive sits outside extensions/ so Pi cannot auto-discover the old shim.
 RETIRED_CONTROL_ARCHIVE = ".retired-controls"
 RETIRED_CONTROL_FILES = (
     (Path(".pi/agent"), Path("extensions/chanks-controls.ts")),
-    (Path(".claude"), Path("hooks/torre-firma.sh")),
 )
 
 MANUAL_FILES = (
@@ -173,7 +175,7 @@ def _block_re(name: bytes, *, annotated: bool = False) -> re.Pattern[bytes]:
 
 
 BLOCK_RE = _block_re(b"SESSION-SKILL-ARCHITECTURE:MANUAL")
-MANUAL_BLOCKS = (
+LEGACY_BLOCKS = (
     ("session-routing.md", START_MARKER, END_MARKER, BLOCK_RE, True),
 ) + tuple(
     (template, b"<!-- " + name + b" -->", b"<!-- /" + name + b" -->",
@@ -188,10 +190,30 @@ MANUAL_BLOCKS = (
 # Personal blocks a runtime receives when it lacks them (maintainer decision B3,
 # 2026-10-01). Every other optional block stays replace-if-present. The Hermes helper
 # (prepare-personal-config.py) applies the same list to SOUL.md.
+PERSONAL_NAMES = {
+    b"AGENT-PROPAGATION-MAP:MANUAL": b"chanks:agent-propagation-map",
+    b"doc-guard-rule": b"chanks:doc-guard-rule",
+    b"EXPLAIN-TO-MAINTAINER:MANUAL": b"chanks:explain-to-maintainer",
+}
+# Public legacy contract for the separate Hermes/snapshot helper. The four
+# Tower-covered runtimes use PERSONAL_BLOCKS and never write these legacy blocks.
+MANUAL_BLOCKS = LEGACY_BLOCKS
+PERSONAL_BLOCKS = tuple(
+    (template, b"<!-- " + name + b" -->", b"<!-- /" + name + b" -->", _block_re(name), False)
+    for template, name in (
+        ("agent-propagation-map.md", b"chanks:agent-propagation-map"),
+        ("doc-guard-rule.md", b"chanks:doc-guard-rule"),
+        ("explain-to-maintainer.md", b"chanks:explain-to-maintainer"),
+    )
+)
 ADDED_WHEN_ABSENT_BLOCKS = (
     b"<!-- doc-guard-rule -->",
     b"<!-- EXPLAIN-TO-MAINTAINER:MANUAL -->",
     b"<!-- PLAN-NAMING:GLOBAL -->",
+)
+PERSONAL_ADDED_WHEN_ABSENT = (
+    b"<!-- chanks:doc-guard-rule -->",
+    b"<!-- chanks:explain-to-maintainer -->",
 )
 ADDED_WHEN_ABSENT_FILES = (Path(".codex/AGENTS.md"),)
 
@@ -209,7 +231,7 @@ PLAN_NAMING_CANON_ROOTS = MappingProxyType({
     Path(".hermes/SOUL.md"): ".agents/skills",
 })
 MANAGED_MARKER_RE = re.compile(
-    rb"<!--\s*(/?)((?:gentle-ai|section):[A-Za-z0-9_.-]+)\s*-->"
+    rb"<!--\s*(/?)((?:gentle-ai|section|control-tower):[A-Za-z0-9_.-]+)\s*-->"
 )
 
 
@@ -252,11 +274,10 @@ def skill_link_target(skill: str) -> str:
 
 
 def skills_for_root(home: Path, runtime_root: Path) -> tuple[str, ...]:
-    """Skills whose real files live in this root: all of them centrally, only
-    the shared overlay elsewhere (own skills are linked or retired there)."""
+    """Personal runtime destinations only; public source inventory stays intact."""
     if _relative_root(home, runtime_root) == CENTRAL_SKILLS_RELATIVE:
-        return SKILLS
-    return SHARED
+        return PERSONAL_SKILLS
+    return ()
 
 
 def manual_paths(home: Path) -> tuple[Path, ...]:
@@ -403,13 +424,32 @@ def render_manual_blocks(root: Path) -> dict[bytes, bytes]:
         rendered = template.replace("{{REPO_ROOT}}", root.as_posix())
         if "{{REPO_ROOT}}" in rendered:
             raise InstallError(f"manual block template has unresolved placeholder: {template_path}")
+        # Legacy rendering remains available to Hermes. These bytes are never
+        # used by the four Tower-covered runtime writers.
+        for old, new in PERSONAL_NAMES.items():
+            rendered = rendered.replace(f"<!-- {new.decode()} -->", f"<!-- {old.decode()} -->")
+            rendered = rendered.replace(f"<!-- /{new.decode()} -->", f"<!-- /{old.decode()} -->")
+        rendered = rendered.replace(PERSONAL_HEADER.decode() + "\n", "")
         rendered_blocks[start] = rendered.encode("utf-8")
     return rendered_blocks
 
 
+PERSONAL_HEADER = "<!-- Generated by Chanks (personal configuration) — not part of Control Tower -->".encode()
+
+
+def render_personal_blocks(root: Path) -> dict[bytes, bytes]:
+    rendered = {}
+    for template, start, end, _, _ in PERSONAL_BLOCKS:
+        block = (root / "templates" / template).read_bytes()
+        if not block.startswith(start + b"\n" + PERSONAL_HEADER + b"\n") or not block.endswith(end + b"\n"):
+            raise InstallError(f"invalid personal block template: {template}")
+        rendered[start] = block
+    return rendered
+
+
 def render_manual_block(root: Path) -> bytes:
     """Compatibility accessor for the required session-routing block."""
-    return render_manual_blocks(root)[START_MARKER]
+    return (root / "templates/session-routing.md").read_bytes()
 
 
 def _managed_ranges(content: bytes, path: Path) -> list[tuple[int, int]]:
@@ -470,12 +510,12 @@ def replace_manual_block(content: bytes, replacement: bytes, path: Path) -> byte
 
 
 def _owned_block_matches(
-    content: bytes, path: Path
+    content: bytes, path: Path, blocks=None
 ) -> dict[bytes, re.Match[bytes] | None]:
     matches_by_start: dict[bytes, re.Match[bytes] | None] = {}
     managed_ranges = _managed_ranges(content, path)
     present: list[tuple[bytes, re.Match[bytes]]] = []
-    for _, start, end, pattern, required in MANUAL_BLOCKS:
+    for _, start, end, pattern, required in (blocks if blocks is not None else MANUAL_BLOCKS):
         start_count, end_count = _owned_marker_counts(content, start)
         if start_count == 0 and end_count == 0 and not required:
             matches_by_start[start] = None
@@ -540,10 +580,118 @@ def desired_manual_content(
     return content
 
 
+def desired_personal_content(path: Path, replacements: dict[bytes, bytes], *, add_absent=False) -> bytes:
+    content = path.read_bytes()
+    matches = _transition_matches(content, path)
+    for _, start, _, _, _ in PERSONAL_BLOCKS:
+        match = matches[start]
+        if match is not None:
+            content = content[:match.start()] + replacements[start] + content[match.end():]
+            # Offsets belong to the original bytes; validate again after each splice.
+            matches = _transition_matches(content, path)
+    if add_absent:
+        aliases = {b"<!-- " + new + b" -->": b"<!-- " + old + b" -->"
+                   for old, new in PERSONAL_NAMES.items()}
+        absent = tuple(start for start in PERSONAL_ADDED_WHEN_ABSENT
+                       if matches[start] is None and matches[aliases[start]] is None)
+        content = append_absent_blocks(content, replacements, absent)
+    return content
+
+
+def _transition_matches(content: bytes, path: Path):
+    """Validate both generations before any edit, including unknown enclosing tags."""
+    blocks = tuple((template, start, end, pattern, False)
+                   for template, start, end, pattern, _ in LEGACY_BLOCKS + PERSONAL_BLOCKS)
+    matches = _owned_block_matches(content, path, blocks)
+    for old, new in PERSONAL_NAMES.items():
+        if matches[b"<!-- " + old + b" -->"] and matches[b"<!-- " + new + b" -->"]:
+            raise InstallError(f"duplicated legacy/personal marker in {path}: {new.decode()}")
+    # Any marked block surrounding or inside an owned range is ambiguous. Do not
+    # allow an unrecognized personal block to be swallowed by a replacement.
+    tokens = re.compile(rb"<!--\s*(/?)\s*([A-Za-z0-9_:.-]+)(?:"
+                        + re.escape(MANUAL_ANNOTATION) + rb")?\s*-->")
+    for match in (value for value in matches.values() if value is not None):
+        name = re.search(rb"<!-- ([A-Za-z0-9_:.-]+)", match.group()).group(1)
+        stack = []
+        for token in tokens.finditer(content):
+            token_name = token.group(2)
+            if not token.group(1):
+                if token_name == name and stack or token_name != name and match.start() < token.start() < match.end():
+                    raise InstallError(f"nested owned marker in {path}: {name.decode()}")
+                stack.append(token_name)
+            elif stack and stack[-1] == token_name:
+                stack.pop()
+            elif token_name == name:
+                raise InstallError(f"malformed owned marker nesting in {path}: {name.decode()}")
+    return matches
+
+
+def tower_migration_plan(home: Path, root: Path):
+    """Read-only preflight of the entire migration; never infer unmarked ownership."""
+    replacements = render_personal_blocks(root)
+    plan = []
+    for path in installed_manual_paths(home):
+        _validate_file_destination(home, path, "runtime instruction file", require_existing=True)
+        before = path.read_bytes()
+        matches = _transition_matches(before, path)
+        edits = []
+        for _, start, _, _, _ in LEGACY_BLOCKS + PERSONAL_BLOCKS:
+            match = matches[start]
+            if match is None:
+                continue
+            name = start[len(b"<!-- "):-len(b" -->")]
+            if name in PERSONAL_NAMES:
+                new = PERSONAL_NAMES[name]
+                replacement = replacements[b"<!-- " + new + b" -->"]
+                detail = f"REPLACE {name.decode()} -> {new.decode()}"
+            elif start in replacements:
+                replacement = replacements[start]
+                detail = f"UPDATE {name.decode()}"
+            else:
+                replacement = b""
+                detail = f"REMOVE {name.decode()}"
+            if match.group() != replacement:
+                edits.append((match.start(), match.end(), replacement, detail))
+        after = before
+        for begin, finish, replacement, _ in sorted(edits, reverse=True):
+            after = after[:begin] + replacement + after[finish:]
+        if after != before:
+            plan.append((path, before, after, tuple(detail for _, _, _, detail in edits)))
+    archive = home / ".claude/.skill-backups/tower-migration"
+    _validate_directory_path(archive, "Tower migration backup")
+    return plan
+
+
+def migrate_to_tower(home: Path, root: Path | None = None, *, apply_changes=False):
+    """Back up ALL affected instruction files before the first replacement."""
+    root = root or repo_root()
+    plan = tower_migration_plan(home, root)
+    if not apply_changes or not plan:
+        return plan
+    # Recheck the complete read set before creating even the backup directory.
+    for path, before, _, _ in plan:
+        _validate_file_destination(home, path, "runtime instruction file", require_existing=True)
+        if path.read_bytes() != before:
+            raise InstallError(f"instruction file changed during migration: {path}")
+    archive = home / ".claude/.skill-backups/tower-migration"
+    archive.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    backup = Path(tempfile.mkdtemp(prefix=f"{stamp}-", dir=archive))
+    for path, before, _, _ in plan:
+        target = backup / path.relative_to(home)
+        _atomic_copy(path, target, backup)
+        if target.read_bytes() != before:
+            raise InstallError(f"instruction file changed while backing up: {path}")
+    for path, before, after, _ in plan:
+        if path.read_bytes() != before:
+            raise InstallError(f"instruction file changed during migration: {path}; backups: {backup}")
+        _atomic_write(path, after, home)
+    print(f"BACKUP: {backup}")
+    return plan
+
+
 def preflight(home: Path, root: Path) -> None:
-    # Validate the generated notice and its destination before unrelated installation writes.
-    pi_notices_changes(home, root)
-    replacements = render_manual_blocks(root)
+    replacements = render_personal_blocks(root)
     retired_files = retired_skill_files(root)
     for runtime_root in installed_skill_roots(home):
         _validate_directory_path(runtime_root, "runtime skill")
@@ -554,7 +702,7 @@ def preflight(home: Path, root: Path) -> None:
         for retired_skill in RETIRED_SKILLS:
             _validate_retired_skill_destination(runtime_root, runtime_root / retired_skill)
         if not central:
-            for own_skill in OWN_SKILLS:
+            for own_skill in PERSONAL_SKILLS:
                 _validate_own_skill_entry(runtime_root, runtime_root / own_skill)
         for skill, relative, _ in source_files(root, skills_for_root(home, runtime_root)):
             skill_root = runtime_root / skill
@@ -569,7 +717,7 @@ def preflight(home: Path, root: Path) -> None:
         _validate_file_destination(
             path.parent, path, "runtime instruction file", require_existing=True
         )
-        desired_manual_content(path, replacements, add_absent=adds_absent_blocks(home, path))
+        desired_personal_content(path, replacements, add_absent=adds_absent_blocks(home, path))
     for runtime_root, destination in retired_control_files(home):
         _validate_retired_control(runtime_root, destination)
 
@@ -679,7 +827,7 @@ OWN_SKILL_ENTRY_KINDS = ("own-skill-archive", "skill-link", "skill-link-replace"
 def build_plan(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     preflight(home, root)
-    replacements = render_manual_blocks(root)
+    replacements = render_personal_blocks(root)
     retired_files = retired_skill_files(root)
     changes: list[Change] = []
     for runtime_root in installed_skill_roots(home):
@@ -701,15 +849,13 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
             if not destination.is_file() or destination.read_bytes() != source.read_bytes():
                 changes.append(Change(destination, "skill"))
     for path in installed_manual_paths(home):
-        desired = desired_manual_content(
+        desired = desired_personal_content(
             path, replacements, add_absent=adds_absent_blocks(home, path))
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     changes.extend(carril_changes(home, root))
     changes.extend(pi_npm_host_peers_changes(home, root))
     changes.extend(pi_overlay_rebuild_changes(home, root))
-    changes.extend(etapa_hook_changes(home, root))
-    changes.extend(pi_notices_changes(home, root))
     changes.extend(retired_control_changes(home))
     return changes
 
@@ -730,7 +876,7 @@ def _validate_own_skill_entry(runtime_root: Path, destination: Path) -> None:
 def own_skill_entry_changes(runtime_root: Path, relative_root: str) -> list[Change]:
     changes: list[Change] = []
     linked = relative_root == LINK_SKILLS_RELATIVE
-    for skill in OWN_SKILLS:
+    for skill in PERSONAL_SKILLS:
         destination = runtime_root / skill
         target = skill_link_target(skill)
         if destination.is_symlink():
@@ -754,6 +900,7 @@ def _create_skill_link(runtime_root: Path, skill: str) -> None:
     _validate_own_skill_entry(runtime_root, destination)
     if _lexists(destination) and not destination.is_symlink():
         raise InstallError(f"own skill directory must be archived before linking: {destination}")
+    runtime_root.mkdir(parents=True, exist_ok=True)
     for attempt in range(100):
         temporary = runtime_root / f".{skill}.link-{os.getpid()}-{attempt}"
         try:
@@ -791,7 +938,7 @@ def retired_skill_archive_root(runtime_root: Path) -> Path:
 def retired_skill_files(root: Path) -> dict[str, frozenset[str]]:
     current = {(Path(skill) / relative).as_posix() for skill, relative, _ in source_files(root)}
     return {relative: digests for relative, digests in RETIRED_SKILL_FILES.items()
-            if relative not in current}
+            if relative not in current and relative.split("/")[0] not in TOWER_V1_SKILLS}
 
 
 def _validate_retired_file_archive(runtime_root: Path) -> Path:
@@ -872,7 +1019,7 @@ def _atomic_write(
 def apply(home: Path, root: Path | None = None) -> list[Change]:
     root = root or repo_root()
     changes = build_plan(home, root)
-    replacements = render_manual_blocks(root)
+    replacements = render_personal_blocks(root)
     change_paths = {change.path for change in changes}
     for runtime_root in installed_skill_roots(home):
         for skill, relative, source in source_files(root, skills_for_root(home, runtime_root)):
@@ -881,7 +1028,7 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
                 _atomic_copy(source, destination, runtime_root)
     for path in installed_manual_paths(home):
         if path in change_paths:
-            desired = desired_manual_content(
+            desired = desired_personal_content(
                 path, replacements, add_absent=adds_absent_blocks(home, path))
             _atomic_write(path, desired, path.parent)
     for runtime_root in installed_skill_roots(home):
@@ -905,10 +1052,6 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
         install_pi_npm_host_peers(home, root)
     if any(change.kind in ("pi-overlay-tool", "pi-overlay-data") for change in changes):
         install_pi_overlay_rebuild(home, root)
-    if etapa_hook_path(home) in change_paths:
-        _atomic_copy(etapa_hook_source(root), etapa_hook_path(home), home / ".claude")
-    if pi_notices_path(home) in change_paths:
-        install_pi_notices(home, root)
     # Deferred control pieces are archived last, like other retirements: a failed install
     # must leave the previously installed copy active.
     retired_controls = {change.path for change in changes if change.kind == "retired-control"}
@@ -1004,13 +1147,8 @@ def pi_notices_changes(home: Path, root: Path | None = None) -> list[Change]:
 
 
 def install_pi_notices(home: Path, root: Path | None = None) -> None:
-    """Install only the passive notice file. No skills, settings, hooks, or retirements."""
-    if not pi_notices_changes(home, root):
-        return
-    _atomic_write(
-        pi_notices_path(home), desired_pi_notices(root), home / ".pi",
-        label="Pi notices extension", require_existing=False,
-    )
+    """Retained entry point: signatures are exclusively product-owned."""
+    raise InstallError("Pi notices are Tower-owned; use the Tower installer")
 
 
 # --- S144: the Pi extension shim -------------------------------------------
@@ -1473,15 +1611,38 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--check", action="store_true", help="report drift and exit non-zero")
     mode.add_argument("--dry-run", action="store_true", help="report changes without writing")
     parser.add_argument("--home", type=Path, default=Path.home(), help="runtime home directory")
+    parser.add_argument("--migrate-to-tower", action="store_true",
+                        help="migrate legacy blocks (dry-run unless --apply)")
+    parser.add_argument("--apply", action="store_true", help="apply the Tower migration with backups")
     parser.add_argument(
         "--pi-notices-only", action="store_true",
         help="install/check only the passive Pi notices extension (no other runtime changes)",
     )
     args = parser.parse_args(argv)
+    if args.apply and (not args.migrate_to_tower or args.check or args.dry_run):
+        parser.error("--apply requires --migrate-to-tower and cannot be combined with --check/--dry-run")
+    if args.migrate_to_tower and (args.pi_notices_only or args.check):
+        parser.error("--migrate-to-tower cannot be combined with --pi-notices-only/--check")
     try:
-        home = args.home.expanduser()
-        changes = (pi_notices_changes(home, repo_root()) if args.pi_notices_only
-                   else build_plan(home, repo_root()))
+        home = _absolute(args.home.expanduser())
+        if args.migrate_to_tower:
+            plan = migrate_to_tower(home, repo_root(), apply_changes=args.apply)
+            for skill in STOP_MANAGING_SKILLS:
+                print(f"STOP_MANAGING skill: {skill} (Tower-owned; files retained)")
+            for path, _, _, details in plan:
+                for detail in details:
+                    action, _, description = detail.partition(" ")
+                    prefix = "APPLIED" if args.apply else "WOULD"
+                    print(f"{prefix}_{action} {path}: {description}")
+            if not plan:
+                print("NO_CHANGES")
+            return 0
+        if args.pi_notices_only:
+            raise InstallError("Pi notices are Tower-owned; use the Tower installer")
+        changes = build_plan(home, repo_root())
+        if any(any(_owned_marker_counts(path.read_bytes(), start))
+               for path in installed_manual_paths(home) for _, start, _, _, _ in LEGACY_BLOCKS):
+            print("HINT: legacy Chanks blocks left untouched; run --migrate-to-tower (dry-run first)")
         surfaces = ("Pi notices extension" if args.pi_notices_only
                     else "runtime copies and manual blocks")
         if args.check:

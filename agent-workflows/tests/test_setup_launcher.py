@@ -117,7 +117,8 @@ class SetupLauncherTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Torre V1", result.stdout + result.stderr)
         self.assertIn("skills instaladas", result.stdout)
-        self.assertTrue((self.home / ".agents/skills/chanks-1-prd/SKILL.md").is_file())
+        # Tower-owned skill was absent and must remain untouched by personal setup.
+        self.assertFalse(os.path.lexists(self.home / ".agents/skills/chanks-1-prd"))
         self.assert_tower_unchanged()
 
     def test_install_succeeds_with_foreign_setup_and_preserves_it(self):
