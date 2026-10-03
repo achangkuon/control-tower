@@ -308,6 +308,7 @@ test("status live-reconciles installed engine and projects without changing any 
   const result = invoke(f, ["status"], { runner: () => ({ status: 0, stdout: "unknown" }) });
   success(result);
   expect(result.value.engine).toEqual({ installed: true, status: "healthy", active: r.sha, previous: null,
+    activeTag: "v1-test", previousTag: null,
     components: { skills: "ok", radar: "ok", signatures: "ok", pointers: "ok", gentleAi: { status: "missing", version: null } } });
   expect(result.value.projects).toEqual([{ projectRoot: root, status: "invalid" }]);
   expect(snapshot(f)).toEqual(before);

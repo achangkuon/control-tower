@@ -46,6 +46,40 @@ func clean(text string) string {
 	}, ansi.Strip(text))
 }
 
+// All status sections share the widest fixed label (Claude Code) and a two-space gap.
+func statusRow(label, value string) string {
+	return "  " + label + strings.Repeat(" ", max(2, 13-ansi.StringWidth(label))) + value
+}
+
+func (m model) menuLines(hints map[int]string) []string {
+	labelWidth := 0
+	for _, label := range menu {
+		labelWidth = max(labelWidth, ansi.StringWidth(label))
+	}
+	// Hide the entire hint column before truncating any label or partial hint.
+	hintWidth := 0
+	for _, hint := range hints {
+		hintWidth = max(hintWidth, ansi.StringWidth(hint)+2)
+	}
+	showHints := m.width >= 2+labelWidth+2+hintWidth
+	lines := make([]string, 0, len(menu))
+	for i, label := range menu {
+		prefix := "  "
+		if i == m.selected {
+			prefix = "> "
+		}
+		line := prefix + label
+		if i == m.selected {
+			line = m.palette.tower.Render(line)
+		}
+		if hint := hints[i]; showHints && hint != "" {
+			line += strings.Repeat(" ", labelWidth-ansi.StringWidth(label)+2) + m.palette.dim.Render("("+hint+")")
+		}
+		lines = append(lines, line)
+	}
+	return lines
+}
+
 func (m model) wrap(lines []string) []string {
 	var wrapped []string
 	for _, line := range lines {

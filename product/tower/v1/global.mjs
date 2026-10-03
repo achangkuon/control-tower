@@ -494,6 +494,8 @@ export function doctorGlobal(value) {
   const result = inspect(optionsFor(value, "doctor"));
   return Object.freeze({ status: result.state ? "healthy" : "absent", active: result.state?.active ?? null,
     previous: result.state?.previous ?? null,
+    activeTag: result.versions.get(result.state?.active)?.tag || null,
+    previousTag: result.versions.get(result.state?.previous)?.tag || null,
     ...(value.home ? { components: doctorRuntime({ home: value.home, env: value.env, runner: value.runner }) } : {}) });
 }
 export function rollbackGlobal(value) {

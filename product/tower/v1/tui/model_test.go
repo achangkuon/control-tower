@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"strings"
@@ -10,8 +11,135 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
 )
+
+const taggedJSON = `{"schema":"tower.v1.status/1","engine":{"installed":true,"status":"healthy","active":"123456789abcdef","previous":"abcdef123456789","activeTag":"v1.1.0","previousTag":"v1.0.2","components":{"gentleAi":{"status":"ok","version":"4.0.0"}}},"projects":[{"projectRoot":"/proyecto","status":"healthy"}],"prerequisites":{"gh":{"present":true,"version":"2.90.0","authenticated":true},"bun":{"present":true,"version":"1.3.0"},"git":{"present":true,"version":"2.50.0"},"go":{"present":true,"version":"1.26.4"}},"agents":{"claude":{"executable":true},"pi":{"config":true}},"system":{"os":"linux","arch":"x64","shell":"bash"}}`
+
+func TestReadableVersions(t *testing.T) {
+	for _, tt := range []struct{ name, data, active, previous string }{
+		{"tags", taggedJSON, "v1.1.0", "v1.0.2"},
+		{"legacy", healthyJSON, "1234567", "abcdef1"},
+		{"unknown", `{"schema":"tower.v1.status/1","engine":{"status":"absent","activeTag":null,"previousTag":null},"projects":[]}`, "no instalado", "ninguna"},
+		{"mixed", strings.Replace(taggedJSON, `"previousTag":"v1.0.2"`, `"previousTag":null`, 1), "v1.1.0", "abcdef1"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			m := loaded(t, tt.data)
+			contains(t, m.View(), "Versión: "+tt.active)
+			contains(t, m.View(), "Anterior: "+tt.previous)
+			// Exercise the actual doctor JSON boundary rather than assigning internal fields.
+			var data struct{ Engine json.RawMessage }
+			if err := json.Unmarshal([]byte(tt.data), &data); err != nil {
+				t.Fatal(err)
+			}
+			m.page, m.diagnosing = "doctor", true
+			next, _ := m.Update(commandResult{action: "doctor", id: m.sequence, data: data.Engine})
+			m = next.(model)
+			contains(t, m.View(), "Anterior: "+tt.previous)
+			if tt.name == "tags" && strings.Contains(m.View(), "1234567") {
+				t.Fatal("digest displayed despite known tag")
+			}
+		})
+	}
+	m := loaded(t, taggedJSON)
+	m.page, m.diagnosing = "doctor", true
+	next, _ := m.Update(commandResult{action: "doctor", id: m.sequence, data: []byte(`{"status":"healthy","active":"123456789abcdef","previous":"abcdef123456789","activeTag":"v1.1.0","previousTag":"v1.0.2","components":{"gentleAi":{"status":"ok","version":"4.0.0"}}}`)})
+	contains(t, next.(model).View(), "Activa: v1.1.0 · Anterior: v1.0.2", "4.0.0")
+}
+
+func TestAlignedStatusAndGentleAI(t *testing.T) {
+	m := loaded(t, taggedJSON)
+	view := m.View()
+	for label, value := range map[string]string{"Motor": "instalado · sano", "Versión": "v1.1.0 · anterior v1.0.2", "Gentle AI": "4.0.0", "Proyectos": "1", "gh": "2.90.0", "Bun": "1.3.0", "Git": "2.50.0", "Go": "1.26.4", "Claude Code": "listo", "Pi": "sólo configuración", "Codex": "no detectado", "OpenCode": "no detectado", "Sistema": "linux/x64 · bash"} {
+		contains(t, view, "  "+label+strings.Repeat(" ", 13-ansi.StringWidth(label))+value)
+	}
+	contains(t, loaded(t, healthyJSON).View(), "  Gentle AI    falta")
+	missing := strings.Replace(taggedJSON, `"status":"ok","version":"4.0.0"`, `"status":"missing","version":null`, 1)
+	contains(t, loaded(t, missing).View(), "  Gentle AI    falta")
+}
+
+func TestMenuHintsAndNarrowLayout(t *testing.T) {
+	m := loaded(t, taggedJSON)
+	contains(t, m.View(), "> Instalar o actualizar", "  Volver a la versión anterior  (v1.0.2)", "  Proyectos"+strings.Repeat(" ", ansi.StringWidth(menu[1])-ansi.StringWidth(menu[2])+2)+"(1)")
+	if strings.Contains(m.View(), "(al día)") {
+		t.Fatal("invented update availability")
+	}
+	m.selected = 1
+	contains(t, m.View(), "> Volver a la versión anterior  (v1.0.2)")
+	m.width = 31
+	contains(t, m.View(), "> Volver a la versión anterior")
+	if strings.Contains(m.View(), "(v1.0.2)") || strings.Contains(m.View(), "(1)") {
+		t.Fatal("hints must drop before truncating menu labels")
+	}
+	m = loaded(t, taggedJSON)
+	m.loading = true
+	if strings.Contains(m.View(), "(v1.0.2)") || strings.Contains(m.View(), "(1)") {
+		t.Fatal("stale hints while loading")
+	}
+}
+
+func TestReadableStatusStylesAndHintSafety(t *testing.T) {
+	t.Setenv("TERM", "xterm-256color")
+	m := loaded(t, taggedJSON)
+	m.palette = newPalette(false)
+	m.selected = 1
+	view := m.View()
+	contains(t, view, m.palette.tower.Render("> "+menu[1]), m.palette.dim.Render("(v1.0.2)"))
+	m = loaded(t, healthyJSON)
+	m.palette = newPalette(false)
+	contains(t, m.View(), m.palette.warn.Render("falta"))
+	// Tags are display data, never terminal commands.
+	unsafe := strings.Replace(taggedJSON, `"activeTag":"v1.1.0"`, `"activeTag":"\u001b[31mv1.1.0\u001b[0m\n"`, 1)
+	view = loaded(t, unsafe).View()
+	contains(t, view, "Versión: v1.1.0 ")
+	if strings.Contains(view, "\x1b") {
+		t.Fatal("tag injected terminal control sequences")
+	}
+}
+
+func TestMenuHintsRequireCurrentKnownData(t *testing.T) {
+	for _, tt := range []struct{ name, data string }{
+		{"legacy", healthyJSON},
+		{"absent", `{"schema":"tower.v1.status/1","engine":{"status":"absent"},"projects":[]}`},
+		{"project query failed", strings.Replace(taggedJSON, `[{"projectRoot":"/proyecto","status":"healthy"}]`, `{"error":"failed"}`, 1)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			m := loaded(t, tt.data)
+			if tt.name == "legacy" {
+				contains(t, m.View(), "(abcdef1)", "(1)")
+			} else if tt.name == "absent" {
+				contains(t, m.View(), "(0)")
+				if strings.Contains(m.View(), "(ninguna)") {
+					t.Fatal("rollback hint without previous release")
+				}
+			} else if strings.Contains(m.View(), "(1)") || strings.Contains(m.View(), "(0)") {
+				t.Fatal("project count invented after query failure")
+			}
+			m.statusError = "estado no disponible"
+			for _, line := range strings.Split(m.View(), "\n") {
+				if strings.Contains(line, "(v1.0.2)") || strings.Contains(line, "(1)") || strings.Contains(line, "(0)") {
+					t.Fatal("stale hints after status failure")
+				}
+			}
+		})
+	}
+	m := loaded(t, taggedJSON)
+	for _, size := range []tea.WindowSizeMsg{{Width: 40, Height: 40}, {Width: 31, Height: 16}, {Width: 28, Height: 12}, {Width: 10, Height: 2}, {Width: 1, Height: 1}} {
+		next, _ := m.Update(size)
+		m = next.(model)
+		for _, line := range strings.Split(m.View(), "\n") {
+			if ansi.StringWidth(line) > size.Width {
+				t.Fatalf("line exceeds %d cells: %q", size.Width, line)
+			}
+		}
+	}
+}
+
+func TestHomeRenderingSample(t *testing.T) {
+	m := loaded(t, taggedJSON)
+	t.Log("Home fixture:\n" + m.View())
+}
 
 const healthyJSON = `{"schema":"tower.v1.status/1","engine":{"installed":true,"status":"healthy","active":"123456789abcdef","previous":"abcdef123456789"},"projects":[{"projectRoot":"/proyecto","status":"healthy"}],"prerequisites":{"gh":{"present":true,"version":"2.90.0","authenticated":true},"bun":{"present":true,"version":"1.3.0"},"git":{"present":true,"version":"2.50.0"},"go":{"present":true,"version":"1.26.4"}},"agents":{"claude":{"executable":true,"config":true},"pi":{"config":true},"codex":{},"opencode":{"executable":true}},"system":{"os":"linux","arch":"x64","shell":"bash"}}`
 
@@ -120,9 +248,9 @@ func TestStatusRendering(t *testing.T) {
 		name, data string
 		want       []string
 	}{
-		{"healthy", healthyJSON, []string{"instalado / sano", "1234567", "abcdef1", "/proyecto", "sano", "con sesión", "1.26.4", "Claude Code: listo", "Pi: sólo configuración", "Codex: no detectado", "OpenCode: listo", "linux", "bash"}},
-		{"absent", `{"schema":"tower.v1.status/1","engine":{"status":"absent"},"projects":[]}`, []string{"no instalado", "Proyectos (0)", "Bun: falta", "Git: falta", "Go: falta", "gh: falta"}},
-		{"warnings", `{"schema":"tower.v1.status/1","engine":{"status":"error"},"projects":{"error":"failure"},"prerequisites":{"gh":{"present":true,"version":"2.0","authenticated":false},"go":{"present":true,"error":"failure"}}}`, []string{"Motor: error", "Proyectos: error de consulta", "sin sesión", "Go: error de comprobación"}},
+		{"healthy", healthyJSON, []string{"instalado · sano", "1234567", "abcdef1", "/proyecto", "sano", "con sesión", "1.26.4", statusRow("Claude Code", "listo"), statusRow("Pi", "sólo configuración"), statusRow("Codex", "no detectado"), statusRow("OpenCode", "listo"), "linux", "bash"}},
+		{"absent", `{"schema":"tower.v1.status/1","engine":{"status":"absent"},"projects":[]}`, []string{"no instalado", statusRow("Proyectos", "0"), statusRow("Bun", "falta"), statusRow("Git", "falta"), statusRow("Go", "falta"), statusRow("gh", "falta")}},
+		{"warnings", `{"schema":"tower.v1.status/1","engine":{"status":"error"},"projects":{"error":"failure"},"prerequisites":{"gh":{"present":true,"version":"2.0","authenticated":false},"go":{"present":true,"error":"failure"}}}`, []string{statusRow("Motor", "error"), statusRow("Proyectos", "error de consulta"), "sin sesión", statusRow("Go", "error de comprobación")}},
 	} {
 		t.Run(tt.name, func(t *testing.T) { contains(t, loaded(t, tt.data).View(), tt.want...) })
 	}
@@ -159,7 +287,7 @@ func TestDiagnostic(t *testing.T) {
 	contains(t, m.View(), "Cargando diagnóstico…")
 	next, _ := m.Update(cmd())
 	m = next.(model)
-	contains(t, m.View(), "Diagnóstico", "instalado / sano", "abcdef1", "volver")
+	contains(t, m.View(), "Diagnóstico", "instalado · sano", "abcdef1", "volver")
 	if strings.Contains(m.View(), `"status"`) {
 		t.Fatal("raw JSON displayed")
 	}
@@ -312,7 +440,7 @@ func TestSmallLayoutAndNoColor(t *testing.T) {
 			contains(t, view, "Instalar o actualizar", "Diagnóstico", "Ayuda", "Salir", "q salir")
 		}
 		if size.Height == 16 {
-			contains(t, view, "Sistema:")
+			contains(t, view, "Sistema")
 		}
 		if strings.Contains(view, towerLogo) {
 			t.Fatal("logo not dropped")

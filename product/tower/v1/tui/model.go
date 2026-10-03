@@ -10,6 +10,8 @@ import (
 type engineState struct {
 	Installed                bool
 	Status, Active, Previous string
+	ActiveTag, PreviousTag   string
+	Components               struct{ GentleAi struct{ Status, Version string } }
 }
 type prerequisite struct {
 	Present, Authenticated bool
@@ -242,6 +244,7 @@ func (m model) pageLines() []string {
 		} else if m.diagnosticError != "" {
 			body = append(body, m.palette.bad.Render(m.diagnosticError))
 		} else {
+			body = append(body, m.palette.dim.Render(activationLine(m.diagnostic)))
 			body = append(body, m.engineLines(m.diagnostic)...)
 		}
 	case "help":

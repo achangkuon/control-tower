@@ -104,6 +104,21 @@ test("verified active release configures runtimes, updates pointers, reruns idem
   expect(doctorGlobal(config).status).toBe("absent");
 });
 
+test("S198 doctor exposes provenance tags without changing release identity or files", () => {
+  expect(doctorGlobal(options)).toMatchObject({ activeTag: null, previousTag: null });
+  const first = acquisition("tag-a", { tag: "v1.0.2" });
+  installGlobal({ ...options, acquire: first.acquire });
+  expect(doctorGlobal(options)).toMatchObject({ active: first.id, activeTag: "v1.0.2", previousTag: null });
+  const next = acquisition("tag-b", { tag: "v1.1.0" });
+  updateGlobal({ ...options, acquire: next.acquire });
+  const before = snapshot();
+  expect(doctorGlobal(options)).toMatchObject({ active: next.id, previous: first.id,
+    activeTag: "v1.1.0", previousTag: "v1.0.2" });
+  expect(snapshot()).toEqual(before);
+  rollbackGlobal(options);
+  expect(doctorGlobal(options)).toMatchObject({ activeTag: "v1.0.2", previousTag: "v1.1.0" });
+});
+
 test("S196 global activation refreshes registered healthy projects and isolates skips", () => {
   const home = process.env.HOME, registryRoot = join(home, ".local/share/torre-control/projects");
   fs.mkdirSync(dirname(registryRoot), { recursive: true, mode: 0o755 });

@@ -41,12 +41,32 @@ func (m model) health(value string) string {
 	return m.palette.bad.Render(label)
 }
 
+func readableVersion(tag, sha string) string {
+	if tag != "" {
+		return clean(tag)
+	}
+	return short(sha)
+}
+
+func activationLine(state engineState) string {
+	return "Activa: " + readableVersion(state.ActiveTag, state.Active) + " · Anterior: " + readableVersion(state.PreviousTag, state.Previous)
+}
+
 func (m model) engineLines(state engineState) []string {
 	health := m.health(state.Status)
 	if state.Status == "healthy" {
-		health = m.palette.good.Render("instalado / sano")
+		health = m.palette.good.Render("instalado · sano")
 	}
-	return []string{"Motor: " + health, "  Activa: " + short(state.Active) + " · Anterior: " + short(state.Previous)}
+	version := readableVersion(state.ActiveTag, state.Active)
+	if state.Previous != "" || state.PreviousTag != "" {
+		version += " · anterior " + readableVersion(state.PreviousTag, state.Previous)
+	}
+	gentle := state.Components.GentleAi
+	gentleVersion := m.palette.warn.Render("falta")
+	if gentle.Status == "ok" && gentle.Version != "" {
+		gentleVersion = m.palette.good.Render(clean(gentle.Version))
+	}
+	return []string{statusRow("Motor", health), statusRow("Versión", version), statusRow("Gentle AI", gentleVersion)}
 }
 
 func (m model) statusLines(compact bool) []string {
@@ -59,9 +79,9 @@ func (m model) statusLines(compact bool) []string {
 	lines := append([]string{"Estado"}, m.engineLines(m.status.Engine)...)
 	var projects []projectState
 	if json.Unmarshal(m.status.Projects, &projects) != nil {
-		lines = append(lines, m.palette.bad.Render("Proyectos: error de consulta"))
+		lines = append(lines, statusRow("Proyectos", m.palette.bad.Render("error de consulta")))
 	} else {
-		entries := []string{fmt.Sprintf("Proyectos (%d)", len(projects))}
+		entries := []string{statusRow("Proyectos", fmt.Sprint(len(projects)))}
 		for _, project := range projects {
 			entries = append(entries, "  "+clean(project.ProjectRoot)+": "+m.health(project.Status))
 		}
@@ -87,7 +107,11 @@ func (m model) statusLines(compact bool) []string {
 				value += " · " + m.palette.warn.Render("sin sesión")
 			}
 		}
-		requirements = append(requirements, "  "+item.label+": "+value)
+		if compact {
+			requirements = append(requirements, item.label+" "+value)
+		} else {
+			requirements = append(requirements, statusRow(item.label, value))
+		}
 	}
 	agents := []string{"Agentes"}
 	for _, item := range []struct{ key, label string }{{"claude", "Claude Code"}, {"pi", "Pi"}, {"codex", "Codex"}, {"opencode", "OpenCode"}} {
@@ -98,18 +122,22 @@ func (m model) statusLines(compact bool) []string {
 		} else if a.Config {
 			value = m.palette.warn.Render("sólo configuración")
 		}
-		agents = append(agents, "  "+item.label+": "+value)
-	}
-	if compact {
-		lines[0] += " · " + lines[1] + " · " + strings.TrimSpace(lines[2])
-		lines = append(lines[:1], lines[3:]...)
-		lines = append(lines, strings.Join(requirements, " · "), strings.Join(agents, " · "))
-	} else {
-		lines = append(lines, requirements...)
-		lines = append(lines, agents...)
+		if compact {
+			agents = append(agents, item.label+" "+value)
+		} else {
+			agents = append(agents, statusRow(item.label, value))
+		}
 	}
 	system := m.status.System
-	return append(lines, "Sistema: "+clean(system.OS+"/"+system.Arch+" · "+system.Shell))
+	systemLine := statusRow("Sistema", clean(system.OS+"/"+system.Arch+" · "+system.Shell))
+	if compact {
+		// Keep the system summary in the short layout; detailed rows follow if space permits.
+		lines = append(lines[1:], systemLine)
+		return append(lines, statusRow("Requisitos", strings.Join(requirements[1:], " · ")), statusRow("Agentes", strings.Join(agents[1:], " · ")))
+	}
+	lines = append(lines, requirements...)
+	lines = append(lines, agents...)
+	return append(lines, systemLine)
 }
 
 func (m model) homeView() string {
@@ -119,21 +147,23 @@ func (m model) homeView() string {
 	} else if m.statusError != "" {
 		version = "no disponible"
 	} else if m.status.Engine.Active != "" {
-		version = short(m.status.Engine.Active)
+		version = readableVersion(m.status.Engine.ActiveTag, m.status.Engine.Active)
 	}
-	header := []string{m.palette.tower.Render("Torre de Control V1"), m.palette.dim.Render("Versión del motor: " + version)}
-	tail := []string{""}
-	for i, label := range menu {
-		prefix := "  "
-		if i == m.selected {
-			prefix = "> "
+	header := []string{m.palette.tower.Render("Torre de Control V1"), m.palette.dim.Render("Versión: " + version)}
+	hints := map[int]string{}
+	if !m.loading && m.statusError == "" && m.status.Schema != "" {
+		if m.height >= 18 {
+			header = append(header, m.palette.dim.Render(activationLine(m.status.Engine)))
 		}
-		line := prefix + label
-		if i == m.selected {
-			line = m.palette.tower.Render(line)
+		if m.status.Engine.Previous != "" {
+			hints[1] = readableVersion(m.status.Engine.PreviousTag, m.status.Engine.Previous)
 		}
-		tail = append(tail, line)
+		var projects []projectState
+		if json.Unmarshal(m.status.Projects, &projects) == nil {
+			hints[2] = fmt.Sprint(len(projects))
+		}
 	}
+	tail := append([]string{""}, m.menuLines(hints)...)
 	tail = append(tail, "", "↑↓ o j/k mover · enter elegir · r refrescar · q salir")
 	if m.height < 11 {
 		tail = append(tail[1:len(tail)-2], tail[len(tail)-1])
