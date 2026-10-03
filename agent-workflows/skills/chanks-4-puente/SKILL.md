@@ -43,8 +43,10 @@ implements nothing, prescribes nothing about how the work is done, and never wri
 
 ## Execution Steps
 
-1. Read the installed `radar sesion <ID>` and map its plan evidence to the exact authorized files and
-   constraints above; leave plan authority with the parent.
+1. Read fresh state with the installed `radar status --json` and `radar sesion <ID>` for the
+   human-chosen Session; never read `openspec/plan.yaml` whole. Map that evidence to the
+   exact authorized files and constraints above; leave plan authority with the parent. If fresh evidence
+   no longer supports the handoff, report the missing decision or evidence instead.
 2. Hand the Session to Gentle AI with its checkout and the Session-bound record locator from
    `references/session-readiness.md`.
 3. Verify the returned commit and actual completed-task evidence against that same Session and
@@ -62,6 +64,6 @@ or treat Gentle AI's technical record as product progress.
 
 ## References
 
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../_shared/plan-naming-convention.md`
 - `../chanks-5-session-doc/SKILL.md`
 - `references/session-readiness.md`

@@ -17,6 +17,8 @@ Activa para particionar un producto existente en Zonas disjuntas y Cimientos com
 - Una Zona se define por superficies que modifica, no por carpetas, capas o afinidad temática.
 - Toda ruta exacta modificada por más de una Zona es Cimiento.
 - Probá cobertura y disjunción con `radar check` contra `git ls-files`.
+- Consultá la partición vigente con `radar zonas` y el estado con `radar status --json`;
+  leé `radar sesion <ID>` sólo por Sesión elegida, nunca `openspec/plan.yaml` entero.
 - No escribas el plan: devolvé al responsible parent un delta confirmado con precondición.
 
 ## Decision Gates
@@ -44,4 +46,4 @@ Devuelve inventario, matriz superficie→Zonas, Zonas/Cimientos candidatos, cobe
 ## References
 
 - `references/ubicacion-y-cruces.md`
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../_shared/plan-naming-convention.md`

@@ -13,8 +13,11 @@ Activa sólo ante un new explicit human request para resolver la decisión nombr
 
 ## Hard Rules
 
-- Never read `openspec/plan.yaml` directly. Consumí sólo el bundle Radar devuelto por el read-only planning evidence helper; Engram sólo corrobora.
-- El pedido debe nombrar la decisión y ser separado de cualquier intento de start, continue o resume; esto nunca es un fallback de admisión rechazada.
+- Nunca leas `openspec/plan.yaml` entero. Consumí evidencia fresca del Radar instalado:
+  `radar sesion <ID>` para la Sesión nombrada; `radar status --json` sólo para el resumen.
+  La memoria de Gentle AI sólo corrobora, nunca reemplaza Radar.
+- El pedido debe nombrar la decisión y ser separado de cualquier intento de start, continue o
+  resume; esto nunca permite saltar evidencia que impide el trabajo. V1 no tiene paso de admisión.
 - Presentá una pregunta humana por vez, con consecuencias reales y una recomendación.
 - No respondas por el maintainer ni amplíes el alcance de una resolución.
 - No escribas plan, estado, porcentajes, registro ni vista.
@@ -33,7 +36,8 @@ Activa sólo ante un new explicit human request para resolver la decisión nombr
 
 ## Execution Steps
 
-1. Extraé decisiones abiertas, autoridad, evidencia, opciones, checkpoint y contaminación del bundle returned by the read-only planning evidence helper.
+1. Ejecutá `radar sesion <ID>` y extraé decisiones abiertas, autoridad, evidencia, opciones,
+   checkpoint y contaminación de esa Sesión.
 2. Auditá el conjunto y declarà el alcance exacto del conteo.
 3. Ordená por impacto y presentá una pregunta por vez.
 4. Formateá cada respuesta según `assets/resolution-entry.md`.
@@ -46,7 +50,6 @@ Devuelve alcance auditado, decisiones presentadas/resueltas, delta enviado, resu
 
 ## References
 
-- `references/decision-extraction.md`
 - `assets/resolution-entry.md`
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../_shared/plan-naming-convention.md`
 - `../chanks-5-politica-de-entrega/SKILL.md`

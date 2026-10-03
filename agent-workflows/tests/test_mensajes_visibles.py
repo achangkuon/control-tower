@@ -69,15 +69,14 @@ class MensajesVisiblesTests(unittest.TestCase):
         self.assertIn("plan.yaml", self.skill)
         self.assertIn("ROADMAP", self.skill)
         self.assertIn("alternate plan", self.skill)
-        self.assertIn("never blocks admission or planning", self.skill)
+        self.assertIn("never blocks planning or the human-chosen handoff", self.skill)
 
     def test_skill_keeps_chanks_torre_and_gentle_ai_actions_separate(self):
         for phrase in (
             "💪 Chanks",
-            "method, planning, admission, shared-file coordination, evidence consumption, and documentation closure",
+            "method, planning, human-approved lot selection, shared-file coordination, evidence consumption, and documentation closure",
             "🗼 Torre",
-            "radar, jornada.sh, or openspec/plan.yaml",
-            "regardless of the Tower switch",
+            "signs an actual Radar call",
             "💪 = the workflow speaks",
             "🗼 = a Tower tool ran",
             "Gentle AI",
@@ -86,6 +85,8 @@ class MensajesVisiblesTests(unittest.TestCase):
         ):
             self.assertIn(phrase, self.skill)
         self.assertNotIn("Tower-on", self.skill)
+        self.assertNotIn("jornada.sh", self.skill)
+        self.assertNotIn("admission", self.skill)
 
     def test_skill_distinguishes_copy_from_runtime_or_security_proof(self):
         for phrase in (

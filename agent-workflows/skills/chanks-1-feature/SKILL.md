@@ -14,6 +14,8 @@ Activa para agregar o cambiar capacidad de producto en un repositorio vivo con a
 ## Hard Rules
 
 - Leé primero la autoridad de producto, PRD vigente, Zonas y evidencia del comportamiento actual.
+  Consultá datos del plan con `radar zonas`, `radar status --json` y `radar sesion <ID>` por
+  Sesión elegida; nunca leas `openspec/plan.yaml` entero.
 - Separá modificación de producto, deuda técnica y diagnóstico.
 - No cambies tecnología ni partición territorial por conveniencia de implementación.
 - Cargá `chanks-1-prd` de forma independiente; no reinicies el arranque de proyecto.

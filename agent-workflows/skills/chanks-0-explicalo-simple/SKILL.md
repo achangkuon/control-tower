@@ -32,7 +32,7 @@ report he will read as a product owner rather than as an engineer.
 
 | Situation | Format |
 |---|---|
-| Full status / audit | Artifact via `artifact-design` — masthead, instrument row, findings, decisions |
+| Full status / audit | Markdown or chat — title, verified figures with units, findings, decisions, evidence |
 | One concept or one option | Chat reply, plain prose, no artifact |
 | 2+ options he must pick | Options block: consequence per option + explicit recommendation |
 | Number reported | Pair it with its unit in plain words (`55% del código llega a instalarse`) |
@@ -41,7 +41,9 @@ report he will read as a product owner rather than as an engineer.
 ## Execution Steps
 
 1. Read `references/formato.md` for the section order and worked examples.
-2. Verify claims against code, not documentation. Say which you checked.
+2. Verify behavior claims against code, not documentation. Read plan status through `radar status --json`
+   or `radar faltan`, and `radar sesion <ID>` per human-chosen Session, never the whole
+   `openspec/plan.yaml`. Say which evidence you checked.
 3. Write the plain-language layer FIRST, then attach the technical layer as backing.
 4. For each open decision: context → options with consequences → recommendation.
 5. Close with what is in flight right now and what unblocks next.

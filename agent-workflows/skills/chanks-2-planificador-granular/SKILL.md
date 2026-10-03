@@ -15,7 +15,9 @@ parent; do not write the plan or generated view.
 
 ## Hard Rules
 
-- Read planning evidence only through `../chanks-0-agente-soporte/SKILL.md`; never substitute a plan record.
+- Read fresh planning evidence through the installed `radar zonas` and `radar status --json`;
+  use `radar sesion <ID>` per human-chosen Session. Never read `openspec/plan.yaml` whole or
+  substitute memory for a Radar record.
 - For a native Session, product coordination is Zona → Sesión. Do not create Chanks Modules/Tasks,
   Module trailers, separate scope/criteria headings, or a route-choice menu.
 - Prepare exact `archivos` when known from repository evidence; they are declared/inferred here, not
@@ -66,6 +68,6 @@ claim planning status, a lock, technical task decomposition, or execution author
 
 ## References
 
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../_shared/plan-naming-convention.md`
 - `../chanks-1-heredado/references/ubicacion-y-cruces.md`
 - `references/juicio-de-ruta.md`

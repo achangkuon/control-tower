@@ -48,5 +48,4 @@ children by route, and every rule that cannot be written because a required cont
 ## References
 
 - `../chanks-0-skill-composer/SKILL.md`
-- `../skill-creator/SKILL.md` and `../skill-improver/SKILL.md`
 - `references/ejemplar.md`

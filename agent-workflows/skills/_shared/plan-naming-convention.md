@@ -7,6 +7,12 @@ Control Tower material is historical data and never becomes an active instructio
 view. Radar computes status from Git and plan evidence. An ODD technical record and its Engram
 mirror record execution continuity only: neither is a second product plan.
 
+Never read `openspec/plan.yaml` whole. Read plan evidence through the installed Radar: start with
+`radar etapa`, use `radar status --json` or `radar faltan` to propose work, and run
+`radar sesion <ID>` once per human-chosen Session for its contract. When an authorized stage must
+edit the plan, locate the exact entry and read only those lines; then run `radar check` and, only
+after it passes, `radar render`.
+
 ## 1. Hierarchy — product coordination is Zona → Sesión
 
 ```text
@@ -40,13 +46,13 @@ technical layer or delivery size. Its four enforced properties are defined-by-pa
 exhaustive, and stable. A Session has exactly one Zona; read-only verification may read elsewhere
 without acquiring ownership. Cross-Zona mutation resolves in this order: make the shared path a
 Cimiento, split by Zona, create a Zona only when splitting destroys the product result, then revisit
-a recurring bad partition. One agent owns a claimed Zona; a bottleneck calls for partition repair,
-never relaxed ownership.
+a recurring bad partition. In V1, parallel work requires human approval of the exact lot and
+Radar's `compatible` verdict for every pair; a forecast never claims a Zona.
 
 ## 4. Cimientos and resources
 
 `cimientos.rutas` classifies shared terrain. A native Session's `cimientos` is an exact-file
-reservation list and every reservation must also appear in its exact authorized `archivos`. A
+declaration of shared paths and every declared path must also appear in its exact authorized `archivos`. A
 `Recurso` is a shared non-file identity. Radar validates partition and forecasts compatibility;
 it creates no lock, assignment, or live reservation. Expanded files/scope require approved change
 and fresh compatibility evidence before affected mutation. Existing Zona/Cimiento/resource safety
@@ -93,7 +99,9 @@ title and state — never a bare ID. `radar faltan <ID>` prints exactly that one
 | ✅ `COMPLETO` | Integrated and verified delivery evidence. |
 | 📚 `ARCHIVADO` | Closed history. |
 
-States are computed, never written. `entrega.commit` is an immutable full Git OID and must be an
+States are computed, never written. This closed vocabulary also covers legacy and V2/V3 evidence;
+V1 never creates dispatch markers or reserves a Session, so execution alone leaves it `LISTO`
+until stage 5 records its integrated delivery commit. `entrega.commit` is an immutable full Git OID and must be an
 ancestor of the fixed integrated HEAD. `BLOQUEADO` means cannot; `DIFERIDO` means chose not to.
 
 ### Priority
@@ -134,7 +142,7 @@ A native Session is discriminated by `encargo`. Its **coordination** owns produc
 those parts; do not add separate native `scope`, `criteria`, Module, Task, or acceptance-checklist
 headings. Files are not mandatory provider discovery: unknown preparation may use
 `encargo.incompleto`, remains blocked, and retains known declarations but receives no executable
-Área, queue, or seat. An incomplete Encargo retains known declarations; it does not erase them. A complete non-read-only Session declares exact files; no glob, directory,
+Área or execution authority. An incomplete Encargo retains known declarations; it does not erase them. A complete non-read-only Session declares exact files; no glob, directory,
 escape, symlink, or implicit read-safe fallback is allowed.
 
 `solicitud_sdd` is exceptional and valid only with explicit human `solicitud_sdd` authority. Its
@@ -148,11 +156,13 @@ create native progress, or become active execution planning/write authority.
 
 ## 13. Capacity
 
-Compatibility is Radar's **parallel-safety verdict**: graph independence, distinct Zonas (except
-disjoint cimientos-only reservations), and disjoint Cimientos/Recurso. Cimientos are exclusive per
-exact file, never an all-Cimientos lock; a declared `zona: cimientos` still has no permanent owner.
-It is a forecast, never a live lock, claim, seat assignment, or topology controller. `seats reserve
-nothing live`.
+V1 uses `radar status --json` → `compatibilidad[]` as its **parallel-safety verdict**. Every pair
+in a human-approved lot must be `compatible`: exact files are disjoint, with no shared Cimiento or
+Recurso. Sharing a Zona alone is not a conflict; unknown or colliding declarations are never safe.
+`asientos[]` is a separate Zona-based capacity forecast, not the V1 lot selector. Cimientos are
+exclusive per exact file, never an all-Cimientos lock; a declared `zona: cimientos` has no permanent
+owner. No forecast is a live lock, claim, worker assignment, or topology controller. Live Session
+reservation/acquisition is V2/V3, not part of V1.
 
 ## 14. Decisions and escalation
 
@@ -187,11 +197,14 @@ timing, consent, or delivery gates, and archive controls remain native SDD contr
 
 ## 16. Resume
 
-Every start/continue/resume first has fresh valid Radar admission for that Session and the
-current HEAD. A native Encargo Session resumes the **same Session identity**
-by reconciling its native ODD record, actual code, and observed evidence. It does not require a
-first pending Chanks Module. A legacy Session keeps its first pending Módulo resume rule. Rejected
-states have no fallback to kickoff, decision closure, or a repository executable.
+Before acting on a start/continue/resume, read fresh state with the installed `radar status --json`
+and `radar sesion <ID>` for the human-chosen Session against the current HEAD. V1 has no admission
+or reservation step: Radar reports evidence, the human chooses, and `chanks-4-puente` hands the
+Session to Gentle AI. A native Encargo Session resumes the **same Session identity** by reconciling
+its native ODD record, actual code, and observed evidence. It does not require a first pending
+Chanks Module. A legacy Session keeps its first pending Módulo resume rule. If fresh evidence does
+not allow the requested work, report the state and missing decision/evidence; never bypass it via
+another skill or a repository executable.
 
 ## 17. Tool versus human
 
@@ -234,7 +247,8 @@ rewrite a frozen product archive. Report unknown historical evidence rather than
 ## 19. Chanks inventory
 
 `chanks-0-` is cross-cutting, including `chanks-0-mensajes-visibles`; `chanks-2-planificador-granular`
-prepares Sessions; `chanks-3-*` admits/routes only; `chanks-4-puente` hands the Session to Gentle AI
+prepares Sessions; in V1 `chanks-3-paralelo` proposes a compatible lot for human approval and
+delegation; `chanks-4-puente` hands the Session to Gentle AI
 and receives its delivered commit; and `chanks-5-session-doc` closes a delivered Session. These IDs are compatibility names,
 not hierarchy levels or runtime authority.
 

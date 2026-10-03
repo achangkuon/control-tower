@@ -15,6 +15,8 @@ Activa cuando hay que convertir una intención en alcance aprobado, Zonas y auto
 
 - Enrutá; no fusiones variantes ni produzcas sus artefactos.
 - Conservá decisiones humanas, evidencia y límites de alcance.
+- Leé datos del plan mediante `radar status --json` o `radar zonas`; una vez elegida una Sesión,
+  usá `radar sesion <ID>`. Nunca leas `openspec/plan.yaml` entero.
 - Devolvé todo cambio del dato de planificación como delta confirmado al responsible parent; no escribas el plan.
 - No avances a planificación sin aprobación humana del alcance.
 - Anunciá el paso a `chanks-2-planificador-granular` sólo con alcance aprobado y evidencia
@@ -46,4 +48,4 @@ Devuelve variante elegida, autoridad consultada, alcance aprobado o pendiente, a
 ## References
 
 - `../chanks-2-planificador-granular/SKILL.md`
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../_shared/plan-naming-convention.md`

@@ -13,7 +13,9 @@ Activa para entender qué existe, qué es real o simulado y dónde falla un prod
 
 ## Hard Rules
 
-- Leé completos los archivos auditados y citá `archivo:línea` para cada afirmación material.
+- Leé completos los archivos de código auditados y citá `archivo:línea` para cada afirmación material.
+  Nunca leas `openspec/plan.yaml` entero: consultá `radar status --json`, `radar zonas` y
+  `radar sesion <ID>` para las Sesiones elegidas.
 - Trazá interfaz → adaptación → servicio → backend y distinguí lectura de superficie modificada.
 - No inventes reglas de dominio ni conviertas carpetas en ownership.
 - No escribas código, documentos de producto ni dato de planificación.
@@ -43,4 +45,4 @@ Devuelve alcance, fuentes, trazas, matriz real/mock, hallazgos por severidad, su
 ## References
 
 - `../chanks-1-heredado/references/ubicacion-y-cruces.md`
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../_shared/plan-naming-convention.md`

@@ -5,6 +5,7 @@
 el próximo trabajo. No existen un `STATUS.md` ni un `master-index.md` paralelos.
 
 ```sh
+radar etapa                         # etapa que permite la evidencia antes de actuar
 radar check                         # usa openspec/plan.yaml y el repo actual
 radar status                        # estado, colas por Zona y asientos compatibles
 radar status --json                 # el mismo cálculo, legible por máquina (radar.snapshot/v1)
@@ -15,13 +16,26 @@ radar zonas                         # cobertura de la partición sobre git ls-fi
 radar roadmap                       # alternativas LISTO, compatibilidad e hipotéticos (previsión)
 radar render                        # escribe openspec/ROADMAP.md atómicamente
 radar render -f otro.yaml -o salida.md -C /repo
-radar marcar S114 --worktree /ruta/absoluta [--worker nombre]   # LISTO -> EN CURSO
-radar marcar S114 --listo           # testigo local de "listo para revisión" (etapa 5)
-radar desmarcar S114                # quita el marcador (cierre o abandono)
+radar archivar S114                 # cierra una Sesión con entrega integrada; luego check → render
 ```
 
 El contrato canónico está en
 [`skills/_shared/plan-naming-convention.md`](../../skills/_shared/plan-naming-convention.md).
+
+## Flujo V1 y lectura del plan
+
+Nunca leas `openspec/plan.yaml` entero. Al iniciar una conversación, corré `radar etapa`;
+para proponer trabajo usá `radar status --json` o `radar faltan`. El humano elige; después corré
+`radar sesion <ID>` por cada Sesión elegida y leé sólo esos contratos. Antes de actuar, contrastá
+estado y contrato frescos: V1 no tiene admisión, adquisición ni reserva. Los lotes paralelos exigen
+aprobación humana y `compatible` en cada par de `compatibilidad[]`; cada subagente de Gentle AI
+usa su worktree. La ejecución sola deja la Sesión `LISTO` hasta registrar la entrega.
+
+Para una escritura de plan autorizada, localizá la entrada exacta y leé/editá sólo esas líneas;
+tras cualquier edición corré `radar check` y, si pasa, `radar render`. El cierre central es
+`entrega.commit` integrado → `radar archivar <ID>` → `radar check` → `radar render`.
+Los marcadores de despacho, `radar marcar`/`desmarcar`, session-kickoff y las reservas pertenecen
+a contratos legacy/V2/V3, no al flujo V1.
 
 ## Sesiones nativas con Encargo
 
@@ -62,7 +76,7 @@ sesiones:
       referencias: PRD cocina §2; RFC cocina §4
 ```
 
-## Avance por Módulo
+## Avance por Módulo (sólo legacy)
 
 Cada commit de un Módulo lleva el trailer `Modulo: <ID>` (por ejemplo `Modulo: M125.1`). `radar`
 lo lee sólo de commits alcanzables desde HEAD, así que el plan nunca se escribe por Módulo. Una
@@ -72,7 +86,8 @@ Módulo del plan es un aviso de `radar check`, nunca un error.
 
 ## Compilar y verificar
 
-La admisión usa el binario instalado `$HOME/.local/bin/radar`; nunca ejecuta código del checkout.
+El flujo V1 consulta el binario `radar` instalado; no requiere el checkout del código de Radar.
+Los comandos siguientes son sólo para desarrollar/verificar Radar, no pasos de una Sesión V1.
 
 ```sh
 go build -o radar .
@@ -83,6 +98,10 @@ GOOS=darwin GOARCH=amd64 go build -o radar-darwin-amd64 .
 ```
 
 ## Esquema v3
+
+La versión del esquema no es la versión del flujo de la Torre. El ejemplo siguiente conserva
+`ruta`/Módulos/Tareas como contrato **legacy**, no como plantilla para una Sesión nativa V1;
+para ésta usá el ejemplo de Encargo de arriba.
 
 La v3 distingue decisiones abiertas de registros cerrados (`tipo: resuelta`). No hay
 compatibilidad dual: los planes v2 deben migrarse explícitamente a v3.
@@ -134,7 +153,7 @@ sesiones:
     ruta:
       propuesta: direct
       autoridad: RFC cocina §4
-      revalidacion:                 # opcional hasta chanks-3-session-kickoff
+      revalidacion:                 # evidencia legacy; session-kickoff no pertenece al flujo V1
         resultado: design-tasks
         base: 0123456789abcdef0123456789abcdef01234567
         evidencia: readiness/S23
@@ -165,12 +184,14 @@ acción más criterios binarios. El parser rechaza campos desconocidos, document
 posteriores, la v1 y cualquier intento de escribir `estado`, `Área` o `est` en una Sesión
 o un Módulo.
 
-## Rutas: propuesta y revalidación
+## Rutas: propuesta y revalidación (sólo legacy, fuera del flujo V1)
 
-- `chanks-2-planificador-granular` escribe `ruta.propuesta` y su autoridad.
-- `chanks-3-session-kickoff` revalida una vez. Registra la ruta resultante, el `HEAD` exacto actual y
-  una referencia de evidencia/autoridad. Si cambia la propuesta, `razon` es obligatoria.
-- La revalidación gana para implementar. No existe un segundo dispatcher.
+- Un contrato legacy puede conservar `ruta.propuesta` y su autoridad; la preparación nativa V1
+  no escribe rutas ni Módulos/Tareas.
+- La antigua `chanks-3-session-kickoff`, fuera de V1, registraba una revalidación con la ruta
+  resultante, el `HEAD` exacto y evidencia/autoridad. Si cambió la propuesta, `razon` es obligatoria.
+- Esa evidencia conservada gana para el contrato legacy; no instruye a cargar un dispatcher ni
+  a ejecutar session-kickoff en V1. Gentle AI decide la implementación de la Sesión nativa.
 - `radar check` acepta la base revalidada mientras sea un ancestro inmutable completo del
   `HEAD` actual; rechaza commits laterales.
 
@@ -311,13 +332,24 @@ Los escenarios no modifican el plan, Git ni la evidencia de entrega real: la hip
 parámetro a la misma derivación de estados, nunca como mutación.
 
 **Lo que no hace.** No autoriza ejecución, no reserva capacidad, no asigna workers, no concede
-acceso y no supone que la coordinación esté instalada. La admisión sigue siendo la de siempre, y
-la capacidad nueva depende de que sus consumidores se integren, verifiquen y activen en S146.
+acceso y no supone que la coordinación esté instalada. En V1 se consulta evidencia fresca y el
+humano aprueba el lote; no hay paso de admisión ni adquisición runtime.
 El reporte lo dice en su propia salida para que nadie lo cite como permiso.
 
-## `radar marcar` / `radar desmarcar` — marcador de despacho sin Herdr
+## `radar marcar` / `radar desmarcar` — despacho V2/V3, fuera del flujo V1
 
-`EN CURSO` sólo se deriva de un marcador vivo `<git-common-dir>/chanks/despachos/<ID>.json`
+Estos comandos existen para contratos de despacho, no para las skills V1. V1 no los ejecuta ni
+crea marcadores: sus Sesiones permanecen `LISTO` hasta registrar entrega. Herdr tampoco es una
+dependencia V1. El vocabulario cerrado mantiene `EN CURSO` para la evidencia que lo derive.
+
+```sh
+# Sólo contratos de despacho V2/V3, no pasos V1:
+radar marcar S114 --worktree /ruta/absoluta [--worker nombre]
+radar marcar S114 --listo
+radar desmarcar S114
+```
+
+En esos contratos, `EN CURSO` sólo se deriva de un marcador vivo `<git-common-dir>/chanks/despachos/<ID>.json`
 (esquema `radar.despacho/v1`). Estos dos comandos son los únicos que escriben o quitan ese archivo
 (y nada más bajo el directorio común de Git); sirven para despachar sin Herdr, p. ej. con subagentes
 de Gentle AI, cada uno en su propio worktree. Los marcadores que escribe Herdr siguen siendo válidos.
@@ -345,7 +377,7 @@ de Gentle AI, cada uno en su propio worktree. Los marcadores que escribe Herdr s
 **Limitaciones conocidas.** `marcar --listo` lee, modifica y renombra sin candado: dos `--listo`
 simultáneos sobre la misma Sesión pueden pisarse. Un `kill -9` en plena escritura puede dejar un
 temporal `.<ID>.json.tmp-<pid>` en `despachos/` que ningún comando limpia. Ninguna de las dos
-se corrige aquí; ambas se aceptan para V1.
+se corrige aquí; ambas quedan como limitaciones del despacho V2/V3, no como reglas del flujo V1.
 
 ## `radar faltan` — todo lo que falta, por meta
 
@@ -398,5 +430,5 @@ misma identidad exacta de `Recurso`, así que las Zonas listadas pueden trabajar
 
 `radar` valida datos y partición, deriva estado desde Git, pronostica asientos compatibles y
 renderiza. **No** adquiere reservas vivas, autentica la identidad del owner/invocante, recupera locks stale
-ni congela el candidato runtime de S7.1. MAIN/Tower deberá hacer eso en una fase posterior.
+ni congela candidatos runtime. Esos controles son V2/V3, no requisitos del flujo V1.
 Un pronóstico compatible no es un lock.

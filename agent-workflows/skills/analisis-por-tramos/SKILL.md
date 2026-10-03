@@ -43,6 +43,8 @@ No la uses para diagnosticar fallas de un producto vivo (`chanks-1-descubrimient
 ## Execution Steps
 
 1. **Terreno.** Leé el estado real y preguntá con qué medio contás para entregar (ver `references/medios.md`).
+   Si necesitás datos del plan, usá `radar status --json` o `radar faltan`, y `radar sesion <ID>`
+   por Sesión nombrada/elegida; nunca leas `openspec/plan.yaml` entero.
 2. **Cajas.** Desambiguá cada nombre que signifique más de una cosa; decí qué pasa si apagás cada caja.
 3. **Flujo.** Dibujá la entrada y la salida y los tramos intermedios. Nombrá roles y vocabulario, con descartes.
 4. **Tramos.** Uno por vez: qué produce, qué lo sostiene hoy, qué falta. **Cerrá con el humano antes del siguiente.**
@@ -60,4 +62,5 @@ Declará también qué tramos quedaron sin cierre humano y qué choques quedaron
 ## References
 
 - `references/medios.md` — cómo se entrega el mismo análisis en artifact, markdown o terminal.
-- `references/estructura.md` — la plantilla del documento y el ejemplar que la originó.
+- `references/estructura.md` — usá sólo la plantilla local; el ejemplar histórico externo no
+  es necesario ni impone asientos, rutas revalidadas o herramientas al flujo V1.

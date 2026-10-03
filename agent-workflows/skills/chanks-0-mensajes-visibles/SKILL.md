@@ -15,10 +15,10 @@ cosmetic classification for that feature; this is not a parent router or a plann
 ## Hard Rules
 
 - Suggest only relevant visible messages. This is not an evidence or technical evaluator: do not evaluate evidence, technical feasibility, or enforcement.
-- Assign one responsible identity to each actual action: 💪 Chanks owns method, planning, admission, shared-file coordination, evidence consumption, and documentation closure. 🗼 Torre signs a call to radar, jornada.sh, or openspec/plan.yaml regardless of the Tower switch. Gentle AI owns implementation, testing, and review under its native identity.
+- Assign one responsible identity to each actual action: 💪 Chanks owns method, planning, human-approved lot selection, shared-file coordination, evidence consumption, and documentation closure. 🗼 Torre signs an actual Radar call. Gentle AI owns implementation, testing, and review under its native identity.
 - 💪 = the workflow speaks; 🗼 = a Tower tool ran. Do not relabel method actions as Tower actions or duplicate Gentle AI ownership. A tool notice is not permission, completion, or a blocking control.
 - Distinguish permission from effect completion, and notice from proven enforcement. A skill's presence is not runtime-proven.
-- No separate Session by default. Never add a planning level, status, queue, registry of work, gate, alternate plan, plan.yaml, or ROADMAP update. No-message or uncertain cosmetic preference never blocks admission or planning.
+- No separate Session by default. Never add a planning level, status, queue, registry of work, gate, alternate plan, plan.yaml, or ROADMAP update. No-message or uncertain cosmetic preference never blocks planning or the human-chosen handoff.
 - Do not introduce scope expansion; security controls are outside this aesthetic check. Carry an in-scope copy proposal through ordinary scope approval without another human gate.
 
 ## Decision Gates

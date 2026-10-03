@@ -43,7 +43,10 @@ each Session.
    `motivo`. Then STOP and wait for the human to approve the exact Session IDs. That approval is
    the explicit authorization Gentle AI requires for parallel writers in isolated worktrees.
    Never substitute, add or drop a Session after approval.
-3. **Give each approved Session its own worktree:** one git worktree on its own branch, under the
+3. **Re-read each approved contract** with the installed `radar sesion <ID>` and confirm fresh
+   `radar status --json` still supports the lot; never read `openspec/plan.yaml` whole. If evidence
+   changed, report it and stop the affected handoff rather than substituting another Session.
+   **Give each approved Session its own worktree:** one git worktree on its own branch, under the
    user's home as a sibling of the repository (never under `/tmp`). A worktree that cannot be
    created stops that Session only; report the reason and continue with the others.
 4. **Delegate.** One Gentle AI subagent per approved Session. Hand over only the Session ID, the

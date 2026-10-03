@@ -16,7 +16,8 @@ la regla propia de Chanks: el estado lo calcula Radar, no la memoria.
 ## Hard Rules
 
 - Sólo lectura: no edites archivos ni servicios.
-- No reemplaces instrucciones del repo ni el plan.
+- No reemplaces instrucciones del repo ni el plan; nunca leas `openspec/plan.yaml` entero.
+  Usá resúmenes de Radar y `radar sesion <ID>` sólo por Sesión nombrada/elegida.
 - La memoria no decide qué sigue: el estado de cada Sesión lo calcula sólo `radar status`. Nunca propongas trabajo por un cambio viejo ni por el número siguiente a lo entregado.
 - Contrastá cada Sesión que la memoria mencione con `radar status`; si no está `LISTO`, informá su estado y bloqueo en vez de proponerla.
 - Mostrá las contradicciones entre memoria y Radar sin resolverlas.
@@ -34,8 +35,9 @@ la regla propia de Chanks: el estado lo calcula Radar, no la memoria.
 
 ## Execution Steps
 
-1. Identificá la Sesión nombrada.
-2. Leé `radar status --json` y `radar sesion <ID>` con el Radar instalado.
+1. Distinguí si hay Sesión nombrada o si sólo se pregunta qué sigue.
+2. Leé `radar status --json` con el Radar instalado. Leé `radar sesion <ID>` sólo si el humano
+   nombró/eligió esa Sesión; si no, proponé únicamente `LISTO` y esperá su elección.
 3. Sumá sólo la memoria relevante a ese ID y contrastala con Radar.
 4. Comprimí hechos, riesgos, contradicciones y próxima inspección.
 
