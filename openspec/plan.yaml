@@ -2160,8 +2160,8 @@ sesiones:
     prioridad: torre-v1
     resultado: "Instalar o actualizar deja en la máquina skills V1, Radar, firmas e instrucción global en los cuatro agentes, verifica Gentle AI y desinstalar lo quita todo."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el instalador único y que Gentle AI sea requisito."
-    depende_de: [S194]
-    archivos: [product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs, product/tower/v1/bootstrap.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs]
+    depende_de: [S194, S204]
+    archivos: [product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs, product/tower/v1/bootstrap.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs]
     cimientos: []
     recurso: []
     encargo:
@@ -2385,6 +2385,28 @@ sesiones:
         diferida; los archivos se confirman al prepararla.
       referencias: >-
         docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
+
+  - id: S204
+    zona: metodo
+    prioridad: torre-v1
+    resultado: "Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo."
+    autoridad: "Emilio aprobó el 2026-10-03 en esta Conversación incluir la librería de Radar en vendor/ tras el hallazgo de S195."
+    depende_de: []
+    archivos: [agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/LICENSE, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/NOTICE, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/README.md, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/apic.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/decode.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/emitterc.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/encode.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/parserc.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/readerc.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/resolve.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/scannerc.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/sorter.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/writerc.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yaml.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yamlh.go, agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yamlprivateh.go, agent-workflows/tools/radar/vendor/modules.txt]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        El instalador de S195 compila Radar sin red (GOPROXY=off) y Radar necesita
+        gopkg.in/yaml.v3; en una máquina sin caché de módulos la compilación falla.
+      resultado_comportamiento: >-
+        agent-workflows/tools/radar/vendor contiene yaml.v3 v3.0.1 generado con go mod
+        vendor; go build y go test de Radar pasan usando vendor.
+      restricciones_decisiones: >-
+        Sólo el resultado exacto de go mod vendor para el go.mod vigente; sin cambios de
+        código de Radar ni de versión de la dependencia.
+      referencias: >-
+        Engram tower-v1/s195-radar-offline-build; agent-workflows/tools/radar/go.mod.
 
   - id: S175
     prioridad: resolucion-problemas-generales
