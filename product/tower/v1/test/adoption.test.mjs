@@ -215,6 +215,46 @@ const unchangedFailure = (root, action) => {
   expect(uninstallProject({ projectRoot }).status).toBe("uninstalled");
 }), 180_000);
 
+describe("S208 project upgrades", () => {
+  function older(projectRoot) {
+    initProject(trusted(projectRoot));
+    tamper(projectRoot, state => {
+      const radar = state.installed.destinations.find(d => d.path === targets[0]).tree;
+      radar.entries = radar.entries.filter(e => e.name !== "vendor");
+    });
+    const state = JSON.parse(readFileSync(join(projectRoot, journal, "state.json")));
+    restoreProjectFiles(projectRoot, state.installed);
+  }
+
+  test("single-project update upgrades an intact older copy and is idempotent", () => fixture(({ projectRoot, env }) => {
+    const before = snapshot(projectRoot);
+    older(projectRoot);
+    expect(doctorProject({ projectRoot }).status).toBe("outdated");
+    success(runCli(env, "update", "--project", projectRoot), "upgraded");
+    expect(doctorProject({ projectRoot }).status).toBe("healthy");
+    success(runCli(env, "update", "--project", projectRoot), "unchanged");
+    uninstallProject({ projectRoot });
+    expect(snapshot(projectRoot)).toEqual(before);
+  }));
+
+  test("single-project update refuses live drift without endorsing or overwriting it", () => fixture(({ projectRoot }) => {
+    older(projectRoot);
+    put(projectRoot, targets[1] + "/SKILL.md", "user modification", 0o644);
+    unchangedFailure(projectRoot, () => adoption.updateProject({ projectRoot }));
+    unchangedFailure(projectRoot, () => doctorProject({ projectRoot }));
+  }));
+
+  test("late target write failure restores older targets and journal exactly", () => fixture(({ projectRoot }) => {
+    if (process.getuid?.() === 0) return;
+    older(projectRoot);
+    chmodSync(join(projectRoot, ".control-tower"), 0o555);
+    try {
+      unchangedFailure(projectRoot, () => adoption.updateProject({ projectRoot }));
+      expect(doctorProject({ projectRoot }).status).toBe("outdated");
+    } finally { chmodSync(join(projectRoot, ".control-tower"), 0o755); }
+  }));
+});
+
 describe("project-local lifecycle API", () => {
   test("expanded release members remain global-only during project adoption", () => fixture(({ projectRoot, env }) => {
     const bundlePath = resolve(import.meta.dir, "../bundle.mjs");
@@ -355,7 +395,9 @@ describe("project-local lifecycle API", () => {
     writeFileSync(join(projectRoot, targets[0], "main.go"), bytes);
     const state = JSON.parse(readFileSync(join(projectRoot, journal, "state.json"), "utf8"));
     expect(compareProjectFiles(projectRoot, state.installed)).toBe(true);
-    unchangedFailure(projectRoot, () => doctorProject({ projectRoot }));
+    const installed = snapshot(projectRoot);
+    expect(doctorProject({ projectRoot }).status).toBe("outdated");
+    expect(snapshot(projectRoot)).toEqual(installed);
     expect(Object.isFrozen(uninstallProject({ projectRoot }))).toBe(true);
     expect(snapshot(projectRoot)).toEqual(before);
   }));
@@ -575,7 +617,7 @@ describe("project-local CLI (real isolated Bun processes)", () => {
   test("malformed commands, flags and trust reject before lifecycle mutation", () => {
     const invalid = [
       [[], "command required"],
-      [["update", "--project", "ROOT"], "unknown command"],
+      [["upgrade", "--project", "ROOT"], "unknown command"],
       [["init", "--project"], "invalid arguments"],
       [["init", "--project", "--trust", "trusted"], "invalid arguments"],
       [["init", "--project", "ROOT"], "invalid arguments"],

@@ -125,7 +125,7 @@ func TestReleaseWizard(t *testing.T) {
 			if !reflect.DeepEqual(*calls, [][]string{want}) {
 				t.Fatalf("argv: %v", *calls)
 			}
-			contains(t, m.View(), "newvers", "oldvers", "Volver al inicio")
+			contains(t, m.View(), "Activa: versión desconocida", "Anterior: versión desconocida", "Volver al inicio")
 			m, cmd = key(m, "enter")
 			m = finish(m, cmd)
 			if m.page != "home" || (*calls)[1][0] != "status" {
@@ -179,7 +179,7 @@ func TestRollbackWizard(t *testing.T) {
 	m, calls := actionModel(t, true)
 	m.selected = 1
 	m = keys(m, "enter", "WRONG", "enter")
-	contains(t, m.View(), "1234567", "abcdef1", "ROLLBACK")
+	contains(t, m.View(), "versión desconocida → versión desconocida", "ROLLBACK")
 	if len(*calls) != 0 {
 		t.Fatal("unconfirmed rollback")
 	}

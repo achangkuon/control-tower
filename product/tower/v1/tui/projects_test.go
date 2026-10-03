@@ -9,6 +9,21 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func TestS208OutdatedProjectOffersUpdateNotRadar(t *testing.T) {
+	m := loaded(t, healthyJSON)
+	m.width = 120
+	m.status.Projects = json.RawMessage(`[{"projectRoot":"/proyecto","status":"outdated","towerState":"active"}]`)
+	m.page = "projects"
+	contains(t, m.View(), "🟠 Desactualizado — actualizá la Torre")
+	m = keys(m, "enter")
+	contains(t, m.View(), "Actualizar la Torre")
+	if strings.Contains(m.View(), "Comandos de Radar") {
+		t.Fatal("outdated project offered Radar")
+	}
+	m = keys(m, "enter")
+	contains(t, m.View(), "Instalar o actualizar", "torre-control project update --project")
+}
+
 func TestProjectActions(t *testing.T) {
 	for i, action := range []string{"doctor", "uninstall", "cleanup"} {
 		t.Run(action, func(t *testing.T) {

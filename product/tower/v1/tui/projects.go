@@ -42,6 +42,9 @@ func (m model) promptLines() []string {
 }
 
 func (m model) projectHealth(p projectState) string {
+	if p.Status == "outdated" {
+		return "🟠 Desactualizado — actualizá la Torre"
+	}
 	if p.Status == "healthy" {
 		switch p.TowerState {
 		case "active":
@@ -57,6 +60,9 @@ func (m model) projectHealth(p projectState) string {
 }
 
 func actionsForProject(p projectState) []string {
+	if p.Status == "outdated" {
+		return append([]string{"Actualizar la Torre"}, projectActions...)
+	}
 	if p.Status == "healthy" && p.TowerState == "active" {
 		return append([]string{"Comandos de Radar"}, projectActions...)
 	}
@@ -150,6 +156,8 @@ func (m model) projectsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.projectAction = min(m.projectAction, len(actions)-1)
 			if actions[m.projectAction] == "Comandos de Radar" {
 				m = m.openRadar(project.ProjectRoot)
+			} else if actions[m.projectAction] == "Actualizar la Torre" {
+				m.page, m.offset = "project-update", 0
 			} else if actions[m.projectAction] == "Ver el prompt para armar el plan" {
 				m = m.openProjectPrompt()
 			} else {

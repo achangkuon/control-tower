@@ -502,7 +502,8 @@ function configureRelease(options, operation) {
   try {
     const block = new TextDecoder("utf8", { fatal: true }).decode(template?.bytes ?? Buffer.alloc(0)).replaceAll("{{TOWER_VERSION}}", version).trimEnd();
     projects = refreshRegisteredProjects({ registryRoot: options.registryRoot ??
-      (options.home ? join(options.home, ".local/share/torre-control/projects") : join(dirname(options.stateRoot), "projects")), version, block });
+      (options.home ? join(options.home, ".local/share/torre-control/projects") : join(dirname(options.stateRoot), "projects")), version, block,
+      bundleRoot: join(options.stateRoot, "versions", release.provenance.sha256) });
   } catch (error) { projects = [{ projectRoot: null, status: `skipped:${String(error.message).split(/[\r\n]/, 1)[0]}` }]; }
   return Object.freeze({ ...result, projects });
 }

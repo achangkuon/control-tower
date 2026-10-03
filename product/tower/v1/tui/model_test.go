@@ -157,9 +157,9 @@ func TestProjectPromptClipboardFailureStaysSelectable(t *testing.T) {
 func TestReadableVersions(t *testing.T) {
 	for _, tt := range []struct{ name, data, active, previous string }{
 		{"tags", taggedJSON, "v1.1.0", "v1.0.2"},
-		{"legacy", healthyJSON, "1234567", "abcdef1"},
-		{"unknown", `{"schema":"tower.v1.status/1","engine":{"status":"absent","activeTag":null,"previousTag":null},"projects":[]}`, "no instalado", "ninguna"},
-		{"mixed", strings.Replace(taggedJSON, `"previousTag":"v1.0.2"`, `"previousTag":null`, 1), "v1.1.0", "abcdef1"},
+		{"legacy", healthyJSON, "versión desconocida", "versión desconocida"},
+		{"unknown", `{"schema":"tower.v1.status/1","engine":{"status":"absent","activeTag":null,"previousTag":null},"projects":[]}`, "no instalado", "versión desconocida"},
+		{"mixed", strings.Replace(taggedJSON, `"previousTag":"v1.0.2"`, `"previousTag":null`, 1), "v1.1.0", "versión desconocida"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			m := loaded(t, tt.data)
@@ -244,7 +244,7 @@ func TestMenuHintsRequireCurrentKnownData(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := loaded(t, tt.data)
 			if tt.name == "legacy" {
-				contains(t, m.View(), "(abcdef1)", "(1)")
+				contains(t, m.View(), "(versión desconocida)", "(1)")
 			} else if tt.name == "absent" {
 				contains(t, m.View(), "(0)")
 				if strings.Contains(m.View(), "(ninguna)") {
@@ -270,6 +270,25 @@ func TestMenuHintsRequireCurrentKnownData(t *testing.T) {
 				t.Fatalf("line exceeds %d cells: %q", size.Width, line)
 			}
 		}
+	}
+}
+
+func TestS208VersionLabelsAcrossScreens(t *testing.T) {
+	for _, tt := range []struct{ tag, want string }{{"checkout-936b75f16227", "versión local de prueba"}, {"", "versión desconocida"}, {"v1.2.2", "v1.2.2"}} {
+		t.Run(tt.want, func(t *testing.T) {
+			m := loaded(t, taggedJSON)
+			m.width, m.height = 180, 60
+			m.status.Engine.ActiveTag, m.status.Engine.PreviousTag = tt.tag, tt.tag
+			views := []string{m.View(), strings.Join(m.engineLines(m.status.Engine), "\n")}
+			m.page, m.flow = "wizard", workflow{action: "rollback", step: 4}
+			views = append(views, m.View(), strings.Join(resultLines(execution{stdout: []byte(`{"status":"healthy","active":"123456789abcdef","previous":"abcdef123456789","activeTag":"` + tt.tag + `","previousTag":"` + tt.tag + `"}`)}), "\n"))
+			for _, view := range views {
+				contains(t, view, tt.want)
+				if strings.Contains(view, "checkout-") || strings.Contains(view, "1234567") || strings.Contains(view, "abcdef1") {
+					t.Fatalf("raw version code leaked: %s", view)
+				}
+			}
+		})
 	}
 }
 
@@ -389,7 +408,7 @@ func TestStatusRendering(t *testing.T) {
 		name, data string
 		want       []string
 	}{
-		{"healthy", healthyJSON, []string{"instalado · sano", "1234567", "abcdef1", "/proyecto", "sano", "con sesión", "1.26.4", statusRow("Claude Code", "listo"), statusRow("Pi", "sólo configuración"), statusRow("Codex", "no detectado"), statusRow("OpenCode", "listo"), "linux", "bash"}},
+		{"healthy", healthyJSON, []string{"instalado · sano", "versión desconocida", "/proyecto", "sano", "con sesión", "1.26.4", statusRow("Claude Code", "listo"), statusRow("Pi", "sólo configuración"), statusRow("Codex", "no detectado"), statusRow("OpenCode", "listo"), "linux", "bash"}},
 		{"absent", `{"schema":"tower.v1.status/1","engine":{"status":"absent"},"projects":[]}`, []string{"no instalado", statusRow("Proyectos", "0"), statusRow("Bun", "falta"), statusRow("Git", "falta"), statusRow("Go", "falta"), statusRow("gh", "falta")}},
 		{"warnings", `{"schema":"tower.v1.status/1","engine":{"status":"error"},"projects":{"error":"failure"},"prerequisites":{"gh":{"present":true,"version":"2.0","authenticated":false},"go":{"present":true,"error":"failure"}}}`, []string{statusRow("Motor", "error"), statusRow("Proyectos", "error de consulta"), "sin sesión", statusRow("Go", "error de comprobación")}},
 	} {
@@ -428,7 +447,7 @@ func TestDiagnostic(t *testing.T) {
 	contains(t, m.View(), "Cargando diagnóstico…")
 	next, _ := m.Update(cmd())
 	m = next.(model)
-	contains(t, m.View(), "Diagnóstico", "instalado · sano", "abcdef1", "volver")
+	contains(t, m.View(), "Diagnóstico", "instalado · sano", "versión desconocida", "volver")
 	if strings.Contains(m.View(), `"status"`) {
 		t.Fatal("raw JSON displayed")
 	}

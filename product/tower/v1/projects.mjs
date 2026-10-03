@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, opendirSync,
   readSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
-import { initProject, doctorProject, uninstallProject, cleanupProject, refreshProjectInstructions } from "./adoption.mjs";
+import { initProject, doctorProject, uninstallProject, cleanupProject, updateProject, refreshProjectInstructions } from "./adoption.mjs";
 
 const SCHEMA = "tower.v1.projects/1";
 const MAX_BYTES = 65536;
@@ -163,6 +163,7 @@ export const initRegisteredProject = (options) => registeredOperation(options, "
 export const doctorRegisteredProject = (options) => registeredOperation(options, "doctor", doctorProject);
 export const uninstallRegisteredProject = (options) => registeredOperation(options, "uninstall", uninstallProject);
 export const cleanupRegisteredProject = (options) => registeredOperation(options, "cleanup", cleanupProject);
+export const updateRegisteredProject = (options) => registeredOperation(options, "update", updateProject);
 
 function liveStatus(projectRoot, registered) {
   const result = (status, error, towerState) => Object.freeze({ projectRoot, registered, status,
@@ -178,19 +179,21 @@ function liveStatus(projectRoot, registered) {
     }
     if (!stat(join(projectRoot, JOURNAL))) return result("unadopted", null, registered ? "skills-only" : undefined);
   } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "unsafe", error); }
+  let status;
   try {
     const doctor = doctorProject({ projectRoot });
+    status = doctor.status;
     if (["missing", "modified"].includes(doctor.instructions)) return result("invalid", new Error(`Project instructions ${doctor.instructions}`));
   } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "invalid", error); }
   try {
     // Inspect each component without following links; plan contents are not needed.
     const directory = stat(join(projectRoot, "openspec"));
-    if (!directory) return result("healthy", null, "needs-plan");
+    if (!directory) return result(status, null, "needs-plan");
     if (!directory.isDirectory()) return result("unsafe", new Error("Unsafe openspec directory"));
     if (!(directory.mode & 0o444) || !(directory.mode & 0o111)) return result("inaccessible", new Error("Inaccessible openspec directory"));
     const plan = stat(join(projectRoot, "openspec/plan.yaml"));
     if (plan && !plan.isFile()) return result("unsafe", new Error("Unsafe plan.yaml file"));
-    return result("healthy", null, plan ? "active" : "needs-plan");
+    return result(status, null, plan ? "active" : "needs-plan");
   } catch (error) { return result(error.code === "EACCES" || error.code === "EPERM" ? "inaccessible" : "unsafe", error); }
 }
 
@@ -200,7 +203,7 @@ export function listProjects(value) {
   return Object.freeze(load(options.registryRoot).roots.map((root) => liveStatus(root, true)));
 }
 /** Best-effort refresh: registration grants no adoption or overwrite authority. */
-export function refreshRegisteredProjects({ registryRoot, version, block }) {
+export function refreshRegisteredProjects({ registryRoot, version, block, bundleRoot }) {
   let roots;
   try {
     if (!canonical(registryRoot)) fail("refresh registry path");
@@ -210,10 +213,11 @@ export function refreshRegisteredProjects({ registryRoot, version, block }) {
   }
   return roots.map(projectRoot => {
     try {
-      const result = refreshProjectInstructions({ projectRoot, version, block });
+      const result = refreshProjectInstructions({ projectRoot, version, block, ...(bundleRoot ? { bundleRoot } : {}) });
       return { projectRoot, status: result.status };
     } catch (error) {
-      return { projectRoot, status: `skipped:${String(error.message).split(/[\r\n]/, 1)[0]}` };
+      const reason = String(error.message).split(/[\r\n]/, 1)[0];
+      return { projectRoot, status: /drift|missing or modified project instruction block|modified CLAUDE/.test(reason) ? "skipped:drift" : `skipped:${reason}` };
     }
   });
 }

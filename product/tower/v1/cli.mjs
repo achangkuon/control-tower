@@ -8,15 +8,16 @@ import { fileURLToPath } from "node:url";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "./global.mjs";
 import { requireGentleAi, doctorRuntime, preflightRuntimeHome, uninstallRuntime } from "./runtime-config.mjs";
 import { buildRelease } from "./release-build.mjs";
+import { validateBundle } from "./bundle.mjs";
 import { acquireLatestRelease, updateTui } from "./release.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
-  cleanupRegisteredProject, listProjects } from "./projects.mjs";
+  cleanupRegisteredProject, updateRegisteredProject, listProjects, refreshRegisteredProjects } from "./projects.mjs";
 
 const operations = { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal,
   initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
-  cleanupRegisteredProject, listProjects };
+  cleanupRegisteredProject, updateRegisteredProject, listProjects };
 const globals = { install: "installGlobal", update: "updateGlobal", doctor: "doctorGlobal", rollback: "rollbackGlobal", uninstall: "uninstallGlobal" };
-const projects = { init: "initRegisteredProject", doctor: "doctorRegisteredProject",
+const projects = { init: "initRegisteredProject", doctor: "doctorRegisteredProject", update: "updateRegisteredProject",
   uninstall: "uninstallRegisteredProject", cleanup: "cleanupRegisteredProject" };
 const common = ["--state", "--launcher", "--registry"];
 const usage = (reason) => { throw new Error(`usage: ${reason}`); };
@@ -153,7 +154,8 @@ export function collectStatus({ home, stateRoot, launcherPath, registryRoot, fla
   }
   try {
     const missing = !owns(flags, "--registry") && !defaultParent(home, dirname(registryRoot), false);
-    projectList = missing ? [] : api.listProjects({ registryRoot }).map(({ projectRoot, status }) => ({ projectRoot, status }));
+    projectList = missing ? [] : api.listProjects({ registryRoot }).map(({ projectRoot, status, towerState }) =>
+      ({ projectRoot, status, ...(towerState ? { towerState } : {}) }));
   } catch (error) { projectList = { error: message(error) }; }
   const probe = (command, args) => {
     try {
@@ -419,6 +421,7 @@ export function main(argv, deps = {}) {
         "torre-control install|update --from-checkout <repo>  (clean committed tree; offline release-build and digest verification)\n" +
         "Agregá --fix-permissions a install|update para quitar sólo go-w de las rutas propias informadas dentro de HOME.\n" +
         "torre-control doctor | status | rollback | uninstall\n" +
+        "torre-control project update --project <absolute-path>\n" +
         "uninstall removes owned global resources and restores backups; Gentle AI and projects remain untouched.\n");
       return 0;
     }
@@ -478,7 +481,20 @@ export function main(argv, deps = {}) {
           ...(runner === undefined ? {} : { runner }) });
         if (latestRelease.status === "up-to-date") {
           const tui = refreshTui({ repository: "achangkuon/control-tower", tag: latestRelease.tag });
-          stdout.write(`${JSON.stringify({ status: "up-to-date", tag: latestRelease.tag, tui,
+          // Even an unchanged global release must repair intact older project copies.
+          // Use the verified active root, never this possibly older CLI's bundle.
+          let projects = [];
+          if (defaultParent(home, dirname(registryRoot), false)) {
+            try {
+              const bundleRoot = join(stateRoot, "versions", installed.active);
+              const manifest = validateBundle(bundleRoot);
+              const template = manifest.members.find(m => m.destination === "instructions/project-agents.md");
+              const block = new TextDecoder("utf8", { fatal: true }).decode(Buffer.from(template.bytes, "base64"))
+                .replaceAll("{{TOWER_VERSION}}", latestRelease.tag).trimEnd();
+              projects = refreshRegisteredProjects({ registryRoot, version: latestRelease.tag, block, bundleRoot });
+            } catch (error) { projects = [{ projectRoot: null, status: `skipped:${message(error)}` }]; }
+          }
+          stdout.write(`${JSON.stringify({ status: "up-to-date", tag: latestRelease.tag, tui, projects,
             ...(flags["--fix-permissions"] ? { permissionsChanged } : {}) })}\n`);
           return 0;
         }

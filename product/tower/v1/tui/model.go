@@ -290,6 +290,10 @@ func (m model) pageLines() []string {
 			body = append(body, m.palette.dim.Render(activationLine(m.diagnostic)))
 			body = append(body, m.engineLines(m.diagnostic)...)
 		}
+	case "project-update":
+		body = []string{"Actualizar la Torre", "Volvé al inicio y elegí Instalar o actualizar para poner al día los proyectos registrados.",
+			"También podés actualizar sólo este proyecto: torre-control project update --project <ruta-absoluta>.",
+			"Se conservan los archivos modificados por el usuario y el respaldo para desinstalar."}
 	case "help":
 		body = []string{"Ayuda", "↑/↓ o j/k: mover la selección; enter: elegir.", "esc: volver; r: refrescar el estado; q o Ctrl-C: salir.",
 			"Instalar o actualizar: buscar la última versión publicada, sin preguntas.", "a sobre esa opción: Versión específica (avanzado).", "Volver a la versión anterior: restaurar el motor.",

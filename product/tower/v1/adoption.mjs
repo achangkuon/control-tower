@@ -125,7 +125,7 @@ function writeState(projectRoot, state) {
   // Admission above rejects links/hardlinks before updating our private journal.
   writeFileSync(join(projectRoot, JOURNAL, "state.json"), JSON.stringify(state), { mode: 0o600 });
 }
-function preflight(projectRoot, requireCanonical = false) {
+function preflight(projectRoot) {
   gitRoot(projectRoot);
   const journal = captureProjectFiles(projectRoot, [JOURNAL]).destinations[0].tree;
   if (journal.type !== "directory" || journal.mode !== 0o700 || journal.entries.length !== 1 ||
@@ -135,9 +135,6 @@ function preflight(projectRoot, requireCanonical = false) {
   try { state = JSON.parse(Buffer.from(journal.entries[0].tree.bytes, "base64").toString("utf8")); }
   catch { fail("journal JSON"); }
   validateState(state);
-  if (requireCanonical && !isDeepStrictEqual(state.installed, installedSnapshot(validateBundle(sourceRoot)))) {
-    fail("installed journal snapshot");
-  }
   if (!compareProjectFiles(projectRoot, state.installed)) fail("installed destination drift");
   return state;
 }
@@ -181,11 +178,12 @@ export function initProject(options) {
 /** Strictly read-only verification of journal, installed bytes, modes, and membership. */
 export function doctorProject(options) {
   if (!keys(options, ["projectRoot"])) fail("doctor options");
-  const state = preflight(options.projectRoot, true);
-  let instructions = state.instructions ? projectInstructionState(captureProjectFiles(options.projectRoot, INSTRUCTION_PATHS), state.instructions.installed) : "missing";
+  const state = preflight(options.projectRoot);
+  const outdated = !state.instructions || !isDeepStrictEqual(state.installed, installedSnapshot(validateBundle(sourceRoot)));
+  let instructions = state.instructions ? projectInstructionState(captureProjectFiles(options.projectRoot, INSTRUCTION_PATHS), state.instructions.installed) : "outdated version";
   if (instructions === "ok" && (state.instructions.version !== activeVersion() ||
       instructionBlock(state.instructions.installed) !== renderInstructions(validateBundle(sourceRoot), activeVersion()))) instructions = "outdated version";
-  return Object.freeze({ status: "healthy", instructions });
+  return Object.freeze({ status: outdated ? "outdated" : "healthy", instructions });
 }
 
 /** Refuse all drift before removing anything; restore the exact original destination trees. */
@@ -233,10 +231,16 @@ export function cleanupProject(options) {
   return Object.freeze({ status: "cleaned" });
 }
 
-/** Refresh only intact owned ranges after activation; journal publication participates in compensation. */
+/** Refresh intact adoption targets and owned ranges in one compensated transaction.
+ * Global activation supplies its verified release root, not the old caller's bundle.
+ * Like adoption, this is exception-atomic, not a power-loss or concurrent-writer guarantee.
+ */
 export function refreshProjectInstructions(options) {
-  if (!keys(options, ["projectRoot", "version", "block"]) || !versionOK(options.version) || typeof options.block !== "string") fail("refresh options");
+  if ((!keys(options, ["projectRoot", "version", "block"]) && !keys(options, ["projectRoot", "version", "block", "bundleRoot"])) ||
+      !versionOK(options.version) || typeof options.block !== "string") fail("refresh options");
   const { projectRoot, version, block } = options, state = preflight(projectRoot);
+  const installed = installedSnapshot(validateBundle(options.bundleRoot ?? sourceRoot));
+  const upgraded = !isDeepStrictEqual(state.installed, installed);
   const live = captureProjectFiles(projectRoot, INSTRUCTION_PATHS);
   const prior = state.instructions;
   if (prior && projectInstructionState(live, prior.installed) !== "ok") fail("missing or modified project instruction block");
@@ -247,24 +251,40 @@ export function refreshProjectInstructions(options) {
   const baseline = prior ? replaceProjectInstructionBlock(prior.installed, block) : projectInstructionSnapshot(original, block);
   const next = prior ? replaceProjectInstructionBlock(live, block) : baseline;
   const instructions = { version, original, installed: baseline };
-  validateState({ ...state, instructions });
-  if (prior?.version === version && isDeepStrictEqual(prior.installed, baseline) && isDeepStrictEqual(live, next)) return { status: "unchanged" };
+  validateState({ ...state, installed, instructions });
+  if (!upgraded && prior?.version === version && isDeepStrictEqual(prior.installed, baseline) && isDeepStrictEqual(live, next)) return { status: "unchanged" };
   try {
+    if (upgraded) restoreProjectFiles(projectRoot, installed);
     restoreProjectFiles(projectRoot, next);
-    writeState(projectRoot, { ...state, instructions });
+    if (!compareProjectFiles(projectRoot, installed) || !compareProjectFiles(projectRoot, next)) fail("upgrade readback drift");
+    writeState(projectRoot, { ...state, installed, instructions });
   } catch (error) {
-    try { restoreProjectFiles(projectRoot, live); writeState(projectRoot, state); }
-    catch (rollbackError) { throw new AggregateError([error, rollbackError], "Instruction refresh rollback failed"); }
+    try {
+      restoreProjectFiles(projectRoot, live);
+      if (upgraded) for (const destination of state.installed.destinations) {
+        const snapshot = { schema: state.installed.schema, destinations: [destination] };
+        if (!compareProjectFiles(projectRoot, snapshot)) restoreProjectFiles(projectRoot, snapshot);
+      }
+      writeState(projectRoot, state);
+    } catch (rollbackError) { throw new AggregateError([error, rollbackError], "Project refresh rollback failed"); }
     throw error;
   }
-  return { status: "refreshed" };
+  return { status: upgraded ? "upgraded" : "refreshed" };
+}
+
+/** Explicit single-project update; trust comes only from the intact adoption journal. */
+export function updateProject(options) {
+  if (!keys(options, ["projectRoot"])) fail("update options");
+  const version = activeVersion();
+  return Object.freeze(refreshProjectInstructions({ projectRoot: options.projectRoot, version,
+    block: renderInstructions(validateBundle(sourceRoot), version) }));
 }
 
 // The positional CLI is deliberately closed: no source, global, or legacy override flags.
 function parseCli(args) {
   const [command, projectFlag, projectRoot, trustFlag, trust] = args;
   if (!command) throw new Error("command required");
-  if (!["init", "doctor", "uninstall", "cleanup"].includes(command)) throw new Error("unknown command");
+  if (!["init", "doctor", "update", "uninstall", "cleanup"].includes(command)) throw new Error("unknown command");
   if (projectFlag !== "--project" || !projectRoot || projectRoot.startsWith("--")) throw new Error("invalid arguments");
   if (command === "init") {
     if (args.length !== 5 || trustFlag !== "--trust" || !trust || trust.startsWith("--")) throw new Error("invalid arguments");
@@ -278,6 +298,7 @@ if (import.meta.main) {
     const { command, projectRoot } = parseCli(process.argv.slice(2));
     const result = command === "init" ? initProject({ projectRoot, trustResolution: "trusted" }) :
       command === "doctor" ? doctorProject({ projectRoot }) :
+      command === "update" ? updateProject({ projectRoot }) :
       command === "uninstall" ? uninstallProject({ projectRoot }) : cleanupProject({ projectRoot });
     process.stdout.write(`${JSON.stringify(result)}\n`);
   } catch (error) {

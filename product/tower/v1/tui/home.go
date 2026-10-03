@@ -41,11 +41,14 @@ func (m model) health(value string) string {
 	return m.palette.bad.Render(label)
 }
 
-func readableVersion(tag, sha string) string {
+func readableVersion(tag, _ string) string {
+	if strings.HasPrefix(tag, "checkout-") {
+		return "versión local de prueba"
+	}
 	if tag != "" {
 		return clean(tag)
 	}
-	return short(sha)
+	return "versión desconocida"
 }
 
 func activationLine(state engineState) string {

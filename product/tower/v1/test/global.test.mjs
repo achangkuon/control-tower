@@ -4,7 +4,10 @@ import * as fs from "node:fs";
 import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
 import { initRegisteredProject, uninstallRegisteredProject } from "../projects.mjs";
-import { captureProjectFiles } from "../project-files.mjs";
+import { captureProjectFiles, restoreProjectFiles } from "../project-files.mjs";
+import { doctorProject } from "../adoption.mjs";
+import { listProjects } from "../projects.mjs";
+import { main } from "../cli.mjs";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "../global.mjs";
 
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -284,6 +287,92 @@ test("S198 doctor exposes provenance tags without changing release identity or f
   expect(doctorGlobal(options)).toMatchObject({ activeTag: "v1.0.2", previousTag: "v1.1.0" });
 });
 
+test("S208 v1.1.0-style adoption upgrades on global update and restores pre-adoption bytes", () => {
+  const registryRoot = join(root, "registry"), projectRoot = join(root, "legacy-project");
+  fs.mkdirSync(projectRoot); fs.mkdirSync(join(projectRoot, ".git"));
+  fs.writeFileSync(join(projectRoot, ".git/HEAD"), "ref: refs/heads/master\n");
+  fs.writeFileSync(join(projectRoot, "AGENTS.md"), Buffer.from([255, 0, 10]));
+  fs.mkdirSync(join(projectRoot, ".control-tower"));
+  fs.writeFileSync(join(projectRoot, ".control-tower/radar"), Buffer.from([0, 255, 42]));
+  const original = captureProjectFiles(projectRoot, [".control-tower", ".agents", ".claude", "AGENTS.md", "CLAUDE.md"]);
+  const first = acquisition("s208-old", { tag: "v1.1.0" }, true);
+  installGlobal({ ...options, registryRoot, acquire: first.acquire });
+  initRegisteredProject({ registryRoot, projectRoot, trustResolution: "trusted" });
+  const journalPath = join(projectRoot, ".control-tower-adoption-v1/state.json");
+  const state = JSON.parse(fs.readFileSync(journalPath));
+  // v1.1.0's 30-member release had the three skill members and Radar, no vendor or instructions journal.
+  expect(publishedPaths).toHaveLength(30);
+  state.installed.destinations.find(d => d.path === ".control-tower/radar").tree.entries =
+    state.installed.destinations.find(d => d.path === ".control-tower/radar").tree.entries.filter(e => e.name !== "vendor");
+  for (const destination of state.installed.destinations.filter(d => d.path.includes("skills/"))) {
+    const file = destination.tree.entries.find(e => e.name === "SKILL.md").tree;
+    const bytes = Buffer.from("earlier Control Tower skill\n");
+    Object.assign(file, { bytes: bytes.toString("base64"), byteLength: bytes.length, sha256: hash(bytes) });
+  }
+  restoreProjectFiles(projectRoot, state.installed);
+  restoreProjectFiles(projectRoot, state.instructions.original);
+  delete state.instructions;
+  fs.writeFileSync(journalPath, JSON.stringify(state));
+  fs.mkdirSync(join(projectRoot, "openspec")); fs.writeFileSync(join(projectRoot, "openspec/plan.yaml"), "sesiones: []\n");
+  expect(doctorProject({ projectRoot }).status).toBe("outdated");
+  expect(listProjects({ registryRoot })[0]).toMatchObject({ status: "outdated", towerState: "active" });
+  let statusOutput = "";
+  expect(main(["status", "--state", options.stateRoot, "--launcher", options.launcherPath, "--registry", registryRoot], {
+    env: { HOME: process.env.HOME }, runner: () => ({ status: 0, stdout: "unknown" }),
+    stdout: { write: s => statusOutput += s }, stderr: { write: () => {} },
+  })).toBe(0);
+  expect(JSON.parse(statusOutput).projects).toEqual([{ projectRoot, status: "outdated", towerState: "active" }]);
+  const next = acquisition("s208-next", { tag: "v1.2.2" }, true);
+  const result = updateGlobal({ ...options, registryRoot, acquire: next.acquire });
+  expect(result.projects).toEqual([{ projectRoot, status: "upgraded" }]);
+  expect(doctorProject({ projectRoot }).status).toBe("healthy");
+  expect(fs.existsSync(join(projectRoot, ".control-tower/radar/vendor/modules.txt"))).toBe(true);
+  for (const host of [".agents", ".claude"]) expect(fs.readFileSync(join(projectRoot, host, "skills/control-tower/SKILL.md")))
+    .toEqual(fs.readFileSync(new URL("../skills/control-tower/SKILL.md", import.meta.url)));
+  expect(JSON.parse(fs.readFileSync(journalPath)).original).toEqual(state.original);
+  // Public single-project dispatcher uses the same upgrade and is idempotent.
+  let output = "", error = "";
+  expect(main(["project", "update", "--project", projectRoot, "--registry", registryRoot], {
+    env: { HOME: process.env.HOME }, stdout: { write: s => output += s }, stderr: { write: s => error += s },
+  })).toBe(0);
+  expect(JSON.parse(output).localResult.status).toBe("refreshed");
+  expect(error).toBe("");
+  // Latest's no-download shortcut must still repair projects left behind by an earlier refresh.
+  restoreProjectFiles(projectRoot, JSON.parse(fs.readFileSync(journalPath)).instructions.original);
+  restoreProjectFiles(projectRoot, state.installed);
+  fs.writeFileSync(journalPath, JSON.stringify(state));
+  output = ""; error = "";
+  expect(main(["update", "--latest", "--state", options.stateRoot, "--launcher", options.launcherPath, "--registry", registryRoot], {
+    env: { HOME: process.env.HOME }, platform: "unsupported", arch: "x64",
+    runner: (_command, args) => ({ status: 0, stdout: Buffer.from(args[0] === "release" ? '{"tagName":"v1.2.2"}' : "") }),
+    stdout: { write: s => output += s }, stderr: { write: s => error += s },
+  })).toBe(0);
+  expect(JSON.parse(output).projects).toEqual([{ projectRoot, status: "upgraded" }]);
+  expect(error).toBe("");
+  uninstallRegisteredProject({ registryRoot, projectRoot });
+  expect(captureProjectFiles(projectRoot, original.destinations.map(d => d.path))).toEqual(original);
+}, 30_000);
+
+test("S208 global refresh copies the activated receipt rather than the older caller's bundle", () => {
+  const registryRoot = join(root, "registry"), projectRoot = join(root, "receipt-project");
+  fs.mkdirSync(projectRoot); fs.mkdirSync(join(projectRoot, ".git"));
+  fs.writeFileSync(join(projectRoot, ".git/HEAD"), "ref: refs/heads/master\n");
+  const first = acquisition("receipt-before", {}, true);
+  installGlobal({ ...options, registryRoot, acquire: first.acquire });
+  initRegisteredProject({ registryRoot, projectRoot, trustResolution: "trusted" });
+  const next = acquisition("receipt-after", {}, true), envelope = JSON.parse(next.wire);
+  const member = envelope.members.find(m => m.path === "product/tower/v1/skills/control-tower/SKILL.md");
+  const bytes = Buffer.from("skill from the NEW activated release\n");
+  Object.assign(member, { bytes: bytes.toString("base64"), byteLength: bytes.length, sha256: hash(bytes) });
+  const wire = Buffer.from(JSON.stringify(envelope));
+  const result = updateGlobal({ ...options, registryRoot, acquire: { ...next.acquire, sha256: hash(wire),
+    runner: (_command, args) => ({ status: 0, stdout: args[0] === "auth" ? Buffer.alloc(0) : wire }) } });
+  expect(result.projects).toEqual([{ projectRoot, status: "upgraded" }]);
+  for (const host of [".agents", ".claude"]) expect(fs.readFileSync(join(projectRoot, host, "skills/control-tower/SKILL.md"))).toEqual(bytes);
+  expect(doctorProject({ projectRoot }).status).toBe("outdated"); // Old caller is not the activated version.
+  uninstallRegisteredProject({ registryRoot, projectRoot });
+});
+
 test("S196 global activation refreshes registered healthy projects and isolates skips", () => {
   const home = process.env.HOME, registryRoot = join(home, ".local/share/torre-control/projects");
   fs.mkdirSync(dirname(registryRoot), { recursive: true, mode: 0o755 });
@@ -318,6 +407,7 @@ test("S196 global activation refreshes registered healthy projects and isolates 
     const updated = updateGlobal({ ...config, acquire: second.acquire });
     expect(updated.active).toBe(second.id);
     expect(updated.projects).toHaveLength(7);
+    expect(updated.projects.find(p => p.projectRoot === roots.drift).status).toBe("skipped:drift");
     for (const name of names.slice(1)) expect(updated.projects.find(p => p.projectRoot === roots[name]).status).toMatch(/^skipped:/);
     expect(fs.readFileSync(join(roots.healthy, "AGENTS.md"), "utf8")).toContain("v1-s196-b");
     expect(fs.readFileSync(join(roots.healthy, "AGENTS.md"), "utf8")).toEndWith("later user edit\n");
@@ -325,7 +415,7 @@ test("S196 global activation refreshes registered healthy projects and isolates 
     uninstallRegisteredProject({ registryRoot, projectRoot: roots.healthy });
     expect(fs.readFileSync(join(roots.healthy, "AGENTS.md"), "utf8")).toBe("project rules\nlater user edit\n");
   } finally { fs.chmodSync(roots.denied, 0o700); }
-});
+}, 30_000);
 
 test("new installer can inspect and update a cached exact S194 release", () => {
   const first = install();

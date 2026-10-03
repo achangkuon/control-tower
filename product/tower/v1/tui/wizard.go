@@ -270,9 +270,9 @@ func (m model) wizardLines() []string {
 		lines = []string{"Revisión", "Acción: " + label}
 		switch f.action {
 		case "install", "update":
-			lines = append(lines, "Versión: "+clean(f.tag), "Archivo: "+clean(f.asset), "SHA-256: "+short(f.sha))
+			lines = append(lines, "Versión: "+readableVersion(f.tag, ""), "Archivo: "+clean(f.asset), "SHA-256: "+short(f.sha))
 		case "rollback":
-			lines = append(lines, "Activa → anterior: "+short(m.status.Engine.Active)+" → "+short(m.status.Engine.Previous))
+			lines = append(lines, "Activa → anterior: "+readableVersion(m.status.Engine.ActiveTag, m.status.Engine.Active)+" → "+readableVersion(m.status.Engine.PreviousTag, m.status.Engine.Previous))
 		default:
 			lines = append(lines, "Proyecto: "+clean(f.root))
 			if f.action == "cleanup" {
@@ -310,13 +310,13 @@ func (m model) wizardLines() []string {
 }
 func successfulLocalStatus(status string) bool {
 	switch status {
-	case "success", "installed", "uninstalled", "cleaned", "healthy", "absent":
+	case "success", "installed", "uninstalled", "cleaned", "healthy", "outdated", "upgraded", "refreshed", "unchanged", "absent":
 		return true
 	}
 	return false
 }
 func resultStatusLabel(status string) string {
-	labels := map[string]string{"installed": "instalado", "activated": "activado", "restored": "restaurado", "healthy": "sano", "absent": "no instalado", "uninstalled": "desinstalado", "cleaned": "residuos limpiados"}
+	labels := map[string]string{"installed": "instalado", "activated": "activado", "restored": "restaurado", "healthy": "sano", "absent": "no instalado", "uninstalled": "desinstalado", "cleaned": "residuos limpiados", "outdated": "desactualizado", "upgraded": "actualizado", "refreshed": "actualizado", "unchanged": "al día"}
 	if label := labels[status]; label != "" {
 		return label
 	}
@@ -325,9 +325,9 @@ func resultStatusLabel(status string) string {
 func firstLine(s string) string { return clean(strings.Split(strings.TrimSpace(s), "\n")[0]) }
 func resultLines(r execution) []string {
 	var result struct {
-		Status, Active, Previous, Tag, Tui string
-		LocalResult                        *struct{ Status string }
-		Registry                           struct{ Status string }
+		Status, Active, Previous, ActiveTag, PreviousTag, Tag, Tui string
+		LocalResult                                             *struct{ Status string }
+		Registry                                                struct{ Status string }
 	}
 	parsed := json.Unmarshal(r.stdout, &result) == nil && (result.Status != "" || (result.LocalResult != nil && result.LocalResult.Status != ""))
 	raw := firstLine(string(r.stderr))
@@ -362,10 +362,10 @@ func resultLines(r execution) []string {
 		}
 		lines = []string{"Operación completada: " + resultStatusLabel(operationStatus)}
 		if result.Tag != "" {
-			lines = append(lines, "Versión instalada: "+clean(result.Tag))
+			lines = append(lines, "Versión instalada: "+readableVersion(result.Tag, ""))
 		}
 		if result.LocalResult == nil {
-			lines = append(lines, "Activa: "+short(result.Active)+" · Anterior: "+short(result.Previous))
+			lines = append(lines, "Activa: "+readableVersion(result.ActiveTag, result.Active)+" · Anterior: "+readableVersion(result.PreviousTag, result.Previous))
 		}
 	}
 	if parsed && r.code == 0 && r.err == nil && result.Tui == "updated" {

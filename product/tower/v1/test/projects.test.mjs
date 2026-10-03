@@ -67,6 +67,23 @@ test("real init, doctor and uninstall delegate, retaining informational membersh
   expect(readFileSync(join(registryRoot, "registry.json"), "utf8")).toBe(encode([projectRoot]));
 }));
 
+test("S208 older intact copies stay outdated with meaningful plan state; drift remains invalid", () => fixture(({ trusted, options, registryRoot, projectRoot }) => {
+  initRegisteredProject(trusted);
+  const journalPath = join(projectRoot, journal, "state.json");
+  const state = JSON.parse(readFileSync(journalPath));
+  const radar = state.installed.destinations.find(d => d.path === ".control-tower/radar").tree;
+  radar.entries = radar.entries.filter(e => e.name !== "vendor");
+  restoreProjectFiles(projectRoot, state.installed);
+  put(journalPath, JSON.stringify(state));
+  const before = snapshot(projectRoot);
+  expect(projectStatus(options)).toMatchObject({ status: "outdated", towerState: "needs-plan" });
+  expect(snapshot(projectRoot)).toEqual(before);
+  put(join(projectRoot, "openspec/plan.yaml"), "sesiones: []\n");
+  expect(listProjects({ registryRoot })[0]).toMatchObject({ status: "outdated", towerState: "active" });
+  put(join(projectRoot, ".control-tower/radar/main.go"), "user edit", 0o644);
+  expect(projectStatus(options).status).toBe("invalid");
+}));
+
 test("Tower states reconcile plans and retained skills without writing", () => fixture(({ options, trusted, registryRoot, projectRoot }) => {
   initRegisteredProject(trusted);
   const index = snapshot(registryRoot), local = snapshot(projectRoot);
@@ -260,7 +277,7 @@ test("noncooperating index change is detected rather than overwritten", () => fi
   expect(readFileSync(join(registryRoot, "registry.json"), "utf8")).toBe(replacement);
 }));
 
-test("doctor reports earlier intact installation invalid but uninstall still restores it", () => fixture(({ options, trusted, projectRoot }) => {
+test("doctor reports earlier intact installation outdated and uninstall still restores it", () => fixture(({ options, trusted, projectRoot }) => {
   initRegisteredProject(trusted);
   const statePath = join(projectRoot, journal, "state.json"), state = JSON.parse(readFileSync(statePath));
   const radar = state.installed.destinations.find((entry) => entry.path === ".control-tower/radar");
@@ -269,8 +286,8 @@ test("doctor reports earlier intact installation invalid but uninstall still res
   Object.assign(file, { bytes: bytes.toString("base64"), byteLength: bytes.length,
     sha256: createHash("sha256").update(bytes).digest("hex") });
   put(statePath, JSON.stringify(state)); put(join(projectRoot, ".control-tower/radar/main.go"), bytes, 0o644);
-  expect(projectStatus(options).status).toBe("invalid");
-  expect(() => doctorRegisteredProject(options)).toThrow("installed journal snapshot");
+  expect(projectStatus(options).status).toBe("outdated");
+  expect(doctorRegisteredProject(options).localResult.status).toBe("outdated");
   expect(uninstallRegisteredProject(options).localResult.status).toBe("uninstalled");
 }));
 
