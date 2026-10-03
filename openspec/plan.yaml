@@ -2109,9 +2109,9 @@ sesiones:
     zona: producto-torre
     prioridad: torre-v1
     resultado: "La interfaz Go guía paso a paso instalar, actualizar, volver atrás y administrar proyectos."
-    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190."
+    autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190. El mismo día aprobó ampliar S189 a main.go (adaptador de comandos con argv y errores), model_test.go (expectativas de S188) y styles.go (límite de altura señalado por la revisión)."
     depende_de: [S188]
-    archivos: [product/tower/v1/tui/model.go, product/tower/v1/tui/wizard.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/wizard_test.go, product/tower/v1/tui/projects_test.go]
+    archivos: [product/tower/v1/tui/model.go, product/tower/v1/tui/wizard.go, product/tower/v1/tui/projects.go, product/tower/v1/tui/wizard_test.go, product/tower/v1/tui/projects_test.go, product/tower/v1/tui/main.go, product/tower/v1/tui/model_test.go, product/tower/v1/tui/styles.go]
     cimientos: []
     recurso: []
     encargo:

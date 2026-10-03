@@ -46,7 +46,16 @@ func clean(text string) string {
 	}, ansi.Strip(text))
 }
 
+func (m model) wrap(lines []string) []string {
+	var wrapped []string
+	for _, line := range lines {
+		wrapped = append(wrapped, strings.Split(ansi.Wrap(line, max(1, m.width), ""), "\n")...)
+	}
+	return wrapped
+}
+
 func (m model) fit(lines []string) string {
+	lines = lines[:min(len(lines), max(0, m.height))]
 	for i := range lines {
 		lines[i] = ansi.Truncate(lines[i], m.width, "…")
 	}

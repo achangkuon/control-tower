@@ -32,11 +32,12 @@ func key(m model, value string) (model, tea.Cmd) {
 
 func loaded(t *testing.T, data string) model {
 	t.Helper()
-	m := newModel(func(action string) ([]byte, error) {
+	m := newModel(func(args []string) execution {
+		action := args[0]
 		if action != "status" {
 			t.Fatalf("unexpected command: %s", action)
 		}
-		return []byte(data), nil
+		return execution{stdout: []byte(data)}
 	}, true)
 	next, _ := m.Update(m.Init()())
 	return next.(model)
@@ -85,9 +86,9 @@ func TestNavigation(t *testing.T) {
 		m.selected = index
 		m, cmd := key(m, "enter")
 		if cmd != nil {
-			t.Fatal("placeholder must not execute commands")
+			t.Fatal("opening a screen must not execute commands")
 		}
-		contains(t, m.View(), "Disponible en la próxima versión", "esc")
+		contains(t, m.View(), []string{"Requisitos", "ROLLBACK", "Proyectos"}[index], "esc")
 		m, _ = key(m, "esc")
 		contains(t, m.View(), "Torre de Control V1", "Instalar o actualizar")
 	}
@@ -126,7 +127,7 @@ func TestStatusRendering(t *testing.T) {
 
 func TestLoadingFailureAndRefresh(t *testing.T) {
 	calls := 0
-	m := newModel(func(action string) ([]byte, error) { calls++; return nil, errors.New("fallo simulado") }, true)
+	m := newModel(func([]string) execution { calls++; return execution{code: 1, err: errors.New("fallo simulado")} }, true)
 	contains(t, m.View(), "Cargando estado…")
 	next, _ := m.Update(m.Init()())
 	m = next.(model)
@@ -143,18 +144,19 @@ func TestLoadingFailureAndRefresh(t *testing.T) {
 }
 
 func TestDiagnostic(t *testing.T) {
-	m := newModel(func(action string) ([]byte, error) {
+	m := newModel(func(args []string) execution {
+		action := args[0]
 		if action != "doctor" {
 			t.Fatalf("unexpected action: %s", action)
 		}
-		return []byte(`{"status":"healthy","active":"abcdef123456","previous":null}`), nil
+		return execution{stdout: []byte(`{"status":"healthy","active":"abcdef123456","previous":null}`)}
 	}, true)
 	m.selected = 3
 	m, cmd := key(m, "enter")
 	contains(t, m.View(), "Cargando diagnóstico…")
 	next, _ := m.Update(cmd())
 	m = next.(model)
-	contains(t, m.View(), "Diagnóstico", "instalado / sano", "abcdef1", "Volver")
+	contains(t, m.View(), "Diagnóstico", "instalado / sano", "abcdef1", "volver")
 	if strings.Contains(m.View(), `"status"`) {
 		t.Fatal("raw JSON displayed")
 	}
@@ -162,7 +164,7 @@ func TestDiagnostic(t *testing.T) {
 	contains(t, m.View(), "Instalar o actualizar")
 	m.selected = 3
 	m, _ = key(m, "enter")
-	next, _ = m.Update(commandResult{action: "doctor", err: errors.New("fallo simulado")})
+	next, _ = m.Update(commandResult{action: "doctor", id: m.sequence, err: errors.New("fallo simulado")})
 	contains(t, next.(model).View(), "No se pudo cargar el diagnóstico")
 }
 
@@ -179,13 +181,20 @@ func TestBoundariesAndLateDiagnostic(t *testing.T) {
 	}
 	m.selected = 3
 	m, _ = key(m, "enter")
+	oldID := m.sequence
 	m, _ = key(m, "esc")
 	next, _ := m.Update(commandResult{action: "doctor", data: []byte(`{"status":"absent"}`)})
 	m = next.(model)
 	contains(t, m.View(), "Instalar o actualizar")
-	m.page = "doctor"
-	contains(t, m.View(), "no instalado")
-	next, _ = m.Update(commandResult{action: "doctor", data: []byte(`{}`)})
+	if m.diagnostic.Status != "" {
+		t.Fatal("late diagnostic changed cached state")
+	}
+	m, _ = key(m, "enter")
+	next, _ = m.Update(commandResult{action: "doctor", id: oldID, data: []byte(`{"status":"absent"}`)})
+	if !next.(model).diagnosing {
+		t.Fatal("old request replaced current request")
+	}
+	next, _ = m.Update(commandResult{action: "doctor", id: m.sequence, data: []byte(`{}`)})
 	contains(t, next.(model).View(), "respuesta de diagnóstico no válida")
 	if got := clean("\x1b[31mtexto\x1b[0m\n\x07"); got != "texto  " {
 		t.Fatalf("unsafe output: %q", got)
@@ -194,11 +203,13 @@ func TestBoundariesAndLateDiagnostic(t *testing.T) {
 
 func TestSmallLayoutAndNoColor(t *testing.T) {
 	m := loaded(t, healthyJSON)
-	for _, size := range []tea.WindowSizeMsg{{Width: 45, Height: 16}, {Width: 28, Height: 12}, {Width: 28, Height: 9}} {
+	for _, size := range []tea.WindowSizeMsg{{Width: 45, Height: 16}, {Width: 28, Height: 12}, {Width: 28, Height: 9}, {Width: 10, Height: 1}, {Width: 10, Height: 2}, {Width: 10, Height: 3}} {
 		next, _ := m.Update(size)
 		m = next.(model)
 		view := m.View()
-		contains(t, view, "Instalar o actualizar", "Diagnóstico", "Ayuda", "Salir", "q salir")
+		if size.Height >= 9 {
+			contains(t, view, "Instalar o actualizar", "Diagnóstico", "Ayuda", "Salir", "q salir")
+		}
 		if size.Height == 16 {
 			contains(t, view, "Sistema:")
 		}

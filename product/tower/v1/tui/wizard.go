@@ -1,0 +1,345 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
+	"unicode"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type workflow struct {
+	action, tag, asset, sha, root, confirm, issue string
+	step, frame                                   int
+	started                                       time.Time
+	lines                                         []string
+}
+type progressTick struct{ id uint64 }
+
+var shaPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
+
+func validSHA(s string) bool { return shaPattern.MatchString(s) }
+func validValue(s string) bool {
+	return s != "" && len(s) <= 4096 && !strings.HasPrefix(s, "--") && strings.IndexFunc(s, unicode.IsControl) < 0
+}
+func validTag(s string) bool {
+	return validValue(s) && s != "latest" && strings.IndexFunc(s, unicode.IsSpace) < 0
+}
+func validRoot(s string) bool { return validValue(s) && filepath.IsAbs(s) }
+
+// KeyRunes may contain an entire paste. Controls never become submissions.
+func editInput(value *string, msg tea.KeyMsg) {
+	switch msg.Type {
+	case tea.KeyCtrlU:
+		*value = ""
+	case tea.KeyBackspace, tea.KeyDelete:
+		r := []rune(*value)
+		if len(r) > 0 {
+			*value = string(r[:len(r)-1])
+		}
+	case tea.KeySpace:
+		if len(*value) < 4096 {
+			*value += " "
+		}
+	case tea.KeyRunes:
+		if strings.ContainsRune(string(msg.Runes), '\x1b') {
+			return
+		}
+		for _, r := range msg.Runes {
+			if unicode.IsPrint(r) && len(*value)+len(string(r)) <= 4096 {
+				*value += string(r)
+			}
+		}
+	}
+}
+func (m model) prerequisites() ([]string, bool) {
+	lines := []string{"Requisitos"}
+	ready := !m.loading && m.statusError == ""
+	if !ready {
+		lines = append(lines, "Esperá a cargar un estado válido desde el inicio.")
+	}
+	for _, item := range []struct{ key, label, remedy string }{
+		{"gh", "gh / sesión", "Instalá gh y ejecutá gh auth login para iniciar sesión."},
+		{"bun", "Bun", "Instalá Bun y verificá bun --version."},
+		{"git", "Git", "Instalá Git y verificá git --version."},
+		{"go", "Go", "Instalá Go y verificá go version."},
+	} {
+		p := m.status.Prerequisites[item.key]
+		ok := p.Present && p.Version != "" && p.Error == "" && (item.key != "gh" || p.Authenticated)
+		text := item.label + ": disponible"
+		if !ok {
+			ready = false
+			text = item.label + ": falta o no se pudo verificar. " + item.remedy
+		}
+		lines = append(lines, text)
+	}
+	return lines, ready
+}
+func (m model) confirmation() string {
+	switch m.flow.action {
+	case "update":
+		return "UPDATE"
+	case "rollback":
+		return "ROLLBACK"
+	case "uninstall":
+		return "UNINSTALL"
+	case "cleanup":
+		return "CLEANUP"
+	case "init":
+		return "confiar"
+	}
+	return ""
+}
+func (m *model) field() *string {
+	switch m.flow.step {
+	case 1:
+		if m.flow.action == "init" {
+			return &m.flow.root
+		}
+		return &m.flow.tag
+	case 2:
+		return &m.flow.asset
+	case 3:
+		return &m.flow.sha
+	case 4:
+		return &m.flow.confirm
+	}
+	return nil
+}
+func (m model) inputIssue() string {
+	switch m.flow.step {
+	case 1:
+		if m.flow.action == "init" {
+			if !validRoot(m.flow.root) {
+				return "Ingresá una ruta absoluta válida."
+			}
+		} else if !validTag(m.flow.tag) {
+			return "Ingresá un tag no vacío, sin espacios y distinto de latest."
+		}
+	case 2:
+		if !validValue(m.flow.asset) {
+			return "Ingresá el nombre del archivo del paquete."
+		}
+	case 3:
+		if !validSHA(m.flow.sha) {
+			return "El SHA-256 debe tener 64 caracteres hexadecimales en minúsculas."
+		}
+	case 4:
+		if m.flow.confirm != m.confirmation() {
+			return "Escribí exactamente " + m.confirmation() + " para confirmar."
+		}
+	}
+	return ""
+}
+func (m model) homeRefresh() (tea.Model, tea.Cmd) {
+	m.page, m.offset, m.loading = "home", 0, true
+	m.sequence++
+	return m, m.command("status")
+}
+func (m model) wizardKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.flow.step == 5 {
+		return m, nil
+	}
+	if m.flow.step == 6 && (msg.Type == tea.KeyEnter || msg.Type == tea.KeyEsc) {
+		return m.homeRefresh()
+	}
+	if msg.Type == tea.KeyDown || msg.Type == tea.KeyUp {
+		if msg.Type == tea.KeyDown {
+			m.offset = min(m.maxOffset(), m.offset+1)
+		} else {
+			m.offset = max(0, m.offset-1)
+		}
+		return m, nil
+	}
+	if msg.Type == tea.KeyEsc {
+		m.flow.issue = ""
+		m.offset = 0
+		switch {
+		case m.flow.step == 0 || (m.flow.step == 4 && m.flow.action == "rollback"):
+			m.page = "home"
+		case m.flow.action == "init" && m.flow.step == 4:
+			m.flow.step = 1
+		case m.flow.action == "init" || m.flow.root != "":
+			m.page = "projects"
+		default:
+			m.flow.step--
+		}
+		return m, nil
+	}
+	if msg.Type == tea.KeyEnter {
+		if m.flow.step == 0 {
+			_, ready := m.prerequisites()
+			if ready {
+				m.flow.step = 1
+			}
+			return m, nil
+		}
+		m.flow.issue = m.inputIssue()
+		if m.flow.issue != "" {
+			return m, nil
+		}
+		if m.flow.step == 4 {
+			return m.startAction()
+		}
+		m.flow.step++
+		if m.flow.action == "init" {
+			m.flow.step = 4
+		}
+		m.offset = 0
+		return m, nil
+	}
+	if field := m.field(); field != nil {
+		editInput(field, msg)
+		m.flow.issue = m.inputIssue()
+	}
+	m.offset = min(m.offset, m.maxOffset())
+	return m, nil
+}
+func (m model) tick() tea.Cmd {
+	return tea.Tick(200*time.Millisecond, func(time.Time) tea.Msg { return progressTick{m.sequence} })
+}
+func (m model) startAction() (tea.Model, tea.Cmd) {
+	a := []string{m.flow.action}
+	switch m.flow.action {
+	case "install", "update":
+		a = append(a, "--tag", m.flow.tag, "--asset", m.flow.asset, "--sha256", m.flow.sha)
+	case "init", "doctor", "uninstall", "cleanup":
+		a = []string{"project", m.flow.action, "--project", m.flow.root}
+		if m.flow.action == "init" {
+			a = append(a, "--trust", "trusted")
+		}
+	}
+	m.sequence++
+	m.flow.step, m.flow.started = 5, time.Now()
+	m.offset = 0
+	cmd := func() tea.Msg {
+		result := execution{code: -1, err: fmt.Errorf("comando no permitido")}
+		if allowedArgs(a) {
+			result = m.run(a)
+		}
+		return commandResult{action: "operation", id: m.sequence, result: result}
+	}
+	return m, tea.Batch(cmd, m.tick())
+}
+func (m model) wizardLines() []string {
+	f := m.flow
+	lines := []string{}
+	switch f.step {
+	case 0:
+		lines, _ = m.prerequisites()
+	case 1:
+		if f.action == "init" {
+			lines = []string{"Adoptar un proyecto nuevo", "Ruta absoluta: " + clean(f.root)}
+		} else {
+			lines = []string{"Versión (tag)", "> " + clean(f.tag)}
+		}
+	case 2:
+		lines = []string{"Archivo del paquete (asset)", "> " + clean(f.asset)}
+	case 3:
+		lines = []string{"Código SHA-256", "Pedile este código a quien mantiene la Torre por un canal distinto de GitHub", "> " + clean(f.sha)}
+	case 4:
+		label := map[string]string{"rollback": "volver a la versión anterior", "doctor": "revisar", "uninstall": "desinstalar", "cleanup": "limpiar residuos", "init": "adoptar"}[f.action]
+		if label == "" {
+			label = f.action
+		}
+		lines = []string{"Revisión", "Acción: " + label}
+		switch f.action {
+		case "install", "update":
+			lines = append(lines, "Tag: "+clean(f.tag), "Archivo: "+clean(f.asset), "SHA-256: "+short(f.sha))
+		case "rollback":
+			lines = append(lines, "Activa → anterior: "+short(m.status.Engine.Active)+" → "+short(m.status.Engine.Previous))
+		default:
+			lines = append(lines, "Proyecto: "+clean(f.root))
+			if f.action == "cleanup" {
+				lines = append(lines, "Limpiar residuos es sólo para una operación interrumpida.")
+			}
+			if f.action == "init" {
+				lines = append(lines, "Se agregarán: .claude/skills/control-tower", ".agents/skills/control-tower", ".control-tower/", ".control-tower-adoption-v1/", "La confianza permite ejecutar herramientas del proyecto. Revisá su contenido antes de confiar.")
+			}
+		}
+		if word := m.confirmation(); word != "" {
+			lines = append(lines, "Escribí "+word+" para confirmar:", "> "+clean(f.confirm))
+		} else {
+			lines = append(lines, "Enter confirma la operación.")
+		}
+	case 5:
+		label := map[string]string{"install": "Instalando…", "update": "Actualizando…", "rollback": "Restaurando…", "init": "Adoptando…", "doctor": "Revisando…", "uninstall": "Desinstalando…", "cleanup": "Limpiando residuos…"}[f.action]
+		lines = []string{fmt.Sprintf("%s %s · %d s", []string{"◐", "◓", "◑", "◒"}[f.frame%4], label, int(time.Since(f.started).Seconds()))}
+	case 6:
+		lines = append([]string{"Resultado"}, f.lines...)
+		lines = append(lines, "Volver al inicio")
+	}
+	if f.issue != "" {
+		lines = append(lines, m.palette.bad.Render(f.issue))
+	}
+	return lines
+}
+func firstLine(s string) string { return clean(strings.Split(strings.TrimSpace(s), "\n")[0]) }
+func resultLines(r execution) []string {
+	var result struct {
+		Status, Active, Previous string
+		LocalResult              *struct{ Status string }
+		Registry                 struct{ Status string }
+	}
+	parsed := json.Unmarshal(r.stdout, &result) == nil && (result.Status != "" || (result.LocalResult != nil && result.LocalResult.Status != ""))
+	raw := firstLine(string(r.stderr))
+	if raw == "" && r.err != nil {
+		raw = firstLine(r.err.Error())
+	}
+	var lines []string
+	if parsed && result.LocalResult != nil && result.Registry.Status == "failed" {
+		lines = []string{"La operación en el proyecto se completó, pero no se pudo actualizar la lista de proyectos"}
+	} else if r.code != 0 || r.err != nil || !parsed {
+		text := "No se pudo completar la operación."
+		lower := strings.ToLower(raw)
+		switch {
+		case strings.Contains(lower, "sha-256 mismatch"):
+			text = "El código SHA-256 no coincide. Verificá el código por un canal de confianza."
+		case (strings.Contains(lower, "gh") && strings.Contains(lower, "auth")) || strings.Contains(lower, "github release command failed"):
+			text = "No se pudo verificar la sesión o descargar el paquete. Revisá gh auth login."
+		case strings.Contains(lower, "unknown launcher"):
+			text = "El lanzador existente no es reconocido y se conservó sin cambios."
+		case strings.Contains(lower, "chmod") || strings.Contains(lower, "permission") || strings.Contains(lower, "eacces"):
+			text = "Hay un problema de permisos. Seguí la indicación chmod del mensaje original, si está presente."
+		}
+		lines = []string{text}
+	} else {
+		status := result.Status
+		if result.LocalResult != nil {
+			status = result.LocalResult.Status
+		}
+		labels := map[string]string{"installed": "instalado", "activated": "activado", "restored": "restaurado", "healthy": "sano", "absent": "no instalado", "uninstalled": "desinstalado", "cleaned": "residuos limpiados"}
+		label := labels[status]
+		if label == "" {
+			label = "completado"
+		}
+		lines = []string{"Operación completada: " + label}
+		if result.LocalResult == nil {
+			lines = append(lines, "Activa: "+short(result.Active)+" · Anterior: "+short(result.Previous))
+		}
+	}
+	if raw != "" {
+		lines = append(lines, "Mensaje original: "+raw)
+	}
+	for _, line := range strings.Split(string(r.stderr), "\n") {
+		var recovery struct {
+			Type    string
+			Errors  []string
+			Omitted int
+		}
+		if json.Unmarshal([]byte(line), &recovery) == nil && recovery.Type == "tower.cli.recovery/1" {
+			lines = append(lines, "Se conservó evidencia de recuperación; no repitas la operación sin revisarla.")
+			for _, e := range recovery.Errors {
+				lines = append(lines, clean(e))
+			}
+			if recovery.Omitted > 0 {
+				lines = append(lines, fmt.Sprintf("Otros detalles omitidos: %d", recovery.Omitted))
+			}
+		}
+	}
+	return lines
+}
