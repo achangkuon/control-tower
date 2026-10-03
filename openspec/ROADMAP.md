@@ -1349,7 +1349,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/tui/radar.go, product/tower/v1/tui/radar&#95;test.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs
+  - Archivos autorizados: product/tower/v1/tui/radar.go, product/tower/v1/tui/radar&#95;test.go, product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs
   - Depende de: —
   - Recursos: —
   - Ejecución: ODD nativo.
