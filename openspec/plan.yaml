@@ -2061,6 +2061,7 @@ sesiones:
   - id: S184
     zona: producto-torre
     prioridad: torre-v1
+    diferida: true
     resultado: "Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio."
     autoridad: "Emilio eligió el 2026-10-02 en esta Conversación un instalador de un solo comando con gh, privado, para socios que ya tienen acceso al repositorio, y confirmó que hay una Mac disponible para probarlo. El mismo día pidió además una guía en el repositorio para que el agente de un socio instale la Torre solo con el enlace de GitHub (product/tower/v1/INSTALL-AGENTS.md)."
     depende_de: [S183]
@@ -2112,6 +2113,7 @@ sesiones:
   - id: S190
     zona: producto-torre
     prioridad: torre-v1
+    diferida: true
     resultado: "La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190."
     depende_de: [S191]

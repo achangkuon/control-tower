@@ -455,3 +455,8 @@ Maintainer reported the V1 menu aborting (CR LF Enter) and approved on 2026-10-0
 - Partner end-to-end on a fresh disposable HOME with the exact one-liner: installer checksum OK, engine installed, platform binary verified and installed with `tui/current.json`, and `torre-control` with no arguments opened the Go interface (home Estado, Spanish menu).
 - Maintainer machine updated with the same one-liner (now selects update): active v1.1.0, previous v1.0.2, doctor healthy, demo project healthy, interface record linux-amd64; configuration snapshot and `torre-setup` unchanged.
 - README and the agent runbook now name v1.1.0. Still open: S190 closure after the guided macOS test (also S184).
+
+## Day close (2026-10-02)
+
+- Maintainer deferred the guided macOS test: S184 and S190 are marked `diferida: true` in the plan (code, docs and v1.1.0 already delivered; only the macOS evidence and their closure remain). Resume by running the partner one-liner for v1.1.0 on a Mac, recording the output, switching README/INSTALL-AGENTS macOS to "probado", then closing both Sessions.
+- Follow-ups recorded, not planned: R3-interrupted-binary-publication (`install.mjs:110`), R3-startup-fallback (`cli.mjs:391-392`), GOWORK=off for the benchmark Radar build, flaky timing tests (CT-R12-S1; installed torre launch-worker shims), git test proxy strip-all, release-build partial output, benchmark capture flake, real-model behavioral benchmark run.
