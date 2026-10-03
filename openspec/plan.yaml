@@ -2234,6 +2234,27 @@ sesiones:
       referencias: >-
         install.py DEFERRED_SKILLS/RETIRED_SKILLS; docs/architecture/definiciones-v1-v2-v3.md.
 
+  - id: S212
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "En el menú de comandos de Radar los títulos de los comandos se ven en el celeste de la torre y se distinguen de sus descripciones."
+    autoridad: "Emilio pidió el 2026-10-03 en esta Conversación este parche visual sobre el menú de Radar."
+    depende_de: []
+    archivos: [product/tower/v1/tui/radar.go, product/tower/v1/tui/radar_test.go]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        Títulos y descripciones del menú de Radar se ven del mismo color y cuesta
+        identificar cada comando.
+      resultado_comportamiento: >-
+        Cada título usa el color del dibujo de la torre; las descripciones conservan el
+        color normal; sin color cuando la terminal no lo admite.
+      restricciones_decisiones: >-
+        Sólo estilo; sin cambios de comportamiento.
+      referencias: >-
+        Captura del 2026-10-03 18:50; styles.go palette.tower.
+
   - id: S175
     prioridad: resolucion-problemas-generales
     zona: cimientos

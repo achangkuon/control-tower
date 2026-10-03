@@ -9,9 +9,10 @@
 
 ## Estado y próximo trabajo
 - Método #2 → S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
+- Producto Torre #1 → S212 — En el menú de comandos de Radar los títulos de los comandos se ven en el celeste de la torre y se distinguen de sus descripciones.
 
 ## Avance
-- **Total:** 89% (133/149 S)
+- **Total:** 88% (133/150 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +26,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 93% (43/46 S)
-- **Producto Torre:** 90% (27/30 S)
+- **Producto Torre:** 87% (27/31 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -66,7 +67,7 @@
 2. **S210** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S212** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · En el menú de comandos de Radar los títulos de los comandos se ven en el celeste de la torre y se distinguen de sus descripciones.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1415,6 +1416,20 @@
   - Resultado y comportamiento: Esas fuentes se mueven a agent-workflows/skills-diferidas/v2/ (jornada, session-kickoff, coordinador-manual, agente-soporte) y agent-workflows/skills-diferidas/v3/ (despacho-herdr, unattended-implementation), con un README que explica por qué cada una está diferida. Ningún instalador las instala; las pruebas y referencias se ajustan a las nuevas rutas; los archivos de la Sesión se completan al prepararla.
   - Restricciones y decisiones: Mover sin cambiar contenido (git mv); no se borra ninguna skill; la Torre y su roster V1 no cambian.
   - Referencias: install.py DEFERRED&#95;SKILLS/RETIRED&#95;SKILLS; docs/architecture/definiciones-v1-v2-v3.md.
+
+### S212 — En el menú de comandos de Radar los títulos de los comandos se ven en el celeste de la torre y se distinguen de sus descripciones.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/radar.go, product/tower/v1/tui/radar&#95;test.go
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Títulos y descripciones del menú de Radar se ven del mismo color y cuesta identificar cada comando.
+  - Resultado y comportamiento: Cada título usa el color del dibujo de la torre; las descripciones conservan el color normal; sin color cuando la terminal no lo admite.
+  - Restricciones y decisiones: Sólo estilo; sin cambios de comportamiento.
+  - Referencias: Captura del 2026-10-03 18:50; styles.go palette.tower.
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:
@@ -4229,7 +4244,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
