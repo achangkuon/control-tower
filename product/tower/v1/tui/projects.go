@@ -57,6 +57,9 @@ func (m model) projectHealth(p projectState) string {
 }
 
 func actionsForProject(p projectState) []string {
+	if p.Status == "healthy" && p.TowerState == "active" {
+		return append([]string{"Comandos de Radar"}, projectActions...)
+	}
 	if p.Status == "healthy" && p.TowerState == "needs-plan" {
 		return append([]string{"Ver el prompt para armar el plan"}, projectActions...)
 	}
@@ -145,7 +148,9 @@ func (m model) projectsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			project := projects[m.projectSelected]
 			actions := actionsForProject(project)
 			m.projectAction = min(m.projectAction, len(actions)-1)
-			if len(actions) > len(projectActions) && m.projectAction == 0 {
+			if actions[m.projectAction] == "Comandos de Radar" {
+				m = m.openRadar(project.ProjectRoot)
+			} else if actions[m.projectAction] == "Ver el prompt para armar el plan" {
 				m = m.openProjectPrompt()
 			} else {
 				index := m.projectAction - (len(actions) - len(projectActions))

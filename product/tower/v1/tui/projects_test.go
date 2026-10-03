@@ -44,6 +44,25 @@ func TestProjectActions(t *testing.T) {
 		})
 	}
 }
+func TestRadarActionOnlyForActiveProjects(t *testing.T) {
+	for _, tt := range []struct{ status, state string }{
+		{"healthy", "active"}, {"healthy", "needs-plan"}, {"unadopted", "skills-only"},
+		{"missing", "active"}, {"unsafe", "active"}, {"healthy", ""},
+	} {
+		t.Run(tt.status+"-"+tt.state, func(t *testing.T) {
+			m := loaded(t, healthyJSON)
+			m.status.Projects = json.RawMessage(`[{"projectRoot":"/proyecto","status":"` + tt.status + `","towerState":"` + tt.state + `"}]`)
+			m.page = "projects"
+			m = keys(m, "enter")
+			want := tt.status == "healthy" && tt.state == "active"
+			if strings.Contains(m.View(), "Comandos de Radar") != want {
+				t.Fatalf("Radar action availability: want %v\n%s", want, m.View())
+			}
+			contains(t, m.View(), "Revisar", "Desinstalar", "Limpiar residuos")
+		})
+	}
+}
+
 func TestAdoptProject(t *testing.T) {
 	m, calls := actionModel(t, true)
 	// Retain coverage for the existing manual adoption workflow, no longer a menu entry.

@@ -49,10 +49,12 @@ type model struct {
 	projectMenu                     bool
 	statusError, diagnosticError    string
 	promptOrigin, copyFeedback      string
+	radarRun                        radarRunFunc
+	radar                           radarScreen
 }
 
 func newModel(run runner, noColor bool) model {
-	return model{run: run, palette: newPalette(noColor), page: "home", width: 100, height: 40, loading: true, statusSequence: 1}
+	return model{run: run, radarRun: installedRadarRunner, palette: newPalette(noColor), page: "home", width: 100, height: 40, loading: true, statusSequence: 1}
 }
 
 func (m model) command(action string) tea.Cmd {
@@ -71,12 +73,22 @@ func (m *model) reloadStatus() tea.Cmd {
 	m.loading = true
 	return m.command("status")
 }
-func (m model) operationRunning() bool { return m.page == "wizard" && m.flow.step == 5 }
+func (m model) operationRunning() bool {
+	return (m.page == "wizard" && m.flow.step == 5) || (m.page == "radar-output" && m.radar.running)
+}
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = max(1, msg.Width), max(1, msg.Height)
+		if m.page == "radar-list" {
+			m = m.focusRadarCommand()
+		}
+	case radarResult:
+		if m.page == "radar-output" && m.radar.running && msg.id == m.sequence {
+			m.radar.running, m.radar.code = false, msg.result.code
+			m.radar.lines = radarOutputLines(msg.result)
+		}
 	case clipboardResult:
 		if m.page == "project-prompt" {
 			m.copyFeedback = "Copiado"
@@ -140,6 +152,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, refresh
 		}
 	case tea.KeyMsg:
+		if m.page == "radar-list" || m.page == "radar-id" || m.page == "radar-output" {
+			return m.radarKey(msg)
+		}
 		if m.operationRunning() {
 			switch msg.String() {
 			case "enter":
@@ -250,6 +265,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) pageLines() []string {
 	body := []string{}
+	if m.page == "radar-list" || m.page == "radar-id" || m.page == "radar-output" {
+		return m.radarLines()
+	}
 	if m.page == "wizard" {
 		return m.wrap(m.wizardLines())
 	}
@@ -288,7 +306,16 @@ func (m model) View() string {
 	start := min(m.offset, m.maxOffset())
 	body = body[start:min(len(body), start+space)]
 	footer := "esc: volver · enter: continuar · ↑↓: desplazar"
-	if m.page == "project-prompt" {
+	if m.page == "radar-list" {
+		footer = "enter: ejecutar · esc: proyecto · ↑↓: elegir"
+	} else if m.page == "radar-id" {
+		footer = "enter: ejecutar · esc: comandos"
+	} else if m.page == "radar-output" {
+		footer = "esc: comandos · ↑↓/PgUp/PgDn: desplazar"
+		if m.radar.running {
+			footer = "Esperá a que termine Radar (máximo 30 s)."
+		}
+	} else if m.page == "project-prompt" {
 		footer = "c: copiar · esc: volver · ↑↓: desplazar"
 		if m.copyFeedback != "" {
 			footer = m.copyFeedback + " · esc: volver"
