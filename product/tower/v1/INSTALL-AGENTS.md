@@ -66,7 +66,7 @@ shasum -a 256 /dev/null || sha256sum /dev/null
 ## Step 2 — Get the tag and the installer SHA-256 from the human
 
 Ask: *"Please paste the Tower version (tag) and the installer SHA-256 that the maintainer
-sent you."* The tag looks like `v1.0.2`; the SHA-256 is 64 lowercase hexadecimal
+sent you."* The tag looks like `v1.1.0`; the SHA-256 is 64 lowercase hexadecimal
 characters. Check the format before continuing.
 
 ## Step 3 — Run the one-command installer

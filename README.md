@@ -27,7 +27,7 @@ y GitHub CLI (`gh`) autenticado en `github.com` con acceso al repositorio privad
 requiere Go y sus dependencias disponibles.
 
 Las versiones se publican como Releases privados de `achangkuon/control-tower`
-(la vigente es `v1.0.2`). Los ejemplos usan marcadores como `<TAG>`; nunca
+(la vigente es `v1.1.0`). Los ejemplos usan marcadores como `<TAG>`; nunca
 tome valores de seguridad de esta página. Para instalar sin checkout, el mantenedor
 comunica el tag exacto y **un SHA-256 del instalador** por un segundo canal de
 confianza. El instalador verificado fija a su vez el digest del manifiesto y
