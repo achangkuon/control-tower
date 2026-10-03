@@ -2224,35 +2224,7 @@ sesiones:
       referencias: >-
         Revisiones review-de9db1527e4bd4a0, review-4d9eb12b098477a2 y review-90ff8d096a0977e0.
 
-  - id: S207
-    zona: producto-torre
-    prioridad: torre-v1
-    resultado: "Actualizar también instala la interfaz visual nueva, así nadie se queda con la pantalla de una versión vieja."
-    autoridad: "Emilio detectó el 2026-10-03 en esta Conversación que su interfaz seguía igual tras actualizar y aprobó corregirlo antes de v1.2.1."
-    depende_de: [S205]
-    archivos: [product/tower/v1/release.mjs, product/tower/v1/test/release.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs, product/tower/v1/release-build.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/tui/wizard.go, product/tower/v1/tui/wizard_test.go]
-    cimientos: []
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        El binario torre-tui sólo lo instala el instalador de una línea (sus huellas van
-        fijadas en torre-install.mjs); update y update --latest actualizan motor, runtime
-        y proyectos pero nunca la interfaz, así que quien actualiza conserva la pantalla
-        vieja para siempre.
-      resultado_comportamiento: >-
-        La release publica la huella de cada binario de interfaz; install/update --latest
-        descarga el binario de la plataforma, lo verifica contra esa huella publicada,
-        lo instala junto a los existentes y actualiza current.json de forma atómica; si
-        ya está esa huella no descarga. torre-control sin argumentos abre la interfaz
-        nueva tras actualizar. --from-checkout compila o toma la interfaz local
-        verificada del mismo modo.
-      restricciones_decisiones: >-
-        Mismo riesgo de origen aprobado en S199 (huella publicada junto al asset); nunca
-        se ejecuta un binario sin verificar; una falla de la interfaz no deja el motor a
-        medio actualizar ni rompe la interfaz anterior.
-      referencias: >-
-        install.mjs (instalación de TUI), cli.mjs:376 (current.json), Engram
-        tower-v1/tui-update-gap.
+  - {id: S207, entrega: {commit: 3c8a4b27afdfeadf2ea03d27f35abff938635f46}, historico: openspec/archive/sesiones/S207.md}
 
   - id: S175
     prioridad: resolucion-problemas-generales
