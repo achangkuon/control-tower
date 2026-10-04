@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
-# Three jobs at delivery time, in order: run the suite, validate the plan, then regenerate
-# the report. Only the suite and plan validation can block a push.
+# Two jobs at delivery time, in order: run the suites, then validate the plan. Both can
+# block a push. The Radiografía report is not part of the hook: it is generated on demand
+# and never substitutes a check.
 #
 # Agent-agnostic on purpose: git runs it for Claude Code, opencode, PI, Codex and for a
 # human alike. Nothing here depends on which assistant is driving. That is the point —
@@ -12,10 +13,10 @@
 # unowned. At pre-push time HEAD already carries the commits being published, which is
 # exactly what must be validated.
 #
-# The two sections below differ deliberately in how they resolve their engine. The report
-# loads a script through an interpreter the user already trusts and never blocks, so a
-# repo-relative lookup is acceptable there. The gate EXECUTES a binary and can stop a
-# push, so it refuses any candidate that lives inside the tree being pushed.
+# The plan gate below EXECUTES a binary and can stop a push, so it refuses any candidate
+# that lives inside the tree being pushed: a hook that prefers a repo-relative executable
+# runs whatever a checked-out branch happens to carry, which is binary planting with the
+# contributor's own privileges.
 set -u
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
@@ -43,16 +44,30 @@ if [ "$gated" -eq 1 ] && [ -n "$hook_dir" ] && [ "$hook_dir" = "$root_hooks_dir"
     printf 'pre-push: el commit master a publicar debe ser el HEAD limpio del checkout. Push rechazado.\n' >&2
     exit 1
   fi
-  if ! command -v bun >/dev/null 2>&1; then
-    printf 'pre-push: bun no está disponible, no se puede verificar. Push rechazado.\n' >&2
-    exit 1
-  fi
-
   if [ ! -f "$root/package.json" ]; then
     printf 'pre-push: falta package.json válido; no se puede verificar. Push rechazado.\n' >&2
     exit 1
   fi
 
+  # Bun, Go and Python are all mandatory before publication. A missing tool blocks with an
+  # explanation instead of skipping its suite: a check that quietly does not run is a false
+  # green, and a false green is worse than a stopped push. There is no partial mode.
+  for required_tool in bun go python3; do
+    if ! command -v "$required_tool" >/dev/null 2>&1; then
+      case "$required_tool" in
+        bun) tool_hint="instalalo desde https://bun.sh" ;;
+        go) tool_hint="instalalo desde https://go.dev/dl" ;;
+        *) tool_hint="instalalo desde https://www.python.org/downloads" ;;
+      esac
+      printf 'pre-push: falta %s (%s); no se puede verificar. Push rechazado.\n' \
+        "$required_tool" "$tool_hint" >&2
+      exit 1
+    fi
+  done
+
+  # The suite commands live in package.json so this hook never hardcodes an invocation.
+  # scripts.test is pinned to exactly "bun test" — the plan-gate tests assert it — and the
+  # other two suites must be declared or the gate cannot run them.
   bun -e '
     let pkg
     try {
@@ -61,10 +76,18 @@ if [ "$gated" -eq 1 ] && [ -n "$hook_dir" ] && [ "$hook_dir" = "$root_hooks_dir"
       process.exit(3)
     }
     if (pkg?.scripts?.test !== "bun test") process.exit(2)
+    for (const name of ["test:go", "test:python"]) {
+      const script = pkg?.scripts?.[name]
+      if (typeof script !== "string" || script.trim() === "") process.exit(4)
+    }
   ' "$root/package.json" 2>/dev/null
   package_status=$?
   if [ "$package_status" -eq 3 ]; then
     printf 'pre-push: package.json inválido; no se puede verificar. Push rechazado.\n' >&2
+    exit 1
+  fi
+  if [ "$package_status" -eq 4 ]; then
+    printf 'pre-push: package.json debe declarar scripts.test:go y scripts.test:python. Sin ellas no se pueden correr las tres suites. Push rechazado.\n' >&2
     exit 1
   fi
   if [ "$package_status" -ne 0 ]; then
@@ -76,21 +99,64 @@ if [ "$gated" -eq 1 ] && [ -n "$hook_dir" ] && [ "$hook_dir" = "$root_hooks_dir"
   export CONTROL_TOWER_CORE="$root/core.mjs"
   export CONTROL_TOWER_LIFECYCLE="$root/install/lifecycle.mjs"
 
-  # Git exports these variables to hooks. Unset them only for the suite so fixture
-  # repositories created by tests cannot operate on this repository; later stages retain
-  # their inherited environment.
-  printf 'pre-push: corriendo la suite contra este checkout...\n' >&2
-  if ! (
-    cd "$root" &&
-    unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR \
-          GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH &&
-    bun run test
-  ); then
-    printf '\npre-push: la suite falló. Push rechazado.\n' >&2
-    printf 'pre-push: arreglalo, o pusheá con --no-verify y decí por qué.\n' >&2
-    exit 1
+  # All three suites run against the checkout being pushed, in a fixed order, and the first
+  # failure stops the push naming its suite. Git exports its routing variables to hooks;
+  # they are unset only for the suites so fixture repositories created by tests cannot
+  # operate on this repository. Later stages retain their inherited environment.
+  #
+  # Output is captured so skipped tests can be detected. A skip is legitimate and does not
+  # block, but it is NOT green: the hook must never announce a blanket pass over tests that
+  # never ran. Capture only shapes the message; the suite's own exit status is the verdict.
+  skipped_suites=""
+  skip_measurement=""
+  run_suite() {
+    suite_label=$1
+    suite_script=$2
+    suite_log=$(mktemp 2>/dev/null) || suite_log=""
+    [ -n "$suite_log" ] || skip_measurement="unavailable"
+    printf 'pre-push: corriendo la suite %s (%s)...\n' "$suite_label" "$suite_script" >&2
+    if [ -n "$suite_log" ]; then
+      (
+        cd "$root" &&
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR \
+              GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH &&
+        bun run "$suite_script"
+      ) >"$suite_log" 2>&1
+      suite_status=$?
+      cat "$suite_log" >&2
+      # Skip markers: Python's "skipped='reason'" and "OK (skipped=N)", Go's "--- SKIP",
+      # Bun's "N skip" summary. A false positive only downgrades the final message.
+      if grep -Eq 'skipped=|skipped |--- SKIP|[0-9]+ skip' "$suite_log"; then
+        skipped_suites="$skipped_suites $suite_label"
+      fi
+      rm -f "$suite_log"
+    else
+      (
+        cd "$root" &&
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR \
+              GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH &&
+        bun run "$suite_script"
+      )
+      suite_status=$?
+    fi
+    if [ "$suite_status" -ne 0 ]; then
+      printf '\npre-push: la suite %s (%s) falló. Push rechazado.\n' "$suite_label" "$suite_script" >&2
+      printf 'pre-push: arreglalo, o pusheá con --no-verify y decí por qué.\n' >&2
+      exit 1
+    fi
+  }
+
+  run_suite Bun test
+  run_suite Go test:go
+  run_suite Python test:python
+
+  if [ -n "$skip_measurement" ]; then
+    printf 'pre-push: las tres suites terminaron, pero no se pudo medir si hubo tests salteados. No es un verde completo.\n' >&2
+  elif [ -n "$skipped_suites" ]; then
+    printf 'pre-push: las tres suites terminaron, pero hay tests salteados en:%s. No es un verde completo.\n' "$skipped_suites" >&2
+  else
+    printf 'pre-push: las tres suites pasaron en verde.\n' >&2
   fi
-  printf 'pre-push: suite verde.\n' >&2
 fi
 
 # ── 2. The plan gate — this one BLOCKS ───────────────────────────────────────
@@ -215,29 +281,3 @@ if [ -f "$root/openspec/plan.yaml" ]; then
     fi
   fi
 fi
-
-# ── 3. The report — this one NEVER blocks ────────────────────────────────────
-# A report is not a gate; a stale report labels itself stale.
-[ -f "$root/radiografia.json" ] || exit 0
-command -v bun >/dev/null 2>&1 || exit 0
-
-# Engine lookup, most specific first. A missing engine is not an error: the repo simply
-# has no report until agent-workflows is present on this machine.
-for candidate in \
-  "${RADIOGRAFIA_HOME:-}" \
-  "$root/agent-workflows/radiografia" \
-  "$(dirname "$root")/agent-workflows/radiografia" \
-  "$HOME/projects/agent-workflows/radiografia"
-do
-  [ -n "$candidate" ] && [ -f "$candidate/run.mjs" ] && engine="$candidate" && break
-done
-
-if [ -z "${engine:-}" ]; then
-  printf 'radiografía: motor no encontrado, se omite. El push sigue.\n' >&2
-  exit 0
-fi
-
-printf 'radiografía: regenerando el informe...\n'
-(cd "$root" && bun "$engine/run.mjs") || \
-  printf 'radiografía: no se pudo regenerar. El push sigue.\n' >&2
-exit 0

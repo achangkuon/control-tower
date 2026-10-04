@@ -174,8 +174,14 @@ bun agent-workflows/radiografia/run.mjs --check      # sale 1 si quedó viejo
 No usa ninguna capacidad de asistente. Claude Code, opencode, PI, Codex, un cron o
 una persona lo corren igual.
 
-**Se dispara solo en la entrega.** El hook `.githooks/pre-push` lo corre con la suite
-en cada `git push` y **nunca bloquea** un push: un informe no es un gate.
+**Ya no se dispara sola: el informe es a demanda.** El hook `.githooks/pre-push` ya no
+genera el informe en cada `git push`. Lo que corre en cada push son las tres suites
+obligatorias declaradas en `package.json` —Bun (`bun run test`), Go (`bun run test:go`)
+y Python (`bun run test:python`)— y el push se bloquea si alguna falla o si falta la
+herramienta que necesita (bun, go o python3): una suite que no corre no es una suite que
+pasa. El informe se genera cuando alguien lo pide, con
+`bun agent-workflows/radiografia/run.mjs`; un informe no es un gate y nunca reemplaza a
+las suites.
 `core.hooksPath` es configuración local y no viaja en el clon — en un worktree o
 clon nuevo hay que activarlo una vez:
 
