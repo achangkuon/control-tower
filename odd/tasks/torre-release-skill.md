@@ -20,5 +20,6 @@ One skill, two lazily loaded parts: change-impact map and release procedure.
 
 - Tasks 1-3 written by gentle-ai-worker; audit script exit 0 (frontmatter, sections, links, 116 cited ranges, 11 assets, README one-liner identical), `git diff --check` exit 0. SKILL.md body ~575 tokens.
 - Build output folder set to `/home/emili/projects/control-tower/Releases/<TAG>` (maintainer decision relayed by the S210 session).
-- Commit: recorded in the work-unit commit of this branch.
+- Commit: `0b8f00e` (work-unit commit of tasks 1-4).
+- Native review `review-9f4d49d1dfe00c0b` (medium, lens reliability): approved and acknowledged (authority burned). Advisory, non-blocking: `R3-sandbox-auth` at `references/publicar.md:42-44` (sandbox HOME exports in the test block); follow-up.
 
