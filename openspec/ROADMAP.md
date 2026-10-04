@@ -67,7 +67,8 @@
 3. **S217** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
 
 ### Producto Torre (producto-torre)
-1. **S216** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
+1. **S203** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
+2. **S216** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1311,7 +1312,7 @@
 
 ### S203 — Cada proyecto puede prender o apagar la Torre desde el instalador.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/projects.mjs
   - Depende de: S215

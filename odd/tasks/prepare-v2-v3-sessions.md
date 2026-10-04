@@ -40,3 +40,12 @@ Base HEAD: 05673c4 (Front 2 restructure delivered and pushed).
   rule, state.go:238).
 - Pending outside this task: pista-entrega-ordenada.md still says V2 has no sessions (S203 exists);
   chanks-0-jornada decision deferred to V3 detail planning.
+
+## Follow-up decision (2026-10-04, maintainer)
+- S203 and S169 activated (diferida removed): they fit the approved V2 design as-is. V2 counts 6
+  sessions; S169 computes ready waiting its priority turn, S203 planned behind S215.
+- S4.12, S9.8, S107 stay diferida: V3 remains coarse and those two contracts still carry old-engine
+  wording; they get re-prepared when V3 enters detail planning (after V2 is done).
+- chanks-0-jornada decision frame recorded (Engram tower/jornada-v3-decision-frame): decide at V3
+  planning — recycled worktree (jornada style) vs new worktree per flight; if new, add a cleanup
+  section that removes the worktree once the flight is fully committed.
