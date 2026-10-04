@@ -12,9 +12,16 @@ const isCode = (config, rel) => config.code.extensions.includes(extname(rel))
 // vendored dot-directory (.opencode, .codegraph) is tool configuration that ships with
 // nothing. Walking the disk instead counted 953 files where the product has 70.
 const trackedFiles = (root) => git(root, "ls-files", "-z").split("\0").filter(Boolean)
-const topSegment = (rel) => rel.split(sep)[0]
+const segments = (rel) => rel.split(sep)
+const topSegment = (rel) => segments(rel)[0]
+// A test is a file that lives under a declared test directory at any depth, not only at
+// the root: `pkg/test/x.test.mjs` is a test. Matching is per whole segment, so `latest/`
+// or `test-utils/` are not test directories.
+const isTestFile = (config, rel) => segments(rel).some((segment) => config.code.testDirs.includes(segment))
 const isProductPath = (config, rel) =>
-  !topSegment(rel).startsWith(".") && !config.code.exclude.includes(topSegment(rel))
+  !topSegment(rel).startsWith(".") &&
+  !config.code.exclude.includes(topSegment(rel)) &&
+  !isTestFile(config, rel)
 
 const lineCount = (path) => {
   const body = readFileSync(path, "utf8")
@@ -173,7 +180,7 @@ export function measureRepository(root, { config, judgmentSha = null } = {}) {
     })
   })()
 
-  const testFiles = listUnder(tracked, config.code.testDirs, (rel) => isCode(config, rel))
+  const testFiles = tracked.filter((rel) => isTestFile(config, rel) && isCode(config, rel))
   const docLines = lines(listUnder(tracked, config.code.docDirs, (rel) => rel.endsWith(".md")))
 
   const git_ = measureGit(root, windowHours, judgmentSha, config.judgment, generatedPaths(config))
