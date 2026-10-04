@@ -2244,7 +2244,7 @@ sesiones:
     resultado: "La Torre adopta proyectos que comparten sus skills con un enlace interno y con permisos de grupo, y marca sola sus carpetas internas para que nunca se suban a git."
     autoridad: "Emilio aprobó el 2026-10-03 en esta Conversación adoptar ecom-ecuador y que la Torre marque sus carpetas internas como no subir en cualquier proyecto."
     depende_de: []
-    archivos: [product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs]
+    archivos: [product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/benchmark.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/test/projects.test.mjs]
     cimientos: []
     recurso: []
     encargo:

@@ -1449,7 +1449,7 @@
 - Coordinación:
   - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
-  - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs
+  - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/benchmark.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/test/projects.test.mjs
   - Depende de: —
   - Recursos: —
   - Ejecución: ODD nativo.
