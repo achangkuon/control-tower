@@ -331,10 +331,12 @@ function transactionFor(options, operation, before, next) {
   return { owned, verify, guard, notify, remember, makeDirectory, write, move, remove,
     transactionPath, temporaryLauncher, journal };
 }
+// A verified published tag may replace the recorded tag of byte-identical content:
+// a local checkout (S205) or an earlier published tag of an interface-only release.
 function promotesCheckout(before, release) {
-  const prior = before.versions.get(release?.provenance.sha256);
-  return Boolean(before.state && prior && prior.tag.startsWith("checkout-") &&
-    !release.provenance.tag.startsWith("checkout-"));
+  const prior = before.versions.get(release?.provenance.sha256), next = release?.provenance;
+  return Boolean(before.state && prior && !next.tag.startsWith("checkout-") && prior.tag !== next.tag &&
+    (prior.tag.startsWith("checkout-") || prior.repository === next.repository && prior.asset === next.asset));
 }
 function mutate(options, operation, release = null) {
   const before = inspect(options);

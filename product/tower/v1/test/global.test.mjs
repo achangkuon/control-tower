@@ -174,11 +174,20 @@ for (const boundary of ["provenance-promoted", "state-active", "readback", "fini
   expect(snapshot()).toEqual(before); expect(doctorGlobal(options).activeTag).toBe(first.acquire.tag);
 });
 
-test("S205 equal digests with non-checkout or checkout target provenance still conflict", () => {
+test("S212 an interface-only release re-tags an identical published package instead of conflicting", () => {
+  const first = acquisition("retag", { tag: "v1.2.2" }); installGlobal({ ...options, acquire: first.acquire });
+  const wire = fs.readFileSync(join(version(first.id), "release.json"));
+  expect(updateGlobal({ ...options, acquire: { ...first.acquire, tag: "v1.2.3" } })).toMatchObject({ status: "promoted", tag: "v1.2.3", active: first.id });
+  expect(fs.readFileSync(join(version(first.id), "release.json"))).toEqual(wire);
+  expect(doctorGlobal(options).activeTag).toBe("v1.2.3");
+  expect(updateGlobal({ ...options, acquire: { ...first.acquire, tag: "v1.2.3" } }).status).toBe("unchanged");
+});
+
+test("S205 equal digests with a checkout target or a foreign repository still conflict", () => {
   const first = acquisition("conflict"); installGlobal({ ...options, acquire: first.acquire });
   const before = snapshot();
-  for (const tag of ["v1.2.0", "checkout-abcdef123456"]) {
-    expect(() => updateGlobal({ ...options, acquire: { ...first.acquire, tag } })).toThrow("version provenance conflict");
+  for (const acquire of [{ ...first.acquire, tag: "checkout-abcdef123456" }, { ...first.acquire, tag: "v9.9.9", repository: "foreign/repository" }]) {
+    expect(() => updateGlobal({ ...options, acquire })).toThrow(/version provenance conflict|repository/);
     expect(snapshot()).toEqual(before);
   }
 });
