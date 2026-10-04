@@ -14,8 +14,8 @@ this is subordinate ODD execution continuity.
 - Investigation reports (S180/S181) are the only writes for those sessions; sources read-only.
 
 ## Tasks
-- [ ] T1 S175 — Resolver Radar fuera del checkout (.githooks/pre-push, test/pre-push-plan-gate.test.mjs). Depends: none.
-- [ ] T2 S176 — Invalidar verde anterior sin resumen (agent-workflows/radiografia/cli.mjs, agent-workflows/test/cli.test.mjs). Depends: T1.
+- [x] T1 S175 — delivered: edaa4e0 (planning contracts) + 51d38d0 (hook fix), branch frente-1/resolucion-problemas; native review approved/burned; push pending maintainer decision.
+- [x] T2 S176 — delivered: 0ee4bf5 (cache invalidation), branch frente-1/resolucion-problemas; native review review-53f938c299e02f21 approved/burned; push pending maintainer decision.
 - [ ] T3 S177 — Rotular diseño histórico en ROADMAP raíz. Depends: T2.
 - [ ] T4 S178 — Radiografía ocasional sin porcentaje de instalación + conteo anidado. Depends: T2.
 - [ ] T5 S179 — Cobertura de suites y prerrequisitos portables (Bun/Go/Python obligatorios). Depends: T1.
