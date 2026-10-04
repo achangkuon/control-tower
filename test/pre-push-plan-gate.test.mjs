@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { spawnSync } from "node:child_process"
@@ -69,6 +69,15 @@ const withRadar = (work, executable) => ({
   ...process.env,
   RADAR_BIN: radarWrapper(join(work, "openspec", "plan.yaml"), executable),
   HOME: "/nonexistent-home-for-gate-test",
+  PATH: [process.env.CT_GIT_PROXY_DIR, "/usr/bin", "/bin"].filter(Boolean).join(":"),
+})
+
+// The gate must find no trusted radar at all: PATH carries none, RADAR_BIN is cleared and
+// HOME does not hold the fixed install location. Tests then add exactly one candidate back.
+const noTrustedRadar = (work) => ({
+  ...process.env,
+  RADAR_BIN: "",
+  HOME: join(work, "empty-home"),
   PATH: [process.env.CT_GIT_PROXY_DIR, "/usr/bin", "/bin"].filter(Boolean).join(":"),
 })
 
@@ -251,6 +260,118 @@ test("an executable planted inside the working tree is never run", () => {
   expect(existsSync(marker)).toBe(false)
   expect(result.stderr).toContain("se omite la validación del plan")
   expect(result.status).toBe(0)
+})
+
+// S175. The promise is stronger than "no repo-relative lookup": every candidate is
+// resolved to the destination the kernel would execute, and any destination inside the
+// tree being pushed is discarded. RADAR_BIN is chosen by the user, but a user can be
+// tricked into pointing it at a checked-out file, so it gets the same treatment as PATH.
+const plantedRadar = (work, directory) => {
+  const marker = join(work, "planted-ran")
+  const planted = join(directory, "radar")
+  mkdirSync(directory, { recursive: true })
+  writeFileSync(planted, `#!/bin/sh\ntouch ${JSON.stringify(marker)}\nexit 0\n`, { mode: 0o755 })
+  return { marker, planted }
+}
+
+test("an absolute RADAR_BIN inside the working tree is never run", () => {
+  const { origin, work } = scenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+
+  const { marker, planted } = plantedRadar(work, join(work, "tools"))
+  commit(work, "invalid plan with an absolute RADAR_BIN inside the tree")
+
+  const result = push(work, [], { ...noTrustedRadar(work), RADAR_BIN: planted })
+
+  expect(existsSync(marker)).toBe(false)
+  expect(result.stderr).toContain("se omite la validación del plan")
+  expect(result.status).toBe(0)
+  expect(originCommits(origin)).toContain("absolute RADAR_BIN inside the tree")
+})
+
+// A relative candidate is resolved against the hook's cwd, which git sets to the root of
+// the working tree. It must not escape the containment check by being relative.
+test("a relative RADAR_BIN inside the working tree is never run", () => {
+  const { origin, work } = scenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+
+  const { marker } = plantedRadar(work, join(work, "tools"))
+  commit(work, "invalid plan with a relative RADAR_BIN inside the tree")
+
+  const result = push(work, [], { ...noTrustedRadar(work), RADAR_BIN: "tools/radar" })
+
+  expect(existsSync(marker)).toBe(false)
+  expect(result.stderr).toContain("se omite la validación del plan")
+  expect(result.status).toBe(0)
+  expect(originCommits(origin)).toContain("relative RADAR_BIN inside the tree")
+})
+
+// The candidate path can look external while the kernel would still execute a file inside
+// the tree. Resolving symlinks before the containment check is what closes that gap.
+test("a RADAR_BIN symlink resolving into the working tree is never run", () => {
+  const { origin, work } = scenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+
+  const { marker, planted } = plantedRadar(work, join(work, "tools"))
+  commit(work, "invalid plan with a RADAR_BIN symlink into the tree")
+
+  const outside = join(temporaryDirectory("pre-push-radar-symlink-"), "radar")
+  symlinkSync(planted, outside)
+
+  const result = push(work, [], { ...noTrustedRadar(work), RADAR_BIN: outside })
+
+  expect(existsSync(marker)).toBe(false)
+  expect(result.stderr).toContain("se omite la validación del plan")
+  expect(result.status).toBe(0)
+  expect(originCommits(origin)).toContain("RADAR_BIN symlink into the tree")
+})
+
+// A PATH entry can be a directory inside the checkout just as easily as RADAR_BIN can be a
+// file there. `command -v` reports the path; the hook must still refuse to run it.
+test("a PATH entry inside the working tree is never run", () => {
+  const { origin, work } = scenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+
+  const plantedDirectory = join(work, "tools", "bin")
+  const { marker } = plantedRadar(work, plantedDirectory)
+  commit(work, "invalid plan with a PATH entry inside the tree")
+
+  const environment = {
+    ...noTrustedRadar(work),
+    PATH: [process.env.CT_GIT_PROXY_DIR, plantedDirectory, "/usr/bin", "/bin"].filter(Boolean).join(":"),
+  }
+  const result = push(work, [], environment)
+
+  expect(existsSync(marker)).toBe(false)
+  expect(result.stderr).toContain("se omite la validación del plan")
+  expect(result.status).toBe(0)
+  expect(originCommits(origin)).toContain("PATH entry inside the tree")
+})
+
+// Positive control for the containment check: a radar that really lives outside the tree,
+// at the fixed install location under HOME, is still found and still runs the gate.
+test("an external radar outside the tree is resolved and the gate runs", () => {
+  const { origin, work } = scenario()
+  mkdirSync(join(work, "openspec"), { recursive: true })
+  writeFileSync(join(work, "openspec", "plan.yaml"), brokenPlan)
+  commit(work, "invalid plan with an external radar")
+
+  const marker = join(temporaryDirectory("pre-push-external-marker-"), "ran")
+  const home = temporaryDirectory("pre-push-external-home-")
+  const installed = join(home, ".local", "bin", "radar")
+  mkdirSync(join(home, ".local", "bin"), { recursive: true })
+  writeFileSync(installed, `#!/bin/sh\ntouch ${JSON.stringify(marker)}\nexit 3\n`, { mode: 0o755 })
+
+  const result = push(work, [], { ...noTrustedRadar(work), HOME: home })
+
+  expect(existsSync(marker)).toBe(true)
+  expect(result.status).not.toBe(0)
+  expect(result.stderr).toContain("el plan no valida")
+  expect(originCommits(origin)).not.toContain("invalid plan with an external radar")
 })
 
 // `core.hooksPath` is per-clone configuration and does not travel with the repository, so a

@@ -94,22 +94,69 @@ if [ "$gated" -eq 1 ] && [ -n "$hook_dir" ] && [ "$hook_dir" = "$root_hooks_dir"
 fi
 
 # ── 2. The plan gate — this one BLOCKS ───────────────────────────────────────
+# Resolve a path to the destination the kernel would actually execute: absolute, with
+# every symlink on the way followed. `readlink -f` is not portable and `realpath` is not
+# guaranteed either, so this walks the components with `pwd -P` and `readlink`, which
+# POSIX does specify. Exits non-zero when the path cannot be resolved.
+real_destination() {
+  _rd_path=$1
+  case "$_rd_path" in
+    /*) ;;
+    *) _rd_path="$(pwd)/$_rd_path" ;;
+  esac
+  _rd_hops=0
+  while [ "$_rd_hops" -lt 40 ]; do
+    _rd_hops=$((_rd_hops + 1))
+    _rd_dir=$(CDPATH= cd -P "$(dirname "$_rd_path")" 2>/dev/null && pwd -P) || return 1
+    _rd_path=$_rd_dir/$(basename "$_rd_path")
+    [ -L "$_rd_path" ] || break
+    _rd_link=$(readlink "$_rd_path") || return 1
+    case "$_rd_link" in
+      /*) _rd_path=$_rd_link ;;
+      *) _rd_path=$_rd_dir/$_rd_link ;;
+    esac
+  done
+  [ -e "$_rd_path" ] || return 1
+  printf '%s\n' "$_rd_path"
+}
+
+# True when $1 is $2 or lives under it. A literal prefix comparison, not a glob, so paths
+# carrying shell metacharacters are still compared as text.
+path_inside() {
+  [ "$1" = "$2" ] && return 0
+  _pi_suffix=${1#"$2"/}
+  [ "$_pi_suffix" != "$1" ]
+}
+
 # No plan, no gate: a project that never adopted the method is not failing it. Same for
 # a machine without radar — a missing tool is not a broken plan, so it warns and passes.
 if [ -f "$root/openspec/plan.yaml" ]; then
-  # Engine lookup. NEVER resolve the binary from inside the working tree: a hook that
+  # Engine lookup. NEVER execute a binary from inside the working tree: a hook that
   # prefers a repo-relative executable runs whatever a checked-out branch happens to
-  # carry, which is binary planting with the contributor's own privileges. Only these
-  # three sources are trusted, and every one of them is chosen by the user, not by the
-  # content being pushed: PATH, an explicit RADAR_BIN, and the fixed install location.
+  # carry, which is binary planting with the contributor's own privileges. Only three
+  # sources are trusted — PATH, an explicit RADAR_BIN, and the fixed install location —
+  # and every one of them is chosen by the user, not by the content being pushed. Even
+  # then a candidate is resolved to its real destination first: RADAR_BIN and PATH both
+  # accept relative paths and symlinks, and either can end inside the tree being pushed.
+  root_real=$(real_destination "$root" 2>/dev/null) || root_real=$root
   radar=""
-  if command -v radar >/dev/null 2>&1; then
-    radar="radar"
-  elif [ -n "${RADAR_BIN:-}" ] && [ -x "${RADAR_BIN:-}" ]; then
-    radar="$RADAR_BIN"
-  elif [ -x "$HOME/.local/bin/radar" ]; then
-    radar="$HOME/.local/bin/radar"
-  fi
+  try_radar() {
+    [ -n "$1" ] && [ -x "$1" ] || return 1
+    _tr_destination=$(real_destination "$1") || return 1
+    if path_inside "$_tr_destination" "$root_real"; then
+      printf 'radar: candidato dentro del checkout, se descarta: %s\n' "$1" >&2
+      return 1
+    fi
+    radar=$1
+  }
+  # `command -v` can name a builtin, an alias or a function rather than a file; only a
+  # path can be resolved and executed, so anything without a slash is ignored.
+  path_radar=$(command -v radar 2>/dev/null) || path_radar=""
+  case "$path_radar" in */*) ;; *) path_radar="" ;; esac
+  try_radar "$path_radar" ||
+    try_radar "${RADAR_BIN:-}" ||
+    try_radar "$HOME/.local/bin/radar" ||
+    :
 
   if [ -z "$radar" ]; then
     printf 'radar: no encontrado, se omite la validación del plan. El push sigue.\n' >&2
