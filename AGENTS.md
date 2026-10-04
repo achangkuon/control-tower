@@ -128,18 +128,21 @@ El despacho por Herdr, los handoffs entre workers Pi y los parches de issue por 
 de workers, viven en `agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/`
 (`references/worker-pool.md`). Para trabajo paralelo ordinario usá `chanks-3-paralelo`.
 
+**Uso manual de Herdr (por ahora).** El despacho automático sigue siendo V3, pero si
+el mantenedor pide Herdr de forma explícita —"usá Herdr", "abri un panel en Herdr"—
+cargá la skill `herdr` (Pi: `~/.pi/agent/skills/herdr/SKILL.md`; requiere estar
+corriendo dentro de Herdr, `HERDR_ENV=1`) y atendé sólo lo pedido. Eso es una
+solicitud manual de terminal, no habilita despacho automático de Sesiones ni
+topología Torre: para eso sigue rigiendo el diferimiento a V3.
+
 Cuando una Sesión recibe o detecta una fricción, mientras conserva el contexto fresco
 busca issues abiertos y cerrados de `achangkuon/control-tower`. Si existe el tracker
 sistémico de la misma causa, lo actualiza; si no, crea un `Friction Report` sanitizado,
 sin secretos ni datos personales, y hace readback para verificar el efecto. Capturar o
 actualizar un issue no autoriza a repararlo.
 
-Al cerrar una entrega, reinstalá herramientas según las rutas que tocó:
-
-| Rutas tocadas | Acción posterior a la entrega |
-|---|---|
-| `agent-workflows/tools/radar/` | Ejecutar `agent-workflows/tools/install-radar.sh`. |
-| `agent-workflows/skills/` o `agent-workflows/templates/` | Pedir confirmación humana antes de reinstalar skills; sólo entonces ejecutar `python3 agent-workflows/tools/install.py` y `python3 agent-workflows/tools/install.py --check`. Las skills propias se editan ahí y el instalador las deja en la carpeta central `~/.agents/skills`; Claude Code llega por symlinks por skill, y OpenCode, Codex y Pi la leen directo. |
+Al cerrar una entrega, reinstalá herramientas según las rutas que tocó — la tabla
+completa está en la sección **Mantenedor de la Torre**, al final del archivo.
 
 ## Preferencias de ejecución y presupuesto de cambio
 
@@ -202,11 +205,10 @@ contra el que lo verificaste. Si entran commits que cambian el producto después
 ese sello, el informe lo avisa solo, igual que avisa un árbol sucio o una suite
 registrada en otro commit.
 
-**Publicación.** El informe se publica como Artifact en claude.ai y **sólo Claude Code
-puede publicarlo** — es una herramienta suya. Los demás agentes lo generan y lo dejan
-en disco; el mantenedor lo abre local con `xdg-open radiografia.html`, y la próxima
-sesión de Claude Code lo republica a la misma URL. Que un agente no pueda publicar
-no es motivo para saltear la generación.
+### Publicación
+
+La publicación del informe es mantenimiento de fábrica — está en la sección
+**Mantenedor de la Torre**, al final del archivo.
 
 ## Declaración de política — forma legible por máquina
 
@@ -298,6 +300,49 @@ default seguro — hasta que rebasee sobre `master`.
 Poné `policy: "strict"` en `.doc-guard.json` (o borrá el archivo) y eliminá esta
 sección. El default global del hook es `strict`: cualquier repo que no declare
 nada exige PR, así que los proyectos delicados no dependen de este archivo.
+
+<!-- mantenedor:control-tower -->
+## Mantenedor de la Torre — perspectiva de fábrica
+
+Esta sección es del mantenedor: cómo se crea, mejora y publica la Torre misma.
+No forma parte de la política de entrega del repo y **no viaja en las
+actualizaciones**: la release de la Torre sólo reemplaza el bloque generado
+`control-tower:project-workflow` del final de este archivo; todo lo demás, esta
+sección incluida, sobrevive intacto. Las reglas del resto del archivo siguen
+rigiendo a cualquier agente que trabaje acá, estén o no citadas acá.
+
+### Editar la Torre
+
+- Skills propias V1: se editan en `agent-workflows/skills/`; las diferidas en
+  `agent-workflows/skills-diferidas/`. El instalador las deja en la carpeta central
+  `~/.agents/skills`; Claude Code llega por symlinks por skill, y OpenCode, Codex y
+  Pi la leen directo. Nunca borres y recopies directorios runtime.
+- Antes de evaluar o publicar un cambio de la Torre, cargá la skill personal
+  `torre-release`: mapa de impacto (`references/impacto.md`) y receta de
+  publicación (`references/publicar.md`). Push, publicación y actualización de la
+  máquina real exigen autorización humana explícita y separada.
+- Nunca muevas ni sobrescribas un tag publicado; contenido idéntico con otro tag
+  usa promoción de procedencia.
+
+### Reinstalación de herramientas tras una entrega
+
+Al cerrar una entrega en este repo, cualquier agente reinstala las herramientas
+según las rutas que tocó:
+
+| Rutas tocadas | Acción posterior a la entrega |
+|---|---|
+| `agent-workflows/tools/radar/` | Ejecutar `agent-workflows/tools/install-radar.sh`. |
+| `agent-workflows/skills/` o `agent-workflows/templates/` | Pedir confirmación humana antes de reinstalar skills; sólo entonces ejecutar `python3 agent-workflows/tools/install.py` y `python3 agent-workflows/tools/install.py --check`. Las skills propias se editan ahí y el instalador las deja en la carpeta central `~/.agents/skills`; Claude Code llega por symlinks por skill, y OpenCode, Codex y Pi la leen directo. |
+
+### Publicación de la radiografía
+
+El informe se publica como Artifact en claude.ai y **sólo Claude Code puede
+publicarlo** — es una herramienta suya. Los demás agentes lo generan y lo dejan
+en disco; el mantenedor lo abre local con `xdg-open radiografia.html`, y la
+próxima sesión de Claude Code lo republica a la misma URL. Que un agente no
+pueda publicar no es motivo para saltear la generación.
+
+<!-- /mantenedor:control-tower -->
 
 <!-- control-tower:project-workflow -->
 ## Control Tower V1 — project workflow (generated by Control Tower v1.2.5; do not edit by hand)
