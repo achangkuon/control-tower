@@ -12,20 +12,20 @@
 
 ## Avance
 - **Total:** 88% (138/156 S)
-- 8 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
 - **Capacidades:** — (sin Sesiones enumeradas)
-- **cimientos:** 75% (6/8 S)
+- **cimientos:** 66% (6/9 S)
 - **Contratos:** 100% (1/1 S)
 - **Enrolamiento:** — (sin Sesiones enumeradas)
 - **Entrega:** — (sin Sesiones enumeradas)
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (44/46 S)
-- **Producto Torre:** 90% (30/33 S)
+- **Método:** 91% (44/48 S)
+- **Producto Torre:** 88% (30/34 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -42,6 +42,7 @@
 
 ### cimientos (cimientos)
 1. **S177** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Distinguir diseño histórico y autoridad vigente en el ROADMAP raíz.
+2. **S179** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Definir cobertura de suites y prerrequisitos portables de entrega.
 
 ### Contratos (contratos)
 - Sin Sesiones abiertas.
@@ -63,6 +64,8 @@
 
 ### Método (metodo)
 1. **S176** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
+2. **S178** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Ajustar Radiografía ocasional sin porcentaje de instalación y preparar pruebas anidadas.
+3. **S180** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Investigar la necesidad directa del SDK y guardar evidencia sustantiva.
 
 ### Producto Torre (producto-torre)
 - Sin Sesiones abiertas.
@@ -72,10 +75,6 @@
 - **S215:** Encargo incompleto: falta planificar · falta-planificar (S215)
 - **S216:** Encargo incompleto: falta planificar · falta-planificar (S216)
 - **S217:** Encargo incompleto: falta planificar · falta-planificar (S217)
-- **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
-- **S179:** Encargo incompleto: falta planificar · falta-planificar (S179)
-- **S180:** Encargo incompleto: falta planificar · falta-planificar (S180)
-- **S181:** Encargo incompleto: falta planificar · falta-planificar (S181)
 
 ## Rutas
 - **S1.20:** propuesta direct (decision 104 and Engram observation 10008); revalidada direct sobre 89b75cccbee3a3fffe371e776a68f9a62c7912fe con evidencia The read-only Tower-mode contract remained fully specified after rebasing onto current master; upstream S100 changed disjoint schema/test paths, while S1.20 preserved its verified bytes and stayed limited to core.mjs and test/lifecycle.test.mjs..
@@ -1561,55 +1560,59 @@
 
 ### S178 — Ajustar Radiografía ocasional sin porcentaje de instalación y preparar pruebas anidadas.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S178)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S175)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: radiografia.json, agent-workflows/radiografia/measure.mjs, agent-workflows/test/measure.test.mjs
   - Depende de: S176
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: La medición actual excluye sólo pruebas de nivel superior y radiografia.json conserva un payload legacy. El maintainer resolvió quitar installed-share: Radiografía queda como informe ocasional bajo demanda para cierre/auditoría, no como dashboard diario. config.mjs y measure.mjs ya admiten payload:null.
-  - Resultado y comportamiento: Deshabilitar share mediante payload:null, sin porcentaje de instalación ni rediseño del motor compartido. Preparar la semántica exacta del conteo de pruebas anidadas y verificarla con pruebas enfocadas de measure, sin publicar cifras inferidas. La generación opcional y su documentación operativa corresponden a S179, no a esta Sesión.
-  - Restricciones y decisiones: Encargo incompleto: resta preparación técnica de la semántica de conteo de pruebas anidadas y de los archivos finales exactos; los archivos conocidos no autorizan ejecución ni capacidad paralela. La decisión de deshabilitar share reemplaza la pregunta V1/legacy/ambos: no crear un nuevo denominador, taxonomía, manifiesto o API ni ampliar el motor compartido. El HTML histórico verde en render.mjs:48–51,123 es evidencia pendiente de decisión de alcance, no autoridad para repararlo ni para ampliar S176.
-  - Referencias: radiografia.json; soporte payload:null en agent-workflows/radiografia/config.mjs y measure.mjs; agent-workflows/test/measure.test.mjs y cli.test.mjs como evidencia de pruebas. agent-workflows/radiografia/render.mjs:48–51,123 como evidencia histórica, no superficie de escritura; S179 para operación opcional.
+  - Resultado y comportamiento: Deshabilitar share mediante "payload": null en radiografia.json:13, sin porcentaje de instalación ni rediseño del motor compartido; el soporte ya existe (config.mjs:27,33-34; measure.mjs:94-95,171-184) y render.mjs:43,57-59,218-220 ya omite las celdas sin shipping. Semántica de conteo de pruebas anidadas preparada: contar como prueba todo archivo de código cuyo camino relativo tenga algún segmento igual a una entrada de code.testDirs (hoy sólo matchea el primer segmento en measure.mjs:15,23-24,180 con defaults de config.mjs:21); esas líneas pasan de producto a tests (~21 archivos anidados reales en agent-workflows/test/, agent-workflows/tests/chanks/ y product/tower/v1/test/). Sin nuevo denominador, taxonomía, manifiesto ni API; verificar con pruebas enfocadas de measure antes de cifras. La generación opcional y su documentación operativa corresponden a S179, no a esta Sesión.
+  - Restricciones y decisiones: Contrato preparado: semántica de conteo anidada y archivos finales definidos (radiografia.json, measure.mjs y agent-workflows/test/measure.test.mjs; render.test.mjs:9,174-177 queda como evidencia de cobertura, sin edición prevista). La decisión de deshabilitar share reemplaza la pregunta V1/legacy/ambos: no crear un nuevo denominador, taxonomía, manifiesto o API ni ampliar el motor compartido. Las celdas de share de render.mjs:57-59,218-220 son evidencia de la decisión tomada, no superficie de ampliación ni de S176; S179 lleva la operación opcional. Revalidar el pronóstico antes de implementar.
+  - Referencias: radiografia.json:13 (payload legacy a anular); soporte payload:null en agent-workflows/radiografia/config.mjs:27,33-34 y measure.mjs:94-95,171-184; conteo actual de tests por primer segmento en measure.mjs:15,23-24,180 con defaults de config.mjs:21; suite y caché en cli.mjs:11-32; cobertura existente de share/payload en agent-workflows/test/measure.test.mjs:221,231-254,323-336 y render.test.mjs:174-177; celdas de share en render.mjs:43,57-59 y 218-220. S179 para operación opcional.
 
 ### S179 — Definir cobertura de suites y prerrequisitos portables de entrega.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S179)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S175)
+  - Zona/Área: cimientos · —
+  - Archivos autorizados: .githooks/pre-push, test/pre-push-plan-gate.test.mjs, package.json, AGENTS.md
   - Depende de: S175
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: El gate sólo ejecuta Bun; Go de Radar y Python de composición son separados. Python depende de repositorios hermanos/versión fijada y algunos tests omiten un binario SDD nativo cuando falta. Se conoce el fallo base/main de GenuineCompositionTests.test&#95;fresh&#95;normal&#95;startup&#95;and&#95;policy: no afirmar que todo pasó ni atribuirle una causa raíz de producto confirmada.
-  - Resultado y comportamiento: Retener checks obligatorios de Bun, Go y Python antes de publicar; si falta una herramienta requerida, bloquear con explicación. En la implementación futura quitar la generación automática del informe en pre-push y mantener su generación opcional bajo demanda independiente de los checks. Documentar en AGENTS.md sólo la operación de checks obligatorios e informe opcional. Distinguir falla, no medido y omisión sin anunciar un verde falso. Comandos futuros esperados: bun run test; go test ./... desde agent-workflows/tools/radar; PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s agent-workflows/tests -v. No ejecutarlos en esta planificación.
-  - Restricciones y decisiones: Encargo incompleto: falta preparación técnica de prerrequisitos portables, omisiones internas y pruebas del gate; no falta la decisión sobre suites obligatorias. AGENTS.md se limita a la prosa operativa indicada. No autoriza cambios Python/setup, instalaciones de terceros, mutaciones del HOME real ni modificar la política de resolución de Radar de S175. No cambiar scripts/tests antes de la preparación; ausencia ambiental no equivale por sí misma a bug del producto. El informe opcional nunca sustituye los checks.
-  - Referencias: .githooks/pre-push, test/pre-push-plan-gate.test.mjs, package.json y AGENTS.md; suites Go de agent-workflows/tools/radar y Python de agent-workflows/tests. Fallo base/main conocido de GenuineCompositionTests.test&#95;fresh&#95;normal&#95;startup&#95;and&#95;policy como evidencia pendiente de diagnóstico, no afirmación de causa raíz ni de verde total.
+  - Resultado y comportamiento: Retener checks obligatorios de Bun, Go y Python antes de publicar; si falta una herramienta requerida, bloquear con explicación. Prerrequisitos portables preparados: bun (ya bloquea hoy en pre-push:46-49), go con piso go.mod:4 (1.26) y python3; radar conserva la política de resolución de S175 y su paso con aviso si falta. Omisiones internas inventariadas para el tratamiento falla/sin medir/omitido: skipUnless del binario SDD nativo (test&#95;puente&#95;sdd&#95;start.py:14,215) y skipTest del intérprete Hermes PyYAML (test&#95;personal&#95;config.py:176,188,218); el fallo ambiental de GenuineCompositionTests (test&#95;personal&#95;pi&#95;composition.py:92-106, depende de checkouts hermanos pi-v2 y gentle-pi o sus overrides de entorno) se diagnostica o bloquea, nunca se anuncia verde. En la implementación futura quitar la generación automática del informe en pre-push y mantener su generación opcional bajo demanda independiente de los checks. Documentar en AGENTS.md sólo la operación de checks obligatorios e informe opcional. Distinguir falla, no medido y omisión sin anunciar un verde falso. Comandos futuros esperados: bun run test; go test ./... desde agent-workflows/tools/radar; PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s agent-workflows/tests -v. No ejecutarlos en esta planificación.
+  - Restricciones y decisiones: Contrato preparado: prerrequisitos portables, omisiones internas y superficie de pruebas del gate definidos; no falta la decisión sobre suites obligatorias. Las pruebas del gate se preparan sobre los seams existentes de test/pre-push-plan-gate.test.mjs (scenario/withRadar/ radarWrapper :31-84), que hoy cubren sólo el gate de plan y dependen de Go para compilar radar (:23-29). AGENTS.md se limita a la prosa operativa indicada. No autoriza cambios Python/setup, instalaciones de terceros, mutaciones del HOME real ni modificar la política de resolución de Radar de S175. No cambiar scripts/tests antes de la implementación; ausencia ambiental no equivale por sí misma a bug del producto. El informe opcional nunca sustituye los checks.
+  - Referencias: .githooks/pre-push (gate de suite :41-93, gate de plan :98-172, informe opcional :174-196), test/pre-push-plan-gate.test.mjs, package.json (scripts.test, sin engines) y AGENTS.md; suites Go de agent-workflows/tools/radar (go.mod:4, yaml.v3) y Python stdlib de agent-workflows/tests (unittest discover; antecedente de invocación aislada en odd/tasks/s197-single-installer-transition.md:25-37). Fallo base/main conocido de GenuineCompositionTests.test&#95;fresh&#95;normal&#95;startup&#95;and&#95;policy (test&#95;personal&#95;pi&#95;composition.py:92-106) como evidencia pendiente de diagnóstico, no afirmación de causa raíz ni de verde total.
 
 ### S180 — Investigar la necesidad directa del SDK y guardar evidencia sustantiva.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S180)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S175)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: odd/tasks/s180-sdk-dependency-investigation.md
   - Depende de: S177
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: El uso aparentemente limitado a tests no demuestra que una dependencia esté muerta. Investigar la necesidad directa del SDK desde manifiestos raíz y .opencode, imports, reexports y callers. Plugin, ajv y yaml tienen consumidores conocidos; no inferir su eliminación. La historia tampoco convierte product/tower/generic u openspec/archive en basura.
   - Resultado y comportamiento: Guardar un informe sustantivo en odd/tasks/s180-sdk-dependency-investigation.md con identidad del checkout, fuentes examinadas, método, evidencia, clasificación justificada y limitaciones. Clasificar necesario, incierto u obsoleto sólo con prueba verificable. No es un índice de estado. El OID del informe integrado es entrega Git legítima registrada por el coordinador existente, no un commit ficticio de código; Engram solo no cierra la Sesión.
-  - Restricciones y decisiones: Encargo incompleto: faltan inventario exacto de fuentes del SDK y comandos de lectura. La única escritura futura autorizada es el informe declarado, bajo el prefijo odd/tasks/ de la Zona metodo, verificado por scout; no crearlo en esta planificación. Fuentes y entorno permanecen sólo lectura. Sin borrados, upgrades, reinstalaciones, limpieza legacy, reparación V2 ni mutaciones del HOME real. Hallazgos no autorizan reparaciones ni cambios de dependencias; no afirmar capacidad paralela antes de cerrar preparación.
-  - Referencias: Manifiestos raíz/.opencode e imports, reexports y callers del SDK como fuentes de investigación; consumidores conocidos de plugin, ajv y yaml. odd/tasks/s180-sdk-dependency-investigation.md como informe, no estado; openspec/archive permanece histórico y de sólo lectura.
+  - Restricciones y decisiones: Contrato preparado: inventario de fuentes del SDK y comandos de lectura definidos. El SDK es @opencode-ai/sdk@1.18.13, declarado sólo en package.json:11 con cero imports directos en el árbol; su único consumidor observable es el assertion de manifiesto en test/plugin/tower-spike.test.mjs:157, y el plugin depende de él transitivamente (bun.lock:30), lo que enmascara la necesidad. El doc de mantenimiento openspec/maintenance/2026-08-05-s5-1-core-scope-investigation.md:165,169 afirma imports que el árbol actual no tiene: clasificar con git log -S y citar el árbol observado, nunca el doc. La única escritura futura autorizada es el informe declarado, bajo el prefijo odd/tasks/ de la Zona metodo, verificado por scout; no crearlo en esta planificación. Fuentes y entorno permanecen sólo lectura. Sin borrados, upgrades, reinstalaciones, limpieza legacy, reparación V2 ni mutaciones del HOME real; quitar la dependencia exigiría cambiar el test que la fija y no está autorizado por esta Sesión. Hallazgos no autorizan reparaciones ni cambios de dependencias; no afirmar capacidad paralela antes de cerrar preparación.
+  - Referencias: Manifiestos: package.json:10-13 y bun.lock:9,30,32; .opencode/ sin manifiesto (agent/support-agent.md, plugins/tower-spike.js) y extensions/pi/package.json sin dependencias. Imports directos de plugin (plugin/tower-spike.js:4, test/host-adapters.test.mjs:7, .opencode/plugins/tower-spike.js:1), de ajv (contracts/schema-registry.mjs:1, contracts/host-runtime/schema-registry.mjs:1, jornada/execution-contract.mjs:1 y sus tests) y de yaml (contracts/canonicalize.mjs:2, contracts/validate.mjs:1, policy/delivery-policy.mjs:4 y sus tests). Comandos de lectura propuestos: rg '@opencode-ai/sdk&#124;@opencode-ai/plugin' fuera de node&#95;modules y openspec/archive; rg 'sdk/v2&#124;createOpencodeClient&#124;OpencodeClient'; ls node&#95;modules/@opencode-ai; git log --oneline -S '@opencode-ai/sdk' -- '&#42;.js' '&#42;.mjs' '&#42;.ts'. odd/tasks/s180-sdk-dependency-investigation.md como informe, no estado; openspec/archive permanece histórico y de sólo lectura.
 
 ### S181 — Revisar V1 publicada: instalación, reversibilidad y documentación residual.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S181)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/reviews/s181-v1-residual-review.md
   - Depende de: S150
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: La revisión residual de instalación, reversibilidad y documentación debe consumir la evidencia entregada de S205–S213, sin repetir construcción ni el smoke rutinario de release. El objetivo es la última V1 publicada al inicio de la revisión; entonces se congela la identidad exacta, no ahora ni a partir de assets untracked o HEAD sin tag por sí solos.
   - Resultado y comportamiento: Guardar en product/tower/v1/reviews/s181-v1-residual-review.md un informe sustantivo con identidad publicada congelada, identidades del instalador, benchmark y README, fuentes, método, comprobaciones residuales aisladas, evidencia, hallazgos y limitaciones; no un índice de estado. Contrastar instalación, reversibilidad y documentación contra esas interfaces finales. El OID del informe integrado es evidencia legítima que registra la maquinaria de cierre existente. Los hallazgos nunca autorizan reparaciones: requieren aprobación humana nueva y alcance propio.
-  - Restricciones y decisiones: Encargo incompleto: resta preparación técnica de adquisición y fijación de identidades de release, instalador, benchmark y README, interfaces finales y comprobaciones residuales aisladas explícitas. Única escritura futura: el informe bajo product/tower/ de la Zona producto-torre, verificado por scout; no crearlo ahora. Fuentes y entorno sólo lectura: sin instalación global ni escrituras en HOME real, terceros o producción. Fixtures desechables requieren preparación posterior explícita. No duplicar construcción ni smoke rutinario; assets untracked o HEAD sin tag no bastan como identidad publicada. El conflicto B4 es sólo evidencia de revisión: no autoriza quitar firmas ni reparar código. No inferir capacidad paralela.
-  - Referencias: Entregas S205–S213; README.md:273–275 (contradicción update-skills) y product/tower/v1/INSTALL-AGENTS.md:10–18 (afirmación de configuración global) como evidencia de revisión, no reparaciones autorizadas. B4 de docs/architecture/definiciones-v1-v2-v3.md frente a product/tower/v1/bundle.mjs:72–75 y runtime-config.mjs:335–337, sólo evidencia. product/tower/v1/release-build.mjs:134–142,285–286 como evidencia relevante de identidad. product/tower/v1/reviews/s181-v1-residual-review.md como informe sustantivo cuya integración registra el cierre existente.
+  - Restricciones y decisiones: Contrato preparado: adquisición y fijación de identidad, interfaces finales y comprobaciones residuales aisladas definidas. Adquisición al inicio de la revisión: git tag --list 'v1&#42;' más verificación remota (gh release list / git ls-remote --tags); las referencias locales muestran 10 tags v1.0.0-v1.2.5 con v1.2.5 -&gt; 7ad0510 como más nuevo, pero el estado remoto se re-verifica y se congela recién entonces. Fijar: tag, commit del recibo de build (release-build.mjs:285-286), digests del asset y del instalador y de los 4 TUI (stampInstaller release-build.mjs:134-142, sentinel install.mjs:8; builds archivados fuera del repo en Releases/&lt;TAG&gt;/ según agent-workflows/skills-personales/torre-release/references/publicar.md:89,116-133). Comprobaciones aisladas sin HOME real: --dry-run offline del instalador sellado (install.mjs:136-138,159,179; cli.mjs:60-64 resuelve HOME; antecedente test/install.test.mjs:222-234), verificación de digests contra sidecars, y smoke HOME=tmp de install/update/rollback/uninstall. Única escritura futura: el informe bajo product/tower/ de la Zona producto-torre, verificado por scout; no crearlo ahora. Fuentes y entorno sólo lectura: sin instalación global ni escrituras en HOME real, terceros o producción. No duplicar construcción ni smoke rutinario; assets untracked o HEAD sin tag no bastan como identidad publicada. El conflicto B4 es sólo evidencia de revisión: no autoriza quitar firmas ni reparar código. No inferir capacidad paralela.
+  - Referencias: Entregas S205-S213 (commits e6def96, d94262d, 3c8a4b2, 145f2df, 54e60e1, df449fd, 8d72459, a20cef6, bc1c8d2); README.md:273-275 frente a product/tower/generic/README.md:29 (contradicción residual update-skills) y product/tower/v1/INSTALL-AGENTS.md:10-18 (afirmación de no escribir en configuración global) frente a runtime-config.mjs:335-337 y product/tower/v1/bundle.mjs:72-75 (B4 de docs/architecture/definiciones-v1-v2-v3.md:43), sólo evidencia de revisión, no reparaciones autorizadas. Reversibilidad: cli.mjs:8,17,20,428 y restauración de bloques en project-files.mjs:285-302. product/tower/v1/reviews/s181-v1-residual-review.md como informe sustantivo cuya integración registra el cierre existente.
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
