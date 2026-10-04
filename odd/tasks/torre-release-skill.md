@@ -15,7 +15,7 @@ One skill, two lazily loaded parts: change-impact map and release procedure.
 - [x] 3. Write `references/publicar.md` (ordered release procedure, 11 assets, gotchas).
 - [x] 4. Verify frontmatter, size budget, local references and path:line citations; commit.
 - [x] 5a. Register in `install.py` personal roster (`PERSONAL_SOURCE_DIRS`), with tests.
-- [ ] 5b. Install on the maintainer machine after merging to `master` (`install.py`, then `--check`).
+- [x] 5b. Install on the maintainer machine after merging to `master` (`install.py`, then `--check`).
 
 ## Evidence
 
@@ -27,3 +27,6 @@ One skill, two lazily loaded parts: change-impact map and release procedure.
 - Advisory `R3-sandbox-auth` fixed in `884bf69`: test blocks now run inside a subshell.
 - Registration: RED 4 failures, GREEN 4 focused tests; `test_install.py` 188 pass, `test_builder_flow.py` 39 pass, `bun test agent-workflows` 356 pass; Tower bundle unchanged.
 - Pre-existing/environmental, not regressions (verified against clean `master`): `control-tower-skill.test.mjs` needs `node_modules/yaml` absent in the worktree (master 552/0); `test_personal_pi_composition` fails on both trees (checkout-depth dependent prerequisites).
+- Native review `review-a6c7ed3a5f9c1a79` (high, 4 lenses, slice `dc97f4f..367d67c`): approved and acknowledged, no findings.
+- Merged fast-forward into `master`; design doc `docs/architecture/piloto-automatico.md` committed as `1aa7515` (passive documentation).
+- Installed on the maintainer machine: `install.py` -> INSTALLED; `install.py --check` -> OK (exit 0); `~/.agents/skills/torre-release/` plus Claude link `~/.claude/skills/torre-release`.
