@@ -9,9 +9,10 @@
 
 ## Estado y próximo trabajo
 - Método #2 → S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
+- Producto Torre #1 → S211 — La Torre adopta proyectos que comparten sus skills con un enlace interno y con permisos de grupo, y marca sola sus carpetas internas para que nunca se suban a git.
 
 ## Avance
-- **Total:** 89% (135/151 S)
+- **Total:** 88% (135/152 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +26,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 93% (43/46 S)
-- **Producto Torre:** 90% (29/32 S)
+- **Producto Torre:** 87% (29/33 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -66,7 +67,7 @@
 2. **S210** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S211** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · La Torre adopta proyectos que comparten sus skills con un enlace interno y con permisos de grupo, y marca sola sus carpetas internas para que nunca se suban a git.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1443,6 +1444,20 @@
   - Resultado y comportamiento: Si una etiqueta publicada verificada trae el mismo contenido que una versión instalada del mismo repositorio y asset, la etiqueta registrada se actualiza a la nueva y la actualización sigue (incluida la interfaz). Sigue habiendo conflicto ante otro repositorio o una etiqueta checkout.
   - Restricciones y decisiones: Sin relajar la verificación del contenido.
   - Referencias: global.mjs promotesCheckout (S205).
+
+### S211 — La Torre adopta proyectos que comparten sus skills con un enlace interno y con permisos de grupo, y marca sola sus carpetas internas para que nunca se suban a git.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/adoption.mjs, product/tower/v1/test/adoption.test.mjs, product/tower/v1/project-files.mjs, product/tower/v1/test/project-files.test.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/cli.test.mjs
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: ecom-ecuador tiene .claude/skills como enlace a ../.agents/skills (para que todos los agentes compartan una carpeta) y carpetas con permiso de grupo (umask 002); project init lo rechaza con Unsafe project file snapshot. Además, al adoptar control-tower hubo que excluir a mano las carpetas internas de la adopción para que el control de push aceptara el repo.
+  - Resultado y comportamiento: project init y project update aceptan .claude/skills como enlace relativo a .agents/skills dentro del mismo proyecto: instalan la skill una sola vez y lo registran para desinstalar sin romper el enlace. Rutas propias con escritura de grupo se informan con el comando exacto y se corrigen con --fix-permissions, igual que en la instalación global. La adopción agrega sus rutas internas (.control-tower/, .control-tower-adoption-v1/ y las copias de la skill) a .git/info/exclude en un bloque marcado, y desinstalar lo quita; AGENTS.md y CLAUDE.md quedan visibles para commitearse.
+  - Restricciones y decisiones: Se siguen rechazando enlaces que salen del proyecto, absolutos o hacia otros destinos. Sin commits en los proyectos. Sin tocar .gitignore del proyecto.
+  - Referencias: Engram tower-v1/adopt-control-tower-main; S205 --fix-permissions.
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:
@@ -4257,7 +4272,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
