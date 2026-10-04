@@ -23,6 +23,7 @@ Usa las rutas desde la raíz del checkout. Las citas corresponden a las fuentes 
 Ejecuta sólo los controles autorizados y necesarios. Prepara `<SANDBOX>` absoluto, descartable y privado; nunca sustituyas por el HOME real. Crea previamente sus directorios `home`, `tmp`, `cache`, `config`, `data` y `state`, y exporta HOME/XDG/TMPDIR a ellos antes de las pruebas. Los comandos siguientes son recetas, no resultados observados.
 
 ```bash
+(
 export HOME=<SANDBOX>/home TMPDIR=<SANDBOX>/tmp
 export XDG_CACHE_HOME=<SANDBOX>/cache XDG_CONFIG_HOME=<SANDBOX>/config
 export XDG_DATA_HOME=<SANDBOX>/data XDG_STATE_HOME=<SANDBOX>/state
@@ -37,7 +38,10 @@ HOME=<SANDBOX>/home bun run test
 # Si cambian install.py o skills: receta de agent-workflows/README.md:187-194.
 (cd agent-workflows && HOME=<SANDBOX>/home PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -q)
 HOME=<SANDBOX>/home bun test agent-workflows
+)
 ```
+
+El bloque corre dentro de un subshell `( ... )`: las variables del sandbox mueren al cerrarlo y nunca alcanzan pasos posteriores como `torre-control update` sobre la máquina real. No quites los paréntesis ni copies los `export` sueltos.
 
 La política offline de TUI y caché desechable procede de `product/tower/v1/release-build.mjs:163-172`; el comando Go de prueba se registró en `odd/tasks/s207-tui-update.md:26`. Usa módulos ya disponibles; una caché incompleta es bloqueo, no autorización para descargar dependencias.
 

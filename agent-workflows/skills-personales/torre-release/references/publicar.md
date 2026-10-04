@@ -37,6 +37,7 @@ git ls-tree -r '<COMMIT>' -- product/tower/v1/tui
 1. Ejecuta primero tests afectados y luego los controles completos siguientes. Sustituye `<SANDBOX>` por una raíz nueva, absoluta y externa al checkout; nunca HOME real. Registra códigos de salida y omisiones. La suite raíz es `bun test` (`package.json:5-7`); Radar documenta Go (`agent-workflows/tools/radar/README.md:94`), TUI registra Go offline (`odd/tasks/s207-tui-update.md:26`) y agent-workflows documenta Python/Bun (`agent-workflows/README.md:187-194`).
 
 ```bash
+(
 umask 077
 mkdir -p <SANDBOX>/{home,tmp,cache,config,data,state}
 export HOME=<SANDBOX>/home TMPDIR=<SANDBOX>/tmp
@@ -49,7 +50,11 @@ HOME=<SANDBOX>/home bun run test
 # Añade ambos controles si cambiaron skills o install.py:
 (cd agent-workflows && HOME=<SANDBOX>/home PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -q)
 HOME=<SANDBOX>/home bun test agent-workflows
+)
 ```
+
+El bloque corre dentro de un subshell `( ... )`: las variables del sandbox mueren al cerrarlo y nunca alcanzan pasos posteriores como `torre-control update` sobre la máquina real. No quites los paréntesis ni copies los `export` sueltos.
+
 2. Completa y reconoce la revisión nativa aplicable sobre los bytes finales. No uses su resultado para autorizar push ni publicación.
 3. Para cada Sesión entregada, verifica `entrega.commit` integrado mediante `radar sesion <ID>`. El cierre exige ese commit antes de archivar (`agent-workflows/tools/radar/README.md:33-36`). Sólo con alcance de cierre autorizado:
 
