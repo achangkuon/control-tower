@@ -15,7 +15,7 @@
 | D1 | La coordinación de entregas la hace una **herramienta determinista por proyecto**, no un agente Main. | Ninguna conversación es jefa de otra. Un agente interpreta; una herramienta aplica reglas. |
 | D2 | La herramienta es **nueva, en Go, con la forma de Radar**. No se termina de cablear el semáforo ni el flujo de entrega en JavaScript. | Se reusan las ideas ya probadas, no el código. |
 | D3 | La herramienta se llama **Pista**. | Radar ve qué puede convivir, la Torre autoriza, en la pista se aterriza de a uno. |
-| D4 | Pista entra en **V2**. Lo que hoy es V2 (Torre automática) pasa a **V3**. | V1 conserva su definición: adopción project-local, sin semáforo. |
+| D4 | Pista entra en **V2**. Lo que hoy es V2 (Torre automática) pasa a **V3**. **Reemplazado el 2026-10-03:** Pista pasa a **V3 · Flota**; **V2 · Piloto** no necesita Pista. Ver [Piloto automático](piloto-automatico.md), decisiones P12–P14 y sección 12. | V1 conserva su definición: adopción project-local, sin semáforo. |
 | D5 | Primero se cierra la limpieza de skills (`odd/tasks/chanks-gentle-boundary.md`); recién después se crea la Sesión de Pista. | La Sesión no se escribe sobre configuraciones a medio propagar. |
 
 Descartado: un agente Main coordinador (depende de una conversación abierta y de su contexto) y la Torre automática completa (más alcance del necesario para esta promesa).
@@ -166,7 +166,7 @@ Si los agentes pueden publicar por fuera de Pista, no hay garantía completa: es
 ## 10. Qué queda abierto
 
 - **La definición de V1 se contradice en el plan.** `openspec/plan.yaml:67-69` dice que Torre V1 «no depende de semáforo»; la Sesión archivada `S149` dice que «la Torre V1 es el semáforo compilado, Radar y las skills» (`openspec/archive/sesiones/S149.md:6`). Los Cimientos del plan siguen listando archivos del semáforo (`plan.yaml:111,124,127,130,168`). **Resuelto el 2026-10-01:** el encabezado del plan declara que V1 no tiene semáforo y que `S149` es historia (`docs/architecture/definiciones-v1-v2-v3.md`, A1). Los Cimientos no se modificaron.
-- **Renumerar V2 y V3 en el plan.** Hoy `torre-v2` es la Torre automática. Las Sesiones abiertas de esa prioridad son `S165`, `S4.12`, `S9.8`, `S107` y `S169`. **Resuelto el 2026-10-01:** `torre-v2` pasó a `torre-v3` y `resolucion-problemas-v2` a `resolucion-problemas-v3`; la prioridad nueva `pista-v2` (Pista V2 · Entrega ordenada) todavía no tiene Sesiones. Ninguna Sesión cambió de ID ni de alcance.
+- **Renumerar V2 y V3 en el plan.** Hoy `torre-v2` es la Torre automática. Las Sesiones abiertas de esa prioridad son `S165`, `S4.12`, `S9.8`, `S107` y `S169`. **Resuelto el 2026-10-01:** `torre-v2` pasó a `torre-v3` y `resolucion-problemas-v2` a `resolucion-problemas-v3`; se creó la prioridad `pista-v2` (Pista V2 · Entrega ordenada). Ninguna Sesión cambió de ID ni de alcance. **Actualización del 2026-10-03:** `pista-v2` tiene la Sesión `S203`. Las prioridades del plan siguen usando los nombres anteriores (`pista-v2`, `torre-v3` y `resolucion-problemas-v3`); renombrarlas según V2 · Piloto y V3 · Flota queda para un paso de planificación aparte. Ver [Piloto automático](piloto-automatico.md), sección 12.
 - **Puerta protegida:** depende del plan de GitHub, sin verificar.
 - **Nada está probado en simultáneo.** Es diseño sobre lectura de código.
 - **Partes no leídas:** `core.mjs` completo, `mcp.mjs`, `continuation/`, y las secciones 5 a 21 de `docs/architecture/torre-motor-determinista.md`.

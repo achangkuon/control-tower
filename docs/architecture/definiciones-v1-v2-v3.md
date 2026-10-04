@@ -13,8 +13,8 @@ V1 es una versión estable, orgánica y fluida, sin candados ni reservas. La com
 | Versión | Qué es | Qué no incluye |
 |---|---|---|
 | V1 | Método de Chanks adelgazado y adopción project-local de la Torre. El trabajo paralelo ocurre dentro de una sola conversación. | Semáforo, reserva de Sesiones, candado de escritura, coordinador Main, Herdr e Intercom como requisito. |
-| V2 | **Pista**: entrega ordenada por proyecto. Varias conversaciones independientes entregan por una sola puerta. | Torre automática. |
-| V3 | Torre automática (despacho, ejecución desatendida, tabs de trabajo prolongado) y los arreglos que estaban clasificados como V2. | — |
+| V2 · Piloto | Piloto automático desatendido: estados NOVEDAD y POR REVISAR en Radar, regla de LISTO según el interruptor, herramienta determinista `piloto`, vuelos y rondas, despegue y aterrizaje, controles en la TUI. Varios vuelos con una conversación orquestadora por corrida y un subagente por Sesión; revisión al volver, vuelo por vuelo. | Pista, conversaciones separadas por vuelo, despacho (Herdr u otro), reserva segura, aviso de caídas y división de Sesiones que unen dos vuelos. |
+| V3 · Flota | Una conversación aparte por vuelo para implementar y revisar, Pista (entrega ordenada), despacho (Herdr u otro), reserva segura en `radar marcar`, aviso de caídas y división de Sesiones que unen dos vuelos. | Agente Main coordinador ni proceso siempre encendido. |
 
 «Semáforo» deja de ser un nombre vigente: la herramienta de control de entregas se llama Pista.
 
@@ -60,6 +60,14 @@ Los identificadores N corresponden a la auditoría del documento de Pista.
 | D2 | Documentos del sistema anterior sin aviso (N15). | Los que se usan se actualizan; los que no, se marcan como históricos y se mueven. |
 | D3 | Registros de skills con rutas archivadas (N18). | Se regeneran. |
 | D4 | El documento «Chanks como guía de etapas — análisis por tramos» describe piezas retiradas. | Es la proyección del flujo con V2, no la descripción de V1. |
+
+### Revisión de versiones (2026-10-03)
+
+| # | Ambigüedad | Decisión |
+|---|---|---|
+| E1 | V2 se definía como Pista y V3 como Torre automática. | Reemplazado el 2026-10-03: V2 · Piloto ejecuta varios vuelos con una conversación orquestadora por corrida y un subagente por Sesión, sin Pista; V3 · Flota agrega conversaciones separadas por vuelo, Pista, despacho y reserva segura. V1 no cambia. Ver [Piloto automático](piloto-automatico.md), decisiones P12–P14 y sección 12. |
+
+Las decisiones anteriores y sus consecuencias se conservan como registro del 2026-10-01; las asignaciones de versiones reemplazadas se rigen por E1. Aplicar esta división al plan es un paso aparte.
 
 ## 3. Consecuencias
 
