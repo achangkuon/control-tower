@@ -2236,6 +2236,29 @@ sesiones:
 
   - {id: S212, entrega: {commit: a20cef6326a3bfbd3006e2c2b39e76c3f7c956ca}, historico: openspec/archive/sesiones/S212.md}
 
+  - id: S213
+    zona: producto-torre
+    prioridad: torre-v1
+    resultado: "Una versión que sólo cambia la interfaz se actualiza sin trabarse: el contenido idéntico toma la etiqueta nueva."
+    autoridad: "Emilio aprobó el 2026-10-03 en esta Conversación publicar el parche visual; al actualizar a v1.2.3 se trabó por conflicto de etiqueta."
+    depende_de: [S212]
+    archivos: [product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs]
+    cimientos: []
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        v1.2.3 sólo cambió la interfaz, así que su paquete es idéntico al de v1.2.2 y la
+        actualización frenó con version provenance conflict.
+      resultado_comportamiento: >-
+        Si una etiqueta publicada verificada trae el mismo contenido que una versión
+        instalada del mismo repositorio y asset, la etiqueta registrada se actualiza a la
+        nueva y la actualización sigue (incluida la interfaz). Sigue habiendo conflicto
+        ante otro repositorio o una etiqueta checkout.
+      restricciones_decisiones: >-
+        Sin relajar la verificación del contenido.
+      referencias: >-
+        global.mjs promotesCheckout (S205).
+
   - id: S175
     prioridad: resolucion-problemas-generales
     zona: cimientos

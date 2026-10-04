@@ -9,9 +9,10 @@
 
 ## Estado y próximo trabajo
 - Método #2 → S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
+- Producto Torre #1 → S213 — Una versión que sólo cambia la interfaz se actualiza sin trabarse: el contenido idéntico toma la etiqueta nueva.
 
 ## Avance
-- **Total:** 89% (134/150 S)
+- **Total:** 88% (134/151 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -25,7 +26,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 93% (43/46 S)
-- **Producto Torre:** 90% (28/31 S)
+- **Producto Torre:** 87% (28/32 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -66,7 +67,7 @@
 2. **S210** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S213** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Una versión que sólo cambia la interfaz se actualiza sin trabarse: el contenido idéntico toma la etiqueta nueva.
 
 ## Bloqueos
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
@@ -1429,6 +1430,20 @@
   - Resultado y comportamiento: Cada título usa el color del dibujo de la torre; las descripciones conservan el color normal; sin color cuando la terminal no lo admite.
   - Restricciones y decisiones: Sólo estilo; sin cambios de comportamiento.
   - Referencias: Captura del 2026-10-03 18:50; styles.go palette.tower.
+
+### S213 — Una versión que sólo cambia la interfaz se actualiza sin trabarse: el contenido idéntico toma la etiqueta nueva.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs
+  - Depende de: S212
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: v1.2.3 sólo cambió la interfaz, así que su paquete es idéntico al de v1.2.2 y la actualización frenó con version provenance conflict.
+  - Resultado y comportamiento: Si una etiqueta publicada verificada trae el mismo contenido que una versión instalada del mismo repositorio y asset, la etiqueta registrada se actualiza a la nueva y la actualización sigue (incluida la interfaz). Sigue habiendo conflicto ante otro repositorio o una etiqueta checkout.
+  - Restricciones y decisiones: Sin relajar la verificación del contenido.
+  - Referencias: global.mjs promotesCheckout (S205).
 
 ### S175 — Resolver Radar fuera del checkout antes del push.
 - Coordinación:
@@ -4243,7 +4258,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
+2 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo, producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
