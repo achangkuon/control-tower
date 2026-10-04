@@ -47,6 +47,6 @@ La política offline de TUI y caché desechable procede de `product/tower/v1/rel
 
 ## Señales de deriva
 
-- [ ] Compara la versión declarada por README con el último tag remoto vigente, no sólo tags locales. En la revisión, `README.md:30` decía `v1.2.0`, mientras `AGENTS.md:303` mostraba `v1.2.5`; la última release remota está **sin verificar**.
-- [ ] Recuenta assets: `README.md:187` enumera siete y omite los cuatro `.sha256` TUI exigidos por `odd/tasks/s207-tui-update.md:31` y generados en `product/tower/v1/release-build.mjs:187-189`. No copies ese comando sin corregirlo.
+- [ ] El README no debe fijar una versión vigente a mano: remite a la marcada `Latest` en `gh release list --repo achangkuon/control-tower` (`README.md:29-30`). Si alguien volvió a escribir un número de versión, quítalo. Compara también el bloque de `AGENTS.md` con el último tag remoto.
+- [ ] Recuenta assets: el comando de `README.md:187` debe enumerar los 11, incluidos los cuatro `.sha256` de la interfaz exigidos por `odd/tasks/s207-tui-update.md:31` y generados en `product/tower/v1/release-build.mjs:187-189`. Si falta alguno, corrige el README antes de publicar.
 - [ ] Revisa etiquetas históricas: las fuentes v3 `agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md:3,13` y `agent-workflows/skills-diferidas/v3/chanks-4-unattended-implementation/SKILL.md:3,13` todavía dicen «V2 only», aunque la clasificación vigente es V3 (`agent-workflows/skills-diferidas/README.md:14-18`). Informa la deriva, no actives esas capacidades.

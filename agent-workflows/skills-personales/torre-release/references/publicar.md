@@ -113,7 +113,7 @@ sha256sum <DIR>/tower-v1.json <DIR>/tower-v1.json.sha256 <DIR>/torre-install.mjs
 
 ## 5. Publicación
 
-Confirma de nuevo autorización, tag remoto ausente y commit remoto correcto. Repositorio privado: `README.md:25-30`. No copies la publicación abreviada de `README.md:187`: omite cuatro sidecars TUI requeridos (`odd/tasks/s207-tui-update.md:31`). Publica exactamente estos **11 assets**:
+Confirma de nuevo autorización, tag remoto ausente y commit remoto correcto. Repositorio privado: `README.md:25-30`. Antes de reutilizar `README.md:187`, confirma que enumera los cuatro sidecars TUI requeridos (`odd/tasks/s207-tui-update.md:31`). Publica exactamente estos **11 assets**:
 
 ```bash
 gh release create <TAG> --repo achangkuon/control-tower --target <COMMIT> \

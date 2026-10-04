@@ -27,7 +27,7 @@ y GitHub CLI (`gh`) autenticado en `github.com` con acceso al repositorio privad
 incluida (`vendor/`); se compila sin internet y sólo requiere Go.
 
 Las versiones se publican como Releases privados de `achangkuon/control-tower`
-(la vigente es `v1.2.0`). Una vez instalada, `torre-control update --latest` (o
+(la vigente es la marcada `Latest` en `gh release list --repo achangkuon/control-tower`). Una vez instalada, `torre-control update --latest` (o
 «Instalar o actualizar» en la interfaz) busca sola la última versión publicada y
 la verifica con la huella `tower-v1.json.sha256` que se publica junto al paquete.
 Los ejemplos usan marcadores como `<TAG>`; nunca
@@ -184,8 +184,10 @@ en la caché del operador; el constructor no descarga dependencias. Sustituya co
 
 ```bash
 bun product/tower/v1/release-build.mjs --commit '<COMMIT>' --out /ruta/externa/tower-v1.json --tag '<TAG>' --installer-out /ruta/externa/torre-install.mjs --tui-out-dir /ruta/externa/tui
-gh release create '<TAG>' --repo achangkuon/control-tower --target '<COMMIT>' /ruta/externa/tower-v1.json /ruta/externa/tower-v1.json.sha256 /ruta/externa/torre-install.mjs /ruta/externa/tui/torre-tui-linux-amd64 /ruta/externa/tui/torre-tui-linux-arm64 /ruta/externa/tui/torre-tui-darwin-amd64 /ruta/externa/tui/torre-tui-darwin-arm64
+gh release create '<TAG>' --repo achangkuon/control-tower --target '<COMMIT>' /ruta/externa/tower-v1.json /ruta/externa/tower-v1.json.sha256 /ruta/externa/torre-install.mjs /ruta/externa/tui/torre-tui-linux-amd64 /ruta/externa/tui/torre-tui-linux-arm64 /ruta/externa/tui/torre-tui-darwin-amd64 /ruta/externa/tui/torre-tui-darwin-arm64 /ruta/externa/tui/torre-tui-linux-amd64.sha256 /ruta/externa/tui/torre-tui-linux-arm64.sha256 /ruta/externa/tui/torre-tui-darwin-amd64.sha256 /ruta/externa/tui/torre-tui-darwin-arm64.sha256
 ```
+
+Son once assets: paquete y su huella, instalador, cuatro ejecutables de la interfaz y sus cuatro huellas. Sin las huellas `.sha256` de la interfaz, `update --latest` no puede verificar ni instalar la pantalla nueva.
 
 El constructor lee ambos contenidos del commit y exporta las fuentes Go de ese
 mismo árbol con `git archive`, nunca del directorio de trabajo. Compila los cuatro

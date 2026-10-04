@@ -17,7 +17,7 @@ Activa únicamente para el mantenedor al evaluar cambios o preparar, publicar y 
 - Exige autorización humana explícita y separada para push, publicación y actualización de la máquina real. Una revisión nativa nunca autoriza entrega.
 - Nunca leas `openspec/plan.yaml` entero; usa `radar sesion <ID>` y `radar check`.
 - Construye sólo desde un commit limpio, confirmado y subido. Nunca muevas ni sobrescribas un tag publicado; contenido idéntico con otro tag usa promoción de procedencia.
-- No copies literalmente el comando de publicación del README: omite cuatro checksums TUI; verifica esa deriva antes de cada release.
+- Antes de usar el comando de publicación del README, verifica que enumera los 11 assets; si falta alguno, corrige el README primero.
 - Usa HOME descartable para pruebas y smoke; nunca el HOME real. Sólo la actualización del mantenedor expresamente autorizada opera en su máquina.
 - Detente ante un gate fallido o evidencia ausente; no conviertas warnings ni omisiones en éxitos.
 
