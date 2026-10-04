@@ -202,12 +202,103 @@ class TowerMigrationTests(unittest.TestCase):
         self.assertEqual(before, {relative: (self.home / relative).read_bytes() for relative in targets})
         for name in INSTALLER.TOWER_V1_SKILLS:
             self.assertEqual(os.readlink(self.home / f".claude/skills/{name}"), f"../../.agents/skills/{name}")
-        self.assertEqual(INSTALLER.PERSONAL_SKILLS, ("chanks-0-agente-soporte",))
+        self.assertEqual(INSTALLER.PERSONAL_SKILLS, ("chanks-0-agente-soporte", "torre-release"))
         self.assertTrue((self.home / ".agents/skills/chanks-0-agente-soporte/SKILL.md").is_file())
         for name in INSTALLER.DEFERRED_SKILLS:
             self.assertIn(name, INSTALLER.RETIRED_SKILLS)
             self.assertFalse((self.home / f".agents/skills/{name}").exists())
         self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+
+
+class TorreReleasePersonalTests(unittest.TestCase):
+    FILES = ("SKILL.md", "references/impacto.md", "references/publicar.md")
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.home = Path(self.tempdir.name)
+        self.env = {**os.environ, "HOME": str(self.home), "PYTHONDONTWRITEBYTECODE": "1"}
+        self.source = ROOT / "skills-personales/torre-release"
+        self.destination = self.home / ".agents/skills/torre-release"
+        InstallerTests._seed_runtime(self)
+
+    def cli(self, *args):
+        # No --home override: exercise the normal installer's sandbox HOME default.
+        return subprocess.run([sys.executable, str(SCRIPT), *args], env=self.env,
+                              capture_output=True, text=True)
+
+    def assert_canonical_copy(self):
+        self.assertTrue(self.destination.is_dir())
+        self.assertFalse(self.destination.is_symlink())
+        self.assertEqual(sorted(p.relative_to(self.destination).as_posix()
+                                for p in self.destination.rglob("*") if p.is_file()),
+                         sorted(self.FILES))
+        for relative in self.FILES:
+            self.assertEqual((self.destination / relative).read_bytes(),
+                             (self.source / relative).read_bytes(), relative)
+
+    def test_install_copies_personal_source_byte_identically_and_links_claude(self):
+        result = self.cli()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_canonical_copy()
+        link = self.home / ".claude/skills/torre-release"
+        self.assertTrue(link.is_symlink())
+        self.assertEqual(os.readlink(link), "../../.agents/skills/torre-release")
+        self.assertEqual(link.resolve(), self.destination)
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+
+    def test_check_reports_missing_and_changed_personal_files_without_writes(self):
+        missing = self.cli("--check")
+        self.assertEqual(missing.returncode, 1, missing.stderr)
+        for relative in self.FILES:
+            self.assertIn(f"DRIFT skill: {self.destination / relative}", missing.stdout)
+        self.assertFalse(self.destination.exists())
+        self.assertEqual(self.cli().returncode, 0)
+        self.assertEqual(self.cli("--check").returncode, 0)
+        for relative in self.FILES:
+            with self.subTest(relative=relative):
+                target = self.destination / relative
+                target.write_bytes(b"changed personal file\n")
+                drift = self.cli("--check")
+                self.assertEqual(drift.returncode, 1, drift.stderr)
+                self.assertIn(f"DRIFT skill: {target}", drift.stdout)
+                self.assertEqual(target.read_bytes(), b"changed personal file\n")
+                self.assertEqual(self.cli().returncode, 0)
+                self.assert_canonical_copy()
+
+    def test_personal_skill_is_not_tower_chanks_or_retired(self):
+        self.assertIn("torre-release", INSTALLER.OWN_SKILLS)
+        self.assertIn("torre-release", INSTALLER.PERSONAL_SKILLS)
+        for roster in (INSTALLER.TOWER_V1_SKILLS, INSTALLER.STOP_MANAGING_SKILLS,
+                       INSTALLER.CHANKS_SKILLS, INSTALLER.RETIRED_SKILLS):
+            self.assertNotIn("torre-release", roster)
+        self.assertEqual(INSTALLER.skill_source_root(ROOT, "torre-release"), self.source)
+        self.assertNotIn(b'"torre-release"', INSTALLER.desired_pi_notices(ROOT))
+
+    def test_existing_runtime_copies_archive_and_central_skill_survives_migration(self):
+        for runtime in INSTALLER.runtime_skill_roots(self.home):
+            retired = runtime / "chanks-3-session-kickoff/SKILL.md"
+            retired.parent.mkdir(parents=True, exist_ok=True)
+            retired.write_bytes(b"retired fixture\n")
+            if runtime != self.home / ".agents/skills":
+                old = runtime / "torre-release/SKILL.md"
+                old.parent.mkdir(parents=True, exist_ok=True)
+                old.write_bytes(b"old personal copy\n")
+        self.assertEqual(self.cli().returncode, 0)
+        self.assert_canonical_copy()
+        for runtime in INSTALLER.runtime_skill_roots(self.home):
+            self.assertFalse((runtime / "chanks-3-session-kickoff").exists())
+            if runtime != self.home / ".agents/skills":
+                archived = list(INSTALLER.retired_skill_archive_root(runtime).glob("torre-release-*"))
+                self.assertEqual(len(archived), 1)
+                self.assertEqual((archived[0] / "SKILL.md").read_bytes(), b"old personal copy\n")
+        migration = self.cli("--migrate-to-tower", "--apply")
+        self.assertEqual(migration.returncode, 0, migration.stderr)
+        self.assertNotIn("STOP_MANAGING skill: torre-release", migration.stdout)
+        self.assert_canonical_copy()
+        self.assertEqual(self.cli().returncode, 0)
+        self.assertEqual(self.cli("--check").returncode, 0)
+        self.assert_canonical_copy()
 
 
 class InstallerTests(unittest.TestCase):

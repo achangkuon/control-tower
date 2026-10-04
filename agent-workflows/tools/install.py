@@ -80,6 +80,11 @@ SUPPORT_SKILLS = (
     "skill-orchestrator",
 )
 
+# Personal maintainer sources are independent of the Chanks and Tower rosters.
+PERSONAL_SOURCE_DIRS = MappingProxyType({
+    "torre-release": "skills-personales",
+})
+
 # The maintainer's own skills: one real copy each in the central folder, reached
 # from Claude Code through per-skill symlinks. Gentle AI skills are not part of
 # this roster and stay per runtime under `gentle-ai`.
@@ -90,7 +95,7 @@ TOWER_V1_SKILLS = tuple(sorted(
     + SUPPORT_SKILLS + ("control-tower",)
 ))
 STOP_MANAGING_SKILLS = tuple(sorted(set(CHANKS_SKILLS + SUPPORT_SKILLS) & set(TOWER_V1_SKILLS)))
-OWN_SKILLS = CHANKS_SKILLS + SUPPORT_SKILLS
+OWN_SKILLS = CHANKS_SKILLS + SUPPORT_SKILLS + tuple(PERSONAL_SOURCE_DIRS)
 SKILLS = SHARED + OWN_SKILLS
 PERSONAL_SKILLS = tuple(name for name in OWN_SKILLS if name not in TOWER_V1_SKILLS)
 
@@ -315,6 +320,9 @@ def installed_manual_paths(home: Path) -> tuple[Path, ...]:
 
 def skill_source_root(root: Path, skill: str) -> Path:
     """Resolve canonical bytes without changing runtime roster membership."""
+    personal_dir = PERSONAL_SOURCE_DIRS.get(skill)
+    if personal_dir is not None:
+        return root / personal_dir / skill
     version = DEFERRED_SOURCE_VERSIONS.get(skill)
     if version is not None:
         return root / "skills-diferidas" / version / skill

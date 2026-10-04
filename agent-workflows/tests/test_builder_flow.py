@@ -560,7 +560,9 @@ class GenericBuilderFlowTests(unittest.TestCase):
         forbidden = {"product/tower/generic", "torre-control", "torre-control-soporte", "torre-control-entregas"}
 
         self.assertTrue(set(INSTALLER.SKILLS).isdisjoint(forbidden))
-        self.assertTrue(all(source.is_relative_to(SKILLS) or source.is_relative_to(ROOT / "skills-diferidas")
+        self.assertTrue(all(source.is_relative_to(SKILLS)
+                            or source.is_relative_to(ROOT / "skills-diferidas")
+                            or source.is_relative_to(ROOT / "skills-personales")
                             for _, _, source in INSTALLER.source_files(ROOT)))
         self.assertFalse((ROOT / "skills/torre-control-entregas").exists())
 

@@ -228,7 +228,7 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         central = self.home / ".agents/skills"
         central_names = {path.name for path in central.iterdir()}
         self.assertTrue(set(install.OWN_SKILLS) <= central_names)
-        self.assertEqual(len(install.OWN_SKILLS), 24)
+        self.assertEqual(len(install.OWN_SKILLS), 25)
         self.assertFalse(set(install.DEFERRED_SKILLS) & central_names)
         self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS))
         self.assertTrue(all(not (central / name).exists() for name in install.DEFERRED_SKILLS))

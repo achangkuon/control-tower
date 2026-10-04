@@ -14,7 +14,8 @@ One skill, two lazily loaded parts: change-impact map and release procedure.
 - [x] 2. Write `references/impacto.md` (what to update when a Tower change touches each surface).
 - [x] 3. Write `references/publicar.md` (ordered release procedure, 11 assets, gotchas).
 - [x] 4. Verify frontmatter, size budget, local references and path:line citations; commit.
-- [ ] 5. Deferred: register in `install.py` personal roster and install (propagation).
+- [x] 5a. Register in `install.py` personal roster (`PERSONAL_SOURCE_DIRS`), with tests.
+- [ ] 5b. Install on the maintainer machine after merging to `master` (`install.py`, then `--check`).
 
 ## Evidence
 
@@ -23,3 +24,6 @@ One skill, two lazily loaded parts: change-impact map and release procedure.
 - Commit: `0b8f00e` (work-unit commit of tasks 1-4).
 - Native review `review-9f4d49d1dfe00c0b` (medium, lens reliability): approved and acknowledged (authority burned). Advisory, non-blocking: `R3-sandbox-auth` at `references/publicar.md:42-44` (sandbox HOME exports in the test block); follow-up.
 
+- Advisory `R3-sandbox-auth` fixed in `884bf69`: test blocks now run inside a subshell.
+- Registration: RED 4 failures, GREEN 4 focused tests; `test_install.py` 188 pass, `test_builder_flow.py` 39 pass, `bun test agent-workflows` 356 pass; Tower bundle unchanged.
+- Pre-existing/environmental, not regressions (verified against clean `master`): `control-tower-skill.test.mjs` needs `node_modules/yaml` absent in the worktree (master 552/0); `test_personal_pi_composition` fails on both trees (checkout-depth dependent prerequisites).

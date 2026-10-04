@@ -26,9 +26,11 @@ The complete workflow lives in each adopted project's `AGENTS.md` (S196), not in
 another global workflow block. Install/update these assets through the Tower's
 product lifecycle, not through the maintainer's personal installer.
 
-**`tools/install.py` only writes personal configuration.** The remaining active
-non-V1 skill is `chanks-0-agente-soporte`. It is installed centrally and linked
-from Claude. The installer also manages three personal blocks:
+**`tools/install.py` only writes personal configuration.** The active non-V1
+skills are `chanks-0-agente-soporte` and the maintainer's `torre-release` (from
+[`skills-personales/`](skills-personales/README.md)). Both are installed centrally
+and linked from Claude; neither ships in the Tower bundle or counts as a Tower
+skill. The installer also manages three personal blocks:
 
 | Template | Marker family |
 |---|---|
@@ -140,7 +142,7 @@ available, outside this migration's scope.
 | Session workflow (Tower V1) | `chanks-3-paralelo`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-5-session-doc` |
 | Delivery policy (Tower V1) | `chanks-5-politica-de-entrega` |
 | Decision and communication support (Tower V1) | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer`, `analisis-por-tramos`, `skill-orchestrator` |
-| Personal active skill | `chanks-0-agente-soporte` |
+| Personal active skills (not Tower) | `chanks-0-agente-soporte`, `torre-release` |
 | Deferred to V2, Pista (source kept, not installed) | `chanks-0-jornada`, `chanks-3-session-kickoff`, `chanks-3-coordinador-manual` |
 | Deferred to V3, automatic Tower (source kept, not installed) | `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation` |
 
@@ -154,7 +156,7 @@ archived under `.retired-skills/`, never reinstalled. The retired Pi write-lock
 shim `chanks-controls.ts` still moves to `.pi/agent/.retired-controls/`, outside
 Pi discovery. Tower-owned `torre-firma.sh` is no longer a retirement candidate.
 
-Obsolete files inside the personal skill retire only on an explicit historical
+Obsolete files inside personal skills retire only on an explicit historical
 path/SHA-256 match in `RETIRED_SKILL_FILES`. Modified, missing or unlisted files
 remain intact; backups go under `.retired-skills/files/<stamp>-<unique>/`.
 Historical tombstones inside Tower-owned skills are retained in the registry for
@@ -202,6 +204,7 @@ Do not edit `sdd-*`, Gentle AI's `_shared` files, `gentle-orchestrator`,
 skills/                         canonical V1 skill sources
  skills-diferidas/v2/            Pista sources (personal agente-soporte exception)
  skills-diferidas/v3/            automatic Tower sources
+ skills-personales/              personal maintainer skills (never in the Tower bundle)
  templates/                     personal blocks and retained legacy helper templates
  tools/install.py               personal writes, checks and Tower migration
  tests/test_install.py          focused standard-library fixture tests
