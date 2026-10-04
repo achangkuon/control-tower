@@ -330,6 +330,44 @@ rigiendo a cualquier agente que trabaje acá, estén o no citadas acá.
 - Nunca muevas ni sobrescribas un tag publicado; contenido idéntico con otro tag
   usa promoción de procedencia.
 
+### Cuándo un cambio a master es una release
+
+Un push a `master` **no** es una release. La release es un tag nuevo e inmutable más
+sus assets publicados; lo que usan los proyectos sólo cambia cuando existe ese tag y
+alguien actualiza su Torre instalada. La pregunta que decide es **qué nota quien usa
+la Torre**, no cuántos commits ni cuántas Sesiones entraron.
+
+**Qué viaja.** Sólo lo que enumera el roster explícito del paquete y los módulos del
+motor que declara el constructor de la release; las rutas exactas están en la fase
+«Auditar qué viaja» de la skill `torre-release`. En resumen: Radar
+(`agent-workflows/tools/radar/`), el motor, el instalador y la TUI del producto V1,
+las skills V1 del roster (`agent-workflows/skills/`), las plantillas de instrucciones
+del producto y las firmas (`agent-workflows/chanks/torre-firma.mjs`,
+`agent-workflows/tools/hooks/`). Todo lo demás no viaja: `openspec/`, `docs/`, `odd/`,
+tests, reviews, skills diferidas y personales, y este archivo fuera del bloque generado.
+
+| Qué cambió | Qué se hace | Versión |
+|---|---|---|
+| Nada de lo que viaja | Sólo push. No hay release. | — |
+| Arreglo de algo ya publicado | Release enseguida, chica y frecuente. | patch: `v1.2.5` → `v1.2.6` |
+| Capacidad nueva y visible para quien usa la Torre | Se espera a que cierren todas las Sesiones que la completan; se publica el lote junto. | minor: `v1.2.x` → `v1.3.0` |
+| Una meta entera del plan (por ejemplo Torre V2) | Un solo salto, cuando todas sus Sesiones están cerradas. Nunca una meta a medias. | major: `v1.x` → `v2.0.0` |
+
+Reglas que acompañan la tabla:
+
+- **Los arreglos van de a poco; las metas van de un salto.** Un arreglo que espera a
+  una meta deja a los proyectos con un defecto conocido sin necesidad.
+- **Un arreglo no arrastra trabajo a medias.** Si `master` ya tiene commits de una
+  capacidad incompleta que viaja, el arreglo no se publica desde ese commit sin que el
+  mantenedor lo decida viendo qué más saldría.
+- **Al cerrar cada entrega el agente lo dice.** Compara las rutas tocadas contra «Qué
+  viaja» y reporta una de tres: «no viaja», «amerita patch `<tag>`» o «espera a
+  `<capacidad o meta>`». Si no puede clasificarlo, lo dice y no lo presenta como «no viaja».
+- **Reportar no es publicar.** La clasificación es informativa. Publicar sigue
+  exigiendo la autorización humana explícita y separada, y la receta de `torre-release`.
+- **El número lo elige el mantenedor.** El agente propone el tag según la tabla; no
+  hay campo de versión que incrementar y un tag publicado no se corrige.
+
 ### Reinstalación de herramientas tras una entrega
 
 Al cerrar una entrega en este repo, cualquier agente reinstala las herramientas
