@@ -96,14 +96,22 @@ prioridades:
     nombre: Resolución de problemas · Generales
   - id: resolucion-problemas-v1
     nombre: Resolución de problemas · Torre V1
-  - id: pista-v2
-    nombre: Pista V2 · Entrega ordenada
+  - id: v2-piloto
+    nombre: V2 · Piloto automático desatendido
   - id: resolucion-problemas-v3
     nombre: Resolución de problemas · Torre V3
-  - id: torre-v3
-    nombre: Torre V3 · Tabs de trabajo prolongado visibles
+  - id: v3-flota
+    nombre: V3 · Flota — Conversaciones por vuelo y Pista
   - id: resolucion-problemas-anteriores
     nombre: Resolución de problemas · Sistema anterior
+
+# Frentes de ejecución en paralelo (2026-10-04):
+# - Frente 1 · Resolución de problemas: prioridades resolucion-problemas-generales y
+#   resolucion-problemas-v1 (S175–S181); planificación reconciliada, aprobada y entregada.
+# - Frente 2 · V2/V3: prioridades v2-piloto y v3-flota (S203, S169, S214–S217 y las Sesiones
+#   diferidas S4.12, S9.8, S107). Legado decidido el 2026-10-04: core.mjs y main-store/ quedan
+#   archivados como historia sin trabajo planificado; la decisión sobre chanks-0-jornada queda
+#   pendiente y atada a la planificación de V3 (podría servir a Flota).
 
 cimientos:
   rutas:
@@ -299,7 +307,7 @@ sesiones:
   - {id: S4.11, entrega: {commit: 6ddf6bc77d236dffad5b8ec625379117a91ce0b3}, historico: openspec/archive/sesiones/S4.11.md}
 
   - id: S4.12
-    prioridad: torre-v3
+    prioridad: v3-flota
     zona: hosts
     diferida: true
     resultado: "Reporte de caída de Pi: detener y conservar rama/worktree/candidato sin recuperación automática"
@@ -709,7 +717,7 @@ sesiones:
             criterios: ["REFACTOR: topología duplicada eliminada, readback/fallback estabilizado y convergencia probada."]
 
   - id: S9.8
-    prioridad: torre-v3
+    prioridad: v3-flota
     zona: hosts
     cimientos:
       - product/tower/skills/torre-control/SKILL.md
@@ -835,7 +843,7 @@ sesiones:
             criterios: ["git diff --cached --numstat reports changes only in schemas/delivery-policy-v1.schema.json and test/contracts/s3-2-schemas.test.mjs."]
 
   - id: S107
-    prioridad: torre-v3
+    prioridad: v3-flota
     zona: hosts
     resultado: "Tabs y workers Tower-owned dentro del workspace ligado, con una tab por Session ID, ocupación legible y readback determinista; absorbe S108, S9.2, S119 y S121."
     autoridad: "Resultado opcional Torre V2 y consolidación S108/S9.2/S119/S121 seleccionados explícitamente por el maintainer; conserva las garantías de binding/readback de Engram 11293 y la decisión del 2026-09-13."
@@ -1887,9 +1895,10 @@ sesiones:
   - {id: S160, entrega: {commit: 5eb62d8b350611742a3d7325939b6ca5f5444ca3}, historico: openspec/archive/sesiones/S160.md}
   - {id: S164, entrega: {commit: ee633c7c863502e78d0f2eeef4210f22fcd3b390}, historico: openspec/archive/sesiones/S164.md}
   - id: S165
-    prioridad: torre-v3
+    prioridad: v3-flota
     zona: hosts
     diferida: true
+    archivada: true
     resultado: "Puente mínimo y aislado Pi–semáforo: un adapter invoca el binario y una extensión registra exactamente las ocho tower_* sin continuation ni routing adicional."
     autoridad: "Clasificación opcional Torre V2 seleccionada por el maintainer; preserva la identidad y evidencia honesta EN CURSO de S165 sin convertirla en dependencia de V1."
     depende_de:
@@ -1918,6 +1927,12 @@ sesiones:
           - opcion: Reusar el runtime o router de continuation/V2.
             razon: Rompe el boundary aislado y vuelve a introducir efectos y alcance excluidos de V1.
         contaminaba: [S165]
+      - tipo: resuelta
+        pregunta: ¿Qué lugar queda para S165 tras la redefinición de V2 · Piloto y V3 · Flota?
+        resolucion: "Se archiva como reemplazada: la herramienta determinista `piloto` (V2) y la Pista nueva de V3 cubren su función. La fuente y la evidencia se conservan; no hay trabajo planificado sobre el puente Pi–semáforo."
+        autoridad: "Decisión del maintainer del 2026-10-04 al aprobar el mapa V2/V3 del diseño de Piloto automático."
+        clase: contrato-visible-del-producto
+        falsificador: "Se planifica o ejecuta trabajo nuevo sobre el puente Pi–semáforo en lugar del piloto y la Pista."
   - id: S167
     prioridad: torre-v1
     zona: metodo
@@ -2019,7 +2034,7 @@ sesiones:
         contaminaba: [S167]
 
   - id: S169
-    prioridad: torre-v3
+    prioridad: v2-piloto
     zona: metodo
     diferida: true
     resultado: "chanks-4-unattended-implementation sella un mandato humano de una o más Sesiones LISTO, ordenadas por dependencia (pasos que pueden agrupar Sesiones que corren en paralelo, p. ej. S164+S165), cada una con su propio worker asignado bajo un único vencimiento para todo el mandato, en vez de sólo una Sesión; el coordinador avanza sólo dentro de esa lista y se detiene ante cualquier imprevisto."
@@ -2173,7 +2188,7 @@ sesiones:
 
   - id: S203
     zona: producto-torre
-    prioridad: pista-v2
+    prioridad: v2-piloto
     diferida: true
     resultado: "Cada proyecto puede prender o apagar la Torre desde el instalador."
     autoridad: "Emilio decidió el 2026-10-02 en esta Conversación que el interruptor sea por proyecto y llegue con V2, cuando exista la Pista que de verdad se prende y apaga."
@@ -2193,6 +2208,84 @@ sesiones:
         diferida; los archivos se confirman al prepararla.
       referencias: >-
         docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
+
+  - id: S214
+    zona: producto-torre
+    prioridad: v2-piloto
+    resultado: "Estados NOVEDAD y POR REVISAR en Radar con identidad de vuelo, y regla de LISTO según el interruptor del piloto."
+    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        El piloto necesita estados que distingan trabajo desatendido que requiere decisión humana
+        (NOVEDAD: decisión delicada, no se pudo inferir, interrumpida) de trabajo terminado esperando
+        revisión (POR REVISAR: limpia, con decisiones), y una regla de LISTO que dependa del interruptor:
+        prendido, las dependencias POR REVISAR pueden destrabar dentro del horizonte; apagado, rigen
+        COMPLETO/ARCHIVADO. Un LISTO sin empezar puede volver a PLANIFICADO; lo completado queda visible.
+      referencias: >-
+        docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+
+  - id: S215
+    zona: producto-torre
+    prioridad: v2-piloto
+    resultado: "Herramienta determinista `piloto`: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida."
+    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
+    depende_de:
+      - S214
+    cimientos: []
+    recurso: []
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        V2 ejecuta varios vuelos con una conversación orquestadora por corrida y un subagente por
+        Sesión; hace falta una herramienta determinista (no daemon) que despegue, avance rondas y
+        aterrice sin empujar nada a remoto. Radar propone vuelos y el usuario aprueba; se resuelven
+        preguntas previsibles antes del despegue; límites por defecto de tres rondas de profundidad
+        y diez Sesiones, configurables; ante la duda se detiene esa Sesión conservando el trabajo
+        por separado y siguen los vuelos independientes.
+      referencias: >-
+        docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+
+  - id: S216
+    zona: producto-torre
+    prioridad: v2-piloto
+    resultado: "Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano."
+    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
+    depende_de:
+      - S215
+    cimientos: []
+    recurso: []
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        El piloto corre sin el mantenedor presente; la TUI tiene que dar control humano directo
+        sobre el interruptor, la observación de vuelos y la parada de emergencia que detiene la
+        corrida de forma segura.
+      referencias: >-
+        docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+
+  - id: S217
+    zona: producto-torre
+    prioridad: v2-piloto
+    resultado: "Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo."
+    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
+    depende_de:
+      - S215
+    cimientos: []
+    recurso: []
+    encargo:
+      incompleto: true
+      pedido_contexto: >-
+        Al regresar, el usuario recibe el estado y deja terminar los vuelos; la revisión sigue las
+        dependencias base-arriba aunque la atención empiece por los vuelos con NOVEDAD. La revisión
+        evalúa el vuelo completo, califica Leve/Medio/Grave por esfuerzo semántico, analiza impacto
+        antes de parchar y entrega sólo la porción aprobada; un vuelo que une dos espera la revisión
+        de ambos.
+      referencias: >-
+        docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
 
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 

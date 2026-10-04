@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
 - Próximo trabajo ejecutable: ninguno.
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
@@ -11,8 +11,8 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 90% (137/152 S)
-- 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- **Total:** 88% (138/156 S)
+- 8 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
@@ -21,7 +21,7 @@
 - **Contratos:** 100% (1/1 S)
 - **Enrolamiento:** — (sin Sesiones enumeradas)
 - **Entrega:** — (sin Sesiones enumeradas)
-- **Hosts:** 42% (3/7 S)
+- **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 95% (44/46 S)
@@ -68,6 +68,10 @@
 - Sin Sesiones abiertas.
 
 ## Bloqueos
+- **S214:** Encargo incompleto: falta planificar · falta-planificar (S214)
+- **S215:** Encargo incompleto: falta planificar · falta-planificar (S215)
+- **S216:** Encargo incompleto: falta planificar · falta-planificar (S216)
+- **S217:** Encargo incompleto: falta planificar · falta-planificar (S217)
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
 - **S179:** Encargo incompleto: falta planificar · falta-planificar (S179)
 - **S180:** Encargo incompleto: falta planificar · falta-planificar (S180)
@@ -869,7 +873,7 @@
 
 ### S165 — Puente mínimo y aislado Pi–semáforo: un adapter invoca el binario y una extensión registra exactamente las ocho tower&#95;&#42; sin continuation ni routing adicional.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
   - Archivos autorizados: adapters/pi/semaphore-v1.mjs, extensions/pi/tower-v1/package.json, extensions/pi/tower-v1/semaphore.ts, test/adapters/pi/semaphore-v1.test.mjs, test/extensions/pi/tower-v1-semaphore.test.mjs
   - Depende de: S149
@@ -885,6 +889,10 @@
       - Falsificador: El paquete carga o copia continuation/V2, produce efectos al inicio, registra una superficie distinta de las ocho tower&#95;&#42; o necesita configuración global.
       - Contaminaba: S165
       - Descartada: Reusar el runtime o router de continuation/V2. → Rompe el boundary aislado y vuelve a introducir efectos y alcance excluidos de V1.
+    - Decisión estructurada [resuelta · contrato-visible-del-producto]: ¿Qué lugar queda para S165 tras la redefinición de V2 · Piloto y V3 · Flota?
+      - Resolución: Se archiva como reemplazada: la herramienta determinista &#96;piloto&#96; (V2) y la Pista nueva de V3 cubren su función. La fuente y la evidencia se conservan; no hay trabajo planificado sobre el puente Pi–semáforo.
+      - Autoridad: Decisión del maintainer del 2026-10-04 al aprobar el mapa V2/V3 del diseño de Piloto automático.
+      - Falsificador: Se planifica o ejecuta trabajo nuevo sobre el puente Pi–semáforo en lugar del piloto y la Pista.
   - Referencias: Autoridad canónica de la clasificación opcional V2. Evidencia preservada: implementer-2 limpio en work/S165@290507b416e6e24ce39c81fd02ca85d79d90a3e6 y ausencia de los cinco paths autorizados; no hay bytes que trasladar.
 
 ### S167 — Ruta manual de parches de errores de flujo en issue-resolver, autorizada sólo por el humano, sin Sesión ficticia y compatible de manera verificable con Sesiones activas.
@@ -1316,6 +1324,58 @@
   - Resultado y comportamiento: Desde el detalle de un proyecto adoptado se prende o apaga la Torre para ese proyecto, y el estado se ve en la lista de proyectos.
   - Restricciones y decisiones: Se prepara cuando existan las Sesiones de la Pista V2; hasta entonces queda diferida; los archivos se confirman al prepararla.
   - Referencias: docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
+
+### S214 — Estados NOVEDAD y POR REVISAR en Radar con identidad de vuelo, y regla de LISTO según el interruptor del piloto.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S214)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El piloto necesita estados que distingan trabajo desatendido que requiere decisión humana (NOVEDAD: decisión delicada, no se pudo inferir, interrumpida) de trabajo terminado esperando revisión (POR REVISAR: limpia, con decisiones), y una regla de LISTO que dependa del interruptor: prendido, las dependencias POR REVISAR pueden destrabar dentro del horizonte; apagado, rigen COMPLETO/ARCHIVADO. Un LISTO sin empezar puede volver a PLANIFICADO; lo completado queda visible.
+  - Resultado y comportamiento:
+  - Restricciones y decisiones:
+  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+
+### S215 — Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S215)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S214
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: V2 ejecuta varios vuelos con una conversación orquestadora por corrida y un subagente por Sesión; hace falta una herramienta determinista (no daemon) que despegue, avance rondas y aterrice sin empujar nada a remoto. Radar propone vuelos y el usuario aprueba; se resuelven preguntas previsibles antes del despegue; límites por defecto de tres rondas de profundidad y diez Sesiones, configurables; ante la duda se detiene esa Sesión conservando el trabajo por separado y siguen los vuelos independientes.
+  - Resultado y comportamiento:
+  - Restricciones y decisiones:
+  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+
+### S216 — Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S216)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S215
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El piloto corre sin el mantenedor presente; la TUI tiene que dar control humano directo sobre el interruptor, la observación de vuelos y la parada de emergencia que detiene la corrida de forma segura.
+  - Resultado y comportamiento:
+  - Restricciones y decisiones:
+  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+
+### S217 — Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
+- Coordinación:
+  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S217)
+  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Depende de: S215
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Al regresar, el usuario recibe el estado y deja terminar los vuelos; la revisión sigue las dependencias base-arriba aunque la atención empiece por los vuelos con NOVEDAD. La revisión evalúa el vuelo completo, califica Leve/Medio/Grave por esfuerzo semántico, analiza impacto antes de parchar y entrega sólo la porción aprobada; un vuelo que une dos espera la revisión de ambos.
+  - Resultado y comportamiento:
+  - Restricciones y decisiones:
+  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:

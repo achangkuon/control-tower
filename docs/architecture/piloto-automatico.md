@@ -203,7 +203,7 @@ Cuántas Sesiones afecta es un dato del informe («Medio, afecta a 4 Sesiones»)
 - **Punto de conexión — resuelto el 2026-10-03 (P14).**
 - **Versión — resuelto el 2026-10-03 (P12, P13, sección 12).** Falta aplicarlo al plan y a los documentos de definición.
 - **Límite de los subagentes sin verificar.** Si un subagente puede delegar a su vez en otros subagentes. No bloquea V2 porque el orquestador delega un subagente por Sesión.
-- **Sin decidir del inventario:** la maquinaria de auditoría del motor viejo (`core.mjs`, `main-store/`) y la skill diferida `chanks-0-jornada`.
+- **Legado decidido el 2026-10-04:** `core.mjs` y `main-store/` quedan archivados como historia, sin Sesión que los toque. La decisión sobre `chanks-0-jornada` queda pendiente y atada a la planificación de V3 (podría servir a Flota, que usa copias de trabajo propias por vuelo).
 - **Nada está probado.** Es diseño sobre lectura de código.
 
 ## 12. Versiones
@@ -229,15 +229,15 @@ Comparación que llevó a la decisión:
 
 ### Inventario de V2 y V3 actuales contra este diseño
 
-Relevado el 2026-10-03 por lectura (sin ejecutar `radar`; estados del `ROADMAP.md` generado). Recomendaciones, no cambios aprobados al plan.
+Relevado el 2026-10-03 por lectura (sin ejecutar `radar`; estados del `ROADMAP.md` generado). El mapa fue aprobado y aplicado al plan el 2026-10-04 (prioridades `v2-piloto` y `v3-flota`, Sesiones S214–S217 enumeradas en términos generales).
 
 | Pieza | Hoy | Contra el piloto |
 |---|---|---|
-| S203 — interruptor por proyecto en el instalador | `pista-v2`, DIFERIDO | Cambia: distinguir el interruptor del piloto y el freno de emergencia |
-| S4.12 — aviso si se cae Pi | `torre-v3`, DIFERIDO | Cambia: NOVEDAD · *interrumpida* en Radar |
-| S9.8 — despacho sin espera | `torre-v3`, DIFERIDO | Cambia: un orquestador por vuelo (V3) |
-| S107 — pestañas, una por Sesión | `torre-v3`, DIFERIDO | Cambia: la unidad es el vuelo (V3) |
-| S165 — puente Pi–semáforo | `torre-v3`, DIFERIDO | Se borra: lo reemplazan `piloto` y Pista |
+| S203 — interruptor por proyecto en el instalador | `v2-piloto`, DIFERIDO | Cambia: distinguir el interruptor del piloto y el freno de emergencia |
+| S4.12 — aviso si se cae Pi | `v3-flota`, DIFERIDO | Cambia: NOVEDAD · *interrumpida* en Radar |
+| S9.8 — despacho sin espera | `v3-flota`, DIFERIDO | Cambia: un orquestador por vuelo (V3) |
+| S107 — pestañas, una por Sesión | `v3-flota`, DIFERIDO | Cambia: la unidad es el vuelo (V3) |
+| S165 — puente Pi–semáforo | ARCHIVADA (2026-10-04) | Reemplazada: lo cubren `piloto` y Pista; fuente conservada |
 | S169 — mandato sellado de varias Sesiones | `torre-v3`, DIFERIDO | Cambia: aprobación de vuelos en el despegue y límites de rondas (V2) |
 | `semaphore.mjs`, `continuation/`, `supervision/` | Código dormido | Se borra (se conserva la historia) |
 | `delivery/` | Código de prueba | Se conservan las ideas; Pista se escribe nueva en Go |
@@ -245,7 +245,8 @@ Relevado el 2026-10-03 por lectura (sin ejecutar `radar`; estados del `ROADMAP.m
 | `escalation/`, `console/`, adaptadores de Herdr y Pi | Código dormido | Cambia: NOVEDAD y cascada; llamadas directas a `piloto`; lanzamiento por vuelo |
 | Skills diferidas: arranque, coordinador, despacho por Herdr, implementación desatendida | No instaladas | Cambian: vuelos, despegue y regla de NOVEDAD |
 | Firma de la Torre, avisos de Pi, Pi Intercom | Instalados | Se conservan |
-| `core.mjs`, `main-store/`, `chanks-0-jornada` | Dormidos | Sin decidir |
+| `core.mjs`, `main-store/` | Dormidos | Archivados como historia (2026-10-04), sin trabajo planificado |
+| `chanks-0-jornada` | Diferida | Decisión pendiente, atada a V3: podría servir a Flota |
 
 Desactualizaciones encontradas: `pista-entrega-ordenada.md` dice que V2 no tiene Sesiones, pero existe S203; las skills diferidas dicen «solo V2» y el instalador las clasifica V3.
 
