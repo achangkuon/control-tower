@@ -16,10 +16,10 @@ this is subordinate ODD execution continuity.
 ## Tasks
 - [x] T1 S175 — delivered: edaa4e0 (planning contracts) + 51d38d0 (hook fix), branch frente-1/resolucion-problemas; native review approved/burned; push pending maintainer decision.
 - [x] T2 S176 — delivered: 0ee4bf5 (cache invalidation), branch frente-1/resolucion-problemas; native review review-53f938c299e02f21 approved/burned; push pending maintainer decision.
-- [ ] T3 S177 — Rotular diseño histórico en ROADMAP raíz. Depends: T2.
-- [ ] T4 S178 — Radiografía ocasional sin porcentaje de instalación + conteo anidado. Depends: T2.
-- [ ] T5 S179 — Cobertura de suites y prerrequisitos portables (Bun/Go/Python obligatorios). Depends: T1.
-- [ ] T6 S180 — Investigación SDK con informe sustantivo en odd/tasks/s180-sdk-dependency-investigation.md. Depends: T3.
+- [x] T3 S177 — delivered: 844e03b (historical labeling + current authority refs), branch frente-1/resolucion-problemas; documentation-only, review preflight skipped per contract; push pending maintainer decision.
+- [x] T4 S178 — delivered: 4754543 (payload:null + nested test counting), branch frente-1/resolucion-problemas; native review review-118739d551d0b569 approved/burned; push pending maintainer decision.
+- [x] T5 S179 — delivered: c05e8ae (mandatory three-suite gate, no auto report), branch frente-1/resolucion-problemas; native review review-57099e87241fd581 approved/burned. Checkout modes fixed to 755 (18 tracked executables; authorized by maintainer): Python suite went from 15 failures + 128 errors to 1 failure + 4 skips. Remaining failure root-caused: pi-v2 materialization pin a13d35a742c6ef8462812a28fbe1d8c8b7431c32 absent from local /home/emili/projects/pi-v2 (needs git fetch, maintainer decision); gentle-pi pin satisfied (digest + 2.6.4). Pushes blocked by gate until resolved.
+- [x] T6 S180 — report written: odd/tasks/s180-sdk-dependency-investigation.md (verdicts: plugin/ajv/yaml necesario; sdk direct declaration obsolete — zero code imports, transitive via plugin, only consumer is manifest assertion; stale maintenance doc claim false per git log -S). Scout-verified, all claims reproduce. Commit pending maintainer authorization; doc-only candidate, native review skipped per policy.
 - [ ] T7 S181 — Revisión V1 publicada con informe en product/tower/v1/reviews/s181-v1-residual-review.md; congelar identidad de release al inicio. Depends: none (S150 archived).
 
 ## Acceptance and checks
