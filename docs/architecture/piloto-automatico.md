@@ -233,12 +233,12 @@ Relevado el 2026-10-03 por lectura (sin ejecutar `radar`; estados del `ROADMAP.m
 
 | Pieza | Hoy | Contra el piloto |
 |---|---|---|
-| S203 — interruptor por proyecto en el instalador | `v2-piloto`, DIFERIDO | Cambia: distinguir el interruptor del piloto y el freno de emergencia |
+| S203 — interruptor por proyecto en el instalador | `v2-piloto`, planificada (activada 2026-10-04, depende de S215) | Cambia: distinguir el interruptor del piloto y el freno de emergencia |
 | S4.12 — aviso si se cae Pi | `v3-flota`, DIFERIDO | Cambia: NOVEDAD · *interrumpida* en Radar |
 | S9.8 — despacho sin espera | `v3-flota`, DIFERIDO | Cambia: un orquestador por vuelo (V3) |
 | S107 — pestañas, una por Sesión | `v3-flota`, DIFERIDO | Cambia: la unidad es el vuelo (V3) |
 | S165 — puente Pi–semáforo | ARCHIVADA (2026-10-04) | Reemplazada: lo cubren `piloto` y Pista; fuente conservada |
-| S169 — mandato sellado de varias Sesiones | `torre-v3`, DIFERIDO | Cambia: aprobación de vuelos en el despegue y límites de rondas (V2) |
+| S169 — mandato sellado de varias Sesiones | `v2-piloto`, planificada (activada 2026-10-04; ejemplo S164+S165 retirado por S165 archivada) | Cambia: aprobación de vuelos en el despegue y límites de rondas (V2) |
 | `semaphore.mjs`, `continuation/`, `supervision/` | Código dormido | Se borra (se conserva la historia) |
 | `delivery/` | Código de prueba | Se conservan las ideas; Pista se escribe nueva en Go |
 | `radar marcar`, estado de Radar | Conservado | Cambia: reserva segura, identidad de vuelo, estados nuevos |
