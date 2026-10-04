@@ -1,13 +1,101 @@
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { chmodSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { lstatSync, realpathSync, chmodSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { BUNDLE_MEMBERS, validateBundle } from "../bundle.mjs";
 import { captureProjectFiles, compareProjectFiles, restoreProjectFiles } from "../project-files.mjs";
 import { initProject, doctorProject, uninstallProject } from "../adoption.mjs";
 import * as adoption from "../adoption.mjs";
+
+describe("S211 adoption robustness", () => {
+  test("shared skills and umask 002: actionable refusal, repair, healthy update and reversible uninstall", () => fixture(({ projectRoot }) => {
+    mkdirSync(join(projectRoot, ".agents/skills"), { recursive: true });
+    mkdirSync(join(projectRoot, ".claude"));
+    symlinkSync("../.agents/skills", join(projectRoot, ".claude/skills"));
+    for (const path of [".agents", ".agents/skills", ".claude"]) chmodSync(join(projectRoot, path), 0o775);
+    chmodSync(join(projectRoot, "CLAUDE.md"), 0o664);
+    let error;
+    try { initProject(trusted(projectRoot)); } catch (value) { error = value; }
+    expect(error?.message).toContain("Permisos inseguros: estas rutas permiten escritura de grupo u otros.");
+    for (const path of [".agents", ".agents/skills", ".claude", "CLAUDE.md"]) expect(error.message).toContain(`chmod go-w '${join(projectRoot, path)}'`);
+    expect(readlinkSync(join(projectRoot, ".claude/skills"))).toBe("../.agents/skills");
+    initProject({ ...trusted(projectRoot), fixPermissions: true });
+    expect(realpathSync(join(projectRoot, targets[2]))).toBe(join(projectRoot, targets[1]));
+    const state = JSON.parse(readFileSync(join(projectRoot, journal, "state.json")));
+    expect(state.sharedSkills).toBe("../.agents/skills");
+    expect(state.installed.destinations).toHaveLength(2);
+    expect(doctorProject({ projectRoot }).status).toBe("healthy");
+    expect(adoption.updateProject({ projectRoot }).status).toBe("unchanged");
+    chmodSync(join(projectRoot, "AGENTS.md"), 0o666);
+    for (const action of [doctorProject, adoption.updateProject]) expect(() => action({ projectRoot })).toThrow(`chmod go-w '${join(projectRoot, "AGENTS.md")}'`);
+    adoption.updateProject({ projectRoot, fixPermissions: true });
+    uninstallProject({ projectRoot });
+    expect(readlinkSync(join(projectRoot, ".claude/skills"))).toBe("../.agents/skills");
+    expect(lstatSync(join(projectRoot, ".claude/skills")).mode & 0o777).toBe(0o777);
+    for (const path of [".agents", ".agents/skills", ".claude"]) expect(lstatSync(join(projectRoot, path)).mode & 0o777).toBe(0o755);
+    expect(lstatSync(join(projectRoot, "CLAUDE.md")).mode & 0o777).toBe(0o644);
+    expect(readFileSync(join(projectRoot, "CLAUDE.md"), "utf8")).toBe("leave claude alone");
+    expect(readdirSync(join(projectRoot, ".agents/skills"))).toEqual([]);
+  }));
+
+  for (const target of ["/tmp", "../../outside", "../.agents/other", "../.agents/skills/"]) test(`refuses noncanonical shared link ${target}`, () => fixture(({ projectRoot }) => {
+    mkdirSync(join(projectRoot, ".agents/skills"), { recursive: true }); mkdirSync(join(projectRoot, ".claude"));
+    symlinkSync(target, join(projectRoot, ".claude/skills"));
+    expect(() => initProject({ ...trusted(projectRoot), fixPermissions: true })).toThrow();
+    expect(readlinkSync(join(projectRoot, ".claude/skills"))).toBe(target);
+    expect(readdirSync(join(projectRoot, ".agents/skills"))).toEqual([]);
+  }));
+
+  test("exclude block is journaled, idempotent and removed preserving arbitrary preexisting and later bytes", () => fixture(({ projectRoot }) => {
+    const path = join(projectRoot, ".git/info/exclude"), before = Buffer.from([255, 0, 35, 120]);
+    writeFileSync(path, before);
+    initProject(trusted(projectRoot));
+    const installed = readFileSync(path);
+    expect(installed.subarray(0, before.length)).toEqual(before);
+    for (const line of ["/.control-tower/", "/.control-tower-adoption-v1/", "/.agents/skills/control-tower/", "/.claude/skills/control-tower/"]) expect(installed.toString()).toContain(line);
+    adoption.updateProject({ projectRoot });
+    expect(readFileSync(path)).toEqual(installed);
+    writeFileSync(path, Buffer.concat([installed, Buffer.from("\n# later\n")]));
+    uninstallProject({ projectRoot });
+    expect(readFileSync(path)).toEqual(Buffer.concat([before, Buffer.from("\n# later\n")]));
+  }));
+
+  test("worktree adoption uses the common Git exclude, not the per-worktree gitdir", () => fixture(({ projectRoot, base }) => {
+    const worktree = join(base, "worktree"), gitdir = join(projectRoot, ".git/worktrees/fixture");
+    mkdirSync(worktree);
+    put(worktree, ".git", `gitdir: ${gitdir}\n`);
+    put(gitdir, "HEAD", "ref: refs/heads/master\n");
+    put(gitdir, "commondir", "../..\n");
+    put(gitdir, "gitdir", `${worktree}/.git\n`);
+    const path = join(projectRoot, ".git/info/exclude"), before = readFileSync(path);
+    initProject(trusted(worktree));
+    expect(readFileSync(path, "utf8")).toContain("# control-tower:project-exclude");
+    expect(doctorProject({ projectRoot: worktree }).status).toBe("healthy");
+    uninstallProject({ projectRoot: worktree });
+    expect(readFileSync(path)).toEqual(before);
+  }));
+
+  test("modified exclude blocks refuse uninstall before touching project files", () => fixture(({ projectRoot }) => {
+    initProject(trusted(projectRoot));
+    const path = join(projectRoot, ".git/info/exclude");
+    writeFileSync(path, readFileSync(path, "utf8").replace("/.control-tower/", "/user-change/"));
+    unchangedFailure(projectRoot, () => uninstallProject({ projectRoot }));
+  }));
+
+  test("pre-S211 journal with manual excludes is upgraded without duplicating entries or taking ownership", () => fixture(({ projectRoot }) => {
+    initProject(trusted(projectRoot));
+    tamper(projectRoot, state => { delete state.exclude; });
+    const path = join(projectRoot, ".git/info/exclude");
+    const before = Buffer.from("# manual\n/.control-tower/\n/.control-tower-adoption-v1/\n/.agents/skills/control-tower/\n/.claude/skills/control-tower/\n");
+    writeFileSync(path, before);
+    adoption.updateProject({ projectRoot }); adoption.updateProject({ projectRoot });
+    expect(readFileSync(path)).toEqual(before);
+    uninstallProject({ projectRoot });
+    expect(readFileSync(path)).toEqual(before);
+  }));
+});
 
 const journal = ".control-tower-adoption-v1";
 const targets = [".control-tower/radar", ".agents/skills/control-tower", ".claude/skills/control-tower"];
@@ -20,6 +108,7 @@ function put(root, name, bytes, mode = 0o640) {
   chmodSync(path, mode);
 }
 function fixture(fn) {
+  const mask = process.umask(0o022);
   const base = mkdtempSync(join(tmpdir(), "tower-adoption-"));
   const projectRoot = join(base, "project");
   const home = join(base, "home");
@@ -43,6 +132,7 @@ function fixture(fn) {
       expect(captureProjectFiles(root, readdirSync(root))).toEqual(outsideTrees[i]);
     }
     rmSync(base, { recursive: true, force: true });
+    process.umask(mask);
   }
 }
 const instructionStart = "<!-- control-tower:project-workflow -->";
@@ -291,7 +381,7 @@ describe("project-local lifecycle API", () => {
     const manifest = validateBundle(source);
     expect(Object.isFrozen(initProject(trusted(projectRoot)))).toBe(true);
     const state = JSON.parse(readFileSync(join(projectRoot, journal, "state.json"), "utf8"));
-    expect(Object.keys(state).sort()).toEqual(["installed", "instructions", "original", "schema"]);
+    expect(Object.keys(state).sort()).toEqual(["exclude", "installed", "instructions", "original", "schema"]);
     expect(state.schema).toBe("tower.v1.adoption/1");
     expect(state.original.destinations.map((d) => d.path)).toEqual([...targets].sort());
     expect(state.installed.destinations.map((d) => d.path)).toEqual([...targets].sort());

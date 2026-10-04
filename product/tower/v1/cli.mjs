@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { installGlobal, updateGlobal, doctorGlobal, rollbackGlobal, uninstallGlobal } from "./global.mjs";
 import { requireGentleAi, doctorRuntime, preflightRuntimeHome, uninstallRuntime } from "./runtime-config.mjs";
 import { buildRelease } from "./release-build.mjs";
+import { preflightProjectAdoption } from "./adoption.mjs";
 import { validateBundle } from "./bundle.mjs";
 import { acquireLatestRelease, checkLatestRelease, updateTui } from "./release.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
@@ -38,7 +39,7 @@ function parseArguments(argv) {
   const check = command === "update" && tail.includes("--check");
   const required = check ? ["--check"] : latest ? ["--latest"] : fromCheckout ? ["--from-checkout"] : command === "project" ? ["--project", ...(subcommand === "init" ? ["--trust"] : [])] :
     ["install", "update"].includes(command) ? ["--tag", "--asset", "--sha256"] : [];
-  const allowed = new Set([...common, ...required, ...(!check && ["install", "update"].includes(command) ? ["--fix-permissions"] : [])]);
+  const allowed = new Set([...common, ...required, ...(!check && (["install", "update"].includes(command) || command === "project" && ["init", "update"].includes(subcommand)) ? ["--fix-permissions"] : [])]);
   const flags = Object.create(null);
   for (let index = 0; index < tail.length;) {
     const flag = tail[index], value = tail[index + 1];
@@ -423,7 +424,7 @@ export function main(argv, deps = {}) {
         "Agregá --fix-permissions a install|update para quitar sólo go-w de las rutas propias informadas dentro de HOME.\n" +
         "torre-control update --check  (read-only JSON, 8s metadata budget; different tags count as available, including checkout-*)\n" +
         "torre-control doctor | status | rollback | uninstall\n" +
-        "torre-control project update --project <absolute-path>\n" +
+        "torre-control project init|update --project <absolute-path> [--fix-permissions] (init requiere --trust trusted)\n" +
         "uninstall removes owned global resources and restores backups; Gentle AI and projects remain untouched.\n");
       return 0;
     }
@@ -463,12 +464,17 @@ export function main(argv, deps = {}) {
           launcherPath.startsWith(stateRoot + sep)) usage("overlapping paths");
       result = collectStatus({ home, stateRoot, launcherPath, registryRoot, flags }, deps);
     } else if (command === "project" || command === "list") {
+      // Project permission admission precedes every registry/default-parent write.
+      const permissionsChanged = command === "project" && ["init", "update", "doctor"].includes(subcommand) ?
+        preflightProjectAdoption({ projectRoot: flags["--project"], fixPermissions: flags["--fix-permissions"] === true,
+          onPermissionsFixed: paths => stderr.write(`Permisos corregidos (sólo go-w):\n${paths.map(path => `- ${path}`).join("\n")}\n`) }) : [];
       // Registered project doctor writes membership; it is intentionally not read-only.
       const missing = !owns(flags, "--registry") &&
         !defaultParent(home, dirname(registryRoot), command !== "list");
       result = command === "list" ? missing ? [] : api.listProjects({ registryRoot }) :
         api[projects[subcommand]]({ registryRoot, projectRoot: flags["--project"],
           ...(subcommand === "init" ? { trustResolution: "trusted" } : {}) });
+      if (flags["--fix-permissions"]) result = { ...result, permissionsChanged };
     } else {
       const absent = ["doctor", "uninstall"].includes(command) && absentGlobalDefaults(home, stateRoot, launcherPath, flags);
       const acquiring = command === "install" || command === "update";

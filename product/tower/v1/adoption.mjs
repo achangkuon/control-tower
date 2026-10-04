@@ -1,17 +1,20 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { markerRange } from "./runtime-config.mjs";
-import { lstatSync, mkdirSync, readFileSync, rmSync, chmodSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { realpathSync, lstatSync, mkdirSync, readFileSync, rmSync, chmodSync, writeFileSync } from "node:fs";
+import { join, resolve, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { validateBundle } from "./bundle.mjs";
-import { captureProjectFiles, compareProjectFiles, restoreProjectFiles, validateProjectFiles, PROJECT_FILES_SCHEMA,
+import { preflightProjectPaths, sharedProjectSkills, captureProjectFiles, compareProjectFiles, restoreProjectFiles, validateProjectFiles, PROJECT_FILES_SCHEMA,
   projectInstructionSnapshot, projectInstructionState, removeProjectInstructions, replaceProjectInstructionBlock } from "./project-files.mjs";
 
 const SCHEMA = "tower.v1.adoption/1";
 const JOURNAL = ".control-tower-adoption-v1";
 const TARGETS = Object.freeze([".control-tower/radar", ".agents/skills/control-tower", ".claude/skills/control-tower"]);
 const PATHS = [...TARGETS].sort();
+const sharedPaths = PATHS.filter(path => !path.startsWith(".claude/"));
+const pathsFor = shared => shared ? sharedPaths : PATHS;
 const sourceRoot = resolve(fileURLToPath(new URL("../../../", import.meta.url)));
 const fail = (reason) => { throw new Error(`Invalid Tower adoption: ${reason}`); };
 const keys = (value, names) => value && typeof value === "object" && !Array.isArray(value) &&
@@ -19,7 +22,7 @@ const keys = (value, names) => value && typeof value === "object" && !Array.isAr
 
 function gitRoot(projectRoot) {
   // The snapshot call validates the exact absolute root and every ancestor without following links.
-  captureProjectFiles(projectRoot, [JOURNAL]);
+  captureProjectFiles(projectRoot, [".control-tower-admission"]);
   let git;
   try { git = lstatSync(join(projectRoot, ".git")); } catch (error) {
     if (error.code !== "ENOENT") throw error;
@@ -36,6 +39,73 @@ function gitRoot(projectRoot) {
   }
   // Includes every gitdir ancestor and HEAD; a worktree marker may point outside the project.
   captureProjectFiles(gitdir, ["HEAD"]);
+  const result = spawnSync("git", ["-C", projectRoot, "rev-parse", "--git-common-dir"], {
+    env: { PATH: process.env.PATH, GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: "/dev/null" }, encoding: "utf8", timeout: 10_000,
+  });
+  if (result.status !== 0 || !result.stdout.trim() || /[\0\r\n]/.test(result.stdout.trim())) fail("Git common directory");
+  const common = resolve(projectRoot, result.stdout.trim());
+  captureProjectFiles(common, ["info/exclude"]);
+  return common;
+}
+
+/** Public CLI admission runs before registry/default-parent writes. */
+export function preflightProjectAdoption({ projectRoot, fixPermissions = false, onPermissionsFixed }) {
+  const shared = sharedProjectSkills(projectRoot);
+  const common = gitRoot(projectRoot), exclude = relative(projectRoot, join(common, "info/exclude"));
+  // A missing leaf checks .claude itself without traversing unrelated skills or the admitted alias.
+  return preflightProjectPaths(projectRoot, [...pathsFor(shared), JOURNAL, ...INSTRUCTION_PATHS,
+    ...(shared ? [".claude/.control-tower-admission"] : []),
+    ...(!exclude.startsWith(`..${sep}`) ? [exclude.split(sep).join("/")] : [])], { fixPermissions, onPermissionsFixed });
+}
+
+const excludePaths = ["/.control-tower/", "/.control-tower-adoption-v1/", "/.agents/skills/control-tower/", "/.claude/skills/control-tower/"];
+const excludeStart = "# control-tower:project-exclude", excludeEnd = "# /control-tower:project-exclude";
+const excludeBytes = snapshot => {
+  const tree = snapshot.destinations[0].tree;
+  if (tree.type === "absent") return Buffer.alloc(0);
+  if (tree.type !== "file") fail("exclude file");
+  return Buffer.from(tree.bytes, "base64");
+};
+function excludeSnapshot(snapshot, bytes) {
+  const next = structuredClone(snapshot), entry = next.destinations[0];
+  entry.absentAncestors = [];
+  entry.tree = { type: "file", mode: entry.tree.mode ?? 0o644, encoding: "base64", bytes: bytes.toString("base64"),
+    byteLength: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
+  return next;
+}
+function planExclude(original) {
+  const before = excludeBytes(original), text = before.toString("latin1");
+  if (text.includes(excludeStart) || text.includes(excludeEnd)) fail("unowned exclude marker");
+  const lines = text.split(/\r?\n/), missing = excludePaths.filter(path => !lines.includes(path));
+  const block = missing.length ? `${before.length && before.at(-1) !== 10 ? "\n" : ""}${excludeStart}\n${missing.join("\n")}\n${excludeEnd}\n` : "";
+  return { original, installed: block ? excludeSnapshot(original, Buffer.concat([before, Buffer.from(block)])) : original, block };
+}
+function validateExclude(value) {
+  if (!keys(value, ["original", "installed", "block"])) fail("exclude journal");
+  for (const snapshot of [value.original, value.installed]) {
+    validateProjectFiles(snapshot);
+    if (!isDeepStrictEqual(snapshot.destinations.map(e => e.path), ["info/exclude"])) fail("exclude paths");
+  }
+  if (!isDeepStrictEqual(value, planExclude(value.original))) fail("exclude snapshot");
+}
+function removeExclude(live, value) {
+  if (!value.block) return live;
+  const bytes = excludeBytes(live), block = Buffer.from(value.block), index = bytes.indexOf(block);
+  if (index < 0 || bytes.indexOf(block, index + 1) >= 0) fail("modified exclude block");
+  const next = Buffer.concat([bytes.subarray(0, index), bytes.subarray(index + block.length)]);
+  return !next.length && value.original.destinations[0].tree.type === "absent" ? value.original : excludeSnapshot(live, next);
+}
+function excludePreflight(projectRoot, state) {
+  const root = gitRoot(projectRoot);
+  preflightProjectPaths(root, ["info/exclude"]);
+  const live = captureProjectFiles(root, ["info/exclude"]);
+  if (state?.exclude) removeExclude(live, state.exclude);
+  return { root, live };
+}
+
+function verifySharedSkill(projectRoot, shared) {
+  if (sharedProjectSkills(projectRoot) !== shared) fail("shared skill layout drift");
+  if (shared && realpathSync(join(projectRoot, TARGETS[2])) !== join(projectRoot, TARGETS[1])) fail("shared skill resolution drift");
 }
 
 function expectedTrees(manifest) {
@@ -69,13 +139,13 @@ function expectedTrees(manifest) {
   return trees;
 }
 
-function snapshotPaths(snapshot) {
+function snapshotPaths(snapshot, shared = false) {
   validateProjectFiles(snapshot);
-  if (!isDeepStrictEqual(snapshot.destinations.map((entry) => entry.path), PATHS)) fail("destination paths");
+  if (!isDeepStrictEqual(snapshot.destinations.map((entry) => entry.path), pathsFor(shared))) fail("destination paths");
 }
-function installedSnapshot(manifest) {
+function installedSnapshot(manifest, shared = false) {
   const trees = expectedTrees(manifest);
-  const snapshot = { schema: PROJECT_FILES_SCHEMA, destinations: PATHS.map((path) =>
+  const snapshot = { schema: PROJECT_FILES_SCHEMA, destinations: pathsFor(shared).map((path) =>
     ({ path, absentAncestors: [], tree: trees.get(path) })) };
   validateProjectFiles(snapshot);
   return snapshot;
@@ -112,8 +182,11 @@ function instructionBlock(snapshot) {
   return bytes.subarray(range.begin, range.finish).toString("utf8");
 }
 function validateState(state) {
-  if ((!keys(state, ["schema", "original", "installed"]) && !keys(state, ["schema", "original", "installed", "instructions"])) || state.schema !== SCHEMA) fail("journal schema");
-  snapshotPaths(state.original); snapshotPaths(state.installed);
+  const optional = ["instructions", "sharedSkills", "exclude"].filter(key => Object.hasOwn(state ?? {}, key));
+  if (!keys(state, ["schema", "original", "installed", ...optional]) || state.schema !== SCHEMA) fail("journal schema");
+  if ("sharedSkills" in state && state.sharedSkills !== "../.agents/skills") fail("shared skill journal");
+  snapshotPaths(state.original, Boolean(state.sharedSkills)); snapshotPaths(state.installed, Boolean(state.sharedSkills));
+  if (state.exclude) validateExclude(state.exclude);
   if ("instructions" in state) {
     const value = state.instructions;
     if (!keys(value, ["version", "original", "installed"]) || !versionOK(value.version)) fail("instruction journal schema");
@@ -126,6 +199,7 @@ function writeState(projectRoot, state) {
   writeFileSync(join(projectRoot, JOURNAL, "state.json"), JSON.stringify(state), { mode: 0o600 });
 }
 function preflight(projectRoot) {
+  preflightProjectAdoption({ projectRoot });
   gitRoot(projectRoot);
   const journal = captureProjectFiles(projectRoot, [JOURNAL]).destinations[0].tree;
   if (journal.type !== "directory" || journal.mode !== 0o700 || journal.entries.length !== 1 ||
@@ -135,19 +209,25 @@ function preflight(projectRoot) {
   try { state = JSON.parse(Buffer.from(journal.entries[0].tree.bytes, "base64").toString("utf8")); }
   catch { fail("journal JSON"); }
   validateState(state);
+  verifySharedSkill(projectRoot, Boolean(state.sharedSkills));
+  excludePreflight(projectRoot, state);
   if (!compareProjectFiles(projectRoot, state.installed)) fail("installed destination drift");
   return state;
 }
 
 /** Explicitly trusted, project-local installation; never touches host trust or global state. */
 export function initProject(options) {
-  if (!keys(options, ["projectRoot", "trustResolution"]) || options.trustResolution !== "trusted") fail("explicit trust required");
+  if ((!keys(options, ["projectRoot", "trustResolution"]) && !keys(options, ["projectRoot", "trustResolution", "fixPermissions"])) ||
+      options.trustResolution !== "trusted" || "fixPermissions" in options && typeof options.fixPermissions !== "boolean") fail("explicit trust required");
   const { projectRoot } = options;
-  gitRoot(projectRoot);
+  preflightProjectAdoption(options);
+  const shared = sharedProjectSkills(projectRoot);
+  const { root: excludeRoot, live: excludeOriginal } = excludePreflight(projectRoot);
+  const exclude = planExclude(excludeOriginal);
   const manifest = validateBundle(sourceRoot);
-  const original = captureProjectFiles(projectRoot, TARGETS);
+  const original = captureProjectFiles(projectRoot, pathsFor(shared));
   if (captureProjectFiles(projectRoot, [JOURNAL]).destinations[0].tree.type !== "absent") fail("journal already exists");
-  const installed = installedSnapshot(manifest);
+  const installed = installedSnapshot(manifest, shared);
   const version = activeVersion(), instructionOriginal = captureProjectFiles(projectRoot, INSTRUCTION_PATHS);
   const instructions = { version, original: instructionOriginal,
     installed: projectInstructionSnapshot(instructionOriginal, renderInstructions(manifest, version)) };
@@ -159,7 +239,10 @@ export function initProject(options) {
     restoreProjectFiles(projectRoot, installed);
     restoreProjectFiles(projectRoot, instructions.installed);
     if (!compareProjectFiles(projectRoot, installed) || !compareProjectFiles(projectRoot, instructions.installed)) fail("installation drift");
-    const state = { schema: SCHEMA, original, installed, instructions };
+    verifySharedSkill(projectRoot, shared);
+    restoreProjectFiles(excludeRoot, exclude.installed);
+    const state = { schema: SCHEMA, original, installed, instructions, exclude,
+      ...(shared ? { sharedSkills: "../.agents/skills" } : {}) };
     writeFileSync(join(projectRoot, JOURNAL, "state.json"), JSON.stringify(state), { flag: "wx", mode: 0o600 });
     chmodSync(join(projectRoot, JOURNAL, "state.json"), 0o600);
   } catch (error) {
@@ -167,6 +250,7 @@ export function initProject(options) {
       try {
         restoreProjectFiles(projectRoot, original);
         restoreProjectFiles(projectRoot, instructionOriginal);
+        restoreProjectFiles(excludeRoot, excludeOriginal);
         rmSync(join(projectRoot, JOURNAL), { recursive: true });
       } catch (rollbackError) { throw new AggregateError([error, rollbackError], "Adoption rollback failed"); }
     }
@@ -179,7 +263,7 @@ export function initProject(options) {
 export function doctorProject(options) {
   if (!keys(options, ["projectRoot"])) fail("doctor options");
   const state = preflight(options.projectRoot);
-  const outdated = !state.instructions || !isDeepStrictEqual(state.installed, installedSnapshot(validateBundle(sourceRoot)));
+  const outdated = !state.instructions || !isDeepStrictEqual(state.installed, installedSnapshot(validateBundle(sourceRoot), Boolean(state.sharedSkills)));
   let instructions = state.instructions ? projectInstructionState(captureProjectFiles(options.projectRoot, INSTRUCTION_PATHS), state.instructions.installed) : "outdated version";
   if (instructions === "ok" && (state.instructions.version !== activeVersion() ||
       instructionBlock(state.instructions.installed) !== renderInstructions(validateBundle(sourceRoot), activeVersion()))) instructions = "outdated version";
@@ -189,15 +273,19 @@ export function doctorProject(options) {
 /** Refuse all drift before removing anything; restore the exact original destination trees. */
 export function uninstallProject(options) {
   if (!keys(options, ["projectRoot"])) fail("uninstall options");
-  const { original, installed, instructions } = preflight(options.projectRoot);
+  const state = preflight(options.projectRoot), { original, installed, instructions } = state;
+  const { root: excludeRoot, live: excludeLive } = excludePreflight(options.projectRoot, state);
+  const excludeRemoved = state.exclude ? removeExclude(excludeLive, state.exclude) : null;
   const live = instructions ? captureProjectFiles(options.projectRoot, INSTRUCTION_PATHS) : null;
   const removed = instructions ? removeProjectInstructions(live, instructions.original, instructions.installed) : null;
   try {
     restoreProjectFiles(options.projectRoot, original);
     if (removed) restoreProjectFiles(options.projectRoot, removed);
+    if (excludeRemoved) restoreProjectFiles(excludeRoot, excludeRemoved);
   } catch (error) {
     try {
       if (live) restoreProjectFiles(options.projectRoot, live);
+      restoreProjectFiles(excludeRoot, excludeLive);
       for (const destination of installed.destinations) {
         const snapshot = { schema: installed.schema, destinations: [destination] };
         if (!compareProjectFiles(options.projectRoot, snapshot)) restoreProjectFiles(options.projectRoot, snapshot);
@@ -227,6 +315,8 @@ export function cleanupProject(options) {
   validateState(state);
   if (isDeepStrictEqual(state.original, state.installed)) fail("identical snapshots");
   if (!compareProjectFiles(projectRoot, state.original) || state.instructions && !compareProjectFiles(projectRoot, state.instructions.original)) fail("original destination drift");
+  const { root: excludeRoot, live: excludeLive } = excludePreflight(projectRoot, state);
+  if (state.exclude) restoreProjectFiles(excludeRoot, removeExclude(excludeLive, state.exclude));
   rmSync(join(projectRoot, JOURNAL), { recursive: true });
   return Object.freeze({ status: "cleaned" });
 }
@@ -239,7 +329,9 @@ export function refreshProjectInstructions(options) {
   if ((!keys(options, ["projectRoot", "version", "block"]) && !keys(options, ["projectRoot", "version", "block", "bundleRoot"])) ||
       !versionOK(options.version) || typeof options.block !== "string") fail("refresh options");
   const { projectRoot, version, block } = options, state = preflight(projectRoot);
-  const installed = installedSnapshot(validateBundle(options.bundleRoot ?? sourceRoot));
+  const installed = installedSnapshot(validateBundle(options.bundleRoot ?? sourceRoot), Boolean(state.sharedSkills));
+  const { root: excludeRoot, live: excludeLive } = excludePreflight(projectRoot, state);
+  const exclude = state.exclude ?? planExclude(excludeLive);
   const upgraded = !isDeepStrictEqual(state.installed, installed);
   const live = captureProjectFiles(projectRoot, INSTRUCTION_PATHS);
   const prior = state.instructions;
@@ -251,16 +343,19 @@ export function refreshProjectInstructions(options) {
   const baseline = prior ? replaceProjectInstructionBlock(prior.installed, block) : projectInstructionSnapshot(original, block);
   const next = prior ? replaceProjectInstructionBlock(live, block) : baseline;
   const instructions = { version, original, installed: baseline };
-  validateState({ ...state, installed, instructions });
-  if (!upgraded && prior?.version === version && isDeepStrictEqual(prior.installed, baseline) && isDeepStrictEqual(live, next)) return { status: "unchanged" };
+  validateState({ ...state, installed, instructions, exclude });
+  if (state.exclude && !upgraded && prior?.version === version && isDeepStrictEqual(prior.installed, baseline) && isDeepStrictEqual(live, next)) return { status: "unchanged" };
   try {
     if (upgraded) restoreProjectFiles(projectRoot, installed);
     restoreProjectFiles(projectRoot, next);
     if (!compareProjectFiles(projectRoot, installed) || !compareProjectFiles(projectRoot, next)) fail("upgrade readback drift");
-    writeState(projectRoot, { ...state, installed, instructions });
+    verifySharedSkill(projectRoot, Boolean(state.sharedSkills));
+    if (!state.exclude) restoreProjectFiles(excludeRoot, exclude.installed);
+    writeState(projectRoot, { ...state, installed, instructions, exclude });
   } catch (error) {
     try {
       restoreProjectFiles(projectRoot, live);
+      restoreProjectFiles(excludeRoot, excludeLive);
       if (upgraded) for (const destination of state.installed.destinations) {
         const snapshot = { schema: state.installed.schema, destinations: [destination] };
         if (!compareProjectFiles(projectRoot, snapshot)) restoreProjectFiles(projectRoot, snapshot);
@@ -274,7 +369,9 @@ export function refreshProjectInstructions(options) {
 
 /** Explicit single-project update; trust comes only from the intact adoption journal. */
 export function updateProject(options) {
-  if (!keys(options, ["projectRoot"])) fail("update options");
+  if ((!keys(options, ["projectRoot"]) && !keys(options, ["projectRoot", "fixPermissions"])) ||
+      "fixPermissions" in options && typeof options.fixPermissions !== "boolean") fail("update options");
+  preflightProjectAdoption(options);
   const version = activeVersion();
   return Object.freeze(refreshProjectInstructions({ projectRoot: options.projectRoot, version,
     block: renderInstructions(validateBundle(sourceRoot), version) }));
@@ -282,6 +379,8 @@ export function updateProject(options) {
 
 // The positional CLI is deliberately closed: no source, global, or legacy override flags.
 function parseCli(args) {
+  const fixPermissions = args.at(-1) === "--fix-permissions";
+  if (fixPermissions) args = args.slice(0, -1);
   const [command, projectFlag, projectRoot, trustFlag, trust] = args;
   if (!command) throw new Error("command required");
   if (!["init", "doctor", "update", "uninstall", "cleanup"].includes(command)) throw new Error("unknown command");
@@ -290,19 +389,20 @@ function parseCli(args) {
     if (args.length !== 5 || trustFlag !== "--trust" || !trust || trust.startsWith("--")) throw new Error("invalid arguments");
     if (trust !== "trusted") throw new Error("trust must be trusted");
   } else if (args.length !== 3) throw new Error("invalid arguments");
-  return { command, projectRoot };
+  if (fixPermissions && !["init", "update"].includes(command)) throw new Error("invalid arguments");
+  return { command, projectRoot, fixPermissions };
 }
 
 if (import.meta.main) {
   try {
-    const { command, projectRoot } = parseCli(process.argv.slice(2));
-    const result = command === "init" ? initProject({ projectRoot, trustResolution: "trusted" }) :
+    const { command, projectRoot, fixPermissions } = parseCli(process.argv.slice(2));
+    const result = command === "init" ? initProject({ projectRoot, trustResolution: "trusted", ...(fixPermissions ? { fixPermissions } : {}) }) :
       command === "doctor" ? doctorProject({ projectRoot }) :
-      command === "update" ? updateProject({ projectRoot }) :
+      command === "update" ? updateProject({ projectRoot, ...(fixPermissions ? { fixPermissions } : {}) }) :
       command === "uninstall" ? uninstallProject({ projectRoot }) : cleanupProject({ projectRoot });
     process.stdout.write(`${JSON.stringify(result)}\n`);
   } catch (error) {
-    process.stderr.write(`Invalid Tower adoption CLI: ${String(error.message).split(/[\r\n]/, 1)[0]}\n`);
+    process.stderr.write(`Invalid Tower adoption CLI: ${Array.isArray(error.permissionPaths) ? error.message : String(error.message).split(/[\r\n]/, 1)[0]}\n`);
     process.exitCode = 1;
   }
 }

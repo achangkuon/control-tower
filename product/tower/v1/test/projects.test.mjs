@@ -20,6 +20,7 @@ function put(path, bytes, mode = 0o600) {
   chmodSync(path, mode);
 }
 function fixture(fn) {
+  const mask = process.umask(0o022);
   const base = mkdtempSync(join(tmpdir(), "tower-projects-"));
   const projectRoot = join(base, "project"), registryRoot = join(base, "registry");
   const home = join(base, "home");
@@ -38,6 +39,7 @@ function fixture(fn) {
     expect(captureProjectFiles(base, ["home"])).toEqual(untouched);
     expect(readFileSync(join(projectRoot, "AGENTS.md")).subarray(0, originalAgents.length)).toEqual(originalAgents);
     rmSync(base, { recursive: true, force: true });
+    process.umask(mask);
   }
 }
 function registry(root, bytes) {

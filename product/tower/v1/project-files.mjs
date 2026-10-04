@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { closeSync, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmdirSync, rmSync, writeFileSync, chmodSync, constants } from "node:fs";
+import { readlinkSync, realpathSync, fchmodSync, closeSync, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmdirSync, rmSync, writeFileSync, chmodSync, constants } from "node:fs";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { markerRange } from "./runtime-config.mjs";
@@ -111,6 +111,74 @@ export function validateProjectFiles(snapshot) {
     validateTree(entry.tree);
   }
   return true;
+}
+
+/** The only admitted project skill alias. Never expose general symlink traversal to snapshots. */
+export function sharedProjectSkills(root) {
+  rootPath(root);
+  const { absolute } = location(root, ".claude/skills");
+  const link = stat(absolute);
+  if (!link?.isSymbolicLink()) return false;
+  if (link.uid !== process.getuid() || readlinkSync(absolute) !== "../.agents/skills") fail();
+  const target = location(root, ".agents/skills").absolute;
+  const directory = safe(stat(target), true);
+  if (!directory || directory.uid !== process.getuid() || realpathSync(target) !== target || realpathSync(absolute) !== target) fail();
+  return true;
+}
+
+/** Inspect only selected trees and traversed project ancestors, never unrelated siblings.
+ * Permission repair is explicit, descriptor-based and follows no symlinks.
+ */
+export function preflightProjectPaths(root, paths, { fixPermissions = false, onPermissionsFixed } = {}) {
+  rootPath(root);
+  const discover = () => {
+    const writable = new Map(); let count = 0;
+    const inspect = path => {
+      const entry = safe(stat(path));
+      if (!entry) return null;
+      if (entry.uid !== process.getuid()) fail();
+      if (entry.mode & 0o022) writable.set(path, entry);
+      return entry;
+    };
+    const visit = path => {
+      if (++count > 65536) fail();
+      const entry = inspect(path);
+      if (entry?.isDirectory()) for (const name of readdirSync(path).sort()) visit(join(path, name));
+    };
+    inspect(root);
+    for (const path of paths) {
+      const parts = assertPath(path).split("/"); let current = root;
+      for (const part of parts.slice(0, -1)) {
+        current = join(current, part);
+        const entry = inspect(current); if (entry && !entry.isDirectory()) fail();
+      }
+      visit(join(root, ...parts));
+    }
+    return [...writable].sort(([a], [b]) => a.localeCompare(b));
+  };
+  const entries = discover();
+  if (entries.length && !fixPermissions) {
+    const error = new Error("Tower project: Permisos inseguros: estas rutas permiten escritura de grupo u otros.\n" +
+      entries.map(([path]) => `- ${path}\n  chmod go-w '${path.replaceAll("'", "'\\''")}'`).join("\n") +
+      "\nCorregí los permisos y volvé a intentar, o ejecutá el mismo comando con --fix-permissions.");
+    error.permissionPaths = entries.map(([path]) => path);
+    throw error;
+  }
+  const descriptors = [];
+  try {
+    const current = discover();
+    if (current.length !== entries.length || current.some(([path, s], i) => path !== entries[i][0] ||
+        s.dev !== entries[i][1].dev || s.ino !== entries[i][1].ino || s.mode !== entries[i][1].mode)) fail();
+    for (const [path, before] of entries) {
+      const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK); descriptors.push(fd);
+      const opened = fstatSync(fd);
+      if (opened.dev !== before.dev || opened.ino !== before.ino || opened.mode !== before.mode || opened.uid !== process.getuid()) fail();
+      safe(opened);
+    }
+    for (const [i, [, entry]] of entries.entries()) fchmodSync(descriptors[i], entry.mode & 0o7777 & ~0o022);
+  } finally { for (const fd of descriptors) closeSync(fd); }
+  if (entries.length) onPermissionsFixed?.(entries.map(([path]) => path));
+  return entries.map(([path]) => path);
 }
 
 /** Capture exact non-overlapping project-relative destinations and their absent ancestors, without writing. */

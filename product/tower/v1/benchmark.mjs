@@ -144,10 +144,11 @@ function fixture(root, adopted, env, timeoutMs, plan = null) {
   };
   writeFileSync(join(root, "README.md"), "# Fixture\nA disposable benchmark project.\n");
   git("init", "-q"); git("add", "."); git("commit", "-qm", "seed");
-  if (adopted) initProject({ projectRoot: root, trustResolution: "trusted" });
+  // Only this freshly created disposable fixture is eligible for permission repair.
+  if (adopted) initProject({ projectRoot: root, trustResolution: "trusted", fixPermissions: true });
   if (plan !== null) { mkdirSync(join(root, "openspec")); writeFileSync(join(root, "openspec/plan.yaml"), plan); }
   // Claude injects status: both arms MUST be clean with equal commit counts/messages.
-  // The second commit is empty only in the non-adopter; all adoption output is committed.
+  // Only public instructions are committed; adoption internals remain locally excluded.
   git("add", "."); git("commit", "--allow-empty", "-qm", "prepare arm");
 }
 

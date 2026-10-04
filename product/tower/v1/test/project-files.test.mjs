@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { chmodSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { captureProjectFiles, compareProjectFiles, restoreProjectFiles, validateProjectFiles } from "../project-files.mjs";
+import { preflightProjectPaths, sharedProjectSkills, captureProjectFiles, compareProjectFiles, restoreProjectFiles, validateProjectFiles } from "../project-files.mjs";
 
 function fixture(fn) {
   const base = mkdtempSync(join(tmpdir(), "tower-files-"));
@@ -19,6 +19,44 @@ function put(root, path, bytes = "original", mode = 0o640) {
 }
 const mode = (path) => lstatSync(path).mode & 0o7777;
 const clone = (value) => JSON.parse(JSON.stringify(value));
+
+describe("S211 permission admission", () => {
+  test("reports all selected ancestors and children, shell-quotes paths, repairs only go-w", () => fixture(root => {
+    chmodSync(root, 0o750);
+    put(root, "selected/nested/it's.md", "keep", 0o662);
+    put(root, "unrelated/file", "untouched", 0o666);
+    chmodSync(join(root, "selected"), 0o775);
+    chmodSync(join(root, "selected/nested"), 0o757);
+    const before = captureProjectFiles(root, ["selected", "unrelated"]);
+    let error;
+    try { preflightProjectPaths(root, ["selected/nested"]); } catch (value) { error = value; }
+    expect(error.permissionPaths).toEqual([join(root, "selected"), join(root, "selected/nested"), join(root, "selected/nested/it's.md")]);
+    expect(error.message).toContain(`chmod go-w '${root}/selected/nested/it'\\''s.md'`);
+    expect(captureProjectFiles(root, ["selected", "unrelated"])).toEqual(before);
+    preflightProjectPaths(root, ["selected/nested"], { fixPermissions: true });
+    expect(mode(join(root, "selected"))).toBe(0o755);
+    expect(mode(join(root, "selected/nested"))).toBe(0o755);
+    expect(mode(join(root, "selected/nested/it's.md"))).toBe(0o640);
+    expect(mode(join(root, "unrelated/file"))).toBe(0o666);
+  }));
+
+  test("foreign ownership refuses even explicit repair without mutation", () => fixture(root => {
+    put(root, "selected/file", "keep", 0o666);
+    const before = captureProjectFiles(root, ["selected"]), uid = process.getuid();
+    const owner = spyOn(process, "getuid").mockReturnValue(uid + 1);
+    try { expect(() => preflightProjectPaths(root, ["selected"], { fixPermissions: true })).toThrow(); }
+    finally { owner.mockRestore(); }
+    expect(captureProjectFiles(root, ["selected"])).toEqual(before);
+  }));
+
+  test("canonical alias cannot chain through a symlinked agents directory", () => fixture((root, base) => {
+    mkdirSync(join(base, "target")); mkdirSync(join(root, ".agents")); mkdirSync(join(root, ".claude"));
+    symlinkSync(join(base, "target"), join(root, ".agents/skills"));
+    symlinkSync("../.agents/skills", join(root, ".claude/skills"));
+    expect(() => sharedProjectSkills(root)).toThrow();
+    expect(() => preflightProjectPaths(root, [".agents/skills"], { fixPermissions: true })).toThrow();
+  }));
+});
 
 describe("project file snapshots", () => {
   test("absent, file and complete directory round-trip binary bytes, modes and stable ordering", () => fixture((root) => {

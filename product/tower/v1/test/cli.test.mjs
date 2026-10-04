@@ -16,11 +16,13 @@ const roots = [];
 const environmentKeys = ["HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME",
   "GH_CONFIG_DIR", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM"];
 const test = (name, fn) => bunTest(name, async () => {
+  const mask = process.umask(0o022);
   const environment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
   try { await fn(); }
   finally {
     try { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); }
     finally {
+      process.umask(mask);
       for (const key of environmentKeys) {
         if (environment[key] === undefined) delete process.env[key];
         else process.env[key] = environment[key];
@@ -95,6 +97,27 @@ function project(f) {
   writeFileSync(join(path, "sentinel"), "unrelated");
   return path;
 }
+
+test("S211 project permissions are actionable before registry writes and repair is explicit", () => {
+  const f = fixture(), path = project(f);
+  mkdirSync(join(path, ".agents/skills"), { recursive: true }); mkdirSync(join(path, ".claude"));
+  symlinkSync("../.agents/skills", join(path, ".claude/skills"));
+  for (const name of [".agents", ".agents/skills", ".claude"]) chmodSync(join(path, name), 0o775);
+  writeFileSync(join(path, "CLAUDE.md"), "my rules", { mode: 0o664 }); chmodSync(join(path, "CLAUDE.md"), 0o664);
+  const argv = ["project", "init", "--project", path, "--trust", "trusted"], before = snapshot(f);
+  const refused = invoke(f, argv);
+  expect(refused.code).toBe(1); expect(refused.stderr).toContain(`chmod go-w '${join(path, "CLAUDE.md")}'`);
+  expect(snapshot(f)).toEqual(before);
+  const adopted = invoke(f, [...argv, "--fix-permissions"]);
+  expect(adopted.code).toBe(0); expect(adopted.stderr).toContain("Permisos corregidos (sólo go-w):");
+  expect(invoke(f, ["project", "doctor", "--project", path]).value.localResult.status).toBe("healthy");
+  chmodSync(join(path, ".claude"), 0o775);
+  expect(invoke(f, ["project", "update", "--project", path]).stderr).toContain(`chmod go-w '${join(path, ".claude")}'`);
+  expect(invoke(f, ["project", "update", "--project", path, "--fix-permissions"]).code).toBe(0);
+  success(invoke(f, ["project", "uninstall", "--project", path]));
+  expect(readlinkSync(join(path, ".claude/skills"))).toBe("../.agents/skills");
+  for (const op of ["doctor", "cleanup", "uninstall"]) failed(invoke(f, ["project", op, "--project", path, "--fix-permissions"]));
+});
 
 const invalid = [[], ["unknown"], ["toString"], ["__proto__"], ["uninstall", "--unexpected", "x"], ["project"], ["project", "unknown"],
   ["doctor", "extra"], ["doctor", "--tag", "v1"], ["list", "--project", "/tmp/x"],
@@ -939,9 +962,9 @@ test("menu entries are only closed dispatch commands with exact required inputs"
     ["9", [], "listProjects"],
   ];
   for (const [choice, answers, operation] of entries) {
-    const f = fixture(), calls = [];
+    const f = fixture(), calls = [], path = project(f);
     ready(f);
-    const result = await menu(f, [choice, ...answers], { operations: { [operation]: (options) => {
+    const result = await menu(f, [choice, ...answers.map(answer => answer === "/explicit/project" ? path : answer)], { operations: { [operation]: (options) => {
       calls.push(options);
       return operation.endsWith("Project") ? { localResult: {}, registry: { status: "recorded" } } : {};
     } } });
@@ -949,7 +972,7 @@ test("menu entries are only closed dispatch commands with exact required inputs"
     expect(calls).toHaveLength(1);
     expect(result.prompts).toHaveLength(1 + answers.length);
     if (choice === "2") expect(calls[0].acquire.sha256).toBe("a".repeat(64));
-    if (["5", "6", "7", "8"].includes(choice)) expect(calls[0].projectRoot).toBe("/explicit/project");
+    if (["5", "6", "7", "8"].includes(choice)) expect(calls[0].projectRoot).toBe(path);
   }
 });
 
@@ -1062,15 +1085,15 @@ test("visual arrows and CR LF select list, restore before dispatch and honor NO_
 });
 
 test("visual SS3/split arrows and edited project root tolerate split CR LF", async () => {
-  const f = fixture(), calls = [];
+  const f = fixture(), calls = [], path = project(f);
   const result = await ttyMenu(f, ["\x1b", "O", "B", "j".repeat(5), "\x1bOA", "\r", "\n",
-    "/explicit/projecX\x7ft\r", "\n"], { operations: {
+    `${path}X\x7f\r`, "\n"], { operations: {
     doctorRegisteredProject: (options) => { calls.push(options); return { registry: { status: "recorded" } }; },
   } });
   expect(result.stderr).toContain("Interface not verified");
   expect(result.code).toBe(0);
   expect(calls).toHaveLength(1);
-  expect(calls[0].projectRoot).toBe("/explicit/project");
+  expect(calls[0].projectRoot).toBe(path);
   restored(result);
 });
 
@@ -1100,9 +1123,9 @@ test("visual exceptions, EOF, SIGINT and process exit restore the terminal", asy
 
 test("numbered fallback fixes CR LF and cooked icrnl double LF for project doctor", async () => {
   for (const mode of ["plain", "dumb", "missing", "throws"]) {
-    const f = fixture(), calls = [];
+    const f = fixture(), calls = [], path = project(f);
     const cooked = mode === "missing" || mode === "throws";
-    const result = await ttyMenu(f, [cooked ? "6\n\n" : "6\r\n", "/explicit/project\r\n"], {
+    const result = await ttyMenu(f, [cooked ? "6\n\n" : "6\r\n", `${path}\r\n`], {
       env: { ...f.env, TERM: mode === "dumb" ? "dumb" : "xterm", TOWER_MENU: mode === "plain" ? "plain" : "" },
       ...(cooked ? { stdin: Object.assign(new PassThrough(), { isTTY: true,
         ...(mode === "throws" ? { setRawMode: () => { throw new Error("unavailable"); } } : {}) }) } : {}),
@@ -1113,7 +1136,7 @@ test("numbered fallback fixes CR LF and cooked icrnl double LF for project docto
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("6. project doctor");
     expect(result.stdout).not.toContain("\x1b[?1049h");
-    expect(calls[0].projectRoot).toBe("/explicit/project");
+    expect(calls[0].projectRoot).toBe(path);
   }
 });
 
