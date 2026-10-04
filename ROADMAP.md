@@ -39,6 +39,17 @@ se reescribió derivándolo del enum, y esa corrección sigue en pie.
 
 **Estado**: diseño acordado, sin implementar.
 
+> **Diseño histórico, no autoridad vigente.** Este hilo se escribió antes de la
+> revisión de versiones del 2026-10-03 y se conserva tal cual, como historia de
+> diseño: nada de lo de abajo define componentes, asigna autoridad de ejecución
+> ni crea requisitos nuevos, y no se despacha trabajo desde este archivo. Las
+> definiciones actuales del avance automático (V2 · Piloto) son
+> [Definiciones de V1, V2 y V3](docs/architecture/definiciones-v1-v2-v3.md) y
+> [Piloto automático](docs/architecture/piloto-automatico.md). La autoridad de
+> planificación vigente es `openspec/plan.yaml` consultada por Radar
+> (`radar status`, `radar faltan`); su vista generada vive en
+> `openspec/ROADMAP.md` y no se edita a mano.
+
 ### El objetivo
 
 Hoy, cuando un agente termina la Sesión que tenía asignada, el humano redacta y

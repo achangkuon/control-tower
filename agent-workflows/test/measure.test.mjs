@@ -10,7 +10,7 @@ import {
   readPlanSnapshot,
   readTestCache,
 } from "../radiografia/measure.mjs"
-import { defaults } from "../radiografia/config.mjs"
+import { defaults, loadConfig } from "../radiografia/config.mjs"
 
 const roots = []
 const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" }).trim()
@@ -344,5 +344,72 @@ describe("measureRepository — proyectos sin payload instalable", () => {
     write(root, "src/util.mjs", "export const b = 1\n")
     commit(root, "docs(plan): seed")
     expect(measureRepository(root, { config }).code.product_files).toBe(1)
+  })
+
+  // La decisión del mantenedor es que la Radiografía deje de ser un tablero diario y
+  // pase a ser un informe ocasional de cierre/auditoría. Con el payload apagado, el
+  // share de instalación no se reporta como un cero engañoso: desaparece entero.
+  test("sin payload no queda ni rastro del share instalado en la medición", () => {
+    const root = repo()
+    const config = seedPlain(root, [".mjs"])
+    write(root, "src/app.mjs", "export const a = 1\n")
+    commit(root, "docs(plan): seed")
+    const code = measureRepository(root, { config }).code
+    expect(code.shipping).toBeNull()
+    const wire = JSON.stringify(code)
+    expect(wire).not.toContain("installed_pct")
+    expect(wire).not.toContain("unshipped")
+  })
+})
+
+describe("radiografía ocasional — configuración del proyecto", () => {
+  // El share se apaga por configuración, no reescribiendo el motor: esta prueba fija
+  // que el proyecto declare payload:null en su radiografia.json.
+  test("declara que no hay payload instalable, en lugar de reportar un share diario", () => {
+    const repoRoot = join(import.meta.dir, "..", "..")
+    expect(loadConfig(repoRoot).payload).toBeNull()
+  })
+})
+
+describe("measureRepository — conteo anidado de tests", () => {
+  // Un test no es sólo el que vive en un directorio de tests de la raíz. El contrato de
+  // la Sesión dice que cuenta como test todo archivo de código con un segmento de test en
+  // cualquier parte de su ruta, y que esas líneas dejan de contarse como producto.
+  const seedMixed = (root) => {
+    stubRadar(root)
+    write(root, "openspec/plan.yaml", "schema: plan\n")
+    write(root, "pkg/keeper.mjs", "export const k = 1\nexport const k2 = 2\n")
+    write(root, "test/root.test.mjs", "test('r', () => {})\n")
+    write(root, "pkg/test/unit.test.mjs", "test('u', () => {})\n")
+    write(root, "a/tests/b/c.test.mjs", "test('c', () => {})\ntest('d', () => {})\n")
+    write(root, "latest/notes.mjs", "export const l = 1\n")
+    write(root, "test-utils/helper.mjs", "export const h = 1\n")
+  }
+
+  test("cuenta como test el archivo bajo un directorio de tests, sin importar la profundidad", () => {
+    const root = repo(); seedMixed(root); commit(root, "docs(plan): seed")
+    const m = measureRepository(root, { config: cfg({ payload: null }) })
+    expect(m.code.test_files).toBe(3)
+    expect(m.code.test_lines).toBe(4)
+  })
+
+  test("mueve las líneas de esos tests fuera del producto", () => {
+    const root = repo(); seedMixed(root); commit(root, "docs(plan): seed")
+    const m = measureRepository(root, { config: cfg({ payload: null }) })
+    expect(m.code.product_files).toBe(3)
+    expect(m.code.product_lines).toBe(4)
+  })
+
+  test("no confunde un segmento que sólo contiene 'test' con un directorio de tests", () => {
+    const root = repo()
+    stubRadar(root)
+    write(root, "openspec/plan.yaml", "schema: plan\n")
+    write(root, "latest/notes.mjs", "export const l = 1\n")
+    write(root, "test-utils/helper.mjs", "export const h = 1\n")
+    commit(root, "docs(plan): seed")
+    const m = measureRepository(root, { config: cfg({ payload: null }) })
+    expect(m.code.test_files).toBe(0)
+    expect(m.code.product_files).toBe(2)
+    expect(m.code.product_lines).toBe(2)
   })
 })

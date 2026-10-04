@@ -41,6 +41,15 @@ const ensureIgnored = (root, generated) => {
   writeFileSync(path, `${body}${block}`)
 }
 
+// A run without a summary is «sin medir», never the previous green. The stale record is
+// only relevant when it belongs to the HEAD being measured: another commit's history is
+// left untouched so the cross-commit display keeps its own warning.
+const cacheRecordsHead = (root, cacheFile, head) => {
+  const path = join(root, cacheFile)
+  if (!existsSync(path)) return false
+  try { return JSON.parse(readFileSync(path, "utf8"))?.head === head } catch { return false }
+}
+
 export function radiografia({ root, suite = null, check = false, config = null } = {}) {
   const cfg = config ?? loadConfig(root)
   const authoredPath = join(root, cfg.judgment)
@@ -49,13 +58,19 @@ export function radiografia({ root, suite = null, check = false, config = null }
   }
 
   // Recording happens before measuring so the render sees the run it just performed.
+  const cachePath = join(root, cfg.cache)
   let recorded = false
   if (suite && !check) {
     const summary = suite(root, cfg)
+    const head = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim()
     if (summary) {
-      const head = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim()
-      writeFileSync(join(root, cfg.cache), `${JSON.stringify({ ...summary, head, measured_at: new Date().toISOString() }, null, 2)}\n`)
+      writeFileSync(cachePath, `${JSON.stringify({ ...summary, head, measured_at: new Date().toISOString() }, null, 2)}\n`)
       recorded = true
+    } else if (cacheRecordsHead(root, cfg.cache, head)) {
+      // Keep the record's full shape but null the measurement: readTestCache ignores a
+      // non-numeric pass, so the same HEAD now reports «sin medir» instead of the old green.
+      const invalidated = { pass: null, fail: null, expectations: null, files: null, no_summary: true, head, measured_at: new Date().toISOString() }
+      writeFileSync(cachePath, `${JSON.stringify(invalidated, null, 2)}\n`)
     }
   }
 

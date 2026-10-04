@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
+    "test:go": "cd agent-workflows/tools/radar && go test ./...",
+    "test:python": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s agent-workflows/tests -v",
     "hooks": "git config core.hooksPath .githooks"
   },
   "dependencies": {

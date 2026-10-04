@@ -113,6 +113,45 @@ describe("radiografia", () => {
     expect(readFileSync(join(root, "radiografia.html"), "utf8")).toContain("sin medir")
   })
 
+  test("reports the suite as unmeasured when the run has no summary and no cache exists", () => {
+    const root = project()
+    const result = radiografia({ root, suite: () => null })
+    expect(result.measurements.tests).toBeNull()
+  })
+
+  test("invalidates the previous green when a new run on the same HEAD has no summary", () => {
+    const root = project()
+    radiografia({ root, suite: () => ({ pass: 12, fail: 0, expectations: 40, files: 3 }) })
+    const result = radiografia({ root, suite: () => null })
+    expect(result.measurements.tests).toBeNull()
+    expect(readFileSync(join(root, "radiografia.html"), "utf8")).not.toContain("tests en verde")
+    // The invalidation must survive a later render that does not run the suite at all.
+    expect(radiografia({ root }).measurements.tests).toBeNull()
+  })
+
+  test("keeps a red summary red instead of invalidating it", () => {
+    const root = project()
+    const result = radiografia({ root, suite: () => ({ pass: 100, fail: 3, expectations: 900, files: 10 }) })
+    expect(result.measurements.tests).toMatchObject({ pass: 100, fail: 3, at_head: true })
+  })
+
+  test("updates the recorded summary when a later run does produce one", () => {
+    const root = project()
+    radiografia({ root, suite: () => ({ pass: 12, fail: 0, expectations: 40, files: 3 }) })
+    const result = radiografia({ root, suite: () => ({ pass: 20, fail: 1, expectations: 55, files: 4 }) })
+    expect(result.measurements.tests).toMatchObject({ pass: 20, fail: 1, expectations: 55, at_head: true })
+    expect(JSON.parse(readFileSync(join(root, ".radiografia-cache.json"), "utf8"))).toMatchObject({ pass: 20, fail: 1 })
+  })
+
+  test("leaves a record from another commit untouched when the new run has no summary", () => {
+    const root = project()
+    radiografia({ root, suite: () => ({ pass: 12, fail: 0, expectations: 40, files: 3 }) })
+    write(root, "contracts/nuevo.mjs", "export const nuevo = 1\n")
+    git(root, "add", "-A"); git(root, "commit", "-qm", "feat(contracts): add")
+    const result = radiografia({ root, suite: () => null })
+    expect(result.measurements.tests).toMatchObject({ pass: 12, at_head: false })
+  })
+
   test("check mode reports staleness without writing anything", () => {
     const root = project()
     radiografia({ root })

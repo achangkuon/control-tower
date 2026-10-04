@@ -9,5 +9,5 @@
     "extraProductFiles": ["bin/torre"]
   },
   "tests": { "command": ["bun", "test"] },
-  "payload": { "manifest": "install/runtime-payload.mjs", "symbol": "RUNTIME_PAYLOAD_FILES" }
+  "payload": null
 }
