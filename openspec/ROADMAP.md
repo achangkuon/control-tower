@@ -12,7 +12,7 @@
 
 ## Avance
 - **Total:** 88% (138/156 S)
-- 8 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
+- 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
@@ -24,8 +24,8 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (44/46 S)
-- **Producto Torre:** 90% (30/33 S)
+- **Método:** 89% (44/49 S)
+- **Producto Torre:** 88% (30/34 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -63,15 +63,13 @@
 
 ### Método (metodo)
 1. **S176** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
+2. **S215** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
+3. **S217** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S216** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
 
 ## Bloqueos
-- **S214:** Encargo incompleto: falta planificar · falta-planificar (S214)
-- **S215:** Encargo incompleto: falta planificar · falta-planificar (S215)
-- **S216:** Encargo incompleto: falta planificar · falta-planificar (S216)
-- **S217:** Encargo incompleto: falta planificar · falta-planificar (S217)
 - **S178:** Encargo incompleto: falta planificar · falta-planificar (S178)
 - **S179:** Encargo incompleto: falta planificar · falta-planificar (S179)
 - **S180:** Encargo incompleto: falta planificar · falta-planificar (S180)
@@ -119,7 +117,7 @@
   - Importación legacy: openspec/plans/plan-4/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Reporte de caída de Pi: ante desconexión, envío incierto o caída probada, el puesto afectado se detiene y conserva su rama, worktree y candidato exactamente como están, y produce un reporte claro para revisión humana. No hay reinicio de árbol de procesos, sucesor con ID nuevo ni recuperación automática de ningún tipo.
+  - Pedido y contexto: Reporte de caída de Pi: ante desconexión, envío incierto o caída probada, el puesto afectado se detiene y conserva su rama, worktree y candidato exactamente como están, y produce un reporte claro para revisión humana. No hay reinicio de árbol de procesos, sucesor con ID nuevo ni recuperación automática de ningún tipo. Reencuadre 2026-10-04 (Piloto automático): el reporte alimenta el estado NOVEDAD · interrumpida en Radar, que lo deduce de la marca que deja la caída; el reporte no calcula estados del plan.
   - Resultado y comportamiento: Ante una caída probada, desconexión o envío incierto del puesto Pi, el reporte de caída se construye únicamente desde evidencia que no depende de una raíz de Ejecución ni de una transición registrada por un core Tower-owned (S147/S148, retiradas): el estado de la rama y el worktree en Git, el estado del agente en la tab Herdr declarada, el marcador radar.despacho/v1 y el roster Intercom. No hay adapter que registre una transición contra un core; el propio reporte lee esas cuatro fuentes directamente, sin decidir lifecycle ni tratar el transporte como prueba del efecto. Ante esa evidencia, nada termina, reinicia ni crea un sucesor: la rama, el worktree y el candidato se conservan exactamente como están, y se produce un reporte de caída con assignment, rama, último estado conocido observado en Git/Herdr/Intercom, motivo y recuperabilidad. Otros puestos del mismo mandato aprobado siguen si no dependen del puesto detenido; ninguno se detiene por inferencia. El reporte no es una recuperación: ningún mensaje volátil ni readback sustituye la decisión humana de reanudar ese puesto. El reporte no reconstruye memoria OpenCode/Pi, no depende de una raíz de Ejecución ni de un core que la persista, y no toca fuera del Área exacta.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
     - Decisión estructurada [resuelta · contrato-visible-del-producto; operaciones-irreversibles; seguridad-y-permisos; dependencias-o-evidencia-contradictorias]: ¿Qué recuperación mínima conserva Pi después de la muerte probada de la raíz?
@@ -143,7 +141,7 @@
       - Autoridad: Emilio, 2026-09-26, Engram 11838. Supersede, sólo para este fin, las decisiones 81 y 87 del maintainer del 2026-08-27; no las invalida como evidencia histórica de la arquitectura de recuperación que se consideró y se decidió no construir ahora.
       - Falsificador: La Torre reinicia, termina o crea un sucesor automáticamente tras una caída, o un puesto detenido bloquea otros puestos independientes del mismo mandato.
       - Descartada: Mantener la recuperación automática mínima que describían las decisiones 81/87. → Emilio eligió detener y conservar en vez de recuperar automáticamente; construirla ahora contradice esa elección explícita.
-  - Referencias: Autoridad original: decisiones 81 y 87 del maintainer del 2026-08-27. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 7, 10 y 14. Reducción 2026-09-26 (Emilio, Engram 11838): ante caída, detener y conservar; S4.12 produce sólo el reporte, sin reinicio ni sucesor automático, construido directamente desde Git (rama/worktree), Herdr (estado del agente), el marcador radar.despacho/v1 e Intercom (roster) — sin raíz de Ejecución ni transición registrada por un core Tower-owned, porque S147/S148 (que la habrían provisto) quedan retiradas. La preparación anterior, que delimitaba un contrato de recuperación core-adapter para esa raíz, queda sin objeto: se conservan los archivos conocidos sin permiso de expansión.
+  - Referencias: Autoridad original: decisiones 81 y 87 del maintainer del 2026-08-27. Línea base Git: openspec/plan.yaml@ebc2ffb840030f7266a207536134c057a82bec70, bloque de Sesión S4.12. La ruta y el desglose técnico legacy son sólo historia; no hay trailers Modulo: parciales alcanzables desde HEAD. Los registros nativos de ejecución quedan subordinados y no son autoridad de producto. Enmienda aprobada: Engram 11293 e informe docs/architecture/torre-motor-determinista.md, secciones 7, 10 y 14. Reducción 2026-09-26 (Emilio, Engram 11838): ante caída, detener y conservar; S4.12 produce sólo el reporte, sin reinicio ni sucesor automático, construido directamente desde Git (rama/worktree), Herdr (estado del agente), el marcador radar.despacho/v1 e Intercom (roster) — sin raíz de Ejecución ni transición registrada por un core Tower-owned, porque S147/S148 (que la habrían provisto) quedan retiradas. La preparación anterior, que delimitaba un contrato de recuperación core-adapter para esa raíz, queda sin objeto: se conservan los archivos conocidos sin permiso de expansión. Reencuadre V3: docs/architecture/piloto-automatico.md (sección 5, NOVEDAD · interrumpida).
 
 ### S8.12 — Bundle local Torre V1 de membresía positiva y exacta: Radar, una única fuente canónica de la skill control-tower y sólo las referencias lazy que esa skill necesita.
 - Coordinación:
@@ -205,7 +203,7 @@
   - Importación legacy: openspec/plans/plan-9/STATUS.md@43130ad40af06f3ed05671000719217bee74f0a5
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Varias Sesiones pueden trabajar durante horas en tabs separadas; Main necesita enviar sin esperar y ver finalización, stalls o decisiones humanas.
+  - Pedido y contexto: Varias Sesiones pueden trabajar durante horas en tabs separadas; Main necesita enviar sin esperar y ver finalización, stalls o decisiones humanas. En V3 (Flota) el despacho sirve a una conversación orquestadora por vuelo (P13): la unidad de trabajo es el vuelo, y el dispatch no elige Sesiones fuera de los vuelos aprobados.
   - Resultado y comportamiento: Main conserva la autoridad humana de assignment y solicita el despacho. Para una Ejecución admitida, el core registra el intento y dispatch&#95;id y emite el paquete ligado; el adapter transporta el envío y Main vuelve inmediatamente a coordinar después del acknowledgment de envío. La entrega del mensaje no prueba ejecución ni avance. Progreso y cierre llegan por send; ask sólo aparece con una pregunta de decisión exacta y deja el assignment BLOCKED recuperable. Cada assignment acepta exactamente un terminal COMPLETED, BLOCKED o FAILED con los campos de evidencia/recoverability aprobados; duplicado, stale o sin dispatch&#95;id falla cerrado. Un candidato local, un pane activo o trabajo parcial sin terminal no acredita progreso ni habilita downstream. Antes de cada dispatch o retry, S9.8 usa el binding objetivo consolidado de S107; &#96;active&#95;unchanged&#96; y cierres terminales exactos son convergencia válida, mientras evidencia ausente, fallida, ambigua o divergente produce cero dispatch. S9.8 no enumera, deriva, renombra ni cierra tabs, panes o workspaces; consume sólo la identidad y el estado visible provistos por S107. OFF no atribuye persistencia/retry Tower-owned; ON exige binding y convergencia S107 del objetivo, sin bloquear por otras Sesiones activas válidas. El diff toca sólo Área.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
     - Decisión estructurada [resuelta · contrato-visible-del-producto; seguridad-y-permisos]: ¿Cuál es la política de dispatch y cierre asíncrono?
@@ -218,7 +216,7 @@
       - Evidencia: Contrato inmutable de S9.8.
       - Checkpoint: antes de acreditar progreso o habilitar downstream.
       - Opción: Acreditar sólo un terminal válido ligado al dispatch&#95;id. → Progreso parcial, pane visible o candidato local no habilitan downstream.
-  - Referencias: Autoridad original: decisión 104 y Engram 10008; consolidación V2 aprobada que absorbe S9.7, S168 y S171. La observación remota es Moshi + Tailscale, no Telegram. RDD conserva su autoridad externa.
+  - Referencias: Autoridad original: decisión 104 y Engram 10008; consolidación V2 aprobada que absorbe S9.7, S168 y S171. La observación remota es Moshi + Tailscale, no Telegram. RDD conserva su autoridad externa. Reencuadre V3: docs/architecture/piloto-automatico.md (sección 12; P13).
 
 ### S107 — Tabs y workers Tower-owned dentro del workspace ligado, con una tab por Session ID, ocupación legible y readback determinista; absorbe S108, S9.2, S119 y S121.
 - Coordinación:
@@ -229,7 +227,7 @@
   - Recursos: HERDR&#95;WORKSPACE&#95;ID explícito y recursos Herdr devueltos frescos; sin autoridad sobre recursos extranjeros
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista
+  - Pedido y contexto: Topología Herdr Tower-owned dentro del workspace ligado: MAIN y una tab worker por Session ID canónico, con readback determinista. En V3 (Flota) la unidad de trabajo Tower-owned es el vuelo, con su rama y copia de trabajo propias (P13): la topología se encuadra al vuelo sin cambiar las garantías de binding/readback.
   - Resultado y comportamiento: Dentro del workspace ligado existe una MAIN exacta y cada launch crea a lo sumo una tab worker etiquetada con el Session ID canónico que S107 valida. Ocupación, reciclado seguro, rol y enrolamiento de la tab quedan dentro de este único owner. Toda tab/pane nueva prueba workspace&#95;id, IDs, label, cwd y foreground&#95;cwd antes de éxito. Sólo un recurso devuelto fresco o reprobado por binding/readback puede mutarse; extranjero o ambiguo queda intacto y falla cerrado. Antes de crear, el core persiste el intento mecánico ligado con workspace/session/cwd esperados. El adapter ejecuta sólo el efecto admitido y devuelve readback; retry recupera sólo una coincidencia exacta y única. Herdr genérico sigue Tower-agnostic.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. Las decisiones estructuradas conservan su autoridad y se aplican sin duplicar aquí su prosa completa. Los nombres de archivo prospectivos delimitan autorización, no afirman existencia ni una implementación elegida y no conceden permiso de API pública; toda expansión futura requiere aprobación.
     - Decisión estructurada [resuelta · seguridad-y-permisos; contrato-visible-del-producto]: ¿Quién establece label y workspace visible?
@@ -237,7 +235,7 @@
       - Autoridad: Decisión explícita del maintainer del 2026-09-13 y evidencia de hosts/herdr-topology.mjs.
       - Falsificador: Caller o superficie runtime sustituye el label, o S107 inventa una API de workspace-name.
       - Descartada: Inferir identidad desde branch, worktree, asiento, prompt, worker o OpenCode root&#95;session&#95;id. → No son autoridad y permitirían adoptar recursos ajenos.
-  - Referencias: Autoridad original de topología y binding: decisión del 2026-09-13, Engram 11293 y fuente inmutable ASIGNACION-24-SESIONES.md. Consolidación V2 aprobada: S107 absorbe S108, S9.2, S119 y S121.
+  - Referencias: Autoridad original de topología y binding: decisión del 2026-09-13, Engram 11293 y fuente inmutable ASIGNACION-24-SESIONES.md. Consolidación V2 aprobada: S107 absorbe S108, S9.2, S119 y S121. Reencuadre V3: docs/architecture/piloto-automatico.md (sección 12; P13).
 
 ### S117 — Los tres registros de instalación dejan de forzar ediciones cross-Zona: sus datos enumerados salen del test a un módulo propio declarado como Cimiento exacto.
 - Coordinación:
@@ -919,7 +917,7 @@
       - Contaminaba: S167
   - Referencias: Issue https://github.com/achangkuon/control-tower/issues/148; AGENTS.md:135,151-153; agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md:12-15,37-40; agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md:47,50,52,56,92-96; agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md:23-30; Engram 11809, 11810, 11811 y 11812. Línea base Git: openspec/plan.yaml@ea884263ce64a77f042434a1fecee6055f756c82.
 
-### S169 — chanks-4-unattended-implementation sella un mandato humano de una o más Sesiones LISTO, ordenadas por dependencia (pasos que pueden agrupar Sesiones que corren en paralelo, p. ej. S164+S165), cada una con su propio worker asignado bajo un único vencimiento para todo el mandato, en vez de sólo una Sesión; el coordinador avanza sólo dentro de esa lista y se detiene ante cualquier imprevisto.
+### S169 — chanks-4-unattended-implementation sella un mandato humano de una o más Sesiones LISTO, ordenadas por dependencia (un paso puede agrupar Sesiones que corren en paralelo cuando no dependen entre sí), cada una con su propio worker asignado bajo un único vencimiento para todo el mandato, en vez de sólo una Sesión; el coordinador avanza sólo dentro de esa lista y se detiene ante cualquier imprevisto.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
@@ -928,15 +926,15 @@
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: chanks-4-unattended-implementation hoy sella exactamente una Sesión LISTO por vez (&#96;session.sesion&#95;id&#96; singular en assets/execution-contract.schema.json; «one LISTO plan Session» en SKILL.md). Emilio aprobó ampliarlo a un mandato acotado: una lista ordenada de pasos por dependencia —un paso puede agrupar varias Sesiones que corren en paralelo, por ejemplo S164+S165—, cada Sesión con su propio worker, bajo un único vencimiento para todo el mandato, para que el coordinador pueda avanzar de un paso al siguiente sin pedir un sello nuevo por cada Sesión — pero nunca elegir trabajo fuera de esa lista ni seguir después de un imprevisto.
-  - Resultado y comportamiento: El sello acepta una lista ordenada por dependencia (un paso puede agrupar una o más Sesiones que corren en paralelo cuando no dependen entre sí, por ejemplo S164+S165); cada Sesión declara su propio sesion&#95;id y worker, y pasa las mismas validaciones de LISTO/base/decisión que hoy exige por Sesión. Un único expires&#95;at rige todo el mandato — ninguna Sesión declara su propio vencimiento — y la misma política de ceiling de entrega y de consentimiento RDD ya fijas por sello se aplica a cada una. El coordinador dispatcha respetando el grafo de dependencias declarado dentro del mandato: una Sesión arranca sólo después de que las Sesiones de las que depende dentro del mandato cerraron con un terminal válido (COMPLETED) e integraron su commit; Sesiones sin dependencia mutua en el mismo paso pueden dispatcharse y correr en paralelo. Ante cualquier imprevisto —caída, envío incierto, Sesión que dejó de ser LISTO, decisión nueva, base movida, contradicción de identidad— la Sesión afectada se detiene y conserva (S4.12/Engram 11838): las Sesiones del mandato que no dependen de ella pueden seguir de forma independiente, y las que sí dependen de ella no arrancan; ninguna se elige fuera de la lista original. Un mandato vencido, con lista vacía, con Sesiones repetidas, sin orden de dependencia explícito o con un vencimiento por Sesión en vez de uno por mandato es NOT&#95;READY. El worker dispatchado sigue verificando su propia admisión fresca (chanks-3-session-kickoff) antes de tocar cualquier Sesión de la lista; el sello nunca sustituye esa verificación.
+  - Pedido y contexto: chanks-4-unattended-implementation hoy sella exactamente una Sesión LISTO por vez (&#96;session.sesion&#95;id&#96; singular en assets/execution-contract.schema.json; «one LISTO plan Session» en SKILL.md). Emilio aprobó ampliarlo a un mandato acotado: una lista ordenada de pasos por dependencia —un paso puede agrupar varias Sesiones que corren en paralelo cuando no dependen entre sí—, cada Sesión con su propio worker, bajo un único vencimiento para todo el mandato, para que el coordinador pueda avanzar de un paso al siguiente sin pedir un sello nuevo por cada Sesión — pero nunca elegir trabajo fuera de esa lista ni seguir después de un imprevisto. Con el piloto automático (P4, P11), este mandato es la forma del sello del despegue: la lista aprobada por el humano corresponde a los vuelos del despegue, con sus límites de rondas y su tope de Sesiones.
+  - Resultado y comportamiento: El sello acepta una lista ordenada por dependencia (un paso puede agrupar una o más Sesiones que corren en paralelo cuando no dependen entre sí); cada Sesión declara su propio sesion&#95;id y worker, y pasa las mismas validaciones de LISTO/base/decisión que hoy exige por Sesión. Un único expires&#95;at rige todo el mandato — ninguna Sesión declara su propio vencimiento — y la misma política de ceiling de entrega y de consentimiento RDD ya fijas por sello se aplica a cada una. El coordinador dispatcha respetando el grafo de dependencias declarado dentro del mandato: una Sesión arranca sólo después de que las Sesiones de las que depende dentro del mandato cerraron con un terminal válido (COMPLETED) e integraron su commit; Sesiones sin dependencia mutua en el mismo paso pueden dispatcharse y correr en paralelo. Ante cualquier imprevisto —caída, envío incierto, Sesión que dejó de ser LISTO, decisión nueva, base movida, contradicción de identidad— la Sesión afectada se detiene y conserva (S4.12/Engram 11838): las Sesiones del mandato que no dependen de ella pueden seguir de forma independiente, y las que sí dependen de ella no arrancan; ninguna se elige fuera de la lista original. Un mandato vencido, con lista vacía, con Sesiones repetidas, sin orden de dependencia explícito o con un vencimiento por Sesión en vez de uno por mandato es NOT&#95;READY. El worker dispatchado sigue verificando su propia admisión fresca (chanks-3-session-kickoff) antes de tocar cualquier Sesión de la lista; el sello nunca sustituye esa verificación.
   - Restricciones y decisiones: Gentle AI desglosa, implementa y verifica mediante ODD; SDD sólo por solicitud humana explícita. Sólo los archivos declarados están autorizados; toda expansión requiere aprobación humana y compatibilidad fresca antes de escribir. El sello sigue sin iniciar sesión, dispatchar, crear worktree, adquirir lock, crear cola ni simular un wake/resultado terminal: sigue preparando un registro, no ejecutándolo. Dispatch sigue siendo trabajo de chanks-3-despacho-herdr con la Torre apagada. Ningún cambio de base, alcance, permiso o decisión durante el mandato reutiliza el sello: requiere uno nuevo.
     - Decisión estructurada [resuelta · contrato-visible-del-producto; seguridad-y-permisos]: ¿El coordinador puede elegir la siguiente Sesión después de cerrar una del mandato, o sólo puede avanzar dentro de la lista sellada?
       - Resolución: Sólo dentro de la lista sellada, en el orden declarado. El coordinador nunca elige, deriva o agrega una Sesión que el humano no incluyó al sellar; ante cualquier imprevisto se detiene y conserva, sin continuar el mandato por inferencia.
       - Autoridad: Emilio, 2026-09-26, Engram 11837.
       - Falsificador: El coordinador dispatcha una Sesión fuera de la lista sellada, cambia el orden declarado, o continúa el mandato después de un imprevisto sin detenerse.
       - Descartada: Dejar que el coordinador reponga automáticamente la cola con la siguiente Sesión LISTO de Radar. → Es exactamente la autoselección que la decisión de encadenamiento acotado prohíbe; el humano elige el lote, no el coordinador.
-  - Referencias: Autoridad: Emilio, 2026-09-26, Engram 11837. Estado previo: agent-workflows/skills/chanks-4-unattended-implementation/SKILL.md (Activation Contract, «exactly one plan Session»), assets/execution-contract.schema.json (session.sesion&#95;id singular), references/sealing-and-routing.md (Seal gate ítems 1-8 en singular) y references/night-mode.md (pre-flight gates en singular); references/runtime-standalone.md ya declara «not a replacement coordinator» para una Sesión, y pasa a describir un mandato de una o más. Relacionado: S109 valida este mandato contra Radar; S168 verifica en solo lectura que cada Sesión del mandato efectivamente se despachó.
+  - Referencias: Autoridad: Emilio, 2026-09-26, Engram 11837. Estado previo: agent-workflows/skills/chanks-4-unattended-implementation/SKILL.md (Activation Contract, «exactly one plan Session»), assets/execution-contract.schema.json (session.sesion&#95;id singular), references/sealing-and-routing.md (Seal gate ítems 1-8 en singular) y references/night-mode.md (pre-flight gates en singular); references/runtime-standalone.md ya declara «not a replacement coordinator» para una Sesión, y pasa a describir un mandato de una o más. Relacionado: S109 valida este mandato contra Radar; S168 verifica en solo lectura que cada Sesión del mandato efectivamente se despachó. Reencuadre V2: docs/architecture/piloto-automatico.md (secciones 5 y 12; P4, P11).
 
 ### S172 — cleanup/cleanupProject retira únicamente el journal local intacto que queda tras fallar la eliminación final de uninstall; rechaza cualquier ambigüedad o drift sin mutar el proyecto.
 - Coordinación:
@@ -1316,66 +1314,70 @@
   - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/projects.mjs
-  - Depende de: —
+  - Depende de: S215
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: V1 no tiene interruptor: adoptar un proyecto equivale a prenderla. Lo que de verdad se prende y apaga es la Pista de V2, que todavía no existe.
-  - Resultado y comportamiento: Desde el detalle de un proyecto adoptado se prende o apaga la Torre para ese proyecto, y el estado se ve en la lista de proyectos.
-  - Restricciones y decisiones: Se prepara cuando existan las Sesiones de la Pista V2; hasta entonces queda diferida; los archivos se confirman al prepararla.
-  - Referencias: docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
+  - Pedido y contexto: V1 no tiene interruptor: adoptar un proyecto equivale a prenderla. Con el diseño aprobado, lo que de verdad se prende y apaga es el modo piloto automático, cuyo interruptor vive con &#96;piloto&#96; en el directorio común de Git (P14) y no en el plan; el freno de emergencia es una acción aparte del interruptor y no se confunde con apagar el modo.
+  - Resultado y comportamiento: Desde el detalle de un proyecto adoptado (instalador/TUI) se prende o apaga el piloto para ese proyecto, y el estado del modo se ve en la lista de proyectos y en los controles del piloto de la TUI (S216). Apagar no borra NOVEDAD ni POR REVISAR (P9): lo trabajado queda visible hasta su revisión.
+  - Restricciones y decisiones: La TUI llama a &#96;piloto&#96; (S215) y no mantiene estado propio (P14): el interruptor y el freno son mutaciones de &#96;piloto&#96;. Los archivos declarados se confirman contra el diseño de S216 al preparar la ejecución; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: docs/architecture/piloto-automatico.md (secciones 5 y 12; P9, P14); docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
 
 ### S214 — Estados NOVEDAD y POR REVISAR en Radar con identidad de vuelo, y regla de LISTO según el interruptor del piloto.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S214)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state&#95;test.go, agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/tools/radar/etapa.go, agent-workflows/tools/radar/etapa&#95;test.go, agent-workflows/tools/radar/sesion.go, agent-workflows/tools/radar/faltan.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/roadmap.go, agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/git.go
   - Depende de: —
-  - Recursos: —
+  - Recursos: interruptor y marcas del piloto (radar.piloto/v1) en el directorio común de Git
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: El piloto necesita estados que distingan trabajo desatendido que requiere decisión humana (NOVEDAD: decisión delicada, no se pudo inferir, interrumpida) de trabajo terminado esperando revisión (POR REVISAR: limpia, con decisiones), y una regla de LISTO que dependa del interruptor: prendido, las dependencias POR REVISAR pueden destrabar dentro del horizonte; apagado, rigen COMPLETO/ARCHIVADO. Un LISTO sin empezar puede volver a PLANIFICADO; lo completado queda visible.
-  - Resultado y comportamiento:
-  - Restricciones y decisiones:
-  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+  - Resultado y comportamiento: Radar calcula y muestra los estados nuevos NOVEDAD (con motivo: decisión delicada, no se pudo inferir, interrumpida) y POR REVISAR (con nota: limpia, o con N decisiones anotadas), junto a la identidad del vuelo dueño de cada Sesión, leyendo las marcas radar.piloto/v1 que escribe &#96;piloto&#96; en el directorio común de Git; Radar no las crea ni las edita (P2). POR REVISAR se deduce de Git: el commit de la Sesión está en la rama de su vuelo y no se subió. La regla de LISTO (state.go, bucle de dependencias) pasa a depender del interruptor: con el piloto prendido, una dependencia en POR REVISAR destraba si la Sesión queda dentro del límite de rondas de la corrida; con el piloto apagado rige la regla actual (COMPLETO o ARCHIVADO) y una Sesión LISTO sin empezar vuelve a PLANIFICADO. Lo ya completado no cambia de estado. Los estados nuevos se reflejan en el snapshot JSON, en sesion, faltan y avance, y en la vista generada (render y ROADMAP); EN CURSO vuelve a contarse desde las marcas. Apagar el modo no borra NOVEDAD ni POR REVISAR; sólo impide crear estados nuevos (P9).
+  - Restricciones y decisiones: Radar sigue siendo el único que calcula estados (P2): lee las marcas del piloto y nunca las escribe; &#96;piloto&#96; (S215) es quien las produce. NOVEDAD y POR REVISAR sólo se crean con el modo prendido. Una Sesión con NOVEDAD no destraba a nadie, aunque el resto del plan y los demás vuelos sigan. La ronda de una Sesión es su piso dentro de su vuelo y los límites son de la corrida, no de la Sesión (P3, P5). Los estados se deducen de evidencia, nunca se declaran a mano. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: docs/architecture/piloto-automatico.md (secciones 5 y 7; decisiones P1–P9); docs/architecture/definiciones-v1-v2-v3.md; agent-workflows/tools/radar/state.go (regla de LISTO vigente) y agent-workflows/tools/radar/etapa.go (lectura de marcas radar.despacho/v1, patrón a replicar para radar.piloto/v1).
 
 ### S215 — Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S215)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/piloto/go.mod, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/marca.go, agent-workflows/tools/piloto/worktree.go, agent-workflows/tools/piloto/main&#95;test.go, agent-workflows/tools/piloto/vuelo&#95;test.go, agent-workflows/tools/piloto/marca&#95;test.go, agent-workflows/tools/piloto/worktree&#95;test.go, agent-workflows/tools/install-piloto.sh
   - Depende de: S214
-  - Recursos: —
+  - Recursos: directorio común de Git (interruptor, límites y marcas radar.piloto/v1), ramas y copias de trabajo por vuelo bajo piloto/&lt;fecha&gt;/
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: V2 ejecuta varios vuelos con una conversación orquestadora por corrida y un subagente por Sesión; hace falta una herramienta determinista (no daemon) que despegue, avance rondas y aterrice sin empujar nada a remoto. Radar propone vuelos y el usuario aprueba; se resuelven preguntas previsibles antes del despegue; límites por defecto de tres rondas de profundidad y diez Sesiones, configurables; ante la duda se detiene esa Sesión conservando el trabajo por separado y siguen los vuelos independientes.
-  - Resultado y comportamiento:
-  - Restricciones y decisiones:
-  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+  - Resultado y comportamiento: &#96;piloto&#96; es una herramienta determinista de línea de comando, módulo Go propio con el patrón de Radar, sin daemon, instalable junto a radar (install-piloto.sh con el mismo convenio de TORRE&#95;BIN&#95;DIR). Despegue: lista los vuelos posibles con lo que Radar tiene LISTO, agrupado por Zonas que no chocan, pide la aprobación del usuario vuelo por vuelo y arranca la corrida. Rondas: cada vuelo avanza sin esperar al más lento (P5), con un subagente por Sesión despachado por la conversación orquestadora; los límites de rondas y tope de Sesiones son de la corrida entera. Aterrizaje: al alcanzar el límite, al no quedar nada LISTO, o cuando el usuario dice que volvió (termina lo en el aire y muestra el resumen de la corrida). Freno de emergencia: ninguna Sesión nueva arranca y las en el aire quedan NOVEDAD · interrumpida, con su trabajo en la copia de trabajo de su vuelo. Cada vuelo crea su rama (piloto/&lt;fecha&gt;/vuelo-&lt;id&gt;) y su copia de trabajo; nunca escribe en la rama principal. El interruptor, los límites y las marcas viven en el directorio común de Git, fuera de openspec/plan.yaml. Toda mutación se registra con marcas radar.piloto/v1 (EN CURSO, NOVEDAD con motivo, cierre) que Radar lee (S214). La corrida nunca pushea, nunca publica y nunca toca la configuración personal del usuario. El orquestador guarda sólo resúmenes: el estado vive en &#96;piloto&#96; y Radar (P12).
+  - Restricciones y decisiones: Herramienta determinista, no instrucciones: los límites y las reglas son de código y un agente no se los puede saltar (P1). Radar propone y el usuario aprueba antes de despegar (P4); &#96;piloto&#96; agrupa Sesiones LISTO por Zona leyendo radar status --json y no recalcula estados. Las preguntas previsibles de los contratos se hacen antes de despegar, no durante el vuelo. Ante la duda el agente frena y el vuelo sigue sin esa Sesión (P7); el freno apaga el modo de golpe. Apagar no borra NOVEDAD ni POR REVISAR (P9). Una Sesión que une dos vuelos no arranca con el piloto prendido (P10). Los archivos autorizados son prospectivos: delimitan el módulo nuevo sin afirmar una implementación elegida; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: docs/architecture/piloto-automatico.md (secciones 5, 6 y 12; P1–P7, P10, P12); docs/architecture/definiciones-v1-v2-v3.md; agent-workflows/tools/install-radar.sh (patrón de instalador) y agent-workflows/tools/radar/ (forma de módulo Go determinista).
 
 ### S216 — Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S216)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/tui/radar.go, product/tower/v1/tui/radar&#95;test.go, product/tower/v1/tui/main.go, product/tower/v1/tui/styles.go
   - Depende de: S215
-  - Recursos: —
+  - Recursos: estado del piloto y de los vuelos vía Radar (radar snapshot/status --json); mutación sólo a través de &#96;piloto&#96;
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: El piloto corre sin el mantenedor presente; la TUI tiene que dar control humano directo sobre el interruptor, la observación de vuelos y la parada de emergencia que detiene la corrida de forma segura.
-  - Resultado y comportamiento:
-  - Restricciones y decisiones:
-  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+  - Resultado y comportamiento: La TUI de la Torre suma un panel de control del piloto: el interruptor prende y apaga el modo, la vista de vuelos muestra los vuelos en curso con su ronda, su tope y el estado de cada Sesión (NOVEDAD con motivo, POR REVISAR, EN CURSO) leyendo el estado que Radar publica (radar snapshot/status --json), y el freno de emergencia detiene la corrida a mano de forma segura. La TUI sigue siendo consultiva para el estado (P14): los controles llaman a &#96;piloto&#96;, que es quien muta el interruptor, las marcas y el freno; la TUI no escribe marcas ni estados por su cuenta. El despegue desde la TUI muestra la cuenta regresiva y el resumen de la corrida (vuelos, rondas, tope).
+  - Restricciones y decisiones: No hay proceso siempre prendido (P14): la TUI consulta y convoca, nunca mantiene estado propio del piloto. El freno de emergencia es accesible en todo momento y su efecto es el que define S215 (nada nuevo arranca; lo en el aire queda NOVEDAD · interrumpida). Los archivos autorizados delimitan el cambio en la TUI; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: docs/architecture/piloto-automatico.md (secciones 5 y 12; P14); docs/architecture/definiciones-v1-v2-v3.md; product/tower/v1/tui/radar.go (hoy la TUI sólo hace consultas de lectura a Radar).
 
 ### S217 — Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
 - Coordinación:
-  - Estado derivado: 🔴 BLOQUEADO · falta-planificar (S217)
-  - Encargo incompleto: no autoriza territorio, cola ni asiento.
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/piloto/revision.go, agent-workflows/tools/piloto/revision&#95;test.go, agent-workflows/tools/piloto/aterrizaje.go, agent-workflows/tools/piloto/aterrizaje&#95;test.go
   - Depende de: S215
-  - Recursos: —
+  - Recursos: ramas y copias de trabajo por vuelo ya creadas por S215; marcas radar.piloto/v1
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: Al regresar, el usuario recibe el estado y deja terminar los vuelos; la revisión sigue las dependencias base-arriba aunque la atención empiece por los vuelos con NOVEDAD. La revisión evalúa el vuelo completo, califica Leve/Medio/Grave por esfuerzo semántico, analiza impacto antes de parchar y entrega sólo la porción aprobada; un vuelo que une dos espera la revisión de ambos.
-  - Resultado y comportamiento:
-  - Restricciones y decisiones:
-  - Referencias: docs/architecture/piloto-automatico.md; docs/architecture/definiciones-v1-v2-v3.md.
+  - Resultado y comportamiento: Al aterrizar, &#96;piloto&#96; produce el informe por vuelo: qué Sesiones quedaron POR REVISAR (limpia o con N decisiones anotadas en su commit), cuáles NOVEDAD (con motivo), la ronda alcanzada y las Sesiones sin empezar. La revisión ocurre en una conversación, vuelo por vuelo (P12): primero los vuelos con NOVEDAD, y dentro de cada vuelo la cascada base-arriba — se contestan las decisiones de las NOVEDAD y después se revisa cada commit desde la base hacia arriba según las dependencias. Antes de corregir, el análisis de impacto mide el efecto del arreglo sobre las Sesiones de arriba y lo clasifica: Leve (se traslada el parche), Medio (parche y nueva revisión de cada Sesión afectada) o Grave (esas Sesiones vuelven a LISTO y se rehacen); el tipo lo decide si el arreglo cambia algo que las Sesiones de arriba usan, y cuántas afecta es un dato del informe. El traslado reaplica las Sesiones de arriba sobre la base corregida, posible por el un-commit-por-Sesión. La subida es única por vuelo, hasta la última Sesión aprobada de forma consecutiva, y una Sesión que une dos vuelos espera la revisión de ambos. &#96;piloto&#96; expone estos pasos como comandos deterministas (informe, orden de cascada, registro de resolución de NOVEDAD, aterrizaje de la porción aprobada) y nunca sube sin la aprobación explícita del usuario.
+  - Restricciones y decisiones: La revisión es humana; &#96;piloto&#96; determiniza el orden y el registro, no el juicio de calidad. Apagar el modo no borra estados (P9): la revisión puede retomarse en otra conversación. La subida por vuelo requiere aprobación explícita y sigue la política ordinaria de entrega del repositorio. Archivos prospectivos que delimitan el módulo de S215; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: docs/architecture/piloto-automatico.md (secciones 9 y 10; P8, P12); docs/architecture/definiciones-v1-v2-v3.md; docs/architecture/pista-entrega-ordenada.md (sección 4, cola de revisión análoga).
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
