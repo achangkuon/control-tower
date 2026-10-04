@@ -2,16 +2,16 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S211, S212, S213, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S167, S172, S173, S174, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: Método #2 → S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse..
+- Próximo trabajo ejecutable: ninguno.
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- Método #2 → S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
+- No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 89% (136/152 S)
+- **Total:** 90% (137/152 S)
 - 4 Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
@@ -24,7 +24,7 @@
 - **Hosts:** 42% (3/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 93% (43/46 S)
+- **Método:** 95% (44/46 S)
 - **Producto Torre:** 90% (30/33 S)
 
 ## Zonas y colas
@@ -63,7 +63,6 @@
 
 ### Método (metodo)
 1. **S176** · 📋 PLANIFICADO · espera-atascada (S175) · prioridad Resolución de problemas · Generales · Invalidar el verde anterior cuando una nueva suite no produce resumen.
-2. **S210** · 🟢 LISTO · prioridad Torre V1 · Adopción project-local reversible · Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
 
 ### Producto Torre (producto-torre)
 - Sin Sesiones abiertas.
@@ -1404,7 +1403,7 @@
 
 ### S210 — Las skills de Chanks que no son de V1 quedan ordenadas en carpetas de diferidas por versión (V2 y V3), sin perderse y sin instalarse.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: AGENTS.md, agent-workflows/FLUJO-END-TO-END.md, agent-workflows/README.md, agent-workflows/skills-diferidas/README.md, agent-workflows/skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md, agent-workflows/skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/skills-diferidas/v2/chanks-0-agente-soporte/assets/brief-diario.md, agent-workflows/skills-diferidas/v2/chanks-0-jornada/SKILL.md, agent-workflows/skills-diferidas/v2/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills-diferidas/v2/chanks-3-session-kickoff/references/admission-contract.md, agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/assets/issue-patch-handoff.md, agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/assets/worker-handoff.md, agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/references/dispatch-protocol.md, agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/references/issue-patch-closure.md, agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/references/worker-pool.md, agent-workflows/skills-diferidas/v3/chanks-4-unattended-implementation/SKILL.md, agent-workflows/skills-diferidas/v3/chanks-4-unattended-implementation/assets/execution-contract.schema.json, agent-workflows/skills-diferidas/v3/chanks-4-unattended-implementation/references/night-mode.md, agent-workflows/skills-diferidas/v3/chanks-4-unattended-implementation/references/runtime-standalone.md, agent-workflows/skills-diferidas/v3/chanks-4-unattended-implementation/references/sealing-and-routing.md, agent-workflows/skills/chanks-0-agente-soporte/SKILL.md, agent-workflows/skills/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/skills/chanks-0-agente-soporte/assets/brief-diario.md, agent-workflows/skills/chanks-0-jornada/SKILL.md, agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/SKILL.md, agent-workflows/skills/chanks-3-despacho-herdr/assets/issue-patch-handoff.md, agent-workflows/skills/chanks-3-despacho-herdr/assets/worker-handoff.md, agent-workflows/skills/chanks-3-despacho-herdr/references/dispatch-protocol.md, agent-workflows/skills/chanks-3-despacho-herdr/references/issue-patch-closure.md, agent-workflows/skills/chanks-3-despacho-herdr/references/retiro.md, agent-workflows/skills/chanks-3-despacho-herdr/references/worker-pool.md, agent-workflows/skills/chanks-3-session-kickoff/SKILL.md, agent-workflows/skills/chanks-3-session-kickoff/references/admission-contract.md, agent-workflows/skills/chanks-4-unattended-implementation/SKILL.md, agent-workflows/skills/chanks-4-unattended-implementation/assets/execution-contract.schema.json, agent-workflows/skills/chanks-4-unattended-implementation/references/night-mode.md, agent-workflows/skills/chanks-4-unattended-implementation/references/runtime-standalone.md, agent-workflows/skills/chanks-4-unattended-implementation/references/sealing-and-routing.md, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/tests/test&#95;chanks&#95;jornada.py, agent-workflows/tests/test&#95;coordinador&#95;manual.py, agent-workflows/tests/test&#95;deferred&#95;sources.py, agent-workflows/tests/test&#95;despacho&#95;herdr.py, agent-workflows/tests/test&#95;install.py, agent-workflows/tests/test&#95;issue&#95;patch&#95;flow.py, agent-workflows/tests/test&#95;personal&#95;config.py, agent-workflows/tests/test&#95;standalone&#95;contract.mjs, agent-workflows/tools/install.py, agent-workflows/tools/prepare-personal-config.py, odd/tasks/s210-deferred-skills.md
   - Depende de: —
@@ -4271,7 +4270,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
+Ninguna Zona tiene trabajo LISTO.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
