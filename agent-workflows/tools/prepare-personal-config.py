@@ -171,7 +171,7 @@ def _central_roster(home: Path, repo_root: Path) -> None:
     # V2- and V3-deferred skills are intentionally absent from the central active roster after install.
     roster = install.OWN_SKILLS
     for name in roster:
-        source = repo_root / "agent-workflows/skills" / name
+        source = install.skill_source_root(repo_root / "agent-workflows", name)
         installed = central / name
         _no_symlink(source)
         _no_symlink(installed)
@@ -180,7 +180,8 @@ def _central_roster(home: Path, repo_root: Path) -> None:
         for tree in (source, installed):
             for path in tree.rglob("*"):
                 _no_symlink(path)
-        expected = {p.relative_to(source).as_posix(): p.read_bytes() for p in source.rglob("*") if p.is_file()}
+        expected = {p.relative_to(source).as_posix(): install.runtime_skill_bytes(name, p.relative_to(source), p)
+                    for p in source.rglob("*") if p.is_file()}
         actual = {p.relative_to(installed).as_posix(): p.read_bytes() for p in installed.rglob("*") if p.is_file()}
         if not expected or expected != actual:
             raise MigrationError(f"central own-skill bytes differ from repository: {name}")

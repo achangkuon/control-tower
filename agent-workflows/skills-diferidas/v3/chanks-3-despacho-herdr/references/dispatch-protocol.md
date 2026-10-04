@@ -1,7 +1,7 @@
 # Dispatch protocol rules (V2)
 
 These rules used to live in an always-loaded instruction block. They now live only in the V2
-dispatch skills. `../SKILL.md` and `../../chanks-3-coordinador-manual/SKILL.md` carry the rest;
+dispatch skills. `../SKILL.md` and `../../../v2/chanks-3-coordinador-manual/SKILL.md` carry the rest;
 this file holds what neither states elsewhere. Nothing here overrides Gentle AI.
 
 - Radar compatible capacity is the parallel-safety verdict for the lot. Forecasts reserve

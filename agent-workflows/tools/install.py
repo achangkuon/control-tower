@@ -49,26 +49,30 @@ CHANKS_SKILLS = (
     "chanks-5-session-doc",
 )
 
-# The formal Session start is deferred until V2 (Pista), maintainer decision B2 of
-# 2026-10-01: V1 starts a Session organically and tracks no "in progress" state. The
-# source stays under skills/, byte-identical, so V2 can install it again; it is not
-# installed, and a copy already installed is archived through RETIRED_SKILLS.
+# Pista sources retain their behavior under skills-diferidas/v2/. V1 starts
+# Sessions organically; these skills are not installed, and existing runtime
+# copies are archived reversibly through RETIRED_SKILLS.
 V2_DEFERRED_SKILLS = (
+    "chanks-0-jornada",
     "chanks-3-session-kickoff",
+    "chanks-3-coordinador-manual",
 )
 
-# Automatic-Tower skills deferred until V3. Their sources stay under skills/ but
-# they are not installed, and copies already installed are archived through
-# RETIRED_SKILLS, so the removal is reversible.
+# Automatic-Tower sources live under skills-diferidas/v3/, never installed.
 V3_DEFERRED_SKILLS = (
-    "chanks-0-jornada",
-    "chanks-3-coordinador-manual",
     "chanks-3-despacho-herdr",
     "chanks-4-unattended-implementation",
 )
 
-# Every skill whose source is kept but which no version-1 install writes.
+# Installation exclusions, not every source physically deferred from Tower V1.
 DEFERRED_SKILLS = V2_DEFERRED_SKILLS + V3_DEFERRED_SKILLS
+
+# agente-soporte is deferred from Tower V1 but remains a personal active skill.
+# Source location must not change its runtime destination or retirement policy.
+DEFERRED_SOURCE_VERSIONS = MappingProxyType({
+    **{name: "v2" for name in V2_DEFERRED_SKILLS + ("chanks-0-agente-soporte",)},
+    **{name: "v3" for name in V3_DEFERRED_SKILLS},
+})
 
 # Non-Chanks support skills.
 SUPPORT_SKILLS = (
@@ -309,9 +313,25 @@ def installed_manual_paths(home: Path) -> tuple[Path, ...]:
     return tuple(path for path in manual_paths(home) if path.parent.is_dir())
 
 
+def skill_source_root(root: Path, skill: str) -> Path:
+    """Resolve canonical bytes without changing runtime roster membership."""
+    version = DEFERRED_SOURCE_VERSIONS.get(skill)
+    if version is not None:
+        return root / "skills-diferidas" / version / skill
+    return root / "skills" / skill
+
+
+def runtime_skill_bytes(skill: str, relative: Path, source: Path) -> bytes:
+    """Keep personal runtime links sibling-relative despite deferred source layout."""
+    content = source.read_bytes()
+    if skill == "chanks-0-agente-soporte" and relative == Path("SKILL.md"):
+        content = content.replace(b"../../../skills/chanks-4-puente/", b"../chanks-4-puente/")
+    return content
+
+
 def source_files(root: Path, skills: tuple[str, ...] = SKILLS):
     for skill in skills:
-        source_root = root / "skills" / skill
+        source_root = skill_source_root(root, skill)
         if not source_root.is_dir():
             raise InstallError(f"missing canonical skill directory: {source_root}")
         for path in sorted(source_root.rglob("*")):
@@ -852,7 +872,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
             changes.extend(own_skill_entry_changes(runtime_root, relative_root))
         for skill, relative, source in source_files(root, skills_for_root(home, runtime_root)):
             destination = runtime_root / skill / relative
-            if not destination.is_file() or destination.read_bytes() != source.read_bytes():
+            if not destination.is_file() or destination.read_bytes() != runtime_skill_bytes(skill, relative, source):
                 changes.append(Change(destination, "skill"))
     for path in installed_manual_paths(home):
         desired = desired_personal_content(
@@ -923,14 +943,18 @@ def _create_skill_link(runtime_root: Path, skill: str) -> None:
             temporary.unlink()
 
 
-def _atomic_copy(source: Path, destination: Path, runtime_root: Path) -> None:
+def _atomic_copy(source: Path, destination: Path, runtime_root: Path, *, content: bytes | None = None) -> None:
     _validate_file_destination(runtime_root, destination, "runtime skill file")
     destination.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary_name = tempfile.mkstemp(prefix=f".{destination.name}.", dir=destination.parent)
     temporary = Path(temporary_name)
     try:
-        with os.fdopen(fd, "wb") as output, source.open("rb") as input_file:
-            shutil.copyfileobj(input_file, output)
+        with os.fdopen(fd, "wb") as output:
+            if content is None:
+                with source.open("rb") as input_file:
+                    shutil.copyfileobj(input_file, output)
+            else:
+                output.write(content)
         shutil.copystat(source, temporary)
         os.replace(temporary, destination)
     finally:
@@ -1031,7 +1055,8 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
         for skill, relative, source in source_files(root, skills_for_root(home, runtime_root)):
             destination = runtime_root / skill / relative
             if destination in change_paths:
-                _atomic_copy(source, destination, runtime_root)
+                _atomic_copy(source, destination, runtime_root,
+                             content=runtime_skill_bytes(skill, relative, source))
     for path in installed_manual_paths(home):
         if path in change_paths:
             desired = desired_personal_content(

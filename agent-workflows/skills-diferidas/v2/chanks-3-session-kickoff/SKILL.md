@@ -51,7 +51,7 @@ Sessions at once go through `chanks-3-paralelo`.
    marking only: report its reason. Skip it when the Session is already `EN CURSO`.
 5. Only on successful transition send the stage 4 handoff to the responsible parent and
    `chanks-4-puente`, including the marked checkout and the Session-bound record locator from
-   `../chanks-4-puente/references/session-readiness.md`; announce 💪. Never on refusal.
+   `../../../skills/chanks-4-puente/references/session-readiness.md`; announce 💪. Never on refusal.
 
 ## Output Contract
 
@@ -63,6 +63,6 @@ plan, lock, topology, or delivery authority was created.
 
 - `references/admission-contract.md`
 - `../chanks-0-agente-soporte/SKILL.md`
-- `../chanks-4-puente/SKILL.md`
-- `../chanks-4-puente/references/session-readiness.md`
-- `../chanks-3-paralelo/SKILL.md`
+- `../../../skills/chanks-4-puente/SKILL.md`
+- `../../../skills/chanks-4-puente/references/session-readiness.md`
+- `../../../skills/chanks-3-paralelo/SKILL.md`

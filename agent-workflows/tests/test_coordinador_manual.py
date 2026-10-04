@@ -25,7 +25,7 @@ def normalized(source):
 
 class CoordinadorManualTests(unittest.TestCase):
     def setUp(self):
-        self.skill = read(f"skills/{SKILL_NAME}/SKILL.md")
+        self.skill = read(f"skills-diferidas/v2/{SKILL_NAME}/SKILL.md")
         self.text = normalized(self.skill)
 
     def assert_phrases(self, *phrases):
@@ -33,14 +33,14 @@ class CoordinadorManualTests(unittest.TestCase):
             self.assertIn(" ".join(phrase.lower().split()), self.text, phrase)
 
     def test_registration_and_routing_preserve_the_canonical_admission_contract(self):
-        self.assertIn(SKILL_NAME, INSTALLER.V3_DEFERRED_SKILLS)
+        self.assertIn(SKILL_NAME, INSTALLER.V2_DEFERRED_SKILLS)
         self.assertNotIn(SKILL_NAME, INSTALLER.SKILLS)
         self.assertNotIn("coordinador-multi-agente", INSTALLER.CHANKS_SKILLS)
         self.assertIn("coordinador-multi-agente", INSTALLER.RETIRED_SKILLS)
         self.assertTrue(self.skill.startswith(f"---\nname: {SKILL_NAME}\n"))
         self.assertIn(f"`{SKILL_NAME}`", read("README.md"))
         routing = read("templates/session-routing.md")
-        contract = read("skills/chanks-3-session-kickoff/references/admission-contract.md")
+        contract = read("skills-diferidas/v2/chanks-3-session-kickoff/references/admission-contract.md")
         self.assertIn('"route": "chanks-3-session-kickoff"', contract)
         self.assertNotIn('"route"', routing)
         self.assertNotIn(SKILL_NAME, routing)
@@ -213,7 +213,7 @@ class IntervencionesDeCimientosTests(CoordinadorManualTests):
 
 class DespachoS157ContractTests(unittest.TestCase):
     def test_marker_follows_confirmed_handoff_only_and_seal_is_carried(self):
-        dispatch = read("skills/chanks-3-despacho-herdr/SKILL.md")
+        dispatch = read("skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md")
         for phrase in ("radar.despacho/v1", "Git common dir", "atomic", "sesion",
                        "worktree", "refs/heads/", "worker", "confirmed exact handoff",
                        "ambiguous delivery", "valid approved unattended seal"):

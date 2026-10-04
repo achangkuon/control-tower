@@ -46,7 +46,7 @@ worker worktree and issue/branch binding. Verify the reported immutable commit a
 the exact worker branch and approved files before serial integration; an uncertain result
 preserves the candidate and worker, never infers completion or resends. Main integrates
 only the verified candidate, gathers patch closure through
-`../chanks-3-despacho-herdr/references/issue-patch-closure.md`, and retires through the
+`../../v3/chanks-3-despacho-herdr/references/issue-patch-closure.md`, and retires through the
 dispatch skill's `references/retiro.md` patch checks. A patch never changes Radar
 Session progress or `openspec/plan.yaml`; absent planned-work closure declare
 «nada que registrar». No review outcome grants delivery authorization.
@@ -183,9 +183,9 @@ closure, or retirement; otherwise preserve and report worker evidence.
 
 ## References
 
-- `../chanks-3-despacho-herdr/SKILL.md`
-- `../chanks-3-despacho-herdr/assets/worker-handoff.md`
-- `../chanks-3-despacho-herdr/references/issue-patch-closure.md`
-- `../chanks-3-despacho-herdr/references/dispatch-protocol.md`
-- `../chanks-5-session-doc/SKILL.md` — Session closure only
+- `../../v3/chanks-3-despacho-herdr/SKILL.md`
+- `../../v3/chanks-3-despacho-herdr/assets/worker-handoff.md`
+- `../../v3/chanks-3-despacho-herdr/references/issue-patch-closure.md`
+- `../../v3/chanks-3-despacho-herdr/references/dispatch-protocol.md`
+- `../../../skills/chanks-5-session-doc/SKILL.md` — Session closure only
 - `herdr` skill

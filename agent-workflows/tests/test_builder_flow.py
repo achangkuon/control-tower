@@ -96,7 +96,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("three routes", judgment)
 
     def test_kickoff_admits_fresh_radar_without_a_key_or_host_envelope(self):
-        kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
+        kickoff = read("skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md")
         autoridad = read("skills/chanks-1-autoridad/SKILL.md")
         planner = read("skills/chanks-2-planificador-granular/SKILL.md")
 
@@ -118,29 +118,29 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertNotIn("activation click", planning_skill.lower())
 
     def test_kickoff_keeps_the_installed_radar_as_the_only_admission_binary(self):
-        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+        kickoff = " ".join(read("skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md").split())
         self.assertIn("Radar is the only admission binary", kickoff)
         self.assertIn("never a binary built or found in a repository checkout", kickoff)
         self.assertIn("$HOME/.local/bin/radar", kickoff)
 
     def test_kickoff_states_admission_once_in_its_simple_form(self):
-        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+        kickoff = " ".join(read("skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md").split())
         self.assertIn("`start` requires `LISTO`", kickoff)
         self.assertIn("`continue`/`resume` require `LISTO` or `EN CURSO`", kickoff)
         self.assertIn("references/admission-contract.md", kickoff)
         self.assertEqual(kickoff.count("radar status --json"), 1)
 
     def test_kickoff_marks_the_session_en_curso_with_radar_marcar(self):
-        kickoff = " ".join(read("skills/chanks-3-session-kickoff/SKILL.md").split())
+        kickoff = " ".join(read("skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md").split())
         for phrase in ("radar marcar <ID> --worktree <absolute", "`EN CURSO`", "branch that already has commits",
                        "primary checkout", "chanks-3-paralelo"):
             self.assertIn(phrase, kickoff)
 
     def test_native_resume_reconciles_same_identity_but_legacy_keeps_pending_module(self):
-        support = read("skills/chanks-0-agente-soporte/SKILL.md")
-        kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
-        handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
-        brief = read("skills/chanks-0-agente-soporte/assets/brief-diario.md")
+        support = read("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
+        kickoff = read("skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md")
+        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        brief = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/brief-diario.md")
 
         for source in (kickoff, handoff):
             self.assertIn("same Session identity", source)
@@ -276,7 +276,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
     def test_v1_stage_skills_and_live_docs_give_no_marker_or_formal_start_instruction(self):
         """V1 runs without dispatch markers or a formal start; both wait for V2 (Pista)."""
-        folders = [SKILLS / name for name in INSTALLER.CHANKS_SKILLS]
+        folders = [INSTALLER.skill_source_root(ROOT, name) for name in INSTALLER.CHANKS_SKILLS]
         sources = [path for folder in folders for path in sorted(folder.rglob("*"))
                    if path.is_file() and path.suffix in {".md", ".json", ".py"}]
         sources.append(ROOT / "templates/session-routing.md")
@@ -359,8 +359,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
                 self.assertNotIn(gone, policy)
 
     def test_manual_coordinator_and_dispatch_remain_topology_only(self):
-        coordinator = read("skills/chanks-3-coordinador-manual/SKILL.md")
-        dispatch = read("skills/chanks-3-despacho-herdr/SKILL.md")
+        coordinator = read("skills-diferidas/v2/chanks-3-coordinador-manual/SKILL.md")
+        dispatch = read("skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md")
         template = read("templates/session-routing.md")
 
         for source in (coordinator, dispatch):
@@ -373,8 +373,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
     def test_manual_admission_contract_is_closed_and_conditional(self):
         template = read("templates/session-routing.md")
-        kickoff = read("skills/chanks-3-session-kickoff/SKILL.md")
-        source = read("skills/chanks-3-session-kickoff/references/admission-contract.md")
+        kickoff = read("skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md")
+        source = read("skills-diferidas/v2/chanks-3-session-kickoff/references/admission-contract.md")
         contract, _, _ = admission_contract(source)
         self.assertNotIn(ADMISSION_CONTRACT_START, template)
         self.assertEqual(source.count(ADMISSION_CONTRACT_START), 1)
@@ -419,8 +419,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("chanks-3-session-kickoff", template)
 
     def test_support_preserves_read_only_adoption_and_handoff_boundaries(self):
-        support = read("skills/chanks-0-agente-soporte/SKILL.md")
-        handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        support = read("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
+        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
 
         for phrase in (
             "$HOME/.local/bin/radar status --json -C <repo>",
@@ -479,8 +479,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
     def test_restores_operational_legacy_and_adoption_guards_around_native_odd(self):
         bridge = read("skills/chanks-4-puente/SKILL.md")
-        support = read("skills/chanks-0-agente-soporte/SKILL.md")
-        handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        support = read("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
+        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
         canon = read("skills/_shared/plan-naming-convention.md")
 
         for phrase in ("native ODD", "historical legacy evidence",
@@ -495,7 +495,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("incomplete Encargo retains known declarations", canon)
 
     def test_implementation_handoff_carries_no_v2_machinery(self):
-        handoff = read("skills/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
         for gone in ("PI_SESSION_ID", "APPROVED_ALIAS", "Intercom", "listo para revisión",
                      "seal", "RDD", "SHA-256", "TDD"):
             with self.subTest(gone=gone):
@@ -503,8 +503,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("Gentle AI", handoff)
 
     def test_worker_revalidation_tolerates_only_the_dispatch_markers_listo_to_en_curso(self):
-        skill = read("skills/chanks-4-unattended-implementation/SKILL.md")
-        sealing = read("skills/chanks-4-unattended-implementation/references/sealing-and-routing.md")
+        skill = read("skills-diferidas/v3/chanks-4-unattended-implementation/SKILL.md")
+        sealing = read("skills-diferidas/v3/chanks-4-unattended-implementation/references/sealing-and-routing.md")
 
         self.assertIn("Worker-side revalidation after dispatch tolerates exactly one drift", skill)
         self.assertIn("references/sealing-and-routing.md", skill)
@@ -521,7 +521,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertIn(phrase, sealing)
 
     def test_unattended_seal_never_answers_gentle_ai_consent_for_the_human(self):
-        base = "skills/chanks-4-unattended-implementation"
+        base = "skills-diferidas/v3/chanks-4-unattended-implementation"
         texts = {
             path: " ".join(read(f"{base}/{path}").split())
             for path in ("SKILL.md", "references/sealing-and-routing.md",
@@ -560,7 +560,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
         forbidden = {"product/tower/generic", "torre-control", "torre-control-soporte", "torre-control-entregas"}
 
         self.assertTrue(set(INSTALLER.SKILLS).isdisjoint(forbidden))
-        self.assertTrue(all(source.is_relative_to(SKILLS) for _, _, source in INSTALLER.source_files(ROOT)))
+        self.assertTrue(all(source.is_relative_to(SKILLS) or source.is_relative_to(ROOT / "skills-diferidas")
+                            for _, _, source in INSTALLER.source_files(ROOT)))
         self.assertFalse((ROOT / "skills/torre-control-entregas").exists())
 
 
@@ -576,7 +577,9 @@ FORBIDDEN_IN_STAGE_SKILLS = (
 
 
 def stage_skill_dirs():
-    found = sorted({path for pattern in STAGE_SKILL_GLOBS for path in SKILLS.glob(pattern) if path.is_dir()})
+    roots = (SKILLS, ROOT / "skills-diferidas/v2")
+    found = sorted({path for root in roots for pattern in STAGE_SKILL_GLOBS
+                    for path in root.glob(pattern) if path.is_dir()})
     assert found, "no stage skill folders found"
     return found
 
@@ -600,6 +603,11 @@ def approved_stage_activation(name, description):
     return prefix is not None and description.startswith(prefix)
 
 
+def stage_relative(path):
+    root = SKILLS if path.is_relative_to(SKILLS) else ROOT / "skills-diferidas/v2"
+    return path.relative_to(root).as_posix()
+
+
 def stage_skill_texts():
     for folder in stage_skill_dirs():
         for path in sorted(folder.rglob("*")):
@@ -613,12 +621,12 @@ class StageSkillBoundaryTests(unittest.TestCase):
     def test_stage_skills_carry_none_of_the_collision_phrases(self):
         for path, text in stage_skill_texts():
             for phrase in FORBIDDEN_IN_STAGE_SKILLS:
-                with self.subTest(file=path.relative_to(SKILLS).as_posix(), phrase=phrase):
+                with self.subTest(file=stage_relative(path), phrase=phrase):
                     self.assertNotIn(phrase, text)
 
     def test_scan_covers_parallel_and_python_support_files(self):
         self.assertIn(SKILLS / "chanks-3-paralelo", stage_skill_dirs())
-        paths = {path.relative_to(SKILLS).as_posix() for path, _ in stage_skill_texts()}
+        paths = {stage_relative(path) for path, _ in stage_skill_texts()}
         self.assertIn("chanks-3-paralelo/SKILL.md", paths)
         self.assertIn("chanks-4-puente/scripts/prepare_new_change.py", paths)
         self.assertIn("chanks-3-session-kickoff/references/admission-contract.md", paths)
@@ -627,9 +635,9 @@ class StageSkillBoundaryTests(unittest.TestCase):
         for path, text in stage_skill_texts():
             # Only the canonical admission payload retains historical digest fields.
             # A same-named file elsewhere must not bypass the stage boundary.
-            if path == SKILLS / "chanks-3-session-kickoff/references/admission-contract.md":
+            if path == ROOT / "skills-diferidas/v2/chanks-3-session-kickoff/references/admission-contract.md":
                 continue
-            with self.subTest(file=path.relative_to(SKILLS).as_posix()):
+            with self.subTest(file=stage_relative(path)):
                 self.assertNotIn("SHA-256", text)
         canon = read("skills/_shared/plan-naming-convention.md")
         for phrase in FORBIDDEN_IN_STAGE_SKILLS + ("SHA-256", "digests of exact"):
@@ -695,7 +703,7 @@ class StageSkillBoundaryTests(unittest.TestCase):
             self.assertNotIn(gone, skill)
 
     def test_orphan_support_files_are_gone(self):
-        support = SKILLS / "chanks-0-agente-soporte"
+        support = ROOT / "skills-diferidas/v2/chanks-0-agente-soporte"
         self.assertEqual(
             sorted(p.relative_to(support).as_posix() for p in support.rglob("*") if p.is_file()),
             ["SKILL.md", "assets/assignment-implementation.md", "assets/brief-diario.md"],

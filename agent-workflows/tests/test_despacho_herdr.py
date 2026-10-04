@@ -25,7 +25,11 @@ SECTIONS = (
 
 
 def read(relative):
-    return (ROOT / relative).read_text(encoding="utf-8")
+    # Dynamic skill selectors use the installer's version-aware source inventory.
+    path = Path(relative)
+    if path.parts[0] == "skills":
+        path = INSTALLER.skill_source_root(ROOT, path.parts[1]).joinpath(*path.parts[2:])
+    return (ROOT / path).read_text(encoding="utf-8")
 
 
 def section(source, heading):
@@ -824,7 +828,7 @@ class DispatchProtocolIsSelfContainedTests(unittest.TestCase):
 
     def setUp(self):
         self.dispatch = compact(read(f"skills/{SKILL_NAME}/SKILL.md"))
-        self.coordinator = compact(read("skills/chanks-3-coordinador-manual/SKILL.md"))
+        self.coordinator = compact(read("skills-diferidas/v2/chanks-3-coordinador-manual/SKILL.md"))
         self.protocol = compact(read(f"skills/{SKILL_NAME}/references/dispatch-protocol.md"))
 
     def test_rules_stated_in_the_dispatch_skill(self):
@@ -924,24 +928,24 @@ class WorkerHandoffAssetTests(unittest.TestCase):
     def test_v2_skills_point_at_the_handoff_asset(self):
         for name in (SKILL_NAME, "chanks-3-coordinador-manual", "chanks-4-unattended-implementation"):
             with self.subTest(skill=name):
-                skill_path = ROOT / "skills" / name / "SKILL.md"
+                skill_path = INSTALLER.skill_source_root(ROOT, name) / "SKILL.md"
                 links = re.findall(r"`([^`]+assets/worker-handoff\.md|assets/worker-handoff\.md)`",
                                    skill_path.read_text(encoding="utf-8"))
                 self.assertTrue(links, f"{name} must link its own handoff directly")
                 for link in links:
                     self.assertEqual((skill_path.parent / link).resolve(),
-                                     (ROOT / "skills" / SKILL_NAME / "assets/worker-handoff.md").resolve())
+                                     (INSTALLER.skill_source_root(ROOT, SKILL_NAME) / "assets/worker-handoff.md").resolve())
                     self.assertTrue((skill_path.parent / link).is_file(), link)
         self.assertNotIn("assignment-implementation.md", read(f"skills/{SKILL_NAME}/SKILL.md"))
         self.assertNotIn("assignment-implementation.md",
-                         read("skills/chanks-4-unattended-implementation/references/night-mode.md"))
+                         read("skills-diferidas/v3/chanks-4-unattended-implementation/references/night-mode.md"))
 
     def test_night_mode_handoff_link_resolves_from_the_reference_directory(self):
-        night = ROOT / "skills/chanks-4-unattended-implementation/references/night-mode.md"
+        night = ROOT / "skills-diferidas/v3/chanks-4-unattended-implementation/references/night-mode.md"
         links = re.findall(r"`([^`]+assets/worker-handoff\.md)`", night.read_text(encoding="utf-8"))
         self.assertEqual(len(links), 1)
         self.assertEqual((night.parent / links[0]).resolve(),
-                         (ROOT / "skills" / SKILL_NAME / "assets/worker-handoff.md").resolve())
+                         (INSTALLER.skill_source_root(ROOT, SKILL_NAME) / "assets/worker-handoff.md").resolve())
         self.assertTrue((night.parent / links[0]).is_file())
 
 
@@ -969,7 +973,7 @@ class IssuePatchClosureReferenceTests(unittest.TestCase):
 
     def test_dispatch_and_coordinator_point_at_the_closure_reference(self):
         self.assertIn("references/issue-patch-closure.md", read(f"skills/{SKILL_NAME}/SKILL.md"))
-        coordinator = read("skills/chanks-3-coordinador-manual/SKILL.md")
+        coordinator = read("skills-diferidas/v2/chanks-3-coordinador-manual/SKILL.md")
         self.assertIn("references/issue-patch-closure.md", coordinator)
         self.assertNotIn("gathers patch closure through `chanks-5-session-doc`", compact(coordinator))
 

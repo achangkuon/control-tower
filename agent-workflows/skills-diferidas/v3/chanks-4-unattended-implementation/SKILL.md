@@ -111,10 +111,10 @@ is a standalone sealed approval, not an active runtime, a dispatch, or a deliver
 - `references/sealing-and-routing.md`
 - `references/night-mode.md`
 - `references/runtime-standalone.md`
-- `../_shared/plan-naming-convention.md`
-- `../chanks-0-agente-soporte/SKILL.md`
+- `../../../skills/_shared/plan-naming-convention.md`
+- `../../v2/chanks-0-agente-soporte/SKILL.md`
 - `../chanks-3-despacho-herdr/SKILL.md`
 - `../chanks-3-despacho-herdr/assets/worker-handoff.md` — the full sealed worker handoff
-- `../chanks-3-session-kickoff/SKILL.md`
-- `../chanks-3-paralelo/SKILL.md` — the V1 route for ordinary parallel work
+- `../../v2/chanks-3-session-kickoff/SKILL.md`
+- `../../../skills/chanks-3-paralelo/SKILL.md` — the V1 route for ordinary parallel work
 - `../sdd-apply/SKILL.md` — only for the explicit human `solicitud_sdd` exception; ODD never loads it.

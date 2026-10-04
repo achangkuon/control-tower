@@ -406,7 +406,7 @@ sacarlo del Go deja el campo aceptándose en silencio.
 
 #### 🔴 C2 — las tres rutas están escritas como pipelines distintas, y el tramo 3 dice que son una sola
 
-**Choca con:** `skills/chanks-3-session-kickoff/SKILL.md:25` — *«`direct` y `design-tasks` usan un
+**Choca con:** `skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md:25` — *«`direct` y `design-tasks` usan un
 ejecutor general fresco. `full-sdd` corre el pipeline una sola vez»* — y las líneas 52–55, que
 las ejecutan por separado. El canon §15 define las cuatro rutas pero **no dice** que compartan
 `verify` y `archive`.

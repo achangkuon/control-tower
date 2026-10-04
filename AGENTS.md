@@ -125,7 +125,7 @@ a tested stable V1 and explicit human authorization.
 
 El despacho por Herdr, los handoffs entre workers Pi y los parches de issue por Herdr son
 **V3** (Torre automática): no forman parte del flujo ordinario. Sus reglas, incluida la declaración del pool
-de workers, viven en `agent-workflows/skills/chanks-3-despacho-herdr/`
+de workers, viven en `agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/`
 (`references/worker-pool.md`). Para trabajo paralelo ordinario usá `chanks-3-paralelo`.
 
 Cuando una Sesión recibe o detecta una fricción, mientras conserva el contexto fresco

@@ -5,7 +5,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT.parent / "AGENTS.md"
-DISPATCH = ROOT / "skills/chanks-3-despacho-herdr"
+DISPATCH = ROOT / "skills-diferidas/v3/chanks-3-despacho-herdr"
 
 
 def read(path):
@@ -20,7 +20,7 @@ class IssuePatchContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.policy = read(POLICY)
-        cls.router = read(ROOT / "skills/chanks-3-coordinador-manual/SKILL.md")
+        cls.router = read(ROOT / "skills-diferidas/v2/chanks-3-coordinador-manual/SKILL.md")
         cls.dispatch = read(DISPATCH / "SKILL.md")
         cls.retire = read(DISPATCH / "references/retiro.md")
         cls.handoff = read(DISPATCH / "assets/issue-patch-handoff.md")
@@ -144,7 +144,7 @@ class IssuePatchContractTests(unittest.TestCase):
 
     def test_session_contract_remains_session_only(self):
         self.assertNotIn("SESSION-ADMISSION-CONTRACT", self.routing)
-        contract = read(ROOT / "skills/chanks-3-session-kickoff/references/admission-contract.md")
+        contract = read(ROOT / "skills-diferidas/v2/chanks-3-session-kickoff/references/admission-contract.md")
         self.assertIn('"route": "chanks-3-session-kickoff"', contract)
         self.assertIn('"start": {"states": ["LISTO"]}', contract)
         self.assertIn('`radar.despacho/v1` marker', self.dispatch)

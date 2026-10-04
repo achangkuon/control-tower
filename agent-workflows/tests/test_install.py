@@ -294,7 +294,10 @@ class InstallerTests(unittest.TestCase):
         for skill, relative, source in INSTALLER.source_files(ROOT, INSTALLER.PERSONAL_SKILLS):
             destination = central / skill / relative
             self.assertTrue(destination.is_file(), destination)
-            self.assertEqual(source.read_bytes(), destination.read_bytes())
+            self.assertEqual(INSTALLER.runtime_skill_bytes(skill, relative, source), destination.read_bytes())
+        support = central / "chanks-0-agente-soporte/SKILL.md"
+        self.assertIn(b"../chanks-4-puente/SKILL.md", support.read_bytes())
+        self.assertNotIn(b"../../../skills/", support.read_bytes())
         for runtime_root in (claude, opencode, codex):
             for skill, relative, source in INSTALLER.source_files(ROOT, INSTALLER.SHARED):
                 destination = runtime_root / skill / relative
@@ -803,8 +806,17 @@ class InstallerTests(unittest.TestCase):
 
     def test_installer_inventory_includes_every_chanks_skill_and_excludes_retired_skills(self):
         actual_chanks = {
-            path.parent.name for path in (ROOT / "skills").glob("chanks-*/SKILL.md")
+            path.parent.name for root in (ROOT / "skills", ROOT / "skills-diferidas/v2", ROOT / "skills-diferidas/v3")
+            for path in root.glob("chanks-*/SKILL.md")
         }
+        self.assertEqual(set(INSTALLER.DEFERRED_SOURCE_VERSIONS), {
+            "chanks-0-jornada", "chanks-3-session-kickoff", "chanks-3-coordinador-manual",
+            "chanks-0-agente-soporte", "chanks-3-despacho-herdr", "chanks-4-unattended-implementation",
+        })
+        for name, version in INSTALLER.DEFERRED_SOURCE_VERSIONS.items():
+            self.assertFalse((ROOT / "skills" / name).exists(), name)
+            self.assertTrue((ROOT / "skills-diferidas" / version / name / "SKILL.md").is_file(), name)
+            self.assertNotIn(name, INSTALLER.TOWER_V1_SKILLS)
         self.assertEqual(
             set(INSTALLER.CHANKS_SKILLS) | set(INSTALLER.DEFERRED_SKILLS), actual_chanks
         )
@@ -832,12 +844,10 @@ class InstallerTests(unittest.TestCase):
             self.assertIn("chanks-1-adopcion", INSTALLER.TOWER_V1_SKILLS)
 
     def test_v3_deferred_skills_are_not_installed_but_stay_in_the_repo(self):
-        """The four automatic-Tower skills wait for V3: source kept, never installed."""
+        """The two automatic-Tower skills wait for V3: source kept, never installed."""
         self.assertEqual(
             set(INSTALLER.V3_DEFERRED_SKILLS),
             {
-                "chanks-0-jornada",
-                "chanks-3-coordinador-manual",
                 "chanks-3-despacho-herdr",
                 "chanks-4-unattended-implementation",
             },
@@ -846,7 +856,7 @@ class InstallerTests(unittest.TestCase):
         self.assertTrue(set(INSTALLER.V3_DEFERRED_SKILLS).issubset(INSTALLER.RETIRED_SKILLS))
         installed = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
         for skill in INSTALLER.V3_DEFERRED_SKILLS:
-            self.assertTrue((ROOT / "skills" / skill / "SKILL.md").is_file(), skill)
+            self.assertTrue((ROOT / "skills-diferidas/v3" / skill / "SKILL.md").is_file(), skill)
             self.assertNotIn(skill, installed)
         with tempfile.TemporaryDirectory() as raw:
             home = Path(raw)
@@ -858,13 +868,15 @@ class InstallerTests(unittest.TestCase):
 
     def test_v2_deferred_kickoff_is_not_installed_but_stays_in_the_repo(self):
         """The formal Session start waits for V2 (Pista): source kept, never installed."""
-        self.assertEqual(INSTALLER.V2_DEFERRED_SKILLS, ("chanks-3-session-kickoff",))
+        self.assertEqual(INSTALLER.V2_DEFERRED_SKILLS, (
+            "chanks-0-jornada", "chanks-3-session-kickoff", "chanks-3-coordinador-manual",
+        ))
         self.assertTrue(set(INSTALLER.V2_DEFERRED_SKILLS).isdisjoint(INSTALLER.SKILLS))
         self.assertTrue(set(INSTALLER.V2_DEFERRED_SKILLS).isdisjoint(INSTALLER.V3_DEFERRED_SKILLS))
         self.assertTrue(set(INSTALLER.V2_DEFERRED_SKILLS).issubset(INSTALLER.RETIRED_SKILLS))
         installed = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
         for skill in INSTALLER.V2_DEFERRED_SKILLS:
-            self.assertTrue((ROOT / "skills" / skill / "SKILL.md").is_file(), skill)
+            self.assertTrue((ROOT / "skills-diferidas/v2" / skill / "SKILL.md").is_file(), skill)
             self.assertNotIn(skill, installed)
         planned = [
             change for change in INSTALLER.build_plan(self.home, ROOT)
@@ -879,7 +891,7 @@ class InstallerTests(unittest.TestCase):
     def test_installed_v2_deferred_copies_are_planned_and_archived_reversibly(self):
         roots = INSTALLER.installed_skill_roots(self.home)
         self.assertTrue(roots)
-        source = ROOT / "skills/chanks-3-session-kickoff"
+        source = ROOT / "skills-diferidas/v2/chanks-3-session-kickoff"
         for runtime_root in roots:
             shutil.copytree(source, runtime_root / "chanks-3-session-kickoff")
 
@@ -1043,7 +1055,7 @@ class InstallerTests(unittest.TestCase):
                 self.assertFalse((home / ".agents/skills/chanks-2-planificador-granular").exists())
 
     def test_native_kickoff_reconciles_identity_without_inventing_a_route(self):
-        content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
+        content = (ROOT / "skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         hard_rules = content.split("## Hard Rules", 1)[1].split("## Decision Gates", 1)[0]
 
         self.assertIn("same Session identity", hard_rules)
@@ -1105,7 +1117,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(INSTALLER.build_plan(self.home, ROOT), [])
 
     def test_kickoff_requires_confirmed_exclusive_or_serial_resource_evidence(self):
-        content = (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
+        content = (ROOT / "skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8")
         execution = content.split("## Execution Steps", 1)[1].split("## Output Contract", 1)[0]
 
         self.assertIn("Recurso", execution)
@@ -1284,15 +1296,16 @@ class RetiredSkillFileTests(unittest.TestCase):
         runtime = INSTALLER.runtime_skill_roots(self.home)[0]
         relative = next(iter(self.payloads))
         self.seed(runtime, relative)
-        self.seed(self.source / "skills", relative, b"reintroduced canonical\n")
+        skill, nested = relative.split("/", 1)
+        self.seed(INSTALLER.skill_source_root(self.source, skill), nested, b"reintroduced canonical\n")
         with self.registry_patch():
             planned = INSTALLER.build_plan(self.home, self.source)
             self.assertFalse(any(change.kind == "retired-skill-file" for change in planned))
             INSTALLER.apply(self.home, self.source)
         self.assertEqual((runtime / relative).read_bytes(), b"reintroduced canonical\n")
-        for _, nested, source in INSTALLER.source_files(self.source):
+        for skill, nested, source in INSTALLER.source_files(self.source):
             if "notion" in str(nested) or "session-doc" in source.name:
-                installed = runtime / source.relative_to(self.source / "skills")
+                installed = runtime / skill / nested
                 self.assertFalse(installed.exists(), "Tower-owned source must not be installed here")
         self.assertEqual(self.archived(runtime, relative), [])
 
@@ -1340,9 +1353,9 @@ class RetiredSkillFileTests(unittest.TestCase):
         path = self.seed(runtime, relative)
         original_copy = INSTALLER._atomic_copy
 
-        def edit_then_copy(*args):
+        def edit_then_copy(*args, **kwargs):
             path.write_bytes(b"changed after plan\n")
-            return original_copy(*args)
+            return original_copy(*args, **kwargs)
 
         with self.registry_patch(), mock.patch.object(INSTALLER, "_atomic_copy", side_effect=edit_then_copy):
             INSTALLER.apply(self.home, self.source)
@@ -1456,10 +1469,10 @@ class SessionBoundaryBlockTests(unittest.TestCase):
             self.assertNotIn(how, self.template)
 
     def test_admission_contract_lives_in_the_kickoff_skill_and_waits_for_v2(self):
-        reference = ROOT / "skills/chanks-3-session-kickoff/references/admission-contract.md"
+        reference = ROOT / "skills-diferidas/v2/chanks-3-session-kickoff/references/admission-contract.md"
         self.assertTrue(reference.is_file())
         self.assertIn("references/admission-contract.md",
-                      (ROOT / "skills/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8"))
+                      (ROOT / "skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md").read_text(encoding="utf-8"))
         installed = {(skill, relative.as_posix()) for skill, relative, _ in INSTALLER.source_files(ROOT)}
         self.assertNotIn(("chanks-3-session-kickoff", "references/admission-contract.md"), installed)
         self.assertNotIn("SESSION-ADMISSION-CONTRACT", self.template)
@@ -3050,7 +3063,7 @@ class CentralSkillsFolderTests(unittest.TestCase):
         for skill, relative, source in INSTALLER.source_files(ROOT, INSTALLER.PERSONAL_SKILLS):
             destination = self.central / skill / relative
             self.assertFalse(destination.is_symlink())
-            self.assertEqual(source.read_bytes(), destination.read_bytes())
+            self.assertEqual(INSTALLER.runtime_skill_bytes(skill, relative, source), destination.read_bytes())
         for skill in INSTALLER.OWN_SKILLS:
             self.assertFalse((self.central / skill).is_symlink(), skill)
 

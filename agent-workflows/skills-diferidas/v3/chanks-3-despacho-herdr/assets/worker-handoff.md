@@ -24,7 +24,7 @@ Forbidden scope: <PATHS_AND_EFFECTS>
 Responsible parent: <IDENTITY_AND_RETURN_CHANNEL>
 ```
 
-Run `../../chanks-3-session-kickoff/SKILL.md` first: the worker's own fresh admission, before
+Run `../../../v2/chanks-3-session-kickoff/SKILL.md` first: the worker's own fresh admission, before
 editing anything. Verify repository, HEAD, branch, worktree, and compatibility before editing.
 Native ODD retains the same Session identity and reconciles its native technical record, code,
 and evidence; legacy continues at first pending Módulo for legacy. Do not choose another

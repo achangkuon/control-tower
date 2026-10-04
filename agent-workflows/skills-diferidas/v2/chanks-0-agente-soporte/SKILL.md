@@ -22,7 +22,7 @@ read-only: it advises the responsible parent and never becomes a dispatcher, pla
   improvise a substitute record or adopt it without the human saying yes.
 - Radar remains product authority; no ODD document or Engram record changes plan status. V1 has
   no admission step: a human-chosen `LISTO` Session goes to Gentle AI through
-  `../chanks-4-puente/SKILL.md`.
+  `../../../skills/chanks-4-puente/SKILL.md`.
 - Preserve human choice for scope, files, risks, authority, and contradictions. Compatible seats
   are a parallel-safety verdict (§13), not a live lock, assignment, or topology instruction.
 - Do not implement, deliver, dispatch, create external sessions, or mutate planning data.
@@ -81,4 +81,4 @@ product authority and the responsible parent records changes.
 
 - `assets/brief-diario.md`
 - `assets/assignment-implementation.md`
-- `../chanks-4-puente/SKILL.md`
+- `../../../skills/chanks-4-puente/SKILL.md`

@@ -14,7 +14,7 @@ sys.modules[SPEC.name] = INSTALLER
 SPEC.loader.exec_module(INSTALLER)
 
 SKILL_NAME = "chanks-0-jornada"
-SKILL_PATH = f"skills/{SKILL_NAME}/SKILL.md"
+SKILL_PATH = f"skills-diferidas/v2/{SKILL_NAME}/SKILL.md"
 
 
 def read(relative):
@@ -191,12 +191,12 @@ class ChanksJornadaSkillTests(unittest.TestCase):
             steps,
         )
 
-    def test_installer_defers_the_skill_to_v3_and_keeps_its_source(self):
-        self.assertIn(SKILL_NAME, INSTALLER.V3_DEFERRED_SKILLS)
+    def test_installer_defers_the_skill_to_v2_and_keeps_its_source(self):
+        self.assertIn(SKILL_NAME, INSTALLER.V2_DEFERRED_SKILLS)
         self.assertIn(SKILL_NAME, INSTALLER.RETIRED_SKILLS)
         sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
         self.assertNotIn(SKILL_NAME, sources)
-        self.assertTrue((ROOT / "skills" / SKILL_NAME / "SKILL.md").is_file())
+        self.assertTrue((ROOT / SKILL_PATH).is_file())
 
     def test_ejecutar_failure_signal_is_defined_by_concrete_markers(self):
         # R3-partial-failure-signal-undefined: the partial-failure signal must be concrete,

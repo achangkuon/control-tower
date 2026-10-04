@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import Ajv from "ajv/dist/2020.js"
 
-const schema = await Bun.file(new URL("../skills/chanks-4-unattended-implementation/assets/execution-contract.schema.json", import.meta.url)).json()
+const schema = await Bun.file(new URL("../skills-diferidas/v3/chanks-4-unattended-implementation/assets/execution-contract.schema.json", import.meta.url)).json()
 const validate = new Ajv({ strict: false, allErrors: true }).compile(schema)
 
 const contract = () => ({
@@ -73,7 +73,7 @@ assert.equal(validate({
 }), true, JSON.stringify(validate.errors))
 rejects((value) => { value.result = { state: "READY", sesion_id: "S1" } })
 
-const prose = await Bun.file(new URL("../skills/chanks-4-unattended-implementation/references/sealing-and-routing.md", import.meta.url)).text()
+const prose = await Bun.file(new URL("../skills-diferidas/v3/chanks-4-unattended-implementation/references/sealing-and-routing.md", import.meta.url)).text()
 assert.ok(prose.includes("cannot prove that `expires_at` is later than `sealed_at`"))
 
 // The dispatch marker is the seal's own state change (LISTO -> EN CURSO), not drift: the
@@ -86,7 +86,7 @@ assert.ok(prose.includes("radar_status_stdout_sha256` proves only the snapshot R
 assert.ok(prose.includes("never recompares it after dispatch"))
 assert.ok(prose.includes("Before dispatch, with no marker on disk"))
 
-const skillProse = await Bun.file(new URL("../skills/chanks-4-unattended-implementation/SKILL.md", import.meta.url)).text()
+const skillProse = await Bun.file(new URL("../skills-diferidas/v3/chanks-4-unattended-implementation/SKILL.md", import.meta.url)).text()
 assert.ok(skillProse.includes("Worker-side revalidation after dispatch tolerates exactly one drift"))
 
 console.log("standalone contract schema safety: PASS")

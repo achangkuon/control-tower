@@ -141,8 +141,13 @@ available, outside this migration's scope.
 | Delivery policy (Tower V1) | `chanks-5-politica-de-entrega` |
 | Decision and communication support (Tower V1) | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer`, `analisis-por-tramos`, `skill-orchestrator` |
 | Personal active skill | `chanks-0-agente-soporte` |
-| Deferred to V2, Pista (source kept, not installed) | `chanks-3-session-kickoff` |
-| Deferred to V3 (source kept, not installed) | `chanks-0-jornada`, `chanks-3-coordinador-manual`, `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation` |
+| Deferred to V2, Pista (source kept, not installed) | `chanks-0-jornada`, `chanks-3-session-kickoff`, `chanks-3-coordinador-manual` |
+| Deferred to V3, automatic Tower (source kept, not installed) | `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation` |
+
+The six non-V1 sources live in [`skills-diferidas/`](skills-diferidas/README.md),
+grouped by version. `chanks-0-agente-soporte` lives under `skills-diferidas/v2/`
+but remains installed as a personal skill, never as a Tower V1 bundle member.
+Its installed links remain runtime-relative; its repository links follow the new layout.
 
 Every existing deferred-skill retirement remains unchanged: installed copies are
 archived under `.retired-skills/`, never reinstalled. The retired Pi write-lock
@@ -194,7 +199,9 @@ Do not edit `sdd-*`, Gentle AI's `_shared` files, `gentle-orchestrator`,
 ## Layout
 
 ```text
-skills/                         canonical skill source inventory
+skills/                         canonical V1 skill sources
+ skills-diferidas/v2/            Pista sources (personal agente-soporte exception)
+ skills-diferidas/v3/            automatic Tower sources
  templates/                     personal blocks and retained legacy helper templates
  tools/install.py               personal writes, checks and Tower migration
  tests/test_install.py          focused standard-library fixture tests

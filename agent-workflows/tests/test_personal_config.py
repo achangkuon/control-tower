@@ -202,7 +202,7 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         (self.home / ".agents/skills").mkdir(parents=True)
         hermes_skills = self.home / ".hermes/skills"
         for skill in install.OWN_SKILLS + install.DEFERRED_SKILLS:
-            shutil.copytree(ROOT / "agent-workflows/skills" / skill, hermes_skills / skill)
+            shutil.copytree(install.skill_source_root(ROOT / "agent-workflows", skill), hermes_skills / skill)
         before = {path.relative_to(self.home).as_posix(): (path.read_bytes(), path.stat().st_mode & 0o777)
                   for path in self.home.rglob("*") if path.is_file()}
         with self.assertRaises(personal.MigrationError):
@@ -220,7 +220,7 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.write(".hermes/SOUL.md", self.soul_with_unattended())
         hermes_skills = self.home / ".hermes/skills"
         for skill in install.OWN_SKILLS + install.DEFERRED_SKILLS:
-            shutil.copytree(ROOT / "agent-workflows/skills" / skill, hermes_skills / skill)
+            shutil.copytree(install.skill_source_root(ROOT / "agent-workflows", skill), hermes_skills / skill)
         (hermes_skills / "third-party").mkdir(parents=True)
         (hermes_skills / "third-party/SKILL.md").write_text("# Retain third-party\n", encoding="utf-8")
 
@@ -255,9 +255,9 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.assertIn(str(central).encode(), config)
         self.assertIn(b"creation_nudge_interval: 15", config)
         for name in install.OWN_SKILLS:
-            source = ROOT / "agent-workflows/skills" / name
+            source = install.skill_source_root(ROOT / "agent-workflows", name)
             installed = central / name
-            expected = {path.relative_to(source).as_posix(): path.read_bytes()
+            expected = {path.relative_to(source).as_posix(): install.runtime_skill_bytes(name, path.relative_to(source), path)
                         for path in source.rglob("*") if path.is_file()}
             actual = {path.relative_to(installed).as_posix(): path.read_bytes()
                       for path in installed.rglob("*") if path.is_file()}
@@ -440,10 +440,23 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         self.assertNotIn("UNATTENDED-SEALED-CONSENT:MANUAL", repr(snapshot))
         self.assertNotIn("chanks-4-unattended-implementation", repr(snapshot))
 
+    def test_central_roster_validates_deferred_personal_source_and_runtime_links(self):
+        self.make_skill_rosters()
+        personal._central_roster(self.home, ROOT)
+        support = self.home / ".agents/skills/chanks-0-agente-soporte/SKILL.md"
+        self.assertIn(b"../chanks-4-puente/SKILL.md", support.read_bytes())
+        source = install.skill_source_root(ROOT / "agent-workflows", "chanks-0-agente-soporte") / "SKILL.md"
+        support.write_bytes(source.read_bytes())
+        with self.assertRaisesRegex(personal.MigrationError, "bytes differ"):
+            personal._central_roster(self.home, ROOT)
+
     def make_skill_rosters(self):
         for skill in install.OWN_SKILLS + install.DEFERRED_SKILLS:
             path = self.home / ".agents/skills" / skill
-            shutil.copytree(ROOT / "agent-workflows/skills" / skill, path)
+            source = install.skill_source_root(ROOT / "agent-workflows", skill)
+            shutil.copytree(source, path)
+            for relative in (p.relative_to(source) for p in source.rglob("*") if p.is_file()):
+                (path / relative).write_bytes(install.runtime_skill_bytes(skill, relative, source / relative))
         (self.home / ".hermes/skills/third-party").mkdir(parents=True)
         for skill in install.DEFERRED_SKILLS + ("chanks-1-prd",):
             path = self.home / ".hermes/skills" / skill
