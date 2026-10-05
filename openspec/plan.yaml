@@ -2445,11 +2445,11 @@ sesiones:
   - id: S229
     zona: cimientos
     prioridad: resolucion-problemas-generales
-    resultado: "Los tests de seguridad del core legacy de la suite raíz (fail-closed.test.mjs) provisionan su propio runtime y store dentro de un HOME desechable del fixture: la suite raíz corre completa y verde en sandbox, sin depender del runtime provisionado del dueño, preservando íntegras sus aserciones de seguridad."
+    resultado: "Los tests de seguridad del core legacy de la suite raíz (fail-closed.test.mjs) provisionan su propio runtime y store dentro de un HOME desechable del fixture: la suite raíz corre completa y verde en sandbox, sin depender del runtime provisionado del dueño, preservando íntegras sus aserciones de seguridad; incluye el gate de pre-push (pre-push-plan-gate.test.mjs), cuyo go build de Radar excede su timeout con caché fría de Go — misma clase, autorización de expansión del mantenedor el 2026-10-06."
     autoridad: "Decisión del mantenedor el 2026-10-06 en conversación: «rediseñemos primero los tests» antes de publicar v1.3.2; corrección explícita del mantenedor: esos tests corriendo es seguridad, no fricción — el rediseño no debilita ni saltea ninguna aserción."
     depende_de: []
-    archivos: [test/fail-closed.test.mjs]
-    cimientos: [test/fail-closed.test.mjs]
+    archivos: [test/fail-closed.test.mjs, test/pre-push-plan-gate.test.mjs]
+    cimientos: [test/fail-closed.test.mjs, test/pre-push-plan-gate.test.mjs]
     recurso: []
     encargo:
       pedido_contexto: >-

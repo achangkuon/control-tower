@@ -1525,11 +1525,11 @@
   - Restricciones y decisiones: El contrato de territorio de S226 no se relaja: sin manifiesto o ilegible, radar se instala como siempre; --force sigue siendo el único escape. No se toca product/tower/ ni los bloques personales. Toda expansión adicional de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: issue &#35;158 (cerrada por S226, commit 95b3bc9); store de revisión .git/gentle-ai/ (lineage review-a9f0a09f40edcdbb); agent-workflows/tools/install.py (etapa&#95;hook&#95;&#42; y comentarios Torre-owned); agent-workflows/tools/install-radar.sh (guarda y --force de S226); agent-workflows/tests/{test&#95;personal&#95;config.py,test&#95;install.py}.
 
-### S229 — Los tests de seguridad del core legacy de la suite raíz (fail-closed.test.mjs) provisionan su propio runtime y store dentro de un HOME desechable del fixture: la suite raíz corre completa y verde en sandbox, sin depender del runtime provisionado del dueño, preservando íntegras sus aserciones de seguridad.
+### S229 — Los tests de seguridad del core legacy de la suite raíz (fail-closed.test.mjs) provisionan su propio runtime y store dentro de un HOME desechable del fixture: la suite raíz corre completa y verde en sandbox, sin depender del runtime provisionado del dueño, preservando íntegras sus aserciones de seguridad; incluye el gate de pre-push (pre-push-plan-gate.test.mjs), cuyo go build de Radar excede su timeout con caché fría de Go — misma clase, autorización de expansión del mantenedor el 2026-10-06.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
   - Zona/Área: cimientos · —
-  - Archivos autorizados: test/fail-closed.test.mjs
+  - Archivos autorizados: test/fail-closed.test.mjs, test/pre-push-plan-gate.test.mjs
   - Depende de: —
   - Recursos: —
   - Ejecución: ODD nativo.
