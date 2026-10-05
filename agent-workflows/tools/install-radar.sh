@@ -6,7 +6,8 @@
 # installer for that reason — each installer owns only its own box.
 #
 #   ./install-radar.sh            build and install
-#   ./install-radar.sh --check    diagnose only, touch nothing
+#   ./install-radar.sh --check    diagnose only, touch nothing; it also reports a
+#                                 Torre-owned destination instead of planning a build
 #   ./install-radar.sh --force    install even when the Tower owns the destination
 #
 # The Tower owns ~/.local/bin/radar: once its installer has recorded that path in
@@ -34,10 +35,37 @@ torre_manifest="${TORRE_OWNERSHIP_MANIFEST:-$HOME/.local/share/torre-control/run
 torre_radar="$HOME/.local/bin/radar"
 
 # Only the entries[].path strings of the Tower manifest matter here. A missing,
-# unreadable, or malformed manifest means the path is not Torre-owned.
+# unreadable, or malformed manifest means the path is not Torre-owned: no manifest, no
+# Tower ownership claim. That fail-open is deliberate, not a gap — the Tower is the only
+# writer of that file, so its absence is the expected state on every machine that never
+# ran the Torre installer, and making a minimal shell installer parse JSON (jq, python3)
+# would trade a real dependency for a path nobody claimed.
 torre_owns_radar() {
     [[ -f "$torre_manifest" ]] || return 1
-    grep -Eq '"path"[[:space:]]*:[[:space:]]*"\.local/bin/radar"' "$torre_manifest"
+    local match candidate previous
+    # The Tower writes HOME-relative paths, but the same path can be spelled with a
+    # leading "./" or repeated slashes; normalize before comparing so no spelling of
+    # it can slip past the guard. grep -o hands back one `"path": "value"` wrapper per
+    # path value, so a manifest written as a single line of JSON is read just as well.
+    while IFS= read -r match; do
+        candidate="${match#*:}"      # "path": "value"  ->  " "value""
+        candidate="${candidate#*\"}" #                     ->  "value""
+        candidate="${candidate%\"}"  #                     ->  "value"
+        while :; do
+            previous="$candidate"
+            candidate="${candidate//\/\//\/}"
+            candidate="${candidate#./}"
+            [[ "$candidate" == "$previous" ]] && break
+        done
+        [[ "$candidate" == ".local/bin/radar" ]] && return 0
+    done < <(grep -oE '"path"[[:space:]]*:[[:space:]]*"[^"]*"' "$torre_manifest" 2>/dev/null)
+    return 1
+}
+
+# The destination is Torre-owned only when it is exactly the path the Tower installs and
+# the manifest still claims it. $TORRE_BIN_DIR elsewhere never enters Torre territory.
+torre_owns_destination() {
+    [[ "$BIN/radar" == "$torre_radar" ]] && torre_owns_radar
 }
 
 ok()  { echo "  ✓ $1"; }
@@ -60,11 +88,16 @@ if $check_only; then
         bad "no instalado en $BIN/radar"
     fi
     command -v radar >/dev/null 2>&1 && ok "radar está en PATH" || bad "radar NO está en PATH"
+    # Diagnosis only: this mode never builds nor installs, so it cannot silently plan
+    # the overwrite the guard below refuses. It names the Torre-owned condition instead.
+    if torre_owns_destination && ! $force; then
+        echo "  ~ $torre_radar es propiedad de la Torre; una instalación personal no lo pisa (--force para desarrollo)"
+    fi
     exit 0
 fi
 
 # Refuse to touch a Torre-owned destination, and fail before spending a build.
-if [[ "$BIN/radar" == "$torre_radar" ]] && torre_owns_radar && ! $force; then
+if torre_owns_destination && ! $force; then
     bad "radar es propiedad de la Torre; actualizalo vía torre-control (o --force para desarrollo)"
     echo "    $torre_radar no se tocó: la Torre conserva su manifiesto verificable."
     echo "    Con --force la Torre va a reportar esa entrada como modificada hasta su próxima instalación."

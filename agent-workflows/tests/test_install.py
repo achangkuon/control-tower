@@ -2122,6 +2122,11 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
         # Pi's own settings.json is written by the host-peer wrapper wiring; Claude's never is.
         self.assertNotIn(".claude/settings.json", Path(INSTALLER.__file__).read_text(encoding="utf8"))
 
+    def test_stage_hook_writer_plumbing_is_gone(self):
+        """chanks-etapa.sh is Tower-owned (#158/S226): the personal installer keeps no
+        writer for it — not even unwired plumbing a later edit could re-wire silently."""
+        self.assertEqual([name for name in dir(INSTALLER) if name.startswith("etapa_hook")], [])
+
     def test_hook_uses_external_radar_handles_spaces_and_only_valid_prior_transition(self):
         with tempfile.TemporaryDirectory() as location:
             directory = Path(location)
@@ -2136,7 +2141,8 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
             stage = directory / "stage.json"
             stage.write_text(json.dumps({"schema": "radar.etapa/v1", "etapa": 2, "nombre": "Prepare"}), encoding="utf8")
             env = {**os.environ, "PATH": f"{bin_dir}:/usr/bin:/bin", "CHANKS_STAGE_FILE": str(stage)}
-            hook = INSTALLER.etapa_hook_source(ROOT)
+            hook = ROOT / "tools/hooks/chanks-etapa.sh"
+            self.assertTrue(hook.is_file())
             run = lambda extra=None: subprocess.run([str(hook)], cwd=repo, env={**env, **(extra or {})},
                                                       capture_output=True, text=True, timeout=15)
             self.assertEqual(run().returncode, 0)
@@ -2156,17 +2162,27 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
             inside.chmod(0o755)
             self.assertEqual(run({"PATH": f"{repo}:/usr/bin:/bin"}).stdout, "")
 
-    def test_hook_payload_installs_with_mode_without_settings_wiring(self):
+    def test_hook_payload_is_tower_owned_and_never_installed_by_the_personal_installer(self):
+        """The Torre release ships and registers ~/.claude/hooks/chanks-etapa.sh; the
+        personal installer has no writer for it, so a home only gets what its own
+        installers own."""
         with tempfile.TemporaryDirectory() as location:
             home = Path(location)
             (home / ".claude").mkdir()
-            pending = INSTALLER.etapa_hook_changes(home, ROOT)
-            self.assertEqual(len(pending), 1)
-            self.assertEqual(pending[0].kind, "stage-hook")
-            target = INSTALLER.etapa_hook_path(home)
-            INSTALLER._atomic_copy(INSTALLER.etapa_hook_source(ROOT), target, home / ".claude")
-            self.assertEqual(target.stat().st_mode & 0o777, 0o755)
-            self.assertEqual(INSTALLER.etapa_hook_changes(home, ROOT), [])
+            (home / ".claude/CLAUDE.md").write_bytes(
+                INSTALLER.START_MARKER + b"\noriginal\n" + INSTALLER.END_MARKER + b"\n"
+            )
+            pi_agent = home / ".pi/agent"
+            pi_agent.mkdir(parents=True)
+            (pi_agent / "APPEND_SYSTEM.md").write_bytes(
+                INSTALLER.START_MARKER + b"\noriginal\n" + INSTALLER.END_MARKER + b"\n"
+            )
+            INSTALLER.apply(home, ROOT)
+            self.assertFalse(_lexists(home / ".claude/hooks/chanks-etapa.sh"))
+            self.assertEqual(INSTALLER.build_plan(home, ROOT), [])
+            source = ROOT / "tools/hooks/chanks-etapa.sh"
+            self.assertTrue(source.is_file())
+            self.assertEqual(source.stat().st_mode & 0o777, 0o755)
 
     def test_tool_signature_hook_is_not_installed_and_settings_stay_untouched(self):
         with tempfile.TemporaryDirectory() as location:
@@ -2852,7 +2868,7 @@ class RetiredControlFileTests(unittest.TestCase):
 
     def test_stage_notice_hook_is_tower_owned_and_not_installed(self):
         plan = INSTALLER.build_plan(self.home, ROOT)
-        stage = INSTALLER.etapa_hook_path(self.home)
+        stage = self.home / ".claude/hooks/chanks-etapa.sh"
         self.assertNotIn(stage, [c.path for c in plan])
         INSTALLER.apply(self.home, ROOT)
         self.assertFalse(stage.exists())

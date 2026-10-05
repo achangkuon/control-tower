@@ -546,9 +546,10 @@ class RadarInstallerTerritoryTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def run_installer(self, *args):
+    def run_installer(self, *args, env_extra=None):
         env = {k: v for k, v in os.environ.items() if k != "TORRE_BIN_DIR"}
         env.update({"HOME": str(self.home), "PATH": f"{self.tools}:/usr/bin:/bin"})
+        env.update(env_extra or {})
         return subprocess.run(
             ["bash", str(ROOT / "agent-workflows/tools/install-radar.sh"), *args],
             capture_output=True, text=True, env=env, timeout=60,
@@ -588,6 +589,99 @@ class RadarInstallerTerritoryTests(unittest.TestCase):
         result = self.run_installer()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
+
+    # --- Guard knobs (S228 / R3-untested-guard-knobs): --force is already covered by
+    # test_force_overrides_the_tower_ownership_guard and the "not listed" case by
+    # test_installs_when_the_manifest_does_not_list_radar; these close the rest.
+
+    def test_custom_bin_dir_is_left_out_of_the_tower_territory(self):
+        """$TORRE_BIN_DIR moves the destination: the Torre-owned default stays untouched."""
+        self.write_manifest([{"path": ".local/bin/radar", "component": "radar", "installed": True}])
+        before = self.radar.read_bytes()
+        custom = self.root / "custom bin"
+        result = self.run_installer(env_extra={"TORRE_BIN_DIR": str(custom)})
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual((custom / "radar").read_bytes(), self.FAKE_BUILD)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    def test_manifest_entry_that_merely_resembles_the_radar_path_is_not_ownership(self):
+        """The match is targeted on the whole path: similar or prefixed paths are not it."""
+        self.write_manifest([
+            {"path": ".local/bin/radar-helper", "component": "tools", "installed": True},
+            {"path": "pointers/.local/bin/radar", "component": "pointers", "installed": True},
+        ])
+        result = self.run_installer()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
+
+    # --- Path comparison (S228 / R4-path-compare-bypass): the same HOME-relative path
+    # spelled with a "./" prefix or repeated slashes still claims the destination.
+
+    def test_dot_prefixed_manifest_path_cannot_bypass_the_tower_guard(self):
+        self.write_manifest([{"path": "./.local/bin/radar", "component": "radar", "installed": True}])
+        before = self.radar.read_bytes()
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    def test_repeated_slashes_in_the_manifest_path_cannot_bypass_the_tower_guard(self):
+        self.write_manifest([{"path": ".local//bin/radar", "component": "radar", "installed": True}])
+        before = self.radar.read_bytes()
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    def test_mixed_dot_and_slash_spellings_cannot_bypass_the_tower_guard(self):
+        self.write_manifest([{"path": ".//.local//bin///radar", "component": "radar", "installed": True}])
+        before = self.radar.read_bytes()
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    def test_hand_formatted_manifest_spacing_cannot_bypass_the_tower_guard(self):
+        """JSON spacing is not the guard's business: only the path value is."""
+        manifest = self.home / self.OWNERSHIP_MANIFEST
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text('[ { "path" : "./.local/bin/radar" , "installed" : true } ]', encoding="utf-8")
+        before = self.radar.read_bytes()
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    def test_compact_manifest_with_a_dot_prefixed_path_still_blocks_the_overwrite(self):
+        """One line of JSON is still a manifest: extraction must not become line-based."""
+        manifest = self.home / self.OWNERSHIP_MANIFEST
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text(
+            '{"schema":"tower.v1.ownership/1","entries":[{"path":"./.local/bin/radar",'
+            '"component":"radar","installed":true}],"pointers":[],"directories":[]}',
+            encoding="utf-8",
+        )
+        before = self.radar.read_bytes()
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    # --- --check diagnosis (S228 / R3-check-mode-blindspot): check mode never installs,
+    # so it must report the Torre-owned destination instead of staying silent about it.
+
+    def test_check_mode_reports_the_tower_owned_destination(self):
+        self.write_manifest([{"path": ".local/bin/radar", "component": "radar", "installed": True}])
+        before = self.radar.read_bytes()
+        result = self.run_installer("--check")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    def test_check_mode_says_nothing_about_ownership_without_a_manifest(self):
+        result = self.run_installer("--check")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("propiedad de la Torre", result.stdout + result.stderr)
 
 
 class PersonalInstallerTerritoryTests(unittest.TestCase):

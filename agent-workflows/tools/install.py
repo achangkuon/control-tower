@@ -843,34 +843,6 @@ def main_al_dia_changes(home: Path, root: Path) -> list[Change]:
     return [Change(target, "main-al-dia-launcher")]
 
 
-def etapa_hook_path(home: Path) -> Path:
-    return home / ".claude/hooks/chanks-etapa.sh"
-
-
-def etapa_hook_source(root: Path) -> Path:
-    return root / "tools/hooks/chanks-etapa.sh"
-
-
-def etapa_hook_changes(home: Path, root: Path) -> list[Change]:
-    """Legacy helper for the Claude stage-notice hook, which is Tower-owned: the
-    Torre release ships ~/.claude/hooks/chanks-etapa.sh and registers it in
-    settings.json. build_plan and apply never call this (mirroring torre-firma.sh,
-    which has no writer at all), so the personal installer no longer writes that
-    destination. Retained only for the Pi admission contract tests; never re-add it
-    to the install plan."""
-    if not (home / ".claude").is_dir():
-        return []
-    source = etapa_hook_source(root)
-    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
-        raise InstallError("Chanks stage hook source must be a regular executable 755 file")
-    target = etapa_hook_path(home)
-    _validate_directory_path(target.parent, "stage hook directory")
-    _validate_file_destination(home / ".claude", target, "stage hook", require_existing=False)
-    if target.is_file() and target.read_bytes() == source.read_bytes() and stat.S_IMODE(target.stat().st_mode) == 0o755:
-        return []
-    return [Change(target, "stage-hook")]
-
-
 def firma_hook_path(home: Path) -> Path:
     """Where the Tower signature hook used to be installed. It is retired through
     RETIRED_CONTROL_FILES; its source stays at tools/hooks/torre-firma.sh."""
