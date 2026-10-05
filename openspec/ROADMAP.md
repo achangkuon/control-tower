@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 92% (149/161 S)
+- **Total:** 91% (149/162 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -23,7 +23,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 92% (49/53 S)
-- **Producto Torre:** 89% (33/37 S)
+- **Producto Torre:** 86% (33/38 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -1426,6 +1426,20 @@
   - Resultado y comportamiento: doctorProject acepta una instrucción group-writable cuando su bloque propio verifica igual y sigue rechazando otros-writable y bloque modificado; directorios, journal y directos conservan su exigencia de modo. «torre-control project doctor --project X --fix-permissions» repara los permisos y reporta permissionsChanged, siguiendo el patrón existente de init/update. La TUI muestra, para un proyecto inválido por permisos, una acción informativa «Corregir permisos» con el comando exacto, como la pantalla «Actualizar la Torre».
   - Restricciones y decisiones: La relajación es quirúrgica: sólo archivos de instrucciones cuyo bloque propio verifica, nunca directorios ni otros-writable; preflightProjectPaths no afloja su chequeo general. No se tocan los archivos de S219 ni S221 (Sesión hermana en curso en el checkout Main); toda expansión de archivos requiere aprobación humana. Publicar es decisión humana separada; la release esperada es patch v1.2.5 → v1.2.6. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: product/tower/v1/project-files.mjs (preflightProjectPaths, projectInstructionState); product/tower/v1/adoption.mjs (preflight, doctorProject); product/tower/v1/projects.mjs (doctorRegisteredProject, liveStatus); product/tower/v1/cli.mjs:42; issue &#35;155; AGENTS.md (subsección «Cuándo un cambio a master es una release").
+
+### S223 — El auto-actualizador acepta releases cuyo roster cambia de tamaño: límite de parseo absoluto, sobre --from-checkout construido con el roster del checkout y cachés históricos admitidos por su digest pineado; v1.2.5 puede actualizar a v1.3.0 sin reparación manual.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/bootstrap.mjs, product/tower/v1/global.mjs, product/tower/v1/release-build.mjs, product/tower/v1/bundle.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/test/cli.test.mjs
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Ninguna vía de &#96;torre-control update&#96; pasa de v1.2.5 (roster 91) a v1.3.0 (roster 93): &#96;update --latest&#96; rechaza un sobre publicado válido porque parseEnvelope (bootstrap.mjs:55) acota los objetos al roster del CLI en ejecución (RELEASE&#95;PATHS.size + 1); &#96;update --from-checkout&#96; (cli.mjs:545) corre buildRelease con el código instalado, arma el sobre con el roster viejo y contenidos del checkout nuevo, y deja una versión que no puede auto-validarse; y validateVersion (global.mjs:183) re-valida el release.json de cada caché del store contra los rosters del CLI en ejecución por tamaño, volviendo ingestionable un store con cachés de dos generaciones. El intento de actualizar la máquina del mantenedor dejó una versión rota que exigió reparación manual del estado (2026-10-05).
+  - Resultado y comportamiento: parseEnvelope usa una cota máxima absoluta documentada, independiente del roster del CLI en ejecución, de modo que cualquier CLI parsea un sobre publicado de cualquier roster soportado. &#96;--from-checkout&#96; arma el sobre con el roster del propio checkout (o rechaza limpio si no puede determinarlo), y la versión instalada auto-arranca: doctor, rollback y update funcionan sobre ella. Los cachés históricos se admiten por su digest pineado verificado, sin re-derivar membresía de roster desde el CLI en ejecución, de modo que un store que mezcla cachés de dos generaciones se lista, se inspecciona y permite rollback. Tests de regresión prueban el puente: un CLI de roster 91 parsea e instala un sobre de 93, from-checkout con roster más nuevo produce una versión auto-consistente y el store mixto pasa inspect.
+  - Restricciones y decisiones: La cota absoluta es una guarda de DoS, no se elimina: queda finita y documentada. La admisión de cachés legacy es estrictamente por digest pineado verificado; nunca por confiar en contenido no verificado. Esta Sesión no publica release: publicar (tag patch con el arreglo de S222 incluido) es decisión humana separada. Actualizar la máquina del mantenedor ocurre después del arreglo, con autorización. Toda expansión de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: Issue &#35;156 (evidencia y direcciones 1–3); product/tower/v1/bootstrap.mjs (parseEnvelope, RELEASE&#95;PATHS y la selección de roster por tamaño en el bootstrap cacheado); product/tower/v1/global.mjs:183 (validateVersion); product/tower/v1/cli.mjs:545 (from-checkout); product/tower/v1/release-build.mjs (buildRelease, import de BUNDLE&#95;MEMBERS); product/tower/v1/bundle.mjs (BUNDLE&#95;MEMBERS, validateBundleManifest); recuperación de la máquina del mantenedor del 2026-10-05; AGENTS.md («Cuándo un cambio a master es una release»).
 
 ### S220 — Diagnóstico de las copias de trabajo por vuelo: qué falta decidir sobre cómo se crean, cómo quedan listas para trabajar y cómo se retiran, antes de implementar &#96;piloto&#96;.
 - Coordinación:
