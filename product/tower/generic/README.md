@@ -1,5 +1,13 @@
 # Agent Workflows
 
+> **Historical document (2026-10-05, finding H3 of the published-V1 residual review S181).**
+> Tower V1 replaces the interfaces described below: `install.sh`, `setup.sh`, the `torre`
+> launcher and the old engine are **not** part of the V1 quick start (see the repository
+> `README.md`, "V1 reemplaza las instrucciones anteriores"). The launcher this README calls
+> `torre-control` is actually `torre-setup` today (`tools/setup.sh:44`, `SETUP_LAUNCHER`);
+> `torre-control` is reserved for the immutable Tower V1 launcher. The text below is kept
+> only as the history of the previous engine; do not follow it to set up a machine.
+
 Version-controlled source of truth for the generic user-owned skill family:
 session workflow routing, planning, support, closure, delivery policy, and shared
 resource coordination. Product-specific Control Tower skills live in the Control
