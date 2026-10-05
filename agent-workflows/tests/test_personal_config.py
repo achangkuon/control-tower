@@ -227,9 +227,19 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         install.apply(self.home, ROOT / "agent-workflows")
         central = self.home / ".agents/skills"
         central_names = {path.name for path in central.iterdir()}
-        self.assertTrue(set(install.OWN_SKILLS) <= central_names)
+        # install.py owns only the personal roster centrally; the Tower V1 roster
+        # is installed by the product installer (issue #154).
+        self.assertTrue(set(install.PERSONAL_SKILLS) <= central_names)
         self.assertEqual(len(install.OWN_SKILLS), 25)
         self.assertFalse(set(install.DEFERRED_SKILLS) & central_names)
+        # Simulate the Tower V1 product installer, which on a real machine already
+        # placed the V1 roster in the central root before this migration runs
+        # (issue #154).
+        for name in install.OWN_SKILLS:
+            if name in install.TOWER_V1_SKILLS:
+                shutil.copytree(install.skill_source_root(ROOT / "agent-workflows", name), central / name)
+        central_names = {path.name for path in central.iterdir()}
+        self.assertTrue(set(install.OWN_SKILLS) <= central_names)
         self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS))
         self.assertTrue(all(not (central / name).exists() for name in install.DEFERRED_SKILLS))
         hermes_before = {
