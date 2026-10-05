@@ -3,15 +3,15 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: ninguno.
+- Prioridad activa: Método V1.
+- Próximo trabajo ejecutable: Método #3 → S218 — Skill propia chanks-0-comunicacion-agentes: cualquier agente dentro de Herdr se comunica con otro agente, lo observa, lo frena o abre paneles cuando el usuario lo pide con sus palabras, sin nombrar Herdr..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Método #3 → S218 — Skill propia chanks-0-comunicacion-agentes: cualquier agente dentro de Herdr se comunica con otro agente, lo observa, lo frena o abre paneles cuando el usuario lo pide con sus palabras, sin nombrar Herdr.
 
 ## Avance
-- **Total:** 92% (145/156 S)
+- **Total:** 91% (145/158 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (1/1 S)
@@ -22,8 +22,8 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 92% (47/51 S)
-- **Producto Torre:** 88% (31/35 S)
+- **Método:** 90% (47/52 S)
+- **Producto Torre:** 86% (31/36 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -59,10 +59,12 @@
 ### Método (metodo)
 1. **S215** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
 2. **S217** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
+3. **S218** · 🟢 LISTO · prioridad Método V1 · Skill propia chanks-0-comunicacion-agentes: cualquier agente dentro de Herdr se comunica con otro agente, lo observa, lo frena o abre paneles cuando el usuario lo pide con sus palabras, sin nombrar Herdr.
 
 ### Producto Torre (producto-torre)
 1. **S203** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
 2. **S216** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
+3. **S219** · 📋 PLANIFICADO · espera-natural (S218) · prioridad Método V1 · La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados.
 
 ## Bloqueos
 - Ningún bloqueo derivado.
@@ -1370,6 +1372,34 @@
   - Resultado y comportamiento: Al aterrizar, &#96;piloto&#96; produce el informe por vuelo: qué Sesiones quedaron POR REVISAR (limpia o con N decisiones anotadas en su commit), cuáles NOVEDAD (con motivo), la ronda alcanzada y las Sesiones sin empezar. La revisión ocurre en una conversación, vuelo por vuelo (P12): primero los vuelos con NOVEDAD, y dentro de cada vuelo la cascada base-arriba — se contestan las decisiones de las NOVEDAD y después se revisa cada commit desde la base hacia arriba según las dependencias. Antes de corregir, el análisis de impacto mide el efecto del arreglo sobre las Sesiones de arriba y lo clasifica: Leve (se traslada el parche), Medio (parche y nueva revisión de cada Sesión afectada) o Grave (esas Sesiones vuelven a LISTO y se rehacen); el tipo lo decide si el arreglo cambia algo que las Sesiones de arriba usan, y cuántas afecta es un dato del informe. El traslado reaplica las Sesiones de arriba sobre la base corregida, posible por el un-commit-por-Sesión. La subida es única por vuelo, hasta la última Sesión aprobada de forma consecutiva, y una Sesión que une dos vuelos espera la revisión de ambos. &#96;piloto&#96; expone estos pasos como comandos deterministas (informe, orden de cascada, registro de resolución de NOVEDAD, aterrizaje de la porción aprobada) y nunca sube sin la aprobación explícita del usuario.
   - Restricciones y decisiones: La revisión es humana; &#96;piloto&#96; determiniza el orden y el registro, no el juicio de calidad. Apagar el modo no borra estados (P9): la revisión puede retomarse en otra conversación. La subida por vuelo requiere aprobación explícita y sigue la política ordinaria de entrega del repositorio. Archivos prospectivos que delimitan el módulo de S215; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: docs/architecture/piloto-automatico.md (secciones 9 y 10; P8, P12); docs/architecture/definiciones-v1-v2-v3.md; docs/architecture/pista-entrega-ordenada.md (sección 4, cola de revisión análoga).
+
+### S218 — Skill propia chanks-0-comunicacion-agentes: cualquier agente dentro de Herdr se comunica con otro agente, lo observa, lo frena o abre paneles cuando el usuario lo pide con sus palabras, sin nombrar Herdr.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md, agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md, agent-workflows/tests/test&#95;comunicacion&#95;agentes.py, agent-workflows/tests/test&#95;builder&#95;flow.py, agent-workflows/README.md, agent-workflows/skills/&#95;shared/plan-naming-convention.md, agent-workflows/tools/install.py, AGENTS.md
+  - Depende de: —
+  - Recursos: sesión Herdr en curso (HERDR&#95;ENV=1) y la CLI &#96;herdr&#96; instalada
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El 2026-10-04 el mantenedor pidió «comunicate con el agente» a un agente que compartía checkout con otro, y el pedido quedó frenado: AGENTS.md (bloque «Uso manual de Herdr (por ahora)») y la skill nativa &#96;herdr&#96; exigen que el usuario nombre Herdr, y los ejemplos del bloque sólo hablan de abrir paneles. El bloque además mezcla lo automático, que es V3, con el uso manual, que tiene que poder hacerse hoy. La skill nativa la escribe el autor de Herdr, se sobrescribe en cada actualización y en esta máquina sólo la tiene Pi, así que no puede ser el lugar donde viva la regla del producto.
+  - Resultado y comportamiento: Existe una skill propia, chanks-0-comunicacion-agentes, con forma de skill madre: se activa por la intención del usuario y deriva a un caso. Los casos son: dejarle un mensaje a un agente que ya corre («comunicate con el agente», «decile que…»); mirar qué está haciendo («fijate qué hace»); frenarlo («decile que frene»); y abrir un panel o iniciar un agente nuevo. Para dejar un mensaje, se envía aunque el agente esté ocupado, sin esperar su respuesta y redactado para no interrumpir su trabajo: dice de quién viene, que no frene y que lo sume a sus pendientes. Sólo se frena a otro agente cuando el usuario lo pide con esas palabras. Si el agente destino está esperando una aprobación, no se le envía nada y se le informa al usuario. Fuera de Herdr la skill lo dice y se detiene. La skill cita a la skill nativa &#96;herdr&#96; como referencia de comandos y no copia su procedimiento; donde esa skill no esté instalada, la autoridad de sintaxis es la CLI instalada (&#96;herdr --help&#96;). La skill queda en el origen editable del Método con su prueba contractual y sus menciones en la documentación del Método; sumarla al paquete V1 es S219. En AGENTS.md de este repositorio el bloque «Uso manual de Herdr (por ahora)» se reemplaza: V3 es sólo el despacho automático de Sesiones, y el uso manual lo gobierna la skill nueva.
+  - Restricciones y decisiones: Nunca se responde por otro agente una pregunta o aprobación de su interfaz. No se modifica la skill nativa &#96;herdr&#96;. Quedan fuera el despacho automático de Sesiones, el pool de workers y la topología de la Torre, que siguen diferidos a V3 en agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/. La separación decidida en S137 se conserva: Intercom sigue siendo el transporte entre workers Pi; esta skill cubre la comunicación manual entre agentes de cualquier tipo, pedida por el usuario. Las plantillas AGENTS.md no puede contener las cadenas que prohíbe test/extensions/pi/builder-instructions.test.mjs. Esta Sesión no toca el paquete ni las plantillas instaladas: eso es S219. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: AGENTS.md (sección «Operación local: fricciones y herramientas»); ~/.pi/agent/skills/herdr/SKILL.md (skill nativa, fuera del repositorio); openspec/plans/audits/herdr-skill-ownership-audit.md (la skill nativa se sobrescribe en cada actualización de Herdr); agent-workflows/tests/test&#95;despacho&#95;herdr.py (test&#95;skill&#95;copies&#95;no&#95;herdr&#95;procedure, antecedente de no copiar el procedimiento); agent-workflows/skills/chanks-0-mensajes-visibles/ y su prueba, como ejemplo de skill transversal sumada al roster; fricción &#35;142 y S137 (separación Herdr/Intercom).
+
+### S219 — La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S218)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/bundle.mjs, product/tower/v1/install.mjs, product/tower/v1/instructions/project-agents.md, product/tower/v1/test/bundle.test.mjs
+  - Depende de: S218
+  - Recursos: roster explícito del paquete V1
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: S218 deja la skill chanks-0-comunicacion-agentes en el origen editable del Método, pero el paquete V1 sólo lleva lo que enumera su roster explícito, y los proyectos adoptados sólo saben qué skill cargar por la tabla del bloque generado. Sin esta Sesión la skill existe en este repositorio y no llega a ningún otro proyecto ni agente.
+  - Resultado y comportamiento: Los archivos de la skill figuran en el roster del paquete V1 y el instalador los deja en la carpeta central de skills, de modo que Claude Code, Codex, OpenCode y Pi la encuentran. La tabla «qué skill cargar» de la plantilla de instrucciones de proyecto suma una fila para pedir comunicación con otro agente, observarlo, frenarlo o abrir paneles. Las pruebas del paquete fijan la nueva membresía. Un proyecto que actualiza a la versión que publique esto recibe la skill y la fila sin pasos manuales.
+  - Restricciones y decisiones: Sumar un archivo al roster del paquete exige revisión explícita de release (product/tower/v1/bundle.mjs:22-23); la membresía se enumera, nunca se descubre por recorrido. Las plantillas instaladas no pueden nombrar Tower, MAIN ni Support. Cambia el contrato visible del producto: sale como versión minor según la regla de release de AGENTS.md, y publicar exige autorización humana separada. No se suman skills diferidas ni personales. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: product/tower/v1/bundle.mjs (roster y su comentario de membresía); product/tower/v1/instructions/project-agents.md (tabla «Which skill to load»); product/tower/v1/test/bundle.test.mjs; AGENTS.md (subsección «Cuándo un cambio a master es una release»); S218.
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
@@ -4328,7 +4358,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
