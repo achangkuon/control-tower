@@ -58,6 +58,47 @@ describe("S211 permission admission", () => {
   }));
 });
 
+describe("S222 instruction permission relaxation", () => {
+  test("admits only a listed regular group-writable file; other-writable entries and directories stay strict", () => fixture((root) => {
+    chmodSync(root, 0o755);
+    put(root, "AGENTS.md", "agent rules", 0o664);
+    put(root, "docs/guide.md", "guide", 0o664);
+    chmodSync(join(root, "docs"), 0o775);
+    const relaxed = { groupWritableOk: ["AGENTS.md", "CLAUDE.md", "docs"] };
+    // The listed group-writable regular file is tolerated and still reported for repair.
+    expect(preflightProjectPaths(root, ["AGENTS.md"], relaxed)).toEqual([join(root, "AGENTS.md")]);
+    // Other-writable entries are never tolerated, even when listed.
+    for (const bad of [0o602, 0o606, 0o666]) {
+      put(root, "CLAUDE.md", "claude rules", bad);
+      expect(() => preflightProjectPaths(root, ["CLAUDE.md"], relaxed)).toThrow("Permisos inseguros");
+    }
+    // A listed directory is not a regular file: neither it nor its children are relaxed.
+    expect(() => preflightProjectPaths(root, ["docs"], relaxed)).toThrow("Permisos inseguros");
+    // An unlisted group-writable file keeps full strictness.
+    expect(() => preflightProjectPaths(root, ["AGENTS.md"])).toThrow("Permisos inseguros");
+  }));
+
+  test("relaxed group-writable entries are repaired only under fixPermissions", () => fixture((root) => {
+    chmodSync(root, 0o755);
+    put(root, "AGENTS.md", "agent rules", 0o664);
+    const relaxed = { groupWritableOk: ["AGENTS.md"] };
+    expect(preflightProjectPaths(root, ["AGENTS.md"], relaxed)).toEqual([join(root, "AGENTS.md")]);
+    expect(mode(join(root, "AGENTS.md"))).toBe(0o664);
+    const fixed = [];
+    expect(preflightProjectPaths(root, ["AGENTS.md"], { ...relaxed, fixPermissions: true,
+      onPermissionsFixed: (paths) => fixed.push(...paths) })).toEqual([join(root, "AGENTS.md")]);
+    expect(mode(join(root, "AGENTS.md"))).toBe(0o644);
+    expect(fixed).toEqual([join(root, "AGENTS.md")]);
+  }));
+
+  test("rejects a malformed groupWritableOk list before inspecting the project", () => fixture((root) => {
+    put(root, "AGENTS.md", "agent rules", 0o664);
+    for (const groupWritableOk of ["AGENTS.md", [""], ["../escape"], ["/absolute"], ["a\\b"], [1]]) {
+      expect(() => preflightProjectPaths(root, ["AGENTS.md"], { groupWritableOk })).toThrow();
+    }
+  }));
+});
+
 describe("project file snapshots", () => {
   test("absent, file and complete directory round-trip binary bytes, modes and stable ordering", () => fixture((root) => {
     put(root, "file", Buffer.from([0, 255, 1]), 0o600);

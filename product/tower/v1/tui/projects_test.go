@@ -9,6 +9,51 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func TestS222InvalidPermissionsOfferFixCommand(t *testing.T) {
+	m := loaded(t, healthyJSON)
+	m.status.Projects = json.RawMessage(`[{"projectRoot":"/proyecto","status":"invalid","permissionError":true}]`)
+	m.page = "projects"
+	contains(t, m.View(), "inválido")
+	m = keys(m, "enter")
+	contains(t, m.View(), "Corregir permisos", "Revisar", "Desinstalar", "Limpiar residuos")
+	m, cmd := key(m, "enter")
+	if cmd != nil {
+		t.Fatal("permissions action must be informational and execute nothing")
+	}
+	if m.page != "project-permissions" {
+		t.Fatalf("page = %s", m.page)
+	}
+	contains(t, m.View(), "Corregir permisos", "checkout de Git",
+		"torre-control project doctor --project /proyecto --fix-permissions")
+	m = keys(m, "esc")
+	if m.page != "home" {
+		t.Fatalf("esc left page %s", m.page)
+	}
+}
+
+func TestS222PermissionsActionOnlyForInvalidPermissionErrors(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		project string
+		want    bool
+	}{
+		{"invalid with permission error", `{"projectRoot":"/proyecto","status":"invalid","permissionError":true}`, true},
+		{"invalid without permission error", `{"projectRoot":"/proyecto","status":"invalid"}`, false},
+		{"healthy with permission flag", `{"projectRoot":"/proyecto","status":"healthy","permissionError":true}`, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			m := loaded(t, healthyJSON)
+			m.status.Projects = json.RawMessage(`[` + tt.project + `]`)
+			m.page = "projects"
+			m = keys(m, "enter")
+			contains(t, m.View(), "Revisar")
+			if got := strings.Contains(m.View(), "Corregir permisos"); got != tt.want {
+				t.Fatalf("Corregir permisos: got %v want %v\n%s", got, tt.want, m.View())
+			}
+		})
+	}
+}
+
 func TestS208OutdatedProjectOffersUpdateNotRadar(t *testing.T) {
 	m := loaded(t, healthyJSON)
 	m.width = 120

@@ -20,7 +20,10 @@ type prerequisite struct {
 	Version, Error         string
 }
 type agentState struct{ Executable, Config bool }
-type projectState struct{ ProjectRoot, Status, TowerState string }
+type projectState struct {
+	ProjectRoot, Status, TowerState string
+	PermissionError                 bool
+}
 type snapshot struct {
 	Schema        string
 	Engine        engineState
@@ -317,6 +320,12 @@ func (m model) pageLines() []string {
 		body = []string{"Actualizar la Torre", "Volvé al inicio y elegí Instalar o actualizar para poner al día los proyectos registrados.",
 			"También podés actualizar sólo este proyecto: torre-control project update --project <ruta-absoluta>.",
 			"Se conservan los archivos modificados por el usuario y el respaldo para desinstalar."}
+	case "project-permissions":
+		body = []string{"Corregir permisos",
+			"Un archivo de instrucciones del proyecto quedó editable por grupo tras un checkout de Git (permisos inseguros).",
+			"Para corregirlo, ejecutá este comando en una terminal:",
+			"torre-control project doctor --project " + clean(m.flow.root) + " --fix-permissions",
+			"La interfaz no ejecuta comandos: sólo muestra el comando exacto."}
 	case "help":
 		body = []string{"Ayuda", "↑/↓ o j/k: mover la selección; enter: elegir.", "esc: volver; r: refrescar el estado; q o Ctrl-C: salir.",
 			"Instalar o actualizar: buscar la última versión publicada, sin preguntas.", "a sobre esa opción: Versión específica (avanzado).", "Volver a la versión anterior: restaurar el motor.",

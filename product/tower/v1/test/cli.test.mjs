@@ -116,7 +116,25 @@ test("S211 project permissions are actionable before registry writes and repair 
   expect(invoke(f, ["project", "update", "--project", path, "--fix-permissions"]).code).toBe(0);
   success(invoke(f, ["project", "uninstall", "--project", path]));
   expect(readlinkSync(join(path, ".claude/skills"))).toBe("../.agents/skills");
-  for (const op of ["doctor", "cleanup", "uninstall"]) failed(invoke(f, ["project", op, "--project", path, "--fix-permissions"]));
+  for (const op of ["cleanup", "uninstall"]) failed(invoke(f, ["project", op, "--project", path, "--fix-permissions"]));
+});
+
+test("S222 project doctor accepts --fix-permissions and tolerates a verified group-writable instruction file", () => {
+  const f = fixture(), path = project(f);
+  success(invoke(f, ["project", "init", "--project", path, "--trust", "trusted"]));
+  chmodSync(join(path, "AGENTS.md"), 0o664);
+  const tolerated = invoke(f, ["project", "doctor", "--project", path]);
+  expect(tolerated.code).toBe(0);
+  expect(tolerated.stderr).toBe("");
+  expect(tolerated.value.localResult).toEqual({ status: "healthy", instructions: "ok" });
+  expect(tolerated.value.registry.status).toBe("recorded");
+  expect(lstatSync(join(path, "AGENTS.md")).mode & 0o7777).toBe(0o664);
+  const repaired = invoke(f, ["project", "doctor", "--project", path, "--fix-permissions"]);
+  expect(repaired.code).toBe(0);
+  expect(repaired.stderr).toContain("Permisos corregidos (sólo go-w):");
+  expect(repaired.value.localResult).toEqual({ status: "healthy", instructions: "ok" });
+  expect(repaired.value.permissionsChanged).toEqual([join(path, "AGENTS.md")]);
+  expect(lstatSync(join(path, "AGENTS.md")).mode & 0o7777).toBe(0o644);
 });
 
 const invalid = [[], ["unknown"], ["toString"], ["__proto__"], ["uninstall", "--unexpected", "x"], ["project"], ["project", "unknown"],

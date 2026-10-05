@@ -128,9 +128,15 @@ export function sharedProjectSkills(root) {
 
 /** Inspect only selected trees and traversed project ancestors, never unrelated siblings.
  * Permission repair is explicit, descriptor-based and follows no symlinks.
+ * groupWritableOk lists project-relative regular files whose group-writable bit is
+ * tolerated; the other-writable bit and directories always stay insecure.
  */
-export function preflightProjectPaths(root, paths, { fixPermissions = false, onPermissionsFixed } = {}) {
+export function preflightProjectPaths(root, paths, { fixPermissions = false, onPermissionsFixed, groupWritableOk = [] } = {}) {
+  if (!Array.isArray(groupWritableOk) || !groupWritableOk.every(pathOK)) fail();
+  const relaxed = new Set(groupWritableOk);
   rootPath(root);
+  const relative = path => path.slice(root.length + (root.endsWith(sep) ? 0 : 1)).split(sep).join("/");
+  const tolerated = (entry, path) => entry.isFile() && relaxed.has(relative(path)) && !(entry.mode & 0o002);
   const discover = () => {
     const writable = new Map(); let count = 0;
     const inspect = path => {
@@ -157,27 +163,30 @@ export function preflightProjectPaths(root, paths, { fixPermissions = false, onP
     return [...writable].sort(([a], [b]) => a.localeCompare(b));
   };
   const entries = discover();
-  if (entries.length && !fixPermissions) {
+  const blocking = entries.filter(([path, entry]) => !tolerated(entry, path));
+  if (blocking.length && !fixPermissions) {
     const error = new Error("Tower project: Permisos inseguros: estas rutas permiten escritura de grupo u otros.\n" +
-      entries.map(([path]) => `- ${path}\n  chmod go-w '${path.replaceAll("'", "'\\''")}'`).join("\n") +
+      blocking.map(([path]) => `- ${path}\n  chmod go-w '${path.replaceAll("'", "'\\''")}'`).join("\n") +
       "\nCorregí los permisos y volvé a intentar, o ejecutá el mismo comando con --fix-permissions.");
-    error.permissionPaths = entries.map(([path]) => path);
+    error.permissionPaths = blocking.map(([path]) => path);
     throw error;
   }
-  const descriptors = [];
-  try {
-    const current = discover();
-    if (current.length !== entries.length || current.some(([path, s], i) => path !== entries[i][0] ||
-        s.dev !== entries[i][1].dev || s.ino !== entries[i][1].ino || s.mode !== entries[i][1].mode)) fail();
-    for (const [path, before] of entries) {
-      const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK); descriptors.push(fd);
-      const opened = fstatSync(fd);
-      if (opened.dev !== before.dev || opened.ino !== before.ino || opened.mode !== before.mode || opened.uid !== process.getuid()) fail();
-      safe(opened);
-    }
-    for (const [i, [, entry]] of entries.entries()) fchmodSync(descriptors[i], entry.mode & 0o7777 & ~0o022);
-  } finally { for (const fd of descriptors) closeSync(fd); }
-  if (entries.length) onPermissionsFixed?.(entries.map(([path]) => path));
+  if (fixPermissions) {
+    const descriptors = [];
+    try {
+      const current = discover();
+      if (current.length !== entries.length || current.some(([path, s], i) => path !== entries[i][0] ||
+          s.dev !== entries[i][1].dev || s.ino !== entries[i][1].ino || s.mode !== entries[i][1].mode)) fail();
+      for (const [path, before] of entries) {
+        const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK); descriptors.push(fd);
+        const opened = fstatSync(fd);
+        if (opened.dev !== before.dev || opened.ino !== before.ino || opened.mode !== before.mode || opened.uid !== process.getuid()) fail();
+        safe(opened);
+      }
+      for (const [i, [, entry]] of entries.entries()) fchmodSync(descriptors[i], entry.mode & 0o7777 & ~0o022);
+    } finally { for (const fd of descriptors) closeSync(fd); }
+    if (entries.length) onPermissionsFixed?.(entries.map(([path]) => path));
+  }
   return entries.map(([path]) => path);
 }
 
@@ -196,10 +205,24 @@ export function captureProjectFiles(root, paths) {
   return snapshot;
 }
 
-/** Return whether the live destinations and ancestor presence exactly match a validated snapshot; unsafe entries throw. */
-export function compareProjectFiles(root, snapshot) {
+/** Return whether the live destinations and ancestor presence exactly match a validated snapshot; unsafe entries throw.
+ * An optional groupWritableOk list clears the group-writable bit on both sides for
+ * those destinations before comparison, so a group-writable instruction file whose
+ * bytes verify is not reported as drift. Any other mode difference still fails.
+ */
+export function compareProjectFiles(root, snapshot, { groupWritableOk = [] } = {}) {
   validateProjectFiles(snapshot);
-  return isDeepStrictEqual(captureProjectFiles(root, snapshot.destinations.map((entry) => entry.path)), snapshot);
+  if (!Array.isArray(groupWritableOk) || !groupWritableOk.every(pathOK)) fail();
+  const live = captureProjectFiles(root, snapshot.destinations.map((entry) => entry.path));
+  if (!groupWritableOk.length) return isDeepStrictEqual(live, snapshot);
+  const clear = (value) => {
+    const next = structuredClone(value);
+    for (const entry of next.destinations) {
+      if (groupWritableOk.includes(entry.path) && entry.tree?.type === "file") entry.tree.mode &= ~0o020;
+    }
+    return next;
+  };
+  return isDeepStrictEqual(clear(live), clear(snapshot));
 }
 
 const workflowMarker = "control-tower:project-workflow";

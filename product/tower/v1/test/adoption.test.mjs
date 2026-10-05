@@ -268,6 +268,28 @@ describe("S196 project instructions", () => {
   }));
 });
 
+describe("S222 instruction permission relaxation in doctor", () => {
+  test("doctor tolerates a verified group-writable instruction file, rejects other-writable and reports a modified block", () => fixture(({ projectRoot }) => {
+    initProject(trusted(projectRoot));
+    chmodSync(join(projectRoot, "AGENTS.md"), 0o664);
+    expect(doctorProject({ projectRoot })).toEqual({ status: "healthy", instructions: "ok" });
+    expect(lstatSync(join(projectRoot, "AGENTS.md")).mode & 0o7777).toBe(0o664);
+    chmodSync(join(projectRoot, "AGENTS.md"), 0o602);
+    expect(() => doctorProject({ projectRoot })).toThrow("Permisos inseguros");
+    chmodSync(join(projectRoot, "AGENTS.md"), 0o664);
+    put(projectRoot, "AGENTS.md", agents(projectRoot).replace("Who decides what", "Hand edited"), 0o664);
+    expect(doctorProject({ projectRoot }).instructions).toBe("modified");
+    expect(doctorProject({ projectRoot }).status).toBe("healthy");
+  }));
+
+  test("init, update and uninstall keep strict instruction permission admission", () => fixture(({ projectRoot }) => {
+    initProject(trusted(projectRoot));
+    chmodSync(join(projectRoot, "AGENTS.md"), 0o664);
+    expect(() => adoption.updateProject({ projectRoot })).toThrow("Permisos inseguros");
+    expect(() => uninstallProject({ projectRoot })).toThrow("Permisos inseguros");
+  }));
+});
+
 const snapshot = (root) => captureProjectFiles(root, observed);
 const snapshotWithoutJournal = (root) => captureProjectFiles(root, observed.filter((path) => path !== journal));
 const trusted = (projectRoot) => ({ projectRoot, trustResolution: "trusted" });

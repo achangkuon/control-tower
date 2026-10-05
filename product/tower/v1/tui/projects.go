@@ -60,6 +60,9 @@ func (m model) projectHealth(p projectState) string {
 }
 
 func actionsForProject(p projectState) []string {
+	if p.Status == "invalid" && p.PermissionError {
+		return append([]string{"Corregir permisos"}, projectActions...)
+	}
 	if p.Status == "outdated" {
 		return append([]string{"Actualizar la Torre"}, projectActions...)
 	}
@@ -158,6 +161,9 @@ func (m model) projectsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m = m.openRadar(project.ProjectRoot)
 			} else if actions[m.projectAction] == "Actualizar la Torre" {
 				m.page, m.offset = "project-update", 0
+			} else if actions[m.projectAction] == "Corregir permisos" {
+				m.flow.root = project.ProjectRoot
+				m.page, m.offset = "project-permissions", 0
 			} else if actions[m.projectAction] == "Ver el prompt para armar el plan" {
 				m = m.openProjectPrompt()
 			} else {

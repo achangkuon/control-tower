@@ -49,13 +49,13 @@ function gitRoot(projectRoot) {
 }
 
 /** Public CLI admission runs before registry/default-parent writes. */
-export function preflightProjectAdoption({ projectRoot, fixPermissions = false, onPermissionsFixed }) {
+export function preflightProjectAdoption({ projectRoot, fixPermissions = false, onPermissionsFixed, groupWritableOk }) {
   const shared = sharedProjectSkills(projectRoot);
   const common = gitRoot(projectRoot), exclude = relative(projectRoot, join(common, "info/exclude"));
   // A missing leaf checks .claude itself without traversing unrelated skills or the admitted alias.
   return preflightProjectPaths(projectRoot, [...pathsFor(shared), JOURNAL, ...INSTRUCTION_PATHS,
     ...(shared ? [".claude/.control-tower-admission"] : []),
-    ...(!exclude.startsWith(`..${sep}`) ? [exclude.split(sep).join("/")] : [])], { fixPermissions, onPermissionsFixed });
+    ...(!exclude.startsWith(`..${sep}`) ? [exclude.split(sep).join("/")] : [])], { fixPermissions, onPermissionsFixed, groupWritableOk });
 }
 
 const excludePaths = ["/.control-tower/", "/.control-tower-adoption-v1/", "/.agents/skills/control-tower/", "/.claude/skills/control-tower/"];
@@ -150,7 +150,7 @@ function installedSnapshot(manifest, shared = false) {
   validateProjectFiles(snapshot);
   return snapshot;
 }
-const INSTRUCTION_PATHS = ["AGENTS.md", "CLAUDE.md"];
+export const INSTRUCTION_PATHS = ["AGENTS.md", "CLAUDE.md"];
 const versionOK = value => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
 function activeVersion() {
   const tree = captureProjectFiles(sourceRoot, ["provenance.json"]).destinations[0].tree;
@@ -198,8 +198,8 @@ function writeState(projectRoot, state) {
   // Admission above rejects links/hardlinks before updating our private journal.
   writeFileSync(join(projectRoot, JOURNAL, "state.json"), JSON.stringify(state), { mode: 0o600 });
 }
-function preflight(projectRoot) {
-  preflightProjectAdoption({ projectRoot });
+function preflight(projectRoot, { groupWritableOk } = {}) {
+  preflightProjectAdoption({ projectRoot, groupWritableOk });
   gitRoot(projectRoot);
   const journal = captureProjectFiles(projectRoot, [JOURNAL]).destinations[0].tree;
   if (journal.type !== "directory" || journal.mode !== 0o700 || journal.entries.length !== 1 ||
@@ -211,7 +211,7 @@ function preflight(projectRoot) {
   validateState(state);
   verifySharedSkill(projectRoot, Boolean(state.sharedSkills));
   excludePreflight(projectRoot, state);
-  if (!compareProjectFiles(projectRoot, state.installed)) fail("installed destination drift");
+  if (!compareProjectFiles(projectRoot, state.installed, { groupWritableOk })) fail("installed destination drift");
   return state;
 }
 
@@ -262,7 +262,7 @@ export function initProject(options) {
 /** Strictly read-only verification of journal, installed bytes, modes, and membership. */
 export function doctorProject(options) {
   if (!keys(options, ["projectRoot"])) fail("doctor options");
-  const state = preflight(options.projectRoot);
+  const state = preflight(options.projectRoot, { groupWritableOk: INSTRUCTION_PATHS });
   const outdated = !state.instructions || !isDeepStrictEqual(state.installed, installedSnapshot(validateBundle(sourceRoot), Boolean(state.sharedSkills)));
   let instructions = state.instructions ? projectInstructionState(captureProjectFiles(options.projectRoot, INSTRUCTION_PATHS), state.instructions.installed) : "outdated version";
   if (instructions === "ok" && (state.instructions.version !== activeVersion() ||
