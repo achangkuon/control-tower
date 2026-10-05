@@ -2440,42 +2440,7 @@ sesiones:
 
   - {id: S227, entrega: {commit: 20ee91a73901c498efd380829ccd9f28d042a6d2}, historico: openspec/archive/sesiones/S227.md}
 
-  - id: S228
-    zona: metodo
-    prioridad: resolucion-problemas-generales
-    resultado: "Menores de S226 resueltos: código muerto del escritor del hook eliminado de install.py con su cobertura de test_install.py actualizada (superficie expandida con autorización del mantenedor), y los seis hallazgos informativos de la revisión triageados: arreglos baratos aplicados y decisiones de diseño vigentes documentadas como aceptadas."
-    autoridad: "Decisión del mantenedor el 2026-10-06 en conversación: «resolvamos eso» sobre los menores listados, incluyendo la expansión a test_install.py que la revisión de S226 marcó como necesaria."
-    depende_de: []
-    archivos: [agent-workflows/tools/install.py, agent-workflows/tools/install-radar.sh, agent-workflows/tests/test_personal_config.py, agent-workflows/tests/test_install.py]
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        La revisión nativa de S226 (lineage review-a9f0a09f40edcdbb) dejó seis hallazgos
-        informativos (R1-grep-fail-open, R3-check-mode-blindspot, R3-open-manifest-guard,
-        R3-untested-guard-knobs, R4-path-compare-bypass, R4-silent-failopen-ownership-guard,
-        todos en install-radar.sh o sus tests) y la revisión de S226 señaló código muerto:
-        etapa_hook_path/source/changes en install.py no está cableado a build_plan/apply pero
-        test_install.py aún lo ejercita (superficie que S226 no podía tocar). El texto exacto de
-        los seis hallazgos debe recuperarse del store de revisión de S226.
-      resultado_comportamiento: >-
-        install.py no conserva escritor ni datos muertos del hook de etapa; test_install.py queda
-        actualizado y la suite python completa pasa. De los seis hallazgos: los que corrigen
-        comportamiento barato y seguro se corrigen con test (p. ej. cobertura de knobs de la
-        guarda, comparación de rutas normalizada); los que describen decisiones de diseño vigentes
-        (fail-open ante manifiesto ilegible o grep sin dependencias) se documentan como aceptados
-        con su razón en el registro ODD y en comentarios del código donde corresponda. Ningún
-        cambio de comportamiento del instalador personal fuera de eso.
-      restricciones_decisiones: >-
-        El contrato de territorio de S226 no se relaja: sin manifiesto o ilegible, radar se
-        instala como siempre; --force sigue siendo el único escape. No se toca product/tower/ ni
-        los bloques personales. Toda expansión adicional de archivos requiere aprobación humana.
-        ODD nativo; SDD sólo por solicitud humana explícita.
-      referencias: >-
-        issue #158 (cerrada por S226, commit 95b3bc9); store de revisión
-        .git/gentle-ai/ (lineage review-a9f0a09f40edcdbb);
-        agent-workflows/tools/install.py (etapa_hook_* y comentarios Torre-owned);
-        agent-workflows/tools/install-radar.sh (guarda y --force de S226);
-        agent-workflows/tests/{test_personal_config.py,test_install.py}.
+  - {id: S228, entrega: {commit: af3fbe4a8b2e4276022f002a4cdaa5c85498cb18}, historico: openspec/archive/sesiones/S228.md}
 
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
