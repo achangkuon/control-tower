@@ -8,15 +8,23 @@ language; keep commands exactly as written.
 ## What you are installing
 
 - **Global engine** (`torre-control`): a launcher at `~/.local/bin/torre-control` and its
-  state under `~/.local/share/torre-control/`. Installing it changes nothing in any project
-  and nothing in the human's agent configuration.
+  state under `~/.local/share/torre-control/`. Installing it changes nothing in any project.
+- **Agent notices** (part of engine installation, before any project adoption): the installer
+  also touches the human's **global agent configuration** so Tower notices work:
+  - writes `~/.claude/hooks/chanks-etapa.sh` and `~/.claude/hooks/torre-firma.sh`, and
+    registers them in `~/.claude/settings.json` (`UserPromptSubmit`, `PreToolUse/Bash`);
+  - writes the Pi extension `~/.pi/agent/extensions/chanks-notices.ts`;
+  - inserts a Tower pointer block into `~/.claude/CLAUDE.md` and `~/.pi/agent/APPEND_SYSTEM.md`
+    (and Codex/OpenCode instructions when their directories exist).
+  Every write is recorded so `torre-control` can undo it during uninstall/update. Tell the
+  human about these writes before installing.
 - **Project adoption** (a separate, explicit step): adds the `control-tower` skill to **one
   project the human chooses** — `.claude/skills/control-tower` (Claude Code),
   `.agents/skills/control-tower` (Pi), plus `.control-tower/` (Radar sources) and
   `.control-tower-adoption-v1/` (journal). That is how the agents get Tower V1.
 
-It never edits `~/.claude`, `~/.pi`, `~/.agents`, `~/.codex` or any other global agent
-configuration.
+Outside the writes listed above, it never edits `~/.claude`, `~/.pi`, `~/.agents`,
+`~/.codex` or any other global agent configuration.
 
 ## Rules you must follow
 
