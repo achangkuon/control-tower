@@ -100,15 +100,26 @@ function allowedEntries() {
     [".claude/hooks/chanks-etapa.sh", "signatures"], [".claude/hooks/torre-firma.sh", "signatures"],
   ]);
 }
+// A skill destination the running roster no longer owns. Only these may be absent
+// from allowedEntries(); every other unknown destination stays rejected so a
+// corrupted manifest can never name an arbitrary path for removal.
+function retiredSkill(path) {
+  const match = typeof path === "string" && /^\.(?:agents|claude)\/skills\/([^/]+)$/.exec(path);
+  // `_shared` hosts owned roster files (e.g. the plan-naming convention) and never retires;
+  // treating it as removable would let a corrupted manifest delete a live owned parent.
+  return match && match[1] !== "_shared" && !V1_SKILLS.includes(match[1]) ? match[1] : null;
+}
 function load(home) {
   const bytes = read(home, join(home, manifestPath)); if (!bytes) return null;
   let value; try { value = JSON.parse(bytes); } catch { fail("invalid ownership manifest JSON"); }
   const allowed = allowedEntries();
-  if (value?.entries?.length !== allowed.size) fail("incomplete ownership roster");
   if (value?.schema !== schema || !Array.isArray(value.entries) || !Array.isArray(value.pointers) || !Array.isArray(value.directories) || !plain(value.settings)) fail("invalid ownership manifest");
   const seen = new Set();
   for (const entry of value.entries) {
-    if (seen.has(entry.path) || allowed.get(entry.path) !== entry.component || !entry.installed ||
+    // Entries may be a subset of the running roster: an older release installed fewer
+    // skills, or retired one that a newer release no longer ships (issue #157).
+    const retired = entry.component === "skills" && retiredSkill(entry.path);
+    if (seen.has(entry.path) || allowed.get(entry.path) !== entry.component && !retired || !entry.installed ||
         entry.backup && (!/^\.local\/share\/torre-control\/backups\/[A-Za-z0-9T_.:-]+\/[0-9]+$/.test(entry.backup.path) || !entry.backup.content)) fail("invalid manifest destination");
     seen.add(entry.path);
   }
@@ -118,7 +129,7 @@ function load(home) {
   for (const path of [...allowed.keys(), ...skillFiles, ...pointerPaths, manifestPath, settingsPath]) {
     let parent = dirname(path); while (parent !== ".") { parents.add(parent); parent = dirname(parent); }
   }
-  if (value.directories.some(p => !parents.has(p) && p !== `${share}/backups` &&
+  if (value.directories.some(p => !parents.has(p) && p !== `${share}/backups` && !retiredSkill(p) &&
       !(typeof p === "string" && /^\.local\/share\/torre-control\/backups\/[A-Za-z0-9T_.:-]+$/.test(p) && !p.split("/").includes("..")))) fail("invalid directory manifest");
   return value;
 }
@@ -297,10 +308,11 @@ export function preflightRuntimeHome({ home, fixPermissions = false, onPermissio
   if (stat(join(home, share, ".runtime-lock"))) fail("runtime lock or recovery evidence exists");
   const prior = load(home);
   settings(home);
-  for (const [path] of allowedEntries()) {
-    const actual = snapshot(home, join(home, path), path.startsWith(".claude/skills/"));
-    const entry = prior?.entries.find(e => e.path === path);
-    if (entry && actual && encode(actual) !== encode(entry.installed)) fail(`modified owned entry: ${path}`);
+  // Retired skills are owned paths the running roster no longer ships. Every
+  // recorded entry, current or retired, is verified before any install write.
+  for (const entry of prior?.entries ?? []) {
+    const actual = snapshot(home, join(home, entry.path), entry.installed.kind === "link");
+    if (actual && encode(actual) !== encode(entry.installed)) fail(`modified owned entry: ${entry.path}`);
   }
   for (const path of pointerPaths) {
     const bytes = read(home, join(home, path));
@@ -314,6 +326,8 @@ export function prepareRuntime({ home, members: releaseMembers, vendorReleases =
   preflightRuntimeHome({ home });
   home = homeFor(home); requireGentleAi({ runner, env: { ...env, HOME: home } });
   const prior = load(home), config = settings(home), members = new Map(releaseMembers.map(m => [m.path, Buffer.from(m.bytes)]));
+  const allowed = allowedEntries();
+  const retired = (prior?.entries ?? []).filter(entry => !allowed.has(entry.path) && retiredSkill(entry.path));
   const radar = "agent-workflows/tools/radar/", vendor = BUNDLE_MEMBERS.filter(m => m.source.startsWith(radar + "vendor/"));
   if (vendor.every(m => !members.has(m.source))) {
     // Donors are cached-release receipts verified by the global lifecycle. Only
@@ -372,13 +386,19 @@ export function prepareRuntime({ home, members: releaseMembers, vendorReleases =
   const radarBefore = snapshot(home, join(home, ".local/bin/radar"));
   file(".local/bin/radar", buildRadar({ env, runner, members }), "radar", 0o755);
   desired.at(-1).before = radarBefore;
-  return { home, prior, desired, pointers, config, nextSettings, added };
+  return { home, prior, desired, retired, pointers, config, nextSettings, added };
 }
 export function installRuntime(plan) {
-  const { home, prior, desired, pointers, config, nextSettings, added } = plan;
+  const { home, prior, desired, retired = [], pointers, config, nextSettings, added } = plan;
   // Recheck every observed destination before the first mutation.
   if (encode(load(home)) !== encode(prior) || !(read(home, join(home, settingsPath)) ?? Buffer.alloc(0)).equals(config.bytes ?? Buffer.alloc(0))) fail("runtime preflight changed");
   for (const item of desired) if (encode(snapshot(home, join(home, item.path), Boolean(item.link))) !== encode(item.before)) fail("runtime destination changed");
+  // Only retired paths still present are displaced; a missing one is already gone.
+  const presentRetired = retired.filter(entry => {
+    const actual = snapshot(home, join(home, entry.path), entry.installed.kind === "link");
+    if (actual && encode(actual) !== encode(entry.installed)) fail("runtime destination changed");
+    return actual !== null;
+  });
   for (const p of pointers) if (!(read(home, join(home, p.path)) ?? Buffer.alloc(0)).equals(p.priorBytes ?? Buffer.alloc(0))) fail("pointer changed");
   const created = new Set(prior?.directories ?? []), entries = [];
   directories(home, join(home, share), created);
@@ -442,13 +462,22 @@ export function installRuntime(plan) {
       recovery.entries = entries; recovery.pending = null; persist();
       plan.fault?.("resource-installed");
     }
+    for (const [index, entry] of presentRetired.entries()) {
+      // Preserve the retired owned content in the standard backups layout before removing it.
+      const path = `${share}/backups/${stamp}/${desired.length + index}`;
+      directories(home, dirname(join(home, path)), created);
+      recovery.pending = { path: entry.path, displaced: path, content: entry.installed }; persist();
+      renameSync(join(home, entry.path), join(home, path));
+      recovery.pending = null; persist();
+    }
     const settingsBytes = encode(nextSettings) === encode(config.value) ? config.bytes : Buffer.from(JSON.stringify(nextSettings, null, 2) + "\n");
     if (settingsBytes && !settingsBytes.equals(config.bytes ?? Buffer.alloc(0))) atomic(home, join(home, settingsPath), settingsBytes, config.mode, created);
     for (const p of pointers) if (p.next !== p.priorBytes?.toString("utf8")) atomic(home, join(home, p.path), p.next, p.mode, created);
     // Settings edited since the previous install make the original snapshot stale: uninstall
     // must then remove only the Tower hooks instead of restoring or deleting the file.
     const surgical = Boolean(prior && (prior.settings.surgical || (config.bytes?.toString("base64") ?? null) !== prior.settings.installed));
-    const record = { schema, entries, pointers: pointers.map(({ priorBytes, next, ...p }) => p), directories: [...created].sort(),
+    const retiredPaths = new Set(retired.map(entry => entry.path));
+    const record = { schema, entries, pointers: pointers.map(({ priorBytes, next, ...p }) => p), directories: [...created].filter(path => !retiredPaths.has(path)).sort(),
       settings: { original: prior ? prior.settings.original : config.bytes?.toString("base64") ?? null, originalMode: prior?.settings.originalMode ?? config.mode, installed: settingsBytes?.toString("base64") ?? null, surgical,
         hookDigests: Object.fromEntries(hooks.filter(h => added.includes(h.event)).map(h => [h.event, hash(encode({ matcher: h.matcher, hook: h.hook }))])), added } };
     atomic(home, join(home, manifestPath), encode(record), 0o600);

@@ -1,4 +1,5 @@
 import { expect, test, spyOn } from "bun:test";
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import { join, dirname } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -30,6 +31,13 @@ function fixture(run) {
 }
 const read = (home, path) => fs.readFileSync(join(home, path), "utf8");
 const manifest = (home) => JSON.parse(read(home, ".local/share/torre-control/runtime-ownership.json"));
+const sha256 = value => createHash("sha256").update(value).digest("hex");
+const fileSnapshot = path => ({ kind: "file", sha256: sha256(fs.readFileSync(path)), mode: fs.statSync(path).mode & 0o777 });
+const linkSnapshot = path => { const target = fs.readlinkSync(path); return { kind: "link", target, sha256: sha256(target) }; };
+const holdsBytes = (dir, content) => fs.readdirSync(dir).some(name => {
+  const path = join(dir, name), s = fs.lstatSync(path);
+  return s.isDirectory() ? holdsBytes(path, content) : s.isFile() && fs.readFileSync(path, "utf8") === content;
+});
 
 test("S205 preflight lists every writable owned destination with exact shell-quoted fixes, without chmod", () => fixture(({ home, write }) => {
   write(".claude/settings.json", "{}");
@@ -324,12 +332,12 @@ test("semantically identical existing hooks are not duplicated; private instruct
   expect(fs.statSync(join(home, ".claude/settings.json")).mode & 0o777).toBe(0o600);
 }));
 
-test("doctor detects missing new-runtime pointers and incomplete ownership records", () => fixture(({ home, options, install }) => {
+test("doctor detects missing new-runtime pointers and accepts subset ownership records", () => fixture(({ home, options, install }) => {
   install(); fs.mkdirSync(join(home, ".codex"), { mode: 0o755 });
   expect(doctorRuntime({ home, runner: options.runner }).pointers).toBe("missing");
   const record = manifest(home); record.entries.pop();
   fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
-  expect(doctorRuntime({ home, runner: options.runner }).skills).toBe("modified");
+  expect(doctorRuntime({ home, runner: options.runner })).toMatchObject({ skills: "ok", radar: "missing", pointers: "missing" });
 }));
 
 test("a failed runtime write retains bounded ownership recovery evidence and refuses automatic reentry", () => fixture(({ home, options }) => {
@@ -354,6 +362,76 @@ test("Gentle AI is required before any change; doctor exposes its version and co
   expect(doctorRuntime({ home, runner: good })).toMatchObject({ skills: "modified", radar: "missing" });
   expect(() => uninstallRuntime({ home })).toThrow(/modified/);
   expect(read(home, ".agents/skills/chanks-1-prd/SKILL.md")).toBe("edited");
+}));
+
+test("S225 grows a subset manifest back to the full running roster", () => fixture(({ home, install }) => {
+  install();
+  const full = manifest(home).entries.length;
+  const name = "control-tower", agent = `.agents/skills/${name}`, claude = `.claude/skills/${name}`;
+  fs.rmSync(join(home, agent), { recursive: true, force: true });
+  fs.unlinkSync(join(home, claude));
+  const record = manifest(home); record.entries = record.entries.filter(entry => entry.path !== agent && entry.path !== claude);
+  expect(record.entries.length).toBe(full - 2);
+  fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
+  install();
+  expect(manifest(home).entries).toHaveLength(full);
+  expect(fs.readlinkSync(join(home, claude))).toBe("../../.agents/skills/control-tower");
+  expect(fs.existsSync(join(home, agent, "SKILL.md"))).toBe(true);
+  expect(doctorRuntime({ home, runner: () => ({ status: 0, stdout: "gentle-ai 4.0.0" }) }).skills).toBe("ok");
+}));
+
+test("S225 retires a skill that left the roster with a backup and keeps doctor and uninstall working", () => fixture(({ home, options, install }) => {
+  install();
+  const agent = ".agents/skills/legacy-skill", claude = ".claude/skills/legacy-skill";
+  fs.mkdirSync(join(home, agent), { recursive: true, mode: 0o755 });
+  fs.writeFileSync(join(home, agent, "SKILL.md"), "legacy bytes", { mode: 0o644 });
+  fs.symlinkSync("../../.agents/skills/legacy-skill", join(home, claude));
+  const record = manifest(home);
+  record.entries.push({ path: agent, component: "skills", installed: { kind: "directory", children: { "SKILL.md": fileSnapshot(join(home, agent, "SKILL.md")) } } });
+  record.entries.push({ path: claude, component: "skills", installed: linkSnapshot(join(home, claude)) });
+  record.directories.push(agent);
+  fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
+  install();
+  expect(fs.existsSync(join(home, agent))).toBe(false);
+  expect(fs.existsSync(join(home, claude))).toBe(false);
+  expect(manifest(home).entries.some(entry => entry.path === agent || entry.path === claude)).toBe(false);
+  expect(holdsBytes(join(home, ".local/share/torre-control/backups"), "legacy bytes")).toBe(true);
+  expect(doctorRuntime({ home, runner: options.runner })).toMatchObject({ skills: "ok", radar: "ok", signatures: "ok", pointers: "ok" });
+  expect(uninstallRuntime({ home })).toEqual({ status: "uninstalled" });
+}));
+
+test("S225 subset tolerance still rejects non-ownable and mis-owned manifest destinations", () => {
+  for (const [path, component] of [[".ssh", "skills"], [".agents/skills/legacy-skill", "radar"], [".agents/skills/legacy-skill/SKILL.md", "skills"], [".agents/skills/_shared", "skills"]]) fixture(({ home, write, install }) => {
+    install();
+    const record = manifest(home);
+    record.entries.push({ path, component, installed: { kind: "file", sha256: "deadbeef", mode: 0o644 } });
+    write(".local/share/torre-control/runtime-ownership.json", JSON.stringify(record));
+    expect(install).toThrow(/invalid manifest destination/);
+  });
+});
+
+test("S225 refuses a retired entry that no longer matches its recorded snapshot instead of deleting it", () => fixture(({ home, install }) => {
+  install();
+  const agent = ".agents/skills/legacy-skill";
+  fs.mkdirSync(join(home, agent), { recursive: true, mode: 0o755 });
+  fs.writeFileSync(join(home, agent, "SKILL.md"), "recorded", { mode: 0o644 });
+  const record = manifest(home);
+  record.entries.push({ path: agent, component: "skills", installed: { kind: "directory", children: { "SKILL.md": fileSnapshot(join(home, agent, "SKILL.md")) } } });
+  fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
+  fs.writeFileSync(join(home, agent, "SKILL.md"), "tampered", { mode: 0o644 });
+  expect(install).toThrow(/modified owned entry/);
+  expect(read(home, `${agent}/SKILL.md`)).toBe("tampered");
+}));
+
+test("S225 drops an already-absent retired entry without failing the upgrade", () => fixture(({ home, install }) => {
+  install();
+  const agent = ".agents/skills/legacy-skill";
+  const record = manifest(home);
+  record.entries.push({ path: agent, component: "skills", installed: { kind: "directory", children: {} } });
+  fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
+  install();
+  expect(manifest(home).entries.some(entry => entry.path === agent)).toBe(false);
+  expect(doctorRuntime({ home, runner: () => ({ status: 0, stdout: "gentle-ai 4.0.0" }) }).skills).toBe("ok");
 }));
 
 test("pointer insertion tolerates real gentle-ai blocks with unpaired start/end notes and nesting", () => fixture(({ home, write, install }) => {
