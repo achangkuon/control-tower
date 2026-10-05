@@ -25,7 +25,10 @@ Contamina: `product/tower/v1/` — `project-files.mjs`, `adoption.mjs`, `project
 - [x] T6 — Verificación — bun 2132 pass / 0 fail; python 501 OK; `go test ./...` del módulo TUI ok; vet+gofmt limpios. Commit de unidad `a8132fa` en `s222/permisos-instrucciones`.
 
 ## Estado final
-Implementación completa y commiteada en la rama `s222/permisos-instrucciones` (HEAD `a8132fa`). Pendiente: revisión nativa (RDD), integración a master después de que el otro agente entregue S219/S221, push y decisión de release patch v1.2.6 del mantenedor.
+Implementación entregada e integrada: commit `17498ef` en `master` (push `1904d9b`), S222 archivada en plan.yaml con cierre `47739f2` (push). Revisión nativa RDD aprobada y acuse quemado (lineage `review-f65bd5af0a38bce6`). Clasificación de release: amerita patch `v1.3.1`; publicación pendiente de decisión del mantenedor (posible lote junto con el fix de #156).
+
+## Siguiente paso (2026-10-06)
+Abrir por Radar la Sesión de arreglo del issue #156 (auto-actualización rota cuando cambia el tamaño del roster: bound de parseo, `from-checkout` con roster viejo, validación cruzada de cachés), decidida por el mantenedor como prioridad. Backup de la versión rota del runtime en `~/torre-broken-7b7b024-backup/` y del registro de proyectos en `~/torre-registry-backup.json` (limpiar cuando #156 esté cerrado).
 
 ## Restricciones
 
