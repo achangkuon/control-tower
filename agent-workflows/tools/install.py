@@ -620,7 +620,19 @@ def desired_manual_content(
     return content
 
 
-def desired_personal_content(path: Path, replacements: dict[bytes, bytes], *, add_absent=False) -> bytes:
+def desired_personal_content(
+    path: Path, replacements: dict[bytes, bytes], *, add_opt_in_absent: bool = False
+) -> bytes:
+    """Replace present personal blocks and append the absent ones this runtime receives.
+
+    Two append policies coexist on purpose:
+    - PERSONAL_ALWAYS_ADDED_WHEN_ABSENT blocks are appended to every runtime whenever they
+      are missing, unconditionally (maintainer decision for S224: the session-start freshness
+      check must reach every agent).
+    - PERSONAL_ADDED_WHEN_ABSENT blocks are appended only when `add_opt_in_absent` is true,
+      i.e. for the runtimes listed in ADDED_WHEN_ABSENT_FILES.
+    `add_opt_in_absent=False` therefore never suppresses the unconditional blocks.
+    """
     content = path.read_bytes()
     matches = _transition_matches(content, path)
     for _, start, _, _, _ in PERSONAL_BLOCKS:
@@ -633,7 +645,7 @@ def desired_personal_content(path: Path, replacements: dict[bytes, bytes], *, ad
                for old, new in PERSONAL_NAMES.items()}
     absent = tuple(start for start in PERSONAL_ALWAYS_ADDED_WHEN_ABSENT
                    if matches[start] is None)
-    if add_absent:
+    if add_opt_in_absent:
         absent += tuple(start for start in PERSONAL_ADDED_WHEN_ABSENT
                         if matches[start] is None and matches[aliases[start]] is None)
     if absent:
@@ -766,7 +778,8 @@ def preflight(home: Path, root: Path) -> None:
         _validate_file_destination(
             path.parent, path, "runtime instruction file", require_existing=True
         )
-        desired_personal_content(path, replacements, add_absent=adds_absent_blocks(home, path))
+        desired_personal_content(
+            path, replacements, add_opt_in_absent=adds_absent_blocks(home, path))
     for runtime_root, destination in retired_control_files(home):
         _validate_retired_control(runtime_root, destination)
 
@@ -928,7 +941,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
                 changes.append(Change(destination, "skill"))
     for path in installed_manual_paths(home):
         desired = desired_personal_content(
-            path, replacements, add_absent=adds_absent_blocks(home, path))
+            path, replacements, add_opt_in_absent=adds_absent_blocks(home, path))
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     changes.extend(carril_changes(home, root))
@@ -1113,7 +1126,7 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     for path in installed_manual_paths(home):
         if path in change_paths:
             desired = desired_personal_content(
-                path, replacements, add_absent=adds_absent_blocks(home, path))
+                path, replacements, add_opt_in_absent=adds_absent_blocks(home, path))
             _atomic_write(path, desired, path.parent)
     for runtime_root in installed_skill_roots(home):
         for retired_skill in RETIRED_SKILLS:

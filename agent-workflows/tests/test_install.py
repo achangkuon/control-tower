@@ -649,6 +649,17 @@ class InstallerTests(unittest.TestCase):
                 self.assertEqual(path.read_bytes().count(b"<!-- chanks:main-freshness -->"), 1)
         self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
 
+    def test_opt_in_flag_controls_only_opt_in_blocks(self):
+        replacements = INSTALLER.render_personal_blocks(ROOT)
+        path = self.home / ".claude/CLAUDE.md"
+        without = INSTALLER.desired_personal_content(path, replacements, add_opt_in_absent=False)
+        self.assertIn(b"<!-- chanks:main-freshness -->", without)
+        for start in INSTALLER.PERSONAL_ADDED_WHEN_ABSENT:
+            self.assertNotIn(start, without)
+        opted = INSTALLER.desired_personal_content(path, replacements, add_opt_in_absent=True)
+        for start in INSTALLER.PERSONAL_ADDED_WHEN_ABSENT:
+            self.assertIn(start, opted)
+
     def test_codex_receives_absent_blocks_once_preserving_existing_bytes(self):
         codex = self.home / ".codex/AGENTS.md"
         managed = b"<!-- gentle-ai:persona -->\r\nkeep managed bytes\r\n<!-- /gentle-ai:persona -->\r\n"
