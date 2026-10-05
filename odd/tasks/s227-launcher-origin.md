@@ -21,4 +21,13 @@ Issue: #159 (family #156/#157/#159 — last piece).
 
 ## Evidence
 
-- (recorded per task at close)
+- RED: 3 new contract tests failed with "unknown launcher" (install discovery, uninstall
+  readback, state-absent doctor). GREEN: 77 pass / 0 fail / 699 expect().
+- R3-2: finding text unrecoverable from the native store (hashes only). Evaluated
+  runtime-config.mjs:465-483: `surgical` latch correct; retiredPaths filter sufficient;
+  `hookDigests` persisted but read by no consumer (inert manifest-local state) →
+  accepted-by-design, recorded as cleanup candidate (removing a persisted manifest field is a
+  product-record contract change outside S227's authority).
+- Native review review-90281fac4366059a: approved first pass; 3 informational advisories
+  (R3-001 global.mjs:450, R3-002 global.mjs:120, R3-003 global.test.mjs:696). Commit: 20ee91a.
+  Delivered 6f7b985..20ee91a to master.
