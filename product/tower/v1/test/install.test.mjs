@@ -62,7 +62,7 @@ test("expanded canonical release extracts every pinned skill, template and signa
     "agent-workflows/tools/radar/vendor/modules.txt", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/LICENSE", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yaml.go"]) {
     expect(deps.pinned.paths).toContain(path);
   }
-  expect(deps.pinned.paths).toHaveLength(91);
+  expect(deps.pinned.paths).toHaveLength(93);
   expect(deps.pinned.paths).not.toContain("agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");
   // The fixture's install runner checks exact extracted bytes for every member.
   expect(main([], deps)).toBe(0);

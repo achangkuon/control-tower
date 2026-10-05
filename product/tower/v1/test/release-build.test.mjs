@@ -361,7 +361,7 @@ test("deterministic bytes, fixed keys and exact membership admitted by bootstrap
   const envelope = JSON.parse(bytes);
   expect(Object.keys(envelope)).toEqual(["schema", "members"]);
   expect(envelope.members.map(({ path }) => path)).toEqual(paths);
-  expect(envelope.members).toHaveLength(91);
+  expect(envelope.members).toHaveLength(93);
   expect(Object.keys(envelope.members[0])).toEqual(["path", "type", "encoding", "byteLength", "sha256", "bytes"]);
   const calls = [];
   const result = bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json",
@@ -392,7 +392,7 @@ test("release and installer pins carry global-only members and exclude the perso
   const excluded = "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json";
   expect(envelope.members.map(entry => entry.path)).not.toContain(excluded);
   expect(pinned.paths).not.toContain(excluded);
-  expect(pinned.paths).toHaveLength(91);
+  expect(pinned.paths).toHaveLength(93);
   expect(pinned.sha256).toBe(receipt.sha256);
 }, repo => {
   const excluded = join(repo, "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");

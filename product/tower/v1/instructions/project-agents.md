@@ -72,6 +72,7 @@ Radar only reports. It never chooses work and never replaces the human's decisio
 | Resume work after a break | `chanks-0-session-context-loader` |
 | The human asks for a simpler explanation | `chanks-0-explicalo-simple` |
 | The human asks for visible messages for an approved feature | `chanks-0-mensajes-visibles` |
+| The human asks to communicate with another agent, watch what it does, stop it or open a pane for it | `chanks-0-comunicacion-agentes` |
 | Create or reorganize skills | `chanks-0-skill-composer`, or `skill-orchestrator` for skills that coordinate other agents |
 Load a skill only when its stage starts. Never load all of them up front.
 

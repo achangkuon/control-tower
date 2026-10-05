@@ -75,8 +75,8 @@ function rejects(value, pattern = /release/i) {
 
 test("cached exact S194/S195 72/74-member releases remain verified; new intake requires all 91", () => {
   const preVendor = fixture().members.filter(m => !m.path.startsWith("agent-workflows/tools/radar/vendor/"));
-  for (const count of [72, 74]) {
-    const old = { schema, members: count === 74 ? preVendor : preVendor.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path)) };
+  for (const count of [74, 76]) {
+    const old = { schema, members: count === 76 ? preVendor : preVendor.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path)) };
     const bytes = encode(old), options = { repository: "example/control-tower", tag: `v1-cache-${count}`, asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) };
     expect(bootstrapCachedRelease(options).manifest.members.length).toBe(count);
     expect(() => bootstrapVerifiedRelease(options)).toThrow(/membership/);
@@ -120,8 +120,8 @@ test("published 30-member receipts are cached-only and retain exact membership a
 
 describe("bounded verified global release intake", () => {
   test("accepts exactly 91 canonical source-layout files independently of ordering", () => {
-    expect(BUNDLE_MEMBERS.length).toBe(81);
-    expect(new Set(paths).size).toBe(91);
+    expect(BUNDLE_MEMBERS.length).toBe(83);
+    expect(new Set(paths).size).toBe(93);
     for (const members of [fixture().members, fixture().members.reverse()]) {
       const bytes = encode({ schema, members });
       const original = Buffer.from(bytes);
@@ -129,7 +129,7 @@ describe("bounded verified global release intake", () => {
       const result = run();
       expect(result.manifest.schema).toBe(schema);
       expect(result.manifest.members.map(({ path }) => path).sort()).toEqual([...paths].sort());
-      expect(result.manifest.members.length).toBe(91);
+      expect(result.manifest.members.length).toBe(93);
       expect(Object.isFrozen(result)).toBe(true);
       expect(Object.isFrozen(result.manifest.members)).toBe(true);
       for (const entry of result.manifest.members) {
