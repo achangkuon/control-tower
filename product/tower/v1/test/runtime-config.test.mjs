@@ -401,7 +401,7 @@ test("S225 retires a skill that left the roster with a backup and keeps doctor a
 }));
 
 test("S225 subset tolerance still rejects non-ownable and mis-owned manifest destinations", () => {
-  for (const [path, component] of [[".ssh", "skills"], [".agents/skills/legacy-skill", "radar"], [".agents/skills/legacy-skill/SKILL.md", "skills"], [".agents/skills/_shared", "skills"]]) fixture(({ home, write, install }) => {
+  for (const [path, component] of [[".ssh", "skills"], [".agents/skills/legacy-skill", "radar"], [".agents/skills/legacy-skill/SKILL.md", "skills"], [".agents/skills/_shared", "skills"], [".agents/skills/..", "skills"]]) fixture(({ home, write, install }) => {
     install();
     const record = manifest(home);
     record.entries.push({ path, component, installed: { kind: "file", sha256: "deadbeef", mode: 0o644 } });

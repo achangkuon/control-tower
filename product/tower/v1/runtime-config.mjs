@@ -107,7 +107,7 @@ function retiredSkill(path) {
   const match = typeof path === "string" && /^\.(?:agents|claude)\/skills\/([^/]+)$/.exec(path);
   // `_shared` hosts owned roster files (e.g. the plan-naming convention) and never retires;
   // treating it as removable would let a corrupted manifest delete a live owned parent.
-  return match && match[1] !== "_shared" && !V1_SKILLS.includes(match[1]) ? match[1] : null;
+  return match && match[1] !== "_shared" && match[1] !== "." && match[1] !== ".." && !V1_SKILLS.includes(match[1]) ? match[1] : null;
 }
 function load(home) {
   const bytes = read(home, join(home, manifestPath)); if (!bytes) return null;
