@@ -2387,42 +2387,7 @@ sesiones:
 
   - {id: S221, entrega: {commit: 6a63461ce8e23e7be7b0b6f5b6d59051c4aed76e}, historico: openspec/archive/sesiones/S221.md}
 
-  - id: S222
-    zona: producto-torre
-    prioridad: resolucion-problemas-v1
-    resultado: "El doctor deja de invalidar un proyecto por el bit group-writable de una instrucción cuyo bloque propio verifica byte a byte, «project doctor» soporta --fix-permissions y la TUI ofrece la corrección como acción informativa."
-    autoridad: "Decisión del mantenedor el 2026-10-05 en conversación (issue #155, opción «Ambas», clase seguridad y permisos): confiar en la verificación de contenido para el bit group-writable y habilitar la reparación soportada; contamina product/tower/v1/ y la release esperada es patch."
-    depende_de: []
-    archivos: [product/tower/v1/project-files.mjs, product/tower/v1/adoption.mjs, product/tower/v1/projects.mjs, product/tower/v1/cli.mjs, product/tower/v1/tui/projects.go, product/tower/v1/tui/model.go, product/tower/v1/test/project-files.test.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/tui/projects_test.go]
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        En cada release que cambia las instrucciones generadas, un pull/checkout reescribe
-        AGENTS.md de la Torre con umask 0002 y lo deja group-writable (664); preflightProjectPaths
-        (project-files.mjs:155) rechaza mode & 0o022 y la TUI marca el proyecto «inválido».
-        La verificación de instrucciones ya compara el bloque propio byte a byte
-        (projectInstructionState, project-files.mjs:275), así que el bit es una capa extra sobre
-        contenido ya verificado, y el mensaje de error de permisos sugiere un --fix-permissions
-        que el CLI rechaza para project doctor (cli.mjs:42).
-      resultado_comportamiento: >-
-        doctorProject acepta una instrucción group-writable cuando su bloque propio verifica igual
-        y sigue rechazando otros-writable y bloque modificado; directorios, journal y directos
-        conservan su exigencia de modo. «torre-control project doctor --project X --fix-permissions»
-        repara los permisos y reporta permissionsChanged, siguiendo el patrón existente de
-        init/update. La TUI muestra, para un proyecto inválido por permisos, una acción informativa
-        «Corregir permisos» con el comando exacto, como la pantalla «Actualizar la Torre».
-      restricciones_decisiones: >-
-        La relajación es quirúrgica: sólo archivos de instrucciones cuyo bloque propio verifica,
-        nunca directorios ni otros-writable; preflightProjectPaths no afloja su chequeo general.
-        No se tocan los archivos de S219 ni S221 (Sesión hermana en curso en el checkout Main);
-        toda expansión de archivos requiere aprobación humana. Publicar es decisión humana
-        separada; la release esperada es patch v1.2.5 → v1.2.6. ODD nativo; SDD sólo por solicitud
-        humana explícita.
-      referencias: >-
-        product/tower/v1/project-files.mjs (preflightProjectPaths, projectInstructionState);
-        product/tower/v1/adoption.mjs (preflight, doctorProject); product/tower/v1/projects.mjs
-        (doctorRegisteredProject, liveStatus); product/tower/v1/cli.mjs:42; issue #155;
-        AGENTS.md (subsección «Cuándo un cambio a master es una release").
+  - {id: S222, entrega: {commit: 17498ef70515031bde33b0ca729485752ae56282}, historico: openspec/archive/sesiones/S222.md}
 
   - id: S220
     zona: autoridad
