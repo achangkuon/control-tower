@@ -67,3 +67,17 @@ requires `755`; the Git index mode for those paths is `100755`. Before normalizi
 working-tree modes to `755` (a change Git does not see), the same suite failed with
 `InstallError: Carril launcher source must be a regular executable 755 file`. The
 normalization is what makes the suite green; it is not part of any commit.
+
+### Review and delivery
+
+- First native review `review-5a9ccfc1eef80bba` escalated on R2-001: `add_absent` looked
+  bypassed for `main-freshness`. The behavior is the approved design, so the maintainer chose
+  to make it explicit: `5b984f3` renames the flag to `add_opt_in_absent`, documents the two
+  append policies and adds `test_opt_in_flag_controls_only_opt_in_blocks`
+  (`tests.test_install` + `tests.test_main_al_dia`: 200 OK).
+- Second native review `review-f87f7bf4d1c110ab` (four lenses) approved and acknowledged.
+  Non-blocking follow-ups: possible false `OK` when the default branch cannot be resolved
+  (`main-al-dia:49-58`), fetch timeout robustness (`:31-37`), exact `755` source check
+  (`install.py:824-829`), dirty flag counting untracked files (`:82-87`).
+- Maintainer authorized direct push to `master` and installation on 2026-10-05; S224
+  archived with delivery commit `5b984f3`.

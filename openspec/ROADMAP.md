@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S219, S221, S222, S223, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S219, S221, S222, S223, S224, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
 - Próximo trabajo ejecutable: ninguno.
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 92% (150/162 S)
+- **Total:** 92% (151/163 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -22,7 +22,7 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 92% (49/53 S)
+- **Método:** 92% (50/54 S)
 - **Producto Torre:** 89% (34/38 S)
 
 ## Zonas y colas
@@ -1454,6 +1454,20 @@
   - Resultado y comportamiento: Existe un informe de diagnóstico con evidencia archivo:línea que responde, sin corregir nada: cómo se crea hoy una copia de trabajo y qué le falta para quedar lista (dependencias Bun, Go y Python, modos de archivo, hooks, índice de CodeGraph); si conviene crear una copia nueva por vuelo o reciclar copias ya preparadas, con el costo medido de cada camino; cómo se comportan el gate de push, el aviso de revisión y Radar desde una copia enlazada; quién retira la copia y la rama, cuándo, y qué se conserva si el vuelo quedó a medias o como NOVEDAD · interrumpida. El informe cierra con las decisiones que le corresponden al mantenedor, cada una con opciones, consecuencia y recomendación, y con el delta exacto que esas decisiones le harían a S215.
   - Restricciones y decisiones: Es diagnóstico: no implementa &#96;piloto&#96;, no crea ni borra copias de trabajo ajenas y no modifica el diseño aprobado (P1–P14); si una decisión aprobada resulta insuficiente, se reporta como decisión pendiente y no se reescribe. No decide por el mantenedor. La decisión sobre &#96;chanks-0-jornada&#96; sigue atada a la planificación de V3 y sólo se cita. El único archivo autorizado es el informe; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: docs/architecture/piloto-automatico.md (términos, sección del vuelo, sección 12, pendiente de &#96;chanks-0-jornada&#96;); fricciones &#35;139 (copias por Sesión descartan el pool ya preparado) y &#35;152 (el gate de push ubica mal a Radar); .githooks/pre-push (condiciones desde copia enlazada); odd/tasks/s218-comunicacion-agentes.md (evidencia de los costos observados el 2026-10-04); S215 (herramienta que crea las copias).
+
+### S224 — Cada agente, al entrar a una sesión en un proyecto Git, comprueba una vez que la rama por defecto esté al día con su remoto: al día continúa en silencio, atrás avisa en una línea y pregunta una sola vez si actualizar primero o continuar, y nunca actualiza sin consentimiento.
+- Coordinación:
+  - Estado derivado: 📚 ARCHIVADO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/main-al-dia, agent-workflows/tools/install.py, agent-workflows/templates/main-freshness.md, agent-workflows/templates/agent-propagation-map.md, agent-workflows/README.md, agent-workflows/tests/test&#95;main&#95;al&#95;dia.py, agent-workflows/tests/test&#95;install.py, odd/tasks/main-al-dia.md
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Los agentes arrancan a trabajar en un proyecto sin comprobar si la rama por defecto quedó atrás respecto del remoto. Ya pasó que una sesión trabajó sobre una copia desactualizada y sólo lo advirtió al final. Se pidió que la comprobación ocurra al primer mensaje de la sesión, que medir sea de sólo lectura y que la decisión de actualizar sea del humano.
+  - Resultado y comportamiento: Existe una herramienta de sólo lectura &#96;main-al-dia&#96;, instalada en &#96;~/.local/bin/&#96;, y un bloque personal &#96;main-freshness&#96; que cada agente recibe en sus instrucciones. Al primer mensaje de una sesión dentro de un repositorio Git el agente corre la herramienta una vez: si responde &#96;OK&#96; o &#96;SKIP&#96; no dice nada y sigue con el pedido; si responde &#96;BEHIND&#96;, antes de avanzar informa en una línea qué quedó atrás y hace una sola pregunta —actualizar primero o continuar así— y espera la respuesta. Al actualizar sólo se permite adelantar por avance rápido (fast-forward): la rama por defecto que no está tomada se trae con &#96;git fetch origin &lt;b&gt;:&lt;b&gt;&#96;, la que está tomada en este u otro worktree se adelanta con &#96;git -C &lt;worktree&gt; merge --ff-only origin/&lt;b&gt;&#96;, y la rama actual atrasada respecto de su upstream se adelanta con &#96;git merge --ff-only @{u}&#96;. Nunca se hace stash, reset, rebase, force ni descarte: si el árbol está sucio, las ramas divergieron o el avance rápido falla, el agente se detiene y lo explica en simple. La comprobación no se repite en la misma sesión y los subagentes no la corren. La herramienta imprime &#96;SKIP&#96; sin fallar cuando no hay repositorio Git, no hay remoto &#96;origin&#96; o el remoto no responde, y siempre sale con código 0.
+  - Restricciones y decisiones: La herramienta es de sólo lectura: nunca hace checkout, merge, stash ni mueve ramas locales; lo único que escribe es el &#96;git fetch&#96; que trae las referencias remotas. La actualización jamás ocurre sin consentimiento humano y sólo por avance rápido. El bloque se agrega a los cuatro archivos de instrucciones personales cuando falta, sin cambiar el comportamiento de los bloques existentes. El instalador personal nunca escribe &#96;~/.claude/settings.json&#96;; no hay hook de Claude Code en esta versión. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: odd/tasks/main-al-dia.md (lista de tareas y decisiones); agent-workflows/tools/install.py (precedente &#96;carril&#96; para instalar un ejecutable en &#96;~/.local/bin/&#96;); agent-workflows/templates/agent-propagation-map.md y agent-workflows/README.md (enumeración de los bloques personales); agent-workflows/tests/test&#95;install.py (contrato de los bloques personales y del instalador).
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
