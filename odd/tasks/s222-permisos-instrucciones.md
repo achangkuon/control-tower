@@ -17,12 +17,15 @@ Contamina: `product/tower/v1/` — `project-files.mjs`, `adoption.mjs`, `project
 
 ## Tareas
 
-- [ ] T1 — Escribir S222 en `openspec/plan.yaml` (Zona producto-torre), `radar check` + `radar render`. Commit `docs(plan)`.
-- [ ] T2 — RED: pruebas que fallan — (a) `doctorProject` acepta `AGENTS.md` 664 cuando el bloque propio verifica igual; (b) sigue rechazando otros-writable y bloque modificado; (c) CLI acepta `--fix-permissions` en `project doctor`.
-- [ ] T3 — GREEN: relajamiento quirúrgico — `preflightProjectPaths` acepta un conjunto de rutas de instrucciones con bloque verificado cuyo bit group-writable no invalida; `preflight`/`doctorProject` computan ese conjunto comparando el bloque propio; directorios y otros-writable siguen estrictos.
-- [ ] T4 — GREEN: `--fix-permissions` en `project doctor` (CLI + threading en `projects.mjs`/`adoption.mjs`), siguiendo el patrón existente de `permissionsChanged`.
-- [ ] T5 — TUI: para proyecto inválido, acción informativa «Corregir permisos» con el comando exacto (patrón «Actualizar la Torre» de `model.go`).
-- [ ] T6 — Verificación: suites aplicables (bun product tests, `go test ./...` de la TUI), work-unit commits convencionales en la rama `s222/permisos-instrucciones`.
+- [x] T1 — Escribir S222 en `openspec/plan.yaml` (Zona producto-torre), `radar check` + `radar render`. Commit `docs(plan)` — `f0cf78b`.
+- [x] T2 — RED — (evidencia: «Permisos inseguros» en las 5 pruebas nuevas antes de implementar).
+- [x] T3 — GREEN — `preflightProjectPaths` con `groupWritableOk`; `doctorProject` bifásico con comparación tolerante del bit 0o020 en instrucciones.
+- [x] T4 — GREEN — `--fix-permissions` en `project doctor` (cli.mjs) + proyección `permissionError` al estado.
+- [x] T5 — TUI — acción informativa «Corregir permisos» (`projects.go` + `model.go`, página `project-permissions`).
+- [x] T6 — Verificación — bun 2132 pass / 0 fail; python 501 OK; `go test ./...` del módulo TUI ok; vet+gofmt limpios. Commit de unidad `a8132fa` en `s222/permisos-instrucciones`.
+
+## Estado final
+Implementación completa y commiteada en la rama `s222/permisos-instrucciones` (HEAD `a8132fa`). Pendiente: revisión nativa (RDD), integración a master después de que el otro agente entregue S219/S221, push y decisión de release patch v1.2.6 del mantenedor.
 
 ## Restricciones
 
