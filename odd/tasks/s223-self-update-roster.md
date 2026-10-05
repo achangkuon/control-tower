@@ -34,8 +34,14 @@ Make every `torre-control update` path able to cross a roster-size change
 
 ## Tasks
 
-- [ ] RED: regression tests for the update bridge (91→91 parses, 91→93 parses,
-      from-checkout with newer roster self-bootstraps, mixed-roster store inspects).
-- [ ] Implement the three fixes (delegated writer).
-- [ ] GREEN + full V1 Bun suite from Main.
+- [x] RED: 4 new regression tests failed before implementation (166 pass / 4 fail;
+      /tmp/s223-red.log): absolute-bound intake, roster-91→93 bridge (fresh-process mock),
+      mixed-generation store, from-checkout with larger checkout roster.
+- [x] Implemented the three fixes: ABSOLUTE_MEMBER_LIMIT = 512 (bootstrap.mjs:22);
+      validateMembers superset rule for fresh intake and digest-only admission for caches
+      (bootstrap.mjs:98–131); from-checkout roster from the checkout's own bundle.mjs via
+      isolated subprocess (release-build.mjs:48–77).
+- [x] GREEN: focused 170 pass / 1 skip; full Bun suite 2136 pass / 1 skip; Go ok;
+      Python 501 OK (2 skips). Independent verification by gentle-ai-verify.
+- [x] Fix commit: 8af0de2 (S223 work unit).
 - [ ] Native RDD review, deliver, archive via radar.
