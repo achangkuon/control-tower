@@ -143,6 +143,7 @@ available, outside this migration's scope.
 | Delivery policy (Tower V1) | `chanks-5-politica-de-entrega` |
 | Decision and communication support (Tower V1) | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer`, `analisis-por-tramos`, `skill-orchestrator` |
 | Personal active skills (not Tower) | `chanks-0-agente-soporte`, `torre-release` |
+| Manual agent communication (source in `skills/`, Tower V1 packaging pending, not installed yet) | `chanks-0-comunicacion-agentes` |
 | Deferred to V2, Pista (source kept, not installed) | `chanks-0-jornada`, `chanks-3-session-kickoff`, `chanks-3-coordinador-manual` |
 | Deferred to V3, automatic Tower (source kept, not installed) | `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation` |
 
@@ -150,6 +151,12 @@ The six non-V1 sources live in [`skills-diferidas/`](skills-diferidas/README.md)
 grouped by version. `chanks-0-agente-soporte` lives under `skills-diferidas/v2/`
 but remains installed as a personal skill, never as a Tower V1 bundle member.
 Its installed links remain runtime-relative; its repository links follow the new layout.
+
+`chanks-0-comunicacion-agentes` is not deferred: it is listed in `V1_PENDING_SKILLS`
+until the Tower V1 package adds it, so neither Tower nor this installer writes it.
+It covers what the user asks for by hand —message, observe or stop another agent,
+open a pane— and cites the native `herdr` skill for commands. Automatic Session
+dispatch stays in `chanks-3-despacho-herdr` (V3).
 
 Every existing deferred-skill retirement remains unchanged: installed copies are
 archived under `.retired-skills/`, never reinstalled. The retired Pi write-lock

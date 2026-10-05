@@ -128,12 +128,13 @@ El despacho por Herdr, los handoffs entre workers Pi y los parches de issue por 
 de workers, viven en `agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/`
 (`references/worker-pool.md`). Para trabajo paralelo ordinario usá `chanks-3-paralelo`.
 
-**Uso manual de Herdr (por ahora).** El despacho automático sigue siendo V3, pero si
-el mantenedor pide Herdr de forma explícita —"usá Herdr", "abri un panel en Herdr"—
-cargá la skill `herdr` (Pi: `~/.pi/agent/skills/herdr/SKILL.md`; requiere estar
-corriendo dentro de Herdr, `HERDR_ENV=1`) y atendé sólo lo pedido. Eso es una
-solicitud manual de terminal, no habilita despacho automático de Sesiones ni
-topología Torre: para eso sigue rigiendo el diferimiento a V3.
+**Comunicación manual entre agentes.** V3 es sólo el despacho automático de Sesiones.
+El uso manual —dejarle un mensaje a otro agente, mirar qué está haciendo, frenarlo o
+abrir un panel— lo gobierna la skill `chanks-0-comunicacion-agentes`, y se dispara por
+lo que pide el mantenedor —"comunicate con el agente", "fijate qué hace"—, sin necesidad
+de nombrar Herdr. Cargala y atendé sólo lo pedido (requiere estar corriendo dentro de
+Herdr, `HERDR_ENV=1`). Eso es una solicitud manual, no habilita despacho automático de
+Sesiones ni topología Torre: para eso sigue rigiendo el diferimiento a V3.
 
 Cuando una Sesión recibe o detecta una fricción, mientras conserva el contexto fresco
 busca issues abiertos y cerrados de `achangkuon/control-tower`. Si existe el tracker

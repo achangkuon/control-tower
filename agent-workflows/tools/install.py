@@ -37,6 +37,7 @@ CHANKS_SKILLS = (
     "chanks-1-rfc",
     "chanks-1-terreno",
     "chanks-0-agente-soporte",
+    "chanks-0-comunicacion-agentes",
     "chanks-0-mensajes-visibles",
     "chanks-0-explicalo-simple",
     "chanks-0-session-context-loader",
@@ -85,19 +86,28 @@ PERSONAL_SOURCE_DIRS = MappingProxyType({
     "torre-release": "skills-personales",
 })
 
+# Sources already in the Method whose Tower V1 packaging is a later Session.
+# Until the product export lists them, neither Tower nor this installer ships
+# them: they stay in the public source inventory only.
+V1_PENDING_SKILLS = (
+    "chanks-0-comunicacion-agentes",
+)
+
 # The maintainer's own skills: one real copy each in the central folder, reached
 # from Claude Code through per-skill symlinks. Gentle AI skills are not part of
 # this roster and stay per runtime under `gentle-ai`.
 # Mirror runtime-config.mjs / bundle.mjs's reviewed V1 membership. A fixture
 # test checks this boundary against the product export, without installing Tower.
 TOWER_V1_SKILLS = tuple(sorted(
-    tuple(name for name in CHANKS_SKILLS if name != "chanks-0-agente-soporte")
+    tuple(name for name in CHANKS_SKILLS
+          if name != "chanks-0-agente-soporte" and name not in V1_PENDING_SKILLS)
     + SUPPORT_SKILLS + ("control-tower",)
 ))
 STOP_MANAGING_SKILLS = tuple(sorted(set(CHANKS_SKILLS + SUPPORT_SKILLS) & set(TOWER_V1_SKILLS)))
 OWN_SKILLS = CHANKS_SKILLS + SUPPORT_SKILLS + tuple(PERSONAL_SOURCE_DIRS)
 SKILLS = SHARED + OWN_SKILLS
-PERSONAL_SKILLS = tuple(name for name in OWN_SKILLS if name not in TOWER_V1_SKILLS)
+PERSONAL_SKILLS = tuple(name for name in OWN_SKILLS
+                        if name not in TOWER_V1_SKILLS + V1_PENDING_SKILLS)
 
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.

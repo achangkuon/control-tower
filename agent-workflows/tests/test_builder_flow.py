@@ -568,9 +568,10 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
 
 STAGE_SKILL_GLOBS = (
-    "chanks-0-agente-soporte", "chanks-0-explicalo-simple", "chanks-0-mensajes-visibles",
-    "chanks-0-session-context-loader", "chanks-1-*", "chanks-2-planificador-granular",
-    "chanks-3-session-kickoff", "chanks-3-paralelo", "chanks-4-puente", "chanks-5-*",
+    "chanks-0-agente-soporte", "chanks-0-comunicacion-agentes", "chanks-0-explicalo-simple",
+    "chanks-0-mensajes-visibles", "chanks-0-session-context-loader", "chanks-1-*",
+    "chanks-2-planificador-granular", "chanks-3-session-kickoff", "chanks-3-paralelo",
+    "chanks-4-puente", "chanks-5-*",
 )
 FORBIDDEN_IN_STAGE_SKILLS = (
     "--base-ref", "per work-unit commit", "Forward configured", "four lenses", "cuatro lentes",
@@ -591,6 +592,7 @@ def approved_stage_activation(name, description):
         return description.startswith("Chanks etapa 1,") or description.startswith("Chanks etapa 1 Definir,")
     prefixes = {
         "chanks-0-agente-soporte": "Chanks soporte de planificación,",
+        "chanks-0-comunicacion-agentes": "comunicate con el agente,",
         "chanks-0-explicalo-simple": "explicámelo más fácil,",
         "chanks-0-mensajes-visibles": "Chanks mensajes visibles,",
         "chanks-0-session-context-loader": "Chanks cargar contexto del plan,",
@@ -669,6 +671,7 @@ class StageSkillBoundaryTests(unittest.TestCase):
             ("chanks-4-puente", "Chanks, write code and review a change."),
             ("chanks-5-session-doc", "Chanks, finish any development request."),
             ("chanks-0-mensajes-visibles", "Chanks, suggest messages while planning."),
+            ("chanks-0-comunicacion-agentes", "Herdr, control panes, tabs or another agent."),
         ):
             with self.subTest(name=name):
                 self.assertFalse(approved_stage_activation(name, description))
