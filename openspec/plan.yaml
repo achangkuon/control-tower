@@ -2386,7 +2386,7 @@ sesiones:
     prioridad: metodo-v1
     resultado: "Skill propia chanks-0-comunicacion-agentes: cualquier agente dentro de Herdr se comunica con otro agente, lo observa, lo frena o abre paneles cuando el usuario lo pide con sus palabras, sin nombrar Herdr."
     autoridad: "Alcance aprobado por el maintainer el 2026-10-04 en conversación: skill propia disparada por intención, que cita la skill nativa de Herdr como referencia, disponible para todos los agentes y dentro del paquete de la Torre; el bloque «Uso manual de Herdr (por ahora)» de AGENTS.md se reemplaza."
-    archivos: [agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md, agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md, agent-workflows/tests/test_comunicacion_agentes.py, agent-workflows/tests/test_builder_flow.py, agent-workflows/README.md, agent-workflows/skills/_shared/plan-naming-convention.md, agent-workflows/tools/install.py, AGENTS.md]
+    archivos: [agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md, agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md, agent-workflows/tests/test_comunicacion_agentes.py, agent-workflows/tests/test_builder_flow.py, agent-workflows/tests/test_personal_config.py, agent-workflows/tools/prepare-personal-config.py, agent-workflows/README.md, agent-workflows/skills/_shared/plan-naming-convention.md, agent-workflows/tools/install.py, AGENTS.md]
     cimientos: [AGENTS.md]
     recurso: ["sesión Herdr en curso (HERDR_ENV=1) y la CLI `herdr` instalada"]
     encargo:
@@ -2421,7 +2421,7 @@ sesiones:
         agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/. La separación decidida en
         S137 se conserva: Intercom sigue siendo el transporte entre workers Pi; esta skill cubre la
         comunicación manual entre agentes de cualquier tipo, pedida por el usuario. Las plantillas
-        AGENTS.md no puede contener las cadenas que prohíbe
+        AGENTS.md no pueden contener las cadenas que prohíbe
         test/extensions/pi/builder-instructions.test.mjs. Esta Sesión no toca el paquete ni las
         plantillas instaladas: eso es S219. Los archivos autorizados delimitan el cambio; toda
         expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
