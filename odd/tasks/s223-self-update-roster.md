@@ -44,4 +44,13 @@ Make every `torre-control update` path able to cross a roster-size change
 - [x] GREEN: focused 170 pass / 1 skip; full Bun suite 2136 pass / 1 skip; Go ok;
       Python 501 OK (2 skips). Independent verification by gentle-ai-verify.
 - [x] Fix commit: 8af0de2 (S223 work unit).
-- [ ] Native RDD review, deliver, archive via radar.
+- [x] Native RDD review: lineage review-a3dc79c758fca41c (high, 4 lenses). Single finding
+      R2-001 (readability CRITICAL) was a proven false positive (childProcess import exists at
+      release-build.mjs:2 since before the change; the from-checkout subprocess test passed in
+      the full suite). The bounded 2-line correction (70f2d7a) was rejected by the targeted
+      validator (nothing to fix) and the lineage escalated to a terminal native stop
+      (`native_stop_required`, cause targeted_validator_rejected). No dispute route exists in
+      the compact facade. Maintainer decision 2026-10-06: deliver anyway.
+- [x] Delivered: pushed from Main to origin/master (d3dcbe7, 8af0de2, 819e7cc, 70f2d7a);
+      first push rejected by a known timing-flaky Bun test, retry passed.
+- [ ] Archive via radar (chanks-5-session-doc).
