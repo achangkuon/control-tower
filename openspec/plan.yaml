@@ -2390,7 +2390,7 @@ sesiones:
     autoridad: "Alcance aprobado por el maintainer el 2026-10-04 en conversación: la skill propia de comunicación entre agentes tiene que estar disponible para todos los agentes y viajar en las configuraciones de la Torre."
     depende_de:
       - S218
-    archivos: [product/tower/v1/bundle.mjs, product/tower/v1/install.mjs, product/tower/v1/instructions/project-agents.md, product/tower/v1/test/bundle.test.mjs]
+    archivos: [product/tower/v1/bundle.mjs, product/tower/v1/install.mjs, product/tower/v1/instructions/project-agents.md, product/tower/v1/test/bundle.test.mjs, agent-workflows/tools/install.py, agent-workflows/tests/test_personal_config.py]
     recurso: ["roster explícito del paquete V1"]
     encargo:
       pedido_contexto: >-
