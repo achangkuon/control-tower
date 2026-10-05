@@ -2436,46 +2436,7 @@ sesiones:
 
   - {id: S225, entrega: {commit: d7bd8d1e2d92db4b33089cb3288adc393271222b}, historico: openspec/archive/sesiones/S225.md}
 
-  - id: S226
-    zona: metodo
-    prioridad: resolucion-problemas-generales
-    resultado: "Territorio exclusivo por archivo entre los dos instaladores: el binario de Radar y el hook chanks-etapa.sh quedan en propiedad única de la Torre (la release los viaja a los socios), y el instalador personal del Método los respeta: install-radar.sh se niega a pisar un binario Torre-owned salvo escape explícito de desarrollo, e install.py deja de escribir chanks-etapa.sh (igual que ya protege torre-firma.sh)."
-    autoridad: "Decisión del mantenedor el 2026-10-06 en conversación (issue #158, opción A «mantener los dos, repartir los archivos en disputa»): Radar y chanks-etapa.sh quedan Torre-owned; los bloques personales de los 4 archivos de instrucciones quedan del instalador personal, sin cambio (ya están particionados por marcas)."
-    depende_de: []
-    archivos: [agent-workflows/tools/install.py, agent-workflows/tools/install-radar.sh, agent-workflows/tests/test_personal_config.py]
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        Dos instaladores escriben en $HOME: el personal del Método (agent-workflows/tools/install.py)
-        y el de la Torre (product/tower/v1/runtime-config.mjs). Después de #154 los rosters de skills
-        son disjuntos, pero quedan dos destinos que ambos escriben: ~/.local/bin/radar (install-radar.sh:44-50
-        pisa el binario que la Torre construye y posee, runtime-config.mjs:213-247, entrada propia en
-        allowedEntries) y ~/.claude/hooks/chanks-etapa.sh (escrito por install.py:695-716 y por la Torre
-        desde la misma fuente, que además registra el hook en settings.json). Cada corrida de uno deja
-        el manifiesto de propiedad de la Torre desactualizado («modified owned entry»), lo que bloqueó
-        el upgrade de la máquina del mantenedor el 2026-10-05/06 y obligó a reconciliación manual.
-      resultado_comportamiento: >-
-        install-radar.sh detecta que el destino ~/.local/bin/radar es propiedad de la Torre
-        (lectura del manifiesto de propiedad) y se niega a sobreescribirlo con un mensaje que
-        indique la vía Torre; un escape explícito de desarrollo (--force, documentado) permite
-        sobreescribir a sabiendas, dejando visible que el preflight de la Torre reportará la
-        entrada modificada hasta la próxima instalación. install.py ya no escribe
-        ~/.claude/hooks/chanks-etapa.sh: el hook queda Torre-owned (la release lo entrega y
-        registra), igual que ya ocurre con torre-firma.sh (comentario install.py:163-165). Los
-        tests de config personal existentes siguen pasando y cubren los dos cambios; los bloques
-        personales de los 4 archivos de instrucciones no cambian (partición por marcas vigente).
-      restricciones_decisiones: >-
-        No se cambia el modelo de ownership de la Torre ni su instalador (product/tower/ queda
-        fuera de alcance); no se tocan los bloques personales ni las plantillas; el hook conserva
-        su fuente única agent-workflows/tools/hooks/chanks-etapa.sh (la Torre lo consume, no se
-        duplica). El escape --force es explícito y documentado, nunca default. Toda expansión de
-        archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
-      referencias: >-
-        issues #158 (esta fricción), #157 (arreglada en S225, commit d7bd8d1) y #159 (abierta);
-        agent-workflows/tools/install.py (163-165 protección de torre-firma.sh como modelo a
-        extender, 695-716 escritura de chanks-etapa.sh); agent-workflows/tools/install-radar.sh:44-50;
-        product/tower/v1/runtime-config.mjs (allowedEntries 155-163, buildRadar 213-247);
-        agent-workflows/tests/test_personal_config.py (tests existentes del instalador personal).
+  - {id: S226, entrega: {commit: 95b3bc9e192a1ddb56ed3959d211300a55bd046c}, historico: openspec/archive/sesiones/S226.md}
 
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
