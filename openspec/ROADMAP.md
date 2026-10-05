@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 92% (151/163 S)
+- **Total:** 92% (151/164 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -23,7 +23,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 92% (50/54 S)
-- **Producto Torre:** 89% (34/38 S)
+- **Producto Torre:** 87% (34/39 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -1468,6 +1468,20 @@
   - Resultado y comportamiento: Existe una herramienta de sólo lectura &#96;main-al-dia&#96;, instalada en &#96;~/.local/bin/&#96;, y un bloque personal &#96;main-freshness&#96; que cada agente recibe en sus instrucciones. Al primer mensaje de una sesión dentro de un repositorio Git el agente corre la herramienta una vez: si responde &#96;OK&#96; o &#96;SKIP&#96; no dice nada y sigue con el pedido; si responde &#96;BEHIND&#96;, antes de avanzar informa en una línea qué quedó atrás y hace una sola pregunta —actualizar primero o continuar así— y espera la respuesta. Al actualizar sólo se permite adelantar por avance rápido (fast-forward): la rama por defecto que no está tomada se trae con &#96;git fetch origin &lt;b&gt;:&lt;b&gt;&#96;, la que está tomada en este u otro worktree se adelanta con &#96;git -C &lt;worktree&gt; merge --ff-only origin/&lt;b&gt;&#96;, y la rama actual atrasada respecto de su upstream se adelanta con &#96;git merge --ff-only @{u}&#96;. Nunca se hace stash, reset, rebase, force ni descarte: si el árbol está sucio, las ramas divergieron o el avance rápido falla, el agente se detiene y lo explica en simple. La comprobación no se repite en la misma sesión y los subagentes no la corren. La herramienta imprime &#96;SKIP&#96; sin fallar cuando no hay repositorio Git, no hay remoto &#96;origin&#96; o el remoto no responde, y siempre sale con código 0.
   - Restricciones y decisiones: La herramienta es de sólo lectura: nunca hace checkout, merge, stash ni mueve ramas locales; lo único que escribe es el &#96;git fetch&#96; que trae las referencias remotas. La actualización jamás ocurre sin consentimiento humano y sólo por avance rápido. El bloque se agrega a los cuatro archivos de instrucciones personales cuando falta, sin cambiar el comportamiento de los bloques existentes. El instalador personal nunca escribe &#96;~/.claude/settings.json&#96;; no hay hook de Claude Code en esta versión. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: odd/tasks/main-al-dia.md (lista de tareas y decisiones); agent-workflows/tools/install.py (precedente &#96;carril&#96; para instalar un ejecutable en &#96;~/.local/bin/&#96;); agent-workflows/templates/agent-propagation-map.md y agent-workflows/README.md (enumeración de los bloques personales); agent-workflows/tests/test&#95;install.py (contrato de los bloques personales y del instalador).
+
+### S225 — El instalador global cruza upgrades cuyo roster cambia de tamaño: un manifiesto de propiedad con menos entradas que el roster en ejecución (roster que creó) instala sin desinstalar, y una release con skills retiradas remueve sus rutas propias con backup; doctor y desinstalador quedan sanos en ambas direcciones.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Toda release que agrega o quita skills es inalcanzable por upgrade en máquinas ya instaladas: load() (product/tower/v1/runtime-config.mjs:107) exige que el manifiesto de propiedad tenga exactamente la misma cantidad de entradas que el roster del instalador en ejecución (value.entries.length === allowed.size), antes de los chequeos por-entrada, que sí toleran diferencias. La máquina del mantenedor (v1.2.5, 54 entradas) no pudo instalar v1.3.1 (56 esperadas): «incomplete ownership roster». El único camino hoy es desinstalar y reinstalar, y en la máquina real ese puente además se bloqueó por fricciones concomitantes (&#35;158 territorio de skills con install.py, &#35;159 launcher-origen en el ciclo global). Es la tercera capa de la misma clase sistémica que &#35;156.
+  - Resultado y comportamiento: load() acepta un manifiesto cuyo conjunto de entradas es un subconjunto propio del roster en ejecución: cada entrada presente pasa la validación por-entrada intacta (destino permitido con su componente, sin duplicados, backup bien formado) y un manifiesto con menos entradas que el roster no falla por cantidad. El upgrade agrega al instalar las entradas que faltan y, cuando una skill sale del roster, remueve sus rutas propias registrando backup previo, de modo que tras un upgrade con roster creciente o decreciente el doctor queda sano, el manifiesto nuevo declara el roster completo de la versión instalada y el desinstalador sigue funcionando. Una ruta que no corresponde a un destino ownable (por ejemplo un path que nunca fue destino de skill) sigue rechazándose con el error actual: la tolerancia no convierte un manifiesto corrupto en instrumento de borrado. Tests de regresión cubren el upgrade creciente (manifiesto de 54 entradas ante roster de 56 instala y queda con 56), el decreciente (entrada retirada se remueve con backup y el instalador avanza) y los rechazos que se conservan.
+  - Restricciones y decisiones: La validación por-entrada existente no se relaja para rutas que no corresponden a destinos ownables (seguridad). No publica release: publicar es decisión humana separada. No toca la máquina del mantenedor sin autorización explícita. Esta Sesión no cambia el territorio de skills con install.py (&#35;158, decisión aparte del mantenedor) ni el ciclo global del launcher (&#35;159). Toda expansión de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: issues &#35;157 (esta fricción), &#35;156 (familia, arreglada en v1.3.1), &#35;158 y &#35;159 (fricciones concomitantes de la máquina real); product/tower/v1/runtime-config.mjs (load, prepareRuntime, installRuntime, uninstallRuntime); product/tower/v1/test/runtime-config.test.mjs; S223 (arreglo hermano en el mismo módulo).
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
