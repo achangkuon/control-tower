@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 92% (152/164 S)
+- **Total:** 92% (152/165 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -22,7 +22,7 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 92% (50/54 S)
+- **Método:** 90% (50/55 S)
 - **Producto Torre:** 89% (35/39 S)
 
 ## Zonas y colas
@@ -1482,6 +1482,20 @@
   - Resultado y comportamiento: load() acepta un manifiesto cuyo conjunto de entradas es un subconjunto propio del roster en ejecución: cada entrada presente pasa la validación por-entrada intacta (destino permitido con su componente, sin duplicados, backup bien formado) y un manifiesto con menos entradas que el roster no falla por cantidad. El upgrade agrega al instalar las entradas que faltan y, cuando una skill sale del roster, remueve sus rutas propias registrando backup previo, de modo que tras un upgrade con roster creciente o decreciente el doctor queda sano, el manifiesto nuevo declara el roster completo de la versión instalada y el desinstalador sigue funcionando. Una ruta que no corresponde a un destino ownable (por ejemplo un path que nunca fue destino de skill) sigue rechazándose con el error actual: la tolerancia no convierte un manifiesto corrupto en instrumento de borrado. Tests de regresión cubren el upgrade creciente (manifiesto de 54 entradas ante roster de 56 instala y queda con 56), el decreciente (entrada retirada se remueve con backup y el instalador avanza) y los rechazos que se conservan.
   - Restricciones y decisiones: La validación por-entrada existente no se relaja para rutas que no corresponden a destinos ownables (seguridad). No publica release: publicar es decisión humana separada. No toca la máquina del mantenedor sin autorización explícita. Esta Sesión no cambia el territorio de skills con install.py (&#35;158, decisión aparte del mantenedor) ni el ciclo global del launcher (&#35;159). Toda expansión de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: issues &#35;157 (esta fricción), &#35;156 (familia, arreglada en v1.3.1), &#35;158 y &#35;159 (fricciones concomitantes de la máquina real); product/tower/v1/runtime-config.mjs (load, prepareRuntime, installRuntime, uninstallRuntime); product/tower/v1/test/runtime-config.test.mjs; S223 (arreglo hermano en el mismo módulo).
+
+### S226 — Territorio exclusivo por archivo entre los dos instaladores: el binario de Radar y el hook chanks-etapa.sh quedan en propiedad única de la Torre (la release los viaja a los socios), y el instalador personal del Método los respeta: install-radar.sh se niega a pisar un binario Torre-owned salvo escape explícito de desarrollo, e install.py deja de escribir chanks-etapa.sh (igual que ya protege torre-firma.sh).
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tools/install-radar.sh, agent-workflows/tests/test&#95;personal&#95;config.py
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Dos instaladores escriben en $HOME: el personal del Método (agent-workflows/tools/install.py) y el de la Torre (product/tower/v1/runtime-config.mjs). Después de &#35;154 los rosters de skills son disjuntos, pero quedan dos destinos que ambos escriben: ~/.local/bin/radar (install-radar.sh:44-50 pisa el binario que la Torre construye y posee, runtime-config.mjs:213-247, entrada propia en allowedEntries) y ~/.claude/hooks/chanks-etapa.sh (escrito por install.py:695-716 y por la Torre desde la misma fuente, que además registra el hook en settings.json). Cada corrida de uno deja el manifiesto de propiedad de la Torre desactualizado («modified owned entry»), lo que bloqueó el upgrade de la máquina del mantenedor el 2026-10-05/06 y obligó a reconciliación manual.
+  - Resultado y comportamiento: install-radar.sh detecta que el destino ~/.local/bin/radar es propiedad de la Torre (lectura del manifiesto de propiedad) y se niega a sobreescribirlo con un mensaje que indique la vía Torre; un escape explícito de desarrollo (--force, documentado) permite sobreescribir a sabiendas, dejando visible que el preflight de la Torre reportará la entrada modificada hasta la próxima instalación. install.py ya no escribe ~/.claude/hooks/chanks-etapa.sh: el hook queda Torre-owned (la release lo entrega y registra), igual que ya ocurre con torre-firma.sh (comentario install.py:163-165). Los tests de config personal existentes siguen pasando y cubren los dos cambios; los bloques personales de los 4 archivos de instrucciones no cambian (partición por marcas vigente).
+  - Restricciones y decisiones: No se cambia el modelo de ownership de la Torre ni su instalador (product/tower/ queda fuera de alcance); no se tocan los bloques personales ni las plantillas; el hook conserva su fuente única agent-workflows/tools/hooks/chanks-etapa.sh (la Torre lo consume, no se duplica). El escape --force es explícito y documentado, nunca default. Toda expansión de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: issues &#35;158 (esta fricción), &#35;157 (arreglada en S225, commit d7bd8d1) y &#35;159 (abierta); agent-workflows/tools/install.py (163-165 protección de torre-firma.sh como modelo a extender, 695-716 escritura de chanks-etapa.sh); agent-workflows/tools/install-radar.sh:44-50; product/tower/v1/runtime-config.mjs (allowedEntries 155-163, buildRadar 213-247); agent-workflows/tests/test&#95;personal&#95;config.py (tests existentes del instalador personal).
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
