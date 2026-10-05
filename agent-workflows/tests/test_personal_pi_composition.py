@@ -10,11 +10,16 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 # Explicit overrides are preferred; sibling checkouts are a local development convenience,
-# not portable installation paths or a dependency shipped to partners.
-PROJECTS = ROOT.parents[2]
+# not portable installation paths or a dependency shipped to partners. The checkout may sit
+# directly below the projects directory (Main) or one level deeper (Worktrees/<name>), so probe
+# both ancestors and fall back to the historical depth when neither sibling is present.
+PROJECTS = next((ancestor for ancestor in (ROOT.parents[1], ROOT.parents[2])
+                 if (ancestor / "pi-v2").is_dir() or (ancestor / "gentle-pi").is_dir()),
+                ROOT.parents[2])
 PI_SOURCE = Path(os.environ.get("PERSONAL_PI_SOURCE", str(PROJECTS / "pi-v2")))
 QUIET_SOURCE = Path(os.environ.get("GENTLE_PI_SOURCE", str(PROJECTS / "gentle-pi")))
 MATERIALIZE = ROOT / "agent-workflows/personal-pi/materialize.py"
+MANIFEST = ROOT / "agent-workflows/personal-pi/manifest.json"
 INSTALLER_PATH = ROOT / "agent-workflows/tools/install.py"
 
 
@@ -23,6 +28,27 @@ def run(command, **options):
     if result.returncode:
         raise AssertionError(f"{command[0]} failed ({result.returncode}):\n{result.stderr[-4000:]}\n{result.stdout[-1000:]}")
     return result
+
+
+def pinned_missing_packages(pi_tree: Path, modules_dir: Path) -> list[str]:
+    """External packages the pinned tree declares but the live dependency tree lacks.
+
+    Workspace members are supplied by the tree itself, so only non-workspace
+    dependencies decide whether the pinned source can run against ``modules_dir``.
+    """
+    root = json.loads((pi_tree / "package.json").read_text())
+    workspace_names = set()
+    for pattern in root.get("workspaces", []):
+        for manifest in pi_tree.glob(f"{pattern}/package.json"):
+            name = json.loads(manifest.read_text()).get("name")
+            if isinstance(name, str):
+                workspace_names.add(name)
+    required = set()
+    for manifest in [pi_tree / "package.json", *sorted(pi_tree.glob("packages/*/package.json"))]:
+        data = json.loads(manifest.read_text())
+        for field in ("dependencies", "optionalDependencies"):
+            required.update(name for name in data.get(field) or {} if name not in workspace_names)
+    return sorted(name for name in required if not (modules_dir / name).exists())
 
 
 PROBE = r'''
@@ -108,6 +134,18 @@ class GenuineCompositionTests(unittest.TestCase):
             pi = temp / "pi"
             run(["python3", str(MATERIALIZE), str(pi), "--source", str(PI_SOURCE)])
             run(["python3", str(MATERIALIZE), str(pi), "--verify"])
+            # The pin and the live checkout can diverge irreversibly: the live install stops
+            # providing a dependency the pinned source still imports. Skip explicitly instead
+            # of failing the suite on a mismatch no checkout can satisfy (issue #153).
+            missing = pinned_missing_packages(pi, PI_SOURCE / "node_modules")
+            if missing:
+                pinned_commit = json.loads(MANIFEST.read_text())["base_commit"]
+                self.skipTest(
+                    f"pinned Pi {pinned_commit} requires external packages missing from "
+                    f"{PI_SOURCE}/node_modules: {', '.join(missing)}; the live dependency tree no "
+                    "longer matches the pin, so this composition cannot run without a new pin "
+                    "(issue #153)"
+                )
             # Reuse dependency bytes, never copy or modify source node_modules. Workspace packages
             # must resolve inside the overlay so annotation code is genuinely the pinned version.
             modules = pi / "node_modules"
@@ -205,6 +243,75 @@ class GenuineCompositionTests(unittest.TestCase):
             result = run(["bun", "--conditions=source", str(probe), str(quiet), str(controls), str(skill)], cwd=repo, env=env)
             self.assertEqual(json.loads(result.stdout.splitlines()[-1])["owner"], str(quiet))
         self.assertEqual({p: hashlib.sha256(p.read_bytes()).hexdigest() for p in before}, before)
+
+
+class PinnedDependencyGateTests(unittest.TestCase):
+    """The compatibility gate is driven only by the pinned manifests and the live install."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.tree = Path(self.temp.name) / "pi"
+        self.modules = Path(self.temp.name) / "node_modules"
+        self.modules.mkdir(parents=True)
+
+    def manifest(self, relative, data):
+        path = self.tree / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(data))
+
+    def installed(self, name):
+        path = self.modules / name
+        path.mkdir(parents=True)
+        (path / "package.json").write_text("{}")
+
+    def test_missing_external_dependency_is_reported(self):
+        self.manifest("package.json", {"name": "pi-monorepo", "private": True,
+                                       "workspaces": ["packages/*"],
+                                       "dependencies": {"present": "1.0.0", "absent": "2.0.0"}})
+        self.manifest("packages/coding-agent/package.json",
+                      {"name": "@earendil-works/pi-coding-agent",
+                       "dependencies": {"@earendil-works/pi-ai": "1.0.0"}})
+        self.manifest("packages/ai/package.json", {"name": "@earendil-works/pi-ai"})
+        self.installed("present")
+        self.assertEqual(pinned_missing_packages(self.tree, self.modules), ["absent"])
+
+    def test_compatible_dependency_set_reports_nothing(self):
+        self.manifest("package.json", {"name": "pi-monorepo", "private": True,
+                                       "workspaces": ["packages/*"],
+                                       "dependencies": {"present": "1.0.0"}})
+        self.manifest("packages/tui/package.json",
+                      {"name": "@earendil-works/pi-tui",
+                       "optionalDependencies": {"optional-present": "1.0.0"}})
+        self.installed("present")
+        self.installed("optional-present")
+        self.assertEqual(pinned_missing_packages(self.tree, self.modules), [])
+
+    def test_missing_optional_dependency_is_reported(self):
+        self.manifest("package.json", {"name": "pi-monorepo", "private": True,
+                                       "workspaces": ["packages/*"]})
+        self.manifest("packages/tui/package.json",
+                      {"name": "@earendil-works/pi-tui",
+                       "optionalDependencies": {"optional-absent": "1.0.0"}})
+        self.assertEqual(pinned_missing_packages(self.tree, self.modules), ["optional-absent"])
+
+    def test_missing_scoped_dependency_is_reported(self):
+        self.manifest("package.json", {"name": "pi-monorepo", "private": True,
+                                       "workspaces": ["packages/*"],
+                                       "dependencies": {"@aws-sdk/client-bedrock-runtime": "3.1127.0"}})
+        self.assertEqual(pinned_missing_packages(self.tree, self.modules),
+                         ["@aws-sdk/client-bedrock-runtime"])
+
+    def test_workspace_packages_are_ignored(self):
+        self.manifest("package.json", {"name": "pi-monorepo", "private": True,
+                                       "workspaces": ["packages/*",
+                                                      "packages/coding-agent/examples/extensions/fixture"],
+                                       "dependencies": {"@earendil-works/pi-tui": "1.0.0",
+                                                        "@earendil-works/fixture-extension": "1.0.0"}})
+        self.manifest("packages/tui/package.json", {"name": "@earendil-works/pi-tui"})
+        self.manifest("packages/coding-agent/examples/extensions/fixture/package.json",
+                      {"name": "@earendil-works/fixture-extension"})
+        self.assertEqual(pinned_missing_packages(self.tree, self.modules), [])
 
 
 if __name__ == "__main__":
