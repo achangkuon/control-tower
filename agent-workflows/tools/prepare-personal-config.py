@@ -169,7 +169,10 @@ def _central_roster(home: Path, repo_root: Path) -> None:
     central = home / ".agents/skills"
     _no_symlink(central)
     # V2- and V3-deferred skills are intentionally absent from the central active roster after install.
-    roster = install.OWN_SKILLS
+    # Skills pending Tower packaging (V1_PENDING_SKILLS) are absent too: neither Tower nor the
+    # installer ships them until their packaging Session removes them from the pending list.
+    roster = tuple(name for name in install.OWN_SKILLS
+                   if name not in install.V1_PENDING_SKILLS)
     for name in roster:
         source = install.skill_source_root(repo_root / "agent-workflows", name)
         installed = central / name
