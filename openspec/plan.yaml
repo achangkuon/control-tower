@@ -2390,7 +2390,7 @@ sesiones:
     autoridad: "Alcance aprobado por el maintainer el 2026-10-04 en conversación: la skill propia de comunicación entre agentes tiene que estar disponible para todos los agentes y viajar en las configuraciones de la Torre."
     depende_de:
       - S218
-    archivos: [product/tower/v1/bundle.mjs, product/tower/v1/install.mjs, product/tower/v1/instructions/project-agents.md, product/tower/v1/test/bundle.test.mjs, agent-workflows/tools/install.py, agent-workflows/tests/test_personal_config.py]
+    archivos: [product/tower/v1/bundle.mjs, product/tower/v1/install.mjs, product/tower/v1/instructions/project-agents.md, product/tower/v1/test/bundle.test.mjs]
     recurso: ["roster explícito del paquete V1"]
     encargo:
       pedido_contexto: >-
@@ -2418,6 +2418,40 @@ sesiones:
         product/tower/v1/instructions/project-agents.md (tabla «Which skill to load»);
         product/tower/v1/test/bundle.test.mjs; AGENTS.md (subsección «Cuándo un cambio a master es
         una release»); S218.
+
+  - id: S221
+    zona: metodo
+    prioridad: metodo-v1
+    resultado: "El instalador personal deja de tratar chanks-0-comunicacion-agentes como pendiente de empaque: el roster V1 y el producto quedan espejados y los consumidores del Método reflejan su membresía."
+    autoridad: "Autorizada por el mantenedor el 2026-10-05 en conversación como hermana de S219: la remoción de V1_PENDING_SKILLS declarada en el handoff de S218 exige tocar los consumidores del Método del roster, y radar no permite cruzar Zonas en una Sesión."
+    depende_de:
+      - S219
+    archivos: [agent-workflows/tools/install.py, agent-workflows/tests/test_personal_config.py, agent-workflows/tests/test_comunicacion_agentes.py]
+    recurso: ["roster explícito del paquete V1"]
+    encargo:
+      pedido_contexto: >-
+        S218 dejó la skill en V1_PENDING_SKILLS (install.py:92) con la promesa de que su
+        empaque era una Sesión posterior. S219 suma la skill al roster del paquete; el test
+        test_install.py:178 fija que TOWER_V1_SKILLS y el roster del producto son iguales, así
+        que el listado de pendientes tiene que retirarse en el mismo push o la frontera queda
+        partida. Los consumidores del roster en el Método (conteos y guardias de carpeta
+        central) deben reflejar la membresía nueva.
+      resultado_comportamiento: >-
+        V1_PENDING_SKILLS queda vacía, TOWER_V1_SKILLS incluye chanks-0-comunicacion-agentes y
+        es igual al roster publicado por S219. test_personal_config.py espera 26 skills en la
+        carpeta central (sin entrada pendiente ausente) y test_comunicacion_agentes.py deja de
+        afirmar que la skill está pendiente. Ningún otro comportamiento del instalador cambia.
+      restricciones_decisiones: >-
+        No se toca ningún archivo de producto-torre (eso es S219). El roster se enumera, nunca
+        se descubre por recorrido. Los archivos autorizados delimitan el cambio; toda expansión
+        requiere aprobación humana. Debe entregarse en el mismo push que S219 para que la
+        frontera producto/Método no quede partida en ningún HEAD publicado. ODD nativo; SDD sólo
+        por solicitud humana explícita.
+      referencias: >-
+        agent-workflows/tools/install.py:88-110 (V1_PENDING_SKILLS y TOWER_V1_SKILLS);
+        agent-workflows/tests/test_install.py:178 (frontera roster del producto);
+        agent-workflows/tests/test_personal_config.py; agent-workflows/tests/test_comunicacion_agentes.py:162;
+        S219; handoff de S218 (Engram 13187).
 
   - id: S220
     zona: autoridad

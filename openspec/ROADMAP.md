@@ -11,7 +11,7 @@
 - Producto Torre #3 → S219 — La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados.
 
 ## Avance
-- **Total:** 91% (146/159 S)
+- **Total:** 91% (146/160 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -22,7 +22,7 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 92% (48/52 S)
+- **Método:** 90% (48/53 S)
 - **Producto Torre:** 86% (31/36 S)
 
 ## Zonas y colas
@@ -59,6 +59,7 @@
 ### Método (metodo)
 1. **S215** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
 2. **S217** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
+3. **S221** · 📋 PLANIFICADO · espera-natural (S219) · prioridad Método V1 · El instalador personal deja de tratar chanks-0-comunicacion-agentes como pendiente de empaque: el roster V1 y el producto quedan espejados y los consumidores del Método reflejan su membresía.
 
 ### Producto Torre (producto-torre)
 1. **S203** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
@@ -1399,6 +1400,20 @@
   - Resultado y comportamiento: Los archivos de la skill figuran en el roster del paquete V1 y el instalador los deja en la carpeta central de skills, de modo que Claude Code, Codex, OpenCode y Pi la encuentran. La tabla «qué skill cargar» de la plantilla de instrucciones de proyecto suma una fila para pedir comunicación con otro agente, observarlo, frenarlo o abrir paneles. Las pruebas del paquete fijan la nueva membresía. Un proyecto que actualiza a la versión que publique esto recibe la skill y la fila sin pasos manuales.
   - Restricciones y decisiones: Sumar un archivo al roster del paquete exige revisión explícita de release (product/tower/v1/bundle.mjs:22-23); la membresía se enumera, nunca se descubre por recorrido. Las plantillas instaladas no pueden nombrar Tower, MAIN ni Support. Cambia el contrato visible del producto: sale como versión minor según la regla de release de AGENTS.md, y publicar exige autorización humana separada. No se suman skills diferidas ni personales. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: product/tower/v1/bundle.mjs (roster y su comentario de membresía); product/tower/v1/instructions/project-agents.md (tabla «Which skill to load»); product/tower/v1/test/bundle.test.mjs; AGENTS.md (subsección «Cuándo un cambio a master es una release»); S218.
+
+### S221 — El instalador personal deja de tratar chanks-0-comunicacion-agentes como pendiente de empaque: el roster V1 y el producto quedan espejados y los consumidores del Método reflejan su membresía.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S219)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tests/test&#95;personal&#95;config.py, agent-workflows/tests/test&#95;comunicacion&#95;agentes.py
+  - Depende de: S219
+  - Recursos: roster explícito del paquete V1
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: S218 dejó la skill en V1&#95;PENDING&#95;SKILLS (install.py:92) con la promesa de que su empaque era una Sesión posterior. S219 suma la skill al roster del paquete; el test test&#95;install.py:178 fija que TOWER&#95;V1&#95;SKILLS y el roster del producto son iguales, así que el listado de pendientes tiene que retirarse en el mismo push o la frontera queda partida. Los consumidores del roster en el Método (conteos y guardias de carpeta central) deben reflejar la membresía nueva.
+  - Resultado y comportamiento: V1&#95;PENDING&#95;SKILLS queda vacía, TOWER&#95;V1&#95;SKILLS incluye chanks-0-comunicacion-agentes y es igual al roster publicado por S219. test&#95;personal&#95;config.py espera 26 skills en la carpeta central (sin entrada pendiente ausente) y test&#95;comunicacion&#95;agentes.py deja de afirmar que la skill está pendiente. Ningún otro comportamiento del instalador cambia.
+  - Restricciones y decisiones: No se toca ningún archivo de producto-torre (eso es S219). El roster se enumera, nunca se descubre por recorrido. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. Debe entregarse en el mismo push que S219 para que la frontera producto/Método no quede partida en ningún HEAD publicado. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: agent-workflows/tools/install.py:88-110 (V1&#95;PENDING&#95;SKILLS y TOWER&#95;V1&#95;SKILLS); agent-workflows/tests/test&#95;install.py:178 (frontera roster del producto); agent-workflows/tests/test&#95;personal&#95;config.py; agent-workflows/tests/test&#95;comunicacion&#95;agentes.py:162; S219; handoff de S218 (Engram 13187).
 
 ### S220 — Diagnóstico de las copias de trabajo por vuelo: qué falta decidir sobre cómo se crean, cómo quedan listas para trabajar y cómo se retiran, antes de implementar &#96;piloto&#96;.
 - Coordinación:
