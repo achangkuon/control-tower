@@ -2434,51 +2434,7 @@ sesiones:
 
   - {id: S224, entrega: {commit: 5b984f358ce4667f5ade2c69e9312e18d8aa632b}, historico: openspec/archive/sesiones/S224.md}
 
-  - id: S225
-    zona: producto-torre
-    prioridad: resolucion-problemas-v1
-    resultado: "El instalador global cruza upgrades cuyo roster cambia de tamaño: un manifiesto de propiedad con menos entradas que el roster en ejecución (roster que creó) instala sin desinstalar, y una release con skills retiradas remueve sus rutas propias con backup; doctor y desinstalador quedan sanos en ambas direcciones."
-    autoridad: "Decisión del mantenedor el 2026-10-06 en conversación (issue #157, «quiero dejar este issue resuelto, para que no vuelva a pasar en futuras instalaciones»): arreglar la fricción del manifiesto de propiedad; contamina product/tower/v1/."
-    depende_de: []
-    archivos: [product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs]
-    recurso: []
-    encargo:
-      pedido_contexto: >-
-        Toda release que agrega o quita skills es inalcanzable por upgrade en máquinas ya
-        instaladas: load() (product/tower/v1/runtime-config.mjs:107) exige que el manifiesto de
-        propiedad tenga exactamente la misma cantidad de entradas que el roster del instalador en
-        ejecución (value.entries.length === allowed.size), antes de los chequeos por-entrada,
-        que sí toleran diferencias. La máquina del mantenedor (v1.2.5, 54 entradas) no pudo
-        instalar v1.3.1 (56 esperadas): «incomplete ownership roster». El único camino hoy es
-        desinstalar y reinstalar, y en la máquina real ese puente además se bloqueó por
-        fricciones concomitantes (#158 territorio de skills con install.py, #159 launcher-origen
-        en el ciclo global). Es la tercera capa de la misma clase sistémica que #156.
-      resultado_comportamiento: >-
-        load() acepta un manifiesto cuyo conjunto de entradas es un subconjunto propio del roster
-        en ejecución: cada entrada presente pasa la validación por-entrada intacta (destino
-        permitido con su componente, sin duplicados, backup bien formado) y un manifiesto con
-        menos entradas que el roster no falla por cantidad. El upgrade agrega al instalar las
-        entradas que faltan y, cuando una skill sale del roster, remueve sus rutas propias
-        registrando backup previo, de modo que tras un upgrade con roster creciente o decreciente
-        el doctor queda sano, el manifiesto nuevo declara el roster completo de la versión
-        instalada y el desinstalador sigue funcionando. Una ruta que no corresponde a un destino
-        ownable (por ejemplo un path que nunca fue destino de skill) sigue rechazándose con el
-        error actual: la tolerancia no convierte un manifiesto corrupto en instrumento de
-        borrado. Tests de regresión cubren el upgrade creciente (manifiesto de 54 entradas ante
-        roster de 56 instala y queda con 56), el decreciente (entrada retirada se remueve con
-        backup y el instalador avanza) y los rechazos que se conservan.
-      restricciones_decisiones: >-
-        La validación por-entrada existente no se relaja para rutas que no corresponden a
-        destinos ownables (seguridad). No publica release: publicar es decisión humana separada.
-        No toca la máquina del mantenedor sin autorización explícita. Esta Sesión no cambia el
-        territorio de skills con install.py (#158, decisión aparte del mantenedor) ni el ciclo
-        global del launcher (#159). Toda expansión de archivos requiere aprobación humana. ODD
-        nativo; SDD sólo por solicitud humana explícita.
-      referencias: >-
-        issues #157 (esta fricción), #156 (familia, arreglada en v1.3.1), #158 y #159
-        (fricciones concomitantes de la máquina real); product/tower/v1/runtime-config.mjs
-        (load, prepareRuntime, installRuntime, uninstallRuntime);
-        product/tower/v1/test/runtime-config.test.mjs; S223 (arreglo hermano en el mismo módulo).
+  - {id: S225, entrega: {commit: d7bd8d1e2d92db4b33089cb3288adc393271222b}, historico: openspec/archive/sesiones/S225.md}
 
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 

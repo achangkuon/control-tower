@@ -24,4 +24,8 @@ Issue: #157. Family: #156 (fixed v1.3.1), #158 (installer territory, separate de
 - GREEN: bun test product/tower/v1/test/runtime-config.test.mjs → 30 pass / 0 fail / 152 expect().
 - Parent-added regression: `.agents/skills/_shared` with component skills now asserted to still
   throw /invalid manifest destination/.
-- Commit: (recorded after delivery)
+- Commit: f24569a (work unit) + d7bd8d1 (correction, review R3-1). Native review
+  review-3a5b4d6086f248ff: one reliability lens found R3-1 (CRITICAL, deterministic, introduced:
+  dot segments passed the retired-skill guard); corrected (4 diff lines, guard excludes "."/"..",
+  regression test added), targeted validator approved, acknowledgement burned. Advisory:
+  R3-2 (WARNING, informational) left as follow-up work. Delivered 74084ec..d7bd8d1 to master.
