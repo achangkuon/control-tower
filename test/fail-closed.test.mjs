@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { execFileSync } from "node:child_process"
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -22,6 +23,35 @@ const torrePath = join(packageRoot, "bin", "torre")
 const pausedSendPath = join(packageRoot, "test", "fixtures", "paused-send.mjs")
 const temporaryDirectories = []
 
+// bin/torre resolves the legacy core from $HOME/.config/opencode/control-tower/core.mjs
+// (bin/torre:52). These security tests therefore provision that runtime inside a disposable
+// HOME instead of trusting whatever the executing machine happens to have installed: with an
+// empty HOME the assertions would otherwise fail before reaching the core. core.mjs imports
+// ./semaphore.mjs relatively, so the fixture carries both runtime members, byte for byte.
+const CORE_RUNTIME_MEMBERS = ["core.mjs", "semaphore.mjs"]
+// createRepository lays every synthetic repo out as <root>/main and <root>/agent, so the
+// disposable HOME is always <root>/home and can be derived from the worktree being driven.
+const torreHome = (cwd) => join(dirname(cwd), "home")
+const provisionCoreRuntime = (home) => {
+  const destination = join(home, ".config", "opencode", "control-tower")
+  mkdirSync(destination, { recursive: true })
+  for (const member of CORE_RUNTIME_MEMBERS) {
+    copyFileSync(join(packageRoot, member), join(destination, member))
+  }
+}
+const torreEnvironment = (cwd) => {
+  const environment = {
+    ...process.env,
+    HOME: torreHome(cwd),
+    XDG_DATA_HOME: join(cwd, ".xdg-data"),
+  }
+  // An ambient override would bypass the provisioned HOME runtime and make the test depend on
+  // the machine running it, which is exactly the dependency these tests must not have.
+  delete environment.CONTROL_TOWER_CORE
+  delete environment.CONTROL_TOWER_LIFECYCLE
+  return environment
+}
+
 const git = (cwd, args) =>
   runGit(cwd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim()
 
@@ -30,6 +60,7 @@ const createRepository = () => {
   const main = join(root, "main")
   const agent = join(root, "agent")
   temporaryDirectories.push(root)
+  provisionCoreRuntime(join(root, "home"))
 
   mkdirSync(main)
   git(main, ["init", "-q", "-b", "main"])
@@ -44,7 +75,7 @@ const createRepository = () => {
 const runTorre = (cwd, command) =>
   execFileSync("bash", [torrePath, command], {
     cwd,
-    env: { ...process.env, XDG_DATA_HOME: join(cwd, ".xdg-data") },
+    env: torreEnvironment(cwd),
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   })
@@ -147,7 +178,7 @@ describe("fail-closed core semantics", () => {
 
     const off = Bun.spawn(["bash", torrePath, "off"], {
       cwd: main,
-      env: { ...process.env, XDG_DATA_HOME: join(main, ".xdg-data") },
+      env: torreEnvironment(main),
       stdout: "pipe",
       stderr: "pipe",
     })

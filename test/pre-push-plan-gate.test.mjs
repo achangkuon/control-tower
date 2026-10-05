@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test"
+import { afterAll, afterEach, expect, test } from "bun:test"
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
@@ -20,10 +20,22 @@ const temporaryDirectory = (prefix) => {
 
 const shellQuote = (value) => `'${value.replaceAll("'", "'\"'\"'")}'`
 
+// The radar build must not read or write the operator's Go build cache. Measured on an idle
+// machine: a cold cache takes 6.37s to compile Radar and a warm one 0.61s, so a fresh
+// per-run cache is what makes these tests independent of the machine, at the price of one
+// cold compile. The cache outlives each afterEach temp sweep (the builds have to share it),
+// so it is created here and removed in the afterAll below.
+const goBuildCache = mkdtempSync(join(tmpdir(), "pre-push-gocache-"))
+afterAll(() => rmSync(goBuildCache, { recursive: true, force: true }))
+
 const resolveRadar = (_repositoryBinary) => {
   const buildDirectory = temporaryDirectory("pre-push-radar-")
   const compiled = join(buildDirectory, "radar")
-  const build = spawnSync("go", ["build", "-o", compiled, "."], { cwd: radarSource, encoding: "utf8" })
+  const build = spawnSync("go", ["build", "-o", compiled, "."], {
+    cwd: radarSource,
+    encoding: "utf8",
+    env: { ...process.env, GOCACHE: goBuildCache },
+  })
   if (build.status !== 0) throw new Error(`could not compile radar: ${build.stderr || build.error}`)
   return compiled
 }
@@ -172,6 +184,10 @@ const brokenPlan = [
   "",
 ].join("\n")
 
+// The first resolveRadar call pays the cold per-run Go cache: 6.37s measured, above the 5s
+// default. The timeout is widened only for this call site so the cold compile fits with
+// headroom; every later build reuses the warm cache and stays well inside the default.
+// The assertions are untouched.
 test("a present repository radar is ignored in favor of a temporary build", () => {
   const repositoryBinary = join(temporaryDirectory("pre-push-repository-radar-"), "radar")
   writeFileSync(repositoryBinary, "#!/bin/sh\nexit 99\n", { mode: 0o755 })
@@ -179,7 +195,7 @@ test("a present repository radar is ignored in favor of a temporary build", () =
   const compiled = resolveRadar(repositoryBinary)
   expect(compiled).not.toBe(repositoryBinary)
   expect(existsSync(compiled)).toBeTrue()
-})
+}, 30_000)
 
 test("a repository without a plan pushes untouched", () => {
   const { origin, work } = scenario()
