@@ -161,9 +161,10 @@ RETIRED_SKILL_FILES = MappingProxyType({
     }),
 })
 
-# The deferred Pi write lock still retires reversibly. The Claude signature
-# hook is now Tower-owned and must never be archived by the personal installer.
-# The archive sits outside extensions/ so Pi cannot auto-discover the old shim.
+# The deferred Pi write lock still retires reversibly. The Claude signature and
+# stage-notice hooks are now Tower-owned and must never be archived or written by the
+# personal installer. The archive sits outside extensions/ so Pi cannot auto-discover
+# the old shim.
 RETIRED_CONTROL_ARCHIVE = ".retired-controls"
 RETIRED_CONTROL_FILES = (
     (Path(".pi/agent"), Path("extensions/chanks-controls.ts")),
@@ -851,6 +852,12 @@ def etapa_hook_source(root: Path) -> Path:
 
 
 def etapa_hook_changes(home: Path, root: Path) -> list[Change]:
+    """Legacy helper for the Claude stage-notice hook, which is Tower-owned: the
+    Torre release ships ~/.claude/hooks/chanks-etapa.sh and registers it in
+    settings.json. build_plan and apply never call this (mirroring torre-firma.sh,
+    which has no writer at all), so the personal installer no longer writes that
+    destination. Retained only for the Pi admission contract tests; never re-add it
+    to the install plan."""
     if not (home / ".claude").is_dir():
         return []
     source = etapa_hook_source(root)

@@ -510,5 +510,105 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         return run
 
 
+class RadarInstallerTerritoryTests(unittest.TestCase):
+    """A Torre-owned ~/.local/bin/radar must not be overwritten silently (#158, S226)."""
+
+    OWNERSHIP_MANIFEST = Path(".local/share/torre-control/runtime-ownership.json")
+    FAKE_BUILD = b"built-radar"
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.home = self.root / "home"
+        self.radar = self.home / ".local/bin/radar"
+        self.radar.parent.mkdir(parents=True)
+        self.radar.write_bytes(b"torre-owned-radar")
+        self.radar.chmod(0o755)
+        # A fake `go` keeps the test offline and fast: it only has to honor build -o.
+        self.tools = self.root / "tools"
+        self.tools.mkdir()
+        fake_go = self.tools / "go"
+        fake_go.write_text(
+            "#!/bin/sh\nout=\"\"\nwhile [ $# -gt 0 ]; do\n"
+            "  case \"$1\" in\n    -o) out=\"$2\"; shift 2 ;;\n    *) shift ;;\n  esac\ndone\n"
+            "printf '%s' 'built-radar' > \"$out\"\n",
+            encoding="utf-8",
+        )
+        fake_go.chmod(0o755)
+
+    def write_manifest(self, entries):
+        manifest = self.home / self.OWNERSHIP_MANIFEST
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text(
+            json.dumps({"schema": "tower.v1.ownership/1", "entries": entries,
+                        "pointers": [], "directories": []}),
+            encoding="utf-8",
+        )
+
+    def run_installer(self, *args):
+        env = {k: v for k, v in os.environ.items() if k != "TORRE_BIN_DIR"}
+        env.update({"HOME": str(self.home), "PATH": f"{self.tools}:/usr/bin:/bin"})
+        return subprocess.run(
+            ["bash", str(ROOT / "agent-workflows/tools/install-radar.sh"), *args],
+            capture_output=True, text=True, env=env, timeout=60,
+        )
+
+    def test_refuses_to_overwrite_a_tower_owned_radar_without_touching_it(self):
+        self.write_manifest([{"path": ".local/bin/radar", "component": "radar", "installed": True}])
+        before = self.radar.read_bytes()
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        output = result.stdout + result.stderr
+        self.assertIn("propiedad de la Torre", output)
+        self.assertIn("torre-control", output)
+        self.assertEqual(self.radar.read_bytes(), before)
+
+    def test_force_overrides_the_tower_ownership_guard(self):
+        self.write_manifest([{"path": ".local/bin/radar", "component": "radar", "installed": True}])
+        result = self.run_installer("--force")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
+
+    def test_installs_when_no_ownership_manifest_exists(self):
+        result = self.run_installer()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
+
+    def test_installs_when_the_manifest_does_not_list_radar(self):
+        self.write_manifest([{"path": ".claude/hooks/chanks-etapa.sh", "component": "signatures", "installed": True}])
+        result = self.run_installer()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
+
+    def test_unreadable_manifest_is_tolerated_as_not_owned(self):
+        manifest = self.home / self.OWNERSHIP_MANIFEST
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text("{ not json", encoding="utf-8")
+        result = self.run_installer()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
+
+
+class PersonalInstallerTerritoryTests(unittest.TestCase):
+    """The personal installer must never write the Torre-owned stage hook (#158, S226)."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.home = Path(self.temp.name)
+        old_block = install.render_manual_block(ROOT / "agent-workflows")
+        for path in install.manual_paths(self.home):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"managed-prefix\n" + old_block + b"managed-suffix\n")
+
+    def test_apply_never_plans_or_writes_the_tower_owned_stage_hook(self):
+        hook = self.home / ".claude/hooks/chanks-etapa.sh"
+        plan = install.build_plan(self.home, ROOT / "agent-workflows")
+        self.assertNotIn(hook, [change.path for change in plan])
+        install.apply(self.home, ROOT / "agent-workflows")
+        self.assertFalse(hook.exists())
+
+
 if __name__ == "__main__":
     unittest.main()
