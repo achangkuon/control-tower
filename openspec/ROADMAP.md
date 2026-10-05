@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 92% (155/167 S)
+- **Total:** 92% (155/168 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -1524,6 +1524,20 @@
   - Resultado y comportamiento: install.py no conserva escritor ni datos muertos del hook de etapa; test&#95;install.py queda actualizado y la suite python completa pasa. De los seis hallazgos: los que corrigen comportamiento barato y seguro se corrigen con test (p. ej. cobertura de knobs de la guarda, comparación de rutas normalizada); los que describen decisiones de diseño vigentes (fail-open ante manifiesto ilegible o grep sin dependencias) se documentan como aceptados con su razón en el registro ODD y en comentarios del código donde corresponda. Ningún cambio de comportamiento del instalador personal fuera de eso.
   - Restricciones y decisiones: El contrato de territorio de S226 no se relaja: sin manifiesto o ilegible, radar se instala como siempre; --force sigue siendo el único escape. No se toca product/tower/ ni los bloques personales. Toda expansión adicional de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: issue &#35;158 (cerrada por S226, commit 95b3bc9); store de revisión .git/gentle-ai/ (lineage review-a9f0a09f40edcdbb); agent-workflows/tools/install.py (etapa&#95;hook&#95;&#42; y comentarios Torre-owned); agent-workflows/tools/install-radar.sh (guarda y --force de S226); agent-workflows/tests/{test&#95;personal&#95;config.py,test&#95;install.py}.
+
+### S229 — Los tests de seguridad del core legacy de la suite raíz (fail-closed.test.mjs) provisionan su propio runtime y store dentro de un HOME desechable del fixture: la suite raíz corre completa y verde en sandbox, sin depender del runtime provisionado del dueño, preservando íntegras sus aserciones de seguridad.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: cimientos · —
+  - Archivos autorizados: test/fail-closed.test.mjs
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Los controles de release de la v1.3.2 en HOME desechable (receta torre-release, fase 3) encuentran fallos en test/fail-closed.test.mjs: los tests invocan &#96;bash bin/torre off&#96; (execFileSync) y ese binario resuelve $HOME/.config/opencode/control-tower/core.mjs, que en un sandbox vacío no existe ("Cannot find module … core.mjs"); tres tests de seguridad fallan (inactive-error-precedence, off-waits-for-guarded-operation, off-preserves-state) y uno por timeout. En el HOME real del mantenedor la misma suite pasa (2141 pass). Es la limitación documentada en la release v1.3.0: la suite raíz depende estructuralmente del runtime provisionado del dueño; el mantenedor decidió rediseñar los tests antes de publicar, para que la suite sea hermética y la seguridad siga corriendo en todas partes.
+  - Resultado y comportamiento: Los tests afectados de test/fail-closed.test.mjs aprovisionan en el HOME del fixture un core mínimo funcional con el contrato que bin/torre y el core legacy esperan (fixture hermético definido dentro del propio archivo de test para no expandir la autoridad), de modo que en un HOME desechable sin aprovisionar la suite raíz corre completa: los tests de seguridad pasan en sandbox exactamente con las mismas aserciones que pasan en el HOME real (ninguna aserción se debilita, se saltea ni se reformula). &#96;bun run test&#96; en sandbox termina exit 0, y en el HOME real también, con el mismo conteo de tests. Si el aprovisionamiento requiere un archivo aparte, tocar bin/torre o el core legacy, se reporta como expansión de alcance y no se ejecuta sin aprobación.
+  - Restricciones y decisiones: Prohibido debilitar, saltar (skip) o reformular aserciones de seguridad: el rediseño es de aprovisionamiento, no de contratos. El fixture es de test only y no viaja en la release (fuera del roster del bundle). Toda expansión de archivos (bin/torre, core legacy, otros tests) requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: notas de release v1.3.0 (limitación documentada, decisión del mantenedor); test/fail-closed.test.mjs:90-230 (los tests afectados y su execFileSync); test/fixtures/ (convención de fixtures); friction &#35;147 (flaky intermitente, ajeno); controles de la fase 3 de torre-release/references/publicar.md.
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
