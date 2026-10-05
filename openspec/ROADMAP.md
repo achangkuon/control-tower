@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S219, S221, S222, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S219, S221, S222, S223, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
 - Próximo trabajo ejecutable: ninguno.
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 91% (149/162 S)
+- **Total:** 92% (150/162 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -23,7 +23,7 @@
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
 - **Método:** 92% (49/53 S)
-- **Producto Torre:** 86% (33/38 S)
+- **Producto Torre:** 89% (34/38 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -1429,7 +1429,7 @@
 
 ### S223 — El auto-actualizador acepta releases cuyo roster cambia de tamaño: límite de parseo absoluto, sobre --from-checkout construido con el roster del checkout y cachés históricos admitidos por su digest pineado; v1.2.5 puede actualizar a v1.3.0 sin reparación manual.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/bootstrap.mjs, product/tower/v1/global.mjs, product/tower/v1/release-build.mjs, product/tower/v1/bundle.mjs, product/tower/v1/cli.mjs, product/tower/v1/test/bootstrap.test.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/test/release-build.test.mjs, product/tower/v1/test/cli.test.mjs
   - Depende de: —
