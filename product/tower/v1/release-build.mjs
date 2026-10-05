@@ -45,6 +45,7 @@ function canonicalRosterPath(path) {
 // Load the checkout's bundle.mjs, the only faithful source of its roster. A checkout
 // byte-identical to the running bundle short-circuits, so the ordinary release
 // pipeline (repo == this checkout) never spawns a process or evaluates anything.
+// The spawned evaluator uses the module-top `childProcess` import (node:child_process).
 function loadCheckoutRoster(source) {
   let base;
   try {
