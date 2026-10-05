@@ -11,10 +11,10 @@
 - Método #3 → S218 — Skill propia chanks-0-comunicacion-agentes: cualquier agente dentro de Herdr se comunica con otro agente, lo observa, lo frena o abre paneles cuando el usuario lo pide con sus palabras, sin nombrar Herdr.
 
 ## Avance
-- **Total:** 91% (145/158 S)
+- **Total:** 91% (145/159 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
-- **Autoridad:** 100% (1/1 S)
+- **Autoridad:** 50% (1/2 S)
 - **Capacidades:** — (sin Sesiones enumeradas)
 - **Contratos:** 100% (1/1 S)
 - **Enrolamiento:** — (sin Sesiones enumeradas)
@@ -57,13 +57,13 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S215** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
-2. **S217** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
+1. **S215** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
+2. **S217** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
 3. **S218** · 🟢 LISTO · prioridad Método V1 · Skill propia chanks-0-comunicacion-agentes: cualquier agente dentro de Herdr se comunica con otro agente, lo observa, lo frena o abre paneles cuando el usuario lo pide con sus palabras, sin nombrar Herdr.
 
 ### Producto Torre (producto-torre)
-1. **S203** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
-2. **S216** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
+1. **S203** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
+2. **S216** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
 3. **S219** · 📋 PLANIFICADO · espera-natural (S218) · prioridad Método V1 · La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados.
 
 ## Bloqueos
@@ -1305,7 +1305,7 @@
 
 ### S203 — Cada proyecto puede prender o apagar la Torre desde el instalador.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/projects.mjs
   - Depende de: S215
@@ -1333,10 +1333,10 @@
 
 ### S215 — Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/piloto/go.mod, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/marca.go, agent-workflows/tools/piloto/worktree.go, agent-workflows/tools/piloto/main&#95;test.go, agent-workflows/tools/piloto/vuelo&#95;test.go, agent-workflows/tools/piloto/marca&#95;test.go, agent-workflows/tools/piloto/worktree&#95;test.go, agent-workflows/tools/install-piloto.sh
-  - Depende de: S214
+  - Depende de: S214, S220
   - Recursos: directorio común de Git (interruptor, límites y marcas radar.piloto/v1), ramas y copias de trabajo por vuelo bajo piloto/&lt;fecha&gt;/
   - Ejecución: ODD nativo.
 - Encargo:
@@ -1347,7 +1347,7 @@
 
 ### S216 — Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/tui/radar.go, product/tower/v1/tui/radar&#95;test.go, product/tower/v1/tui/main.go, product/tower/v1/tui/styles.go
   - Depende de: S215
@@ -1361,7 +1361,7 @@
 
 ### S217 — Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/piloto/revision.go, agent-workflows/tools/piloto/revision&#95;test.go, agent-workflows/tools/piloto/aterrizaje.go, agent-workflows/tools/piloto/aterrizaje&#95;test.go
   - Depende de: S215
@@ -1400,6 +1400,20 @@
   - Resultado y comportamiento: Los archivos de la skill figuran en el roster del paquete V1 y el instalador los deja en la carpeta central de skills, de modo que Claude Code, Codex, OpenCode y Pi la encuentran. La tabla «qué skill cargar» de la plantilla de instrucciones de proyecto suma una fila para pedir comunicación con otro agente, observarlo, frenarlo o abrir paneles. Las pruebas del paquete fijan la nueva membresía. Un proyecto que actualiza a la versión que publique esto recibe la skill y la fila sin pasos manuales.
   - Restricciones y decisiones: Sumar un archivo al roster del paquete exige revisión explícita de release (product/tower/v1/bundle.mjs:22-23); la membresía se enumera, nunca se descubre por recorrido. Las plantillas instaladas no pueden nombrar Tower, MAIN ni Support. Cambia el contrato visible del producto: sale como versión minor según la regla de release de AGENTS.md, y publicar exige autorización humana separada. No se suman skills diferidas ni personales. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: product/tower/v1/bundle.mjs (roster y su comentario de membresía); product/tower/v1/instructions/project-agents.md (tabla «Which skill to load»); product/tower/v1/test/bundle.test.mjs; AGENTS.md (subsección «Cuándo un cambio a master es una release»); S218.
+
+### S220 — Diagnóstico de las copias de trabajo por vuelo: qué falta decidir sobre cómo se crean, cómo quedan listas para trabajar y cómo se retiran, antes de implementar &#96;piloto&#96;.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
+  - Archivos autorizados: docs/architecture/piloto-copias-de-trabajo.md
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El diseño del piloto ya decide que cada vuelo tiene su propia rama y copia de trabajo y que &#96;piloto&#96; las crea (docs/architecture/piloto-automatico.md, tabla de términos y sección del vuelo). No se encontró definido qué pasa alrededor de esa copia. El 2026-10-04 se trabajó una Sesión en una copia aparte mientras otro agente ocupaba el checkout principal y aparecieron costos concretos: la copia nació sin dependencias instaladas y la suite Bun completa no pudo correr; bajo umask 002 los ejecutables quedaron en modo 775 y el instalador exige 755, lo que produjo 143 fallos falsos en la suite Python; el gate de push tiene condiciones propias desde una copia enlazada; y nada define quién la retira.
+  - Resultado y comportamiento: Existe un informe de diagnóstico con evidencia archivo:línea que responde, sin corregir nada: cómo se crea hoy una copia de trabajo y qué le falta para quedar lista (dependencias Bun, Go y Python, modos de archivo, hooks, índice de CodeGraph); si conviene crear una copia nueva por vuelo o reciclar copias ya preparadas, con el costo medido de cada camino; cómo se comportan el gate de push, el aviso de revisión y Radar desde una copia enlazada; quién retira la copia y la rama, cuándo, y qué se conserva si el vuelo quedó a medias o como NOVEDAD · interrumpida. El informe cierra con las decisiones que le corresponden al mantenedor, cada una con opciones, consecuencia y recomendación, y con el delta exacto que esas decisiones le harían a S215.
+  - Restricciones y decisiones: Es diagnóstico: no implementa &#96;piloto&#96;, no crea ni borra copias de trabajo ajenas y no modifica el diseño aprobado (P1–P14); si una decisión aprobada resulta insuficiente, se reporta como decisión pendiente y no se reescribe. No decide por el mantenedor. La decisión sobre &#96;chanks-0-jornada&#96; sigue atada a la planificación de V3 y sólo se cita. El único archivo autorizado es el informe; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: docs/architecture/piloto-automatico.md (términos, sección del vuelo, sección 12, pendiente de &#96;chanks-0-jornada&#96;); fricciones &#35;139 (copias por Sesión descartan el pool ya preparado) y &#35;152 (el gate de push ubica mal a Radar); .githooks/pre-push (condiciones desde copia enlazada); odd/tasks/s218-comunicacion-agentes.md (evidencia de los costos observados el 2026-10-04); S215 (herramienta que crea las copias).
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
