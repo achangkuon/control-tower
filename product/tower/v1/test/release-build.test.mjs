@@ -108,6 +108,29 @@ test("instruction gate passes real templates and accepts additional shipped Rada
   expect(buildRelease({ repo, out }).sha256).toBe(digest(readFileSync(out)));
 }, repo => changeInput(repo, projectPath, text => text.replace("radar zonas", "radar zonas; radar roadmap"))));
 
+test("from-checkout builds with the checkout's own larger roster and self-bootstraps (issue #156)", () => {
+  const extra = "agent-workflows/skills/chanks-9-nueva/SKILL.md";
+  return fixture(({ repo, out }) => {
+    const receipt = buildRelease({ repo, out });
+    const envelope = JSON.parse(readFileSync(out));
+    expect(envelope.members.map(({ path }) => path)).toContain(extra);
+    expect(envelope.members).toHaveLength(94);
+    expect(receipt.sha256).toBe(digest(readFileSync(out)));
+    // The envelope carries the checkout roster, so it must admit itself again through
+    // the running CLI's superset rule instead of the stale 93-member roster.
+    expect(bootstrapVerifiedRelease({ repository: "example/control-tower", tag: `checkout-${receipt.commit.slice(0, 12)}`,
+      asset: "tower-v1.json", sha256: receipt.sha256,
+      runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : readFileSync(out) }) })
+      .manifest.members).toHaveLength(94);
+  }, repo => {
+    changeInput(repo, bundlePath, text => text.replace('"chanks-1-adopcion/SKILL.md",',
+      `"${extra.slice("agent-workflows/skills/".length)}",\n  "chanks-1-adopcion/SKILL.md",`));
+    const file = join(repo, extra);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, "new skill\n");
+  });
+});
+
 test("CLI lists every instruction problem in Spanish without truncation", () => fixture(({ repo, out }) => {
   let stdout = "", stderr = "";
   expect(main(["--repo", repo, "--out", out], {

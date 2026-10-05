@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { closeSync, fchmodSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { BUNDLE_MEMBERS } from "./bundle.mjs";
 import { bootstrapVerifiedRelease } from "./bootstrap.mjs";
 import { MAX_RELEASE_BYTES } from "./release.mjs";
@@ -14,11 +14,13 @@ const memberLimit = 1024 * 1024;
 const aggregateLimit = 8 * memberLimit;
 const optionNames = ["repo", "commit", "out", "tag", "installer-out", "tui-out-dir"];
 const installerPath = "product/tower/v1/install.mjs";
+const bundleMemberPath = "product/tower/v1/bundle.mjs";
+const moduleNames = ["adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build"];
+const runningBundlePath = fileURLToPath(new URL("./bundle.mjs", import.meta.url));
 // ASCII paths: default sort is bytewise, never locale-sensitive. Serialization key order
 // is schema,members and path,type,encoding,byteLength,sha256,bytes; no timestamps/newline.
-const paths = [...new Set([...BUNDLE_MEMBERS.map(({ source }) => source), ...[
-  "adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build",
-].map((name) => `product/tower/v1/${name}.mjs`)])].sort();
+const paths = [...new Set([...BUNDLE_MEMBERS.map(({ source }) => source),
+  ...moduleNames.map((name) => `product/tower/v1/${name}.mjs`)])].sort();
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const fail = (reason) => { throw new Error(reason); };
 
@@ -30,6 +32,52 @@ const stageSkills = [
 const requiredRadar = ["etapa", "faltan", "status", "sesion", "check", "render", "archivar", "zonas"];
 const forbiddenTerms = ["jornada", "herdr", "admission", "admisión", "marcar", "session-kickoff", "Emilio", "Notion", "gentle-ai:"];
 class InstructionsError extends Error {}
+class RosterError extends Error {}
+
+// A checkout's roster is its own explicit review record, never the running CLI's
+// BUNDLE_MEMBERS (issue #156: --from-checkout used the installed 91-path roster with
+// newer contents and produced a version that could not self-bootstrap).
+function canonicalRosterPath(path) {
+  return typeof path === "string" && path.length > 0 && path.length <= 512 &&
+    !path.startsWith("/") && !/^[A-Za-z]:/.test(path) && !path.includes("\\") && !path.includes("\0") &&
+    path.split("/").every((part) => part && part !== "." && part !== "..");
+}
+// Load the checkout's bundle.mjs, the only faithful source of its roster. A checkout
+// byte-identical to the running bundle short-circuits, so the ordinary release
+// pipeline (repo == this checkout) never spawns a process or evaluates anything.
+function loadCheckoutRoster(source) {
+  let base;
+  try {
+    base = mkdtempSync(join(realpathSync(tmpdir()), "tower-roster-"));
+    const file = join(base, "bundle.mjs");
+    writeFileSync(file, source, { mode: 0o600 });
+    const script = `import { BUNDLE_MEMBERS } from ${JSON.stringify(pathToFileURL(file).href)};\n` +
+      "process.stdout.write(JSON.stringify(BUNDLE_MEMBERS.map(({ source }) => source)));";
+    const result = childProcess.spawnSync(process.execPath, ["-e", script],
+      { encoding: "buffer", timeout: 10_000, maxBuffer: memberLimit,
+        env: { PATH: process.env.PATH, HOME: process.env.HOME } });
+    if (result.error || result.status !== 0 || !Buffer.isBuffer(result.stdout) || result.stdout.length > memberLimit) {
+      throw new RosterError("El roster de la release no se pudo leer desde product/tower/v1/bundle.mjs del checkout.");
+    }
+    const sources = JSON.parse(result.stdout.toString("utf8"));
+    if (!Array.isArray(sources) || !sources.length || sources.some((path) => !canonicalRosterPath(path))) {
+      throw new RosterError("El roster de product/tower/v1/bundle.mjs del checkout no es válido para construir la release.");
+    }
+    return [...new Set([...sources, ...moduleNames.map((name) => `product/tower/v1/${name}.mjs`)])].sort();
+  } catch (error) {
+    if (error instanceof RosterError) throw error;
+    throw new RosterError("El roster de la release no se pudo determinar desde el bundle.mjs del checkout.");
+  } finally {
+    if (base) rmSync(base, { recursive: true, force: true });
+  }
+}
+function checkoutRoster(root, sha) {
+  let source;
+  try { source = git(root, ["show", `${sha}:${bundleMemberPath}`]); }
+  catch { throw new RosterError("El roster de la release no se pudo leer desde product/tower/v1/bundle.mjs del checkout."); }
+  if (source.equals(readFileSync(runningBundlePath))) return paths;
+  return loadCheckoutRoster(source);
+}
 
 /** Pure structural contract shared with tests. Parse the shipped source, never import/eval it.
  * The roster is deliberately a literal workflowNames array; unsupported source shapes fail closed.
@@ -132,13 +180,13 @@ function outputPath(out, repo) {
 }
 
 /** Deterministic standalone asset; a unique, exact sentinel prevents accidental restamping. */
-export function stampInstaller(source, { tag, sha256, tui }) {
+export function stampInstaller(source, { tag, sha256, tui, roster = paths }) {
   if (typeof tag !== "string" || tag.length > 128 || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(tag) ||
       tag.includes("..") || tag.endsWith(".") || tag.toLowerCase() === "latest" || !/^[a-f0-9]{64}$/.test(sha256)) {
     fail("invalid installer stamp tag or SHA-256");
   }
   if (typeof source !== "string" || source.match(/^const PINNED = null;$/gm)?.length !== 1) fail("unstamped installer marker must occur exactly once");
-  const pinned = { repository: "achangkuon/control-tower", tag, asset: "tower-v1.json", sha256, paths, ...(tui ? { tui } : {}) };
+  const pinned = { repository: "achangkuon/control-tower", tag, asset: "tower-v1.json", sha256, paths: roster, ...(tui ? { tui } : {}) };
   return source.replace(/^const PINNED = null;$/m, () => `const PINNED = ${JSON.stringify(pinned)};`);
 }
 
@@ -217,8 +265,11 @@ export function buildRelease(options, deps = {}) {
   clean(root);
   const sha = git(root, ["rev-parse", "--verify", "--end-of-options", `${commit}^{commit}`]).toString("utf8").trim();
   if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(sha)) fail("git returned an invalid commit");
+  // The envelope carries the CHECKOUT's roster, so the installed version can always
+  // self-validate its own release.json regardless of the running CLI's roster.
+  const releasePaths = checkoutRoster(root, sha);
   const entries = new Map();
-  const readPaths = withInstaller ? [...paths, installerPath] : paths;
+  const readPaths = withInstaller ? [...releasePaths, installerPath] : releasePaths;
   // Include the whole vendor subtree in metadata admission so newly committed
   // dependency files cannot be silently omitted by the explicit release roster.
   const tree = git(root, ["ls-tree", "-rlz", "--full-tree", sha, "--", ...readPaths, "agent-workflows/tools/radar/vendor"]).toString("utf8");
@@ -228,13 +279,13 @@ export function buildRelease(options, deps = {}) {
     entries.set(match[3], Number(match[2]));
   }
   let aggregate = 0;
-  for (const path of paths) {
+  for (const path of releasePaths) {
     const size = entries.get(path);
     if (size === undefined) fail(`missing release member: ${path}`);
     if (!Number.isSafeInteger(size) || size < 0 || size > memberLimit) fail(`release member size limit: ${path}`);
     if ((aggregate += size) > aggregateLimit) fail("release aggregate size limit");
   }
-  const members = paths.map((path) => {
+  const members = releasePaths.map((path) => {
     const bytes = git(root, ["show", `${sha}:${path}`]);
     if (bytes.length !== entries.get(path)) fail(`release member size divergence: ${path}`);
     return { path, type: "file", encoding: "base64", byteLength: bytes.length,
@@ -260,7 +311,7 @@ export function buildRelease(options, deps = {}) {
     const source = git(root, ["show", `${sha}:${installerPath}`]);
     if (source.length !== size) fail("installer size divergence");
     installerSource = new TextDecoder("utf-8", { fatal: true }).decode(source);
-    stampInstaller(installerSource, { tag, sha256 }); // Admit source and pins before any TUI publication.
+    stampInstaller(installerSource, { tag, sha256, roster: releasePaths }); // Admit source and pins before any TUI publication.
   }
   let tui = null;
   if (tuiTarget) {
@@ -271,7 +322,7 @@ export function buildRelease(options, deps = {}) {
       if (!deps.allowTuiFailure) throw error;
     }
   }
-  if (installerSource) installer = Buffer.from(stampInstaller(installerSource, { tag, sha256, tui }));
+  if (installerSource) installer = Buffer.from(stampInstaller(installerSource, { tag, sha256, tui, roster: releasePaths }));
   clean(root);
   const fd = openSync(target, "wx", 0o644);
   try { writeFileSync(fd, bytes); fchmodSync(fd, 0o644); } finally { closeSync(fd); }
@@ -301,7 +352,7 @@ export function main(argv, io = {}) {
     stdout.write(`${JSON.stringify(buildRelease(options))}\n`);
     return 0;
   } catch (error) {
-    if (error instanceof InstructionsError) {
+    if (error instanceof InstructionsError || error instanceof RosterError) {
       stderr.write(`No se pudo construir la release de Tower: ${error.message}\n`);
       return 1;
     }

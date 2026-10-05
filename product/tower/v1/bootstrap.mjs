@@ -12,9 +12,23 @@ const RELEASE_PATHS = new Set([
     .map((name) => `product/tower/v1/${name}.mjs`),
 ]);
 
+// Absolute, deliberate cap on the object count of a release envelope. It must NOT
+// follow the running CLI's roster: an installed CLI N must admit the published
+// envelope of a later roster M > N (issue #156, v1.2.5 roster 91 -> v1.3.0 roster 93),
+// otherwise every roster-size change is unreachable by self-update. 512 is finite and
+// documented: >5x the 93-member roster shipping today leaves room for many future
+// rosters while keeping the nonrecursive preflight to a few thousand allocations, so
+// it still guards JSON.parse against a runaway object count.
+export const ABSOLUTE_MEMBER_LIMIT = 512;
+
 // Six keys and five string values per member, plus two envelope keys/schema.
-// Scale the structural bound with the closed roster, not a fixed old file count.
-const STRING_LIMIT = RELEASE_PATHS.size * 11 + 3;
+// Scale the structural bounds with the absolute cap, not with the running roster,
+// so a supported newer roster is not rejected by a bound derived from the old one.
+const STRING_LIMIT = ABSOLUTE_MEMBER_LIMIT * 11 + 3;
+// Punctuation and numeric scalars outside strings: six colons, six commas and up to
+// seven digits per member, plus the two envelope separators. Generous per member while
+// still finite, so the object bound is the effective cap for a runaway member count.
+const SCALAR_LIMIT = ABSOLUTE_MEMBER_LIMIT * 20 + 64;
 
 // Wire format: {schema, members:[{path,type:"file",encoding:"base64",byteLength,sha256,bytes}]}.
 // Only canonical source-layout paths are admitted; this is not a general extractor.
@@ -52,13 +66,13 @@ function parseEnvelope(text) {
         parent.keys.add(key);
       }
     } else if (char === "{" || char === "[") {
-      if (stack.length >= 3 || (char === "{" ? ++objects > RELEASE_PATHS.size + 1 : ++arrays > 1)) {
+      if (stack.length >= 3 || (char === "{" ? ++objects > ABSOLUTE_MEMBER_LIMIT + 1 : ++arrays > 1)) {
         throw new Error("Release JSON structure limit exceeded");
       }
       stack.push({ kind: char, keys: new Set() });
     } else if (char === "}" || char === "]") {
       if (stack.pop()?.kind !== (char === "}" ? "{" : "[")) throw new Error("Invalid release JSON structure");
-    } else if (!whitespace(char) && ++scalarCharacters > 4096) {
+    } else if (!whitespace(char) && ++scalarCharacters > SCALAR_LIMIT) {
       throw new Error("Release JSON scalar limit exceeded");
     }
   }
@@ -66,50 +80,26 @@ function parseEnvelope(text) {
   return JSON.parse(text);
 }
 
-// All four published releases v1.0.0–v1.1.0 share this exact pre-runtime roster.
-// Keep it independent of today's bundle: historical membership must never grow with it.
-const PUBLISHED_PATHS = new Set([
-  "agent-workflows/tools/radar/archivar.go",
-  "agent-workflows/tools/radar/avance.go",
-  "agent-workflows/tools/radar/check.go",
-  "agent-workflows/tools/radar/encargo.go",
-  "agent-workflows/tools/radar/etapa.go",
-  "agent-workflows/tools/radar/faltan.go",
-  "agent-workflows/tools/radar/git.go",
-  "agent-workflows/tools/radar/go.mod",
-  "agent-workflows/tools/radar/go.sum",
-  "agent-workflows/tools/radar/ledger.go",
-  "agent-workflows/tools/radar/main.go",
-  "agent-workflows/tools/radar/partition.go",
-  "agent-workflows/tools/radar/plan.go",
-  "agent-workflows/tools/radar/render.go",
-  "agent-workflows/tools/radar/roadmap.go",
-  "agent-workflows/tools/radar/safety.go",
-  "agent-workflows/tools/radar/sesion.go",
-  "agent-workflows/tools/radar/snapshot.go",
-  "agent-workflows/tools/radar/state.go",
-  "product/tower/v1/adoption.mjs",
-  "product/tower/v1/bootstrap.mjs",
-  "product/tower/v1/bundle.mjs",
-  "product/tower/v1/cli.mjs",
-  "product/tower/v1/global.mjs",
-  "product/tower/v1/project-files.mjs",
-  "product/tower/v1/projects.mjs",
-  "product/tower/v1/release.mjs",
-  "product/tower/v1/skills/control-tower/SKILL.md",
-  "product/tower/v1/skills/control-tower/references/adoption.md",
-  "product/tower/v1/skills/control-tower/references/authority-and-questions.md",
-]);
-// Unpublished S194/S195 caches remain supported for the existing offline rollback tests.
-// Exact historical rosters, not arbitrary subsets of the current bundle.
-const S195_PATHS = new Set([...RELEASE_PATHS].filter(path => !path.startsWith("agent-workflows/tools/radar/vendor/")));
-const S194_PATHS = new Set([...S195_PATHS].filter(path => ![
-  "product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs",
-].includes(path)));
+// Source-layout roots an envelope may write under. Canonical paths, mirroring
+// bundle.mjs's relativePath, admit a newer roster without trusting a fixed list.
+const RELEASE_ROOTS = ["agent-workflows/", "product/tower/v1/"];
+function canonicalReleasePath(path) {
+  return typeof path === "string" && path.length > 0 && path.length <= 512 &&
+    RELEASE_ROOTS.some((root) => path.startsWith(root)) &&
+    !path.includes("\\") && !path.includes("\0") &&
+    path.split("/").every((part) => part && part !== "." && part !== "..");
+}
 
-function validateMembers(envelope, paths = RELEASE_PATHS) {
+// requiredRoster pins fresh intake to the running CLI's own paths: every one must be
+// present, so a published envelope can only grow and can never silently drop or
+// substitute a reviewed member. Historical caches pass null and are admitted by their
+// verified pinned digest (validated earlier by acquireVerifiedRelease) plus this
+// canonical structure, so a store may mix roster generations (issue #156).
+function validateMembers(envelope, requiredRoster = null) {
   if (!exactKeys(envelope, "members,schema") || envelope.schema !== RELEASE_SCHEMA ||
-      !Array.isArray(envelope.members) || envelope.members.length !== paths.size) {
+      !Array.isArray(envelope.members) || envelope.members.length < 1 ||
+      envelope.members.length > ABSOLUTE_MEMBER_LIMIT ||
+      (requiredRoster && envelope.members.length < requiredRoster.size)) {
     throw new Error("Invalid global release schema or membership");
   }
   const seen = new Set();
@@ -117,7 +107,7 @@ function validateMembers(envelope, paths = RELEASE_PATHS) {
   // Check the complete manifest before any member Buffer.from(base64) allocation.
   for (const member of envelope.members) {
     if (!exactKeys(member, "byteLength,bytes,encoding,path,sha256,type") ||
-        typeof member.path !== "string" || !paths.has(member.path) || seen.has(member.path) ||
+        !canonicalReleasePath(member.path) || seen.has(member.path) ||
         member.type !== "file" || member.encoding !== "base64" ||
         typeof member.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(member.sha256)) {
       throw new Error("Invalid global release member");
@@ -136,6 +126,9 @@ function validateMembers(envelope, paths = RELEASE_PATHS) {
     aggregate += member.byteLength;
     if (aggregate > AGGREGATE_LIMIT) throw new Error("Release aggregate byte limit exceeded");
   }
+  if (requiredRoster) for (const path of requiredRoster) if (!seen.has(path)) {
+    throw new Error("Invalid global release schema or membership");
+  }
   return envelope.members.map((member) => {
     const bytes = Buffer.from(member.bytes, "base64");
     if (bytes.toString("base64") !== member.bytes ||
@@ -147,6 +140,8 @@ function validateMembers(envelope, paths = RELEASE_PATHS) {
 }
 
 /** Internal intake only: no filesystem writes, evaluation, imports or activation of release code.
+ * Fresh intake pins the running roster (superset rule) and verifies the outer digest;
+ * cached intake passes no roster, so a historical cache is admitted by its pinned digest.
  * Metadata is frozen; returned Buffers remain mutable and are isolated from runner-owned bytes.
  * Bounds: existing 16 MiB acquisition, 1 MiB/file, 8 MiB aggregate decoded bytes.
  */
@@ -159,12 +154,12 @@ function bootstrap(options, cached = false) {
   } catch {
     throw new Error("Invalid release UTF8 or bounded JSON envelope");
   }
-  const paths = cached ? [RELEASE_PATHS, S195_PATHS, S194_PATHS, PUBLISHED_PATHS].find(paths => paths.size === envelope?.members?.length) ?? RELEASE_PATHS : RELEASE_PATHS;
-  const members = Object.freeze(validateMembers(envelope, paths));
+  const members = Object.freeze(validateMembers(envelope, cached ? null : RELEASE_PATHS));
   return Object.freeze({ bytes, manifest: Object.freeze({ schema: RELEASE_SCHEMA, members }) });
 }
 
 export function bootstrapVerifiedRelease(options) { return bootstrap(options); }
 // Offline cached versions retain their original independently pinned digest.
-// This admits only exact published and S194/S195 historical rosters, never arbitrary subsets or a new acquisition.
+// This admits any exact historical roster (and any newer one) by that digest,
+// never by re-deriving membership from the running CLI's roster size.
 export function bootstrapCachedRelease(options) { return bootstrap(options, true); }

@@ -235,6 +235,26 @@ function cachePublishedRelease() {
     provenance: [...previous.provenance, provenance].sort((a, b) => a.sha256.localeCompare(b.sha256)) });
   return id;
 }
+function seedHistoricalCache(tag, memberPaths) {
+  // Seed a legacy cache exactly as an older CLI would have published it: exact tree,
+  // 0400 provenance pinned to its own digest, and no re-validation against today's roster.
+  const members = memberPaths.map(path => {
+    const bytes = Buffer.from(`historical fixture: ${path}\n`);
+    return { path, type: "file", encoding: "base64", byteLength: bytes.length,
+      sha256: hash(bytes), bytes: bytes.toString("base64") };
+  });
+  const wire = Buffer.from(JSON.stringify({ schema: "tower.v1.release/1", members })), id = hash(wire);
+  const previous = state(), provenance = { ...previous.provenance[0], tag, sha256: id };
+  fs.mkdirSync(version(id), { mode: 0o700 });
+  for (const [path, bytes] of [
+    ["release.json", wire], ["provenance.json", Buffer.from(JSON.stringify(provenance))],
+    ...members.map(m => [m.path, Buffer.from(m.bytes, "base64")]),
+  ]) {
+    fs.mkdirSync(dirname(join(version(id), path)), { recursive: true, mode: 0o700 });
+    fs.writeFileSync(join(version(id), path), bytes, { mode: 0o400 });
+  }
+  return { id, provenance };
+}
 function publishedTransitionConfig() {
   const home = process.env.HOME, calls = [];
   return { calls, config: { ...options, home, env: { HOME: home, PATH: process.env.PATH },
@@ -269,6 +289,24 @@ test("rollback to a published 30-member cache keeps every installed runtime byte
   expect(snapshot(config.home)).toEqual(runtimeBefore);
   expect(snapshot(version(old))).toEqual(oldBefore);
   expect(doctorGlobal(options).active).toBe(old);
+});
+
+test("a mixed-generation store lists, inspects and rolls back a cache whose roster differs from the running CLI", () => {
+  const current = install("mixed-current"); // active, 93-member roster
+  const retired = new Set(["agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
+    "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md"]);
+  const legacyPaths = paths.filter(path => !retired.has(path));
+  expect(legacyPaths).toHaveLength(91); // v1.2.5's roster matches no named generation
+  const legacy = seedHistoricalCache("v1.2.5", legacyPaths);
+  const before = state();
+  rewrite(statePath(), { ...before, active: current.id, previous: legacy.id,
+    provenance: [...before.provenance, legacy.provenance].sort((a, b) => a.sha256.localeCompare(b.sha256)) });
+  // Inspect must admit every cached generation by its pinned digest, not by roster size.
+  expect(doctorGlobal(options)).toMatchObject({ status: "healthy", active: current.id,
+    activeTag: current.acquire.tag, previous: legacy.id, previousTag: "v1.2.5" });
+  expect(rollbackGlobal(options)).toMatchObject({ status: "activated", active: legacy.id, previous: current.id });
+  expect(doctorGlobal(options)).toMatchObject({ status: "healthy", active: legacy.id, activeTag: "v1.2.5" });
+  expect(rollbackGlobal(options)).toMatchObject({ status: "activated", active: current.id, previous: legacy.id });
 });
 
 test("tampered published cache is rejected before update or rollback writes", () => {

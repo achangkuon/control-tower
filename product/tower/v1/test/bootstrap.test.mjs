@@ -1,8 +1,10 @@
 import { describe, expect, test, spyOn } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { resolve } from "node:path";
 import { BUNDLE_MEMBERS, BUNDLE_SCHEMA } from "../bundle.mjs";
 import { MAX_RELEASE_BYTES } from "../release.mjs";
-import { bootstrapVerifiedRelease, bootstrapCachedRelease } from "../bootstrap.mjs";
+import { bootstrapVerifiedRelease, bootstrapCachedRelease, ABSOLUTE_MEMBER_LIMIT } from "../bootstrap.mjs";
 
 const schema = "tower.v1.release/1";
 const paths = [...BUNDLE_MEMBERS.map(({ source }) => source), ...[
@@ -73,7 +75,49 @@ function rejects(value, pattern = /release/i) {
   expect(calls.length).toBe(2);
 }
 
-test("cached exact S194/S195 72/74-member releases remain verified; new intake requires all 91", () => {
+test("intake admits a member count above the running roster and still rejects a runaway count", () => {
+  // The running roster is 93; a 94th canonical member is a newer, larger published roster.
+  // The absolute parse bound must not be derived from the running CLI's own roster.
+  const grown = [...paths, "agent-workflows/skills/chanks-9-nueva/SKILL.md"];
+  expect(intake(encode({ schema, members: grown.map((path) => member(path)) })).run().manifest.members).toHaveLength(94);
+  // At the documented absolute cap the envelope is still parsed and admitted...
+  const atCap = [...paths, ...Array.from({ length: ABSOLUTE_MEMBER_LIMIT - paths.length }, (_, index) => `product/tower/v1/gen/${index}.mjs`)];
+  expect(atCap).toHaveLength(ABSOLUTE_MEMBER_LIMIT);
+  expect(intake(encode({ schema, members: atCap.map((path) => member(path)) })).run().manifest.members).toHaveLength(ABSOLUTE_MEMBER_LIMIT);
+  // ...and one object beyond it is refused before JSON.parse allocates the structure.
+  const beyond = [...atCap, "product/tower/v1/gen/overflow.mjs"];
+  expect(beyond).toHaveLength(ABSOLUTE_MEMBER_LIMIT + 1);
+  rejects({ schema, members: beyond.map((path) => member(path)) });
+});
+
+test("a roster-91 CLI installs a published 93-member envelope (issue #156 bridge)", () => {
+  const bootstrapPath = resolve(import.meta.dir, "../bootstrap.mjs");
+  const bundlePath = resolve(import.meta.dir, "../bundle.mjs");
+  // v1.2.5's 81 shipped files preceded the two chanks-0-comunicacion-agentes members.
+  const retired = new Set(["agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
+    "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md"]);
+  const running91 = BUNDLE_MEMBERS.filter(({ source }) => !retired.has(source));
+  expect(running91).toHaveLength(81); // + ten engine modules = the 91-path running roster
+  const envelope = encode({ schema, members: paths.map((path) => member(path)) });
+  const script = `
+    import { mock } from "bun:test";
+    import { createHash } from "node:crypto";
+    const bundle = await import(${JSON.stringify(bundlePath)});
+    mock.module(${JSON.stringify(bundlePath)}, () => ({ ...bundle, BUNDLE_MEMBERS: ${JSON.stringify(running91)} }));
+    const { bootstrapVerifiedRelease } = await import(${JSON.stringify(bootstrapPath)});
+    const bytes = Buffer.from(${JSON.stringify(envelope.toString("base64"))}, "base64");
+    const result = bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1.3.0",
+      asset: "tower-v1.json", sha256: createHash("sha256").update(bytes).digest("hex"),
+      runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) });
+    process.stdout.write(String(result.manifest.members.length));
+  `;
+  const run = spawnSync(process.execPath, ["-e", script], { encoding: "utf8" });
+  expect(run.stderr).toBe("");
+  expect(run.status).toBe(0);
+  expect(run.stdout).toBe("93");
+});
+
+test("cached S194/S195 releases are admitted by pinned digest; intake still requires the running roster", () => {
   const preVendor = fixture().members.filter(m => !m.path.startsWith("agent-workflows/tools/radar/vendor/"));
   for (const count of [74, 76]) {
     const old = { schema, members: count === 76 ? preVendor : preVendor.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path)) };
@@ -81,15 +125,19 @@ test("cached exact S194/S195 72/74-member releases remain verified; new intake r
     expect(bootstrapCachedRelease(options).manifest.members.length).toBe(count);
     expect(() => bootstrapVerifiedRelease(options)).toThrow(/membership/);
     expect(() => bootstrapCachedRelease({ ...options, sha256: "0".repeat(64) })).toThrow(/SHA-256/);
+    // A cache is admitted by its own verified pinned digest, so a historical roster
+    // (and an absent member) is still self-consistent. Digest integrity stays strict.
     old.members.pop(); const missing = encode(old);
-    expect(() => bootstrapCachedRelease({ ...options, sha256: digest(missing), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : missing }) })).toThrow(/membership/);
+    expect(bootstrapCachedRelease({ ...options, sha256: digest(missing), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : missing }) }).manifest.members.length).toBe(count - 1);
   }
+  // A 91-member mixed-generation cache (93 minus two engine modules) matches no named
+  // roster; it must still be admitted by digest instead of failing inspect.
   const hybrid = fixture(); hybrid.members = hybrid.members.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path));
   const bytes = encode(hybrid);
-  expect(() => bootstrapCachedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) })).toThrow(/membership/);
+  expect(bootstrapCachedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) }).manifest.members.length).toBe(91);
 });
 
-test("published 30-member receipts are cached-only and retain exact membership and digest checks", () => {
+test("published 30-member receipts stay cached-only and are admitted by digest and structure", () => {
   const cached = (value, overrides = {}) => {
     const bytes = encode(value);
     return { repository: "example/control-tower", tag: "v1.1.0", asset: "tower-v1.json",
@@ -105,10 +153,8 @@ test("published 30-member receipts are cached-only and retain exact membership a
   }
   for (const change of [
     old => { old.schema = "unknown"; },
-    old => { old.members.pop(); },
     old => { old.members.push(member("extra.mjs")); },
     old => { old.members[0].path = old.members[1].path; },
-    old => { old.members[0].path = "product/tower/v1/runtime-config.mjs"; },
     old => { old.members[0].path = "../archivar.go"; },
     old => { old.members[0].type = "symlink"; },
     old => { old.members[0].sha256 = "0".repeat(64); },
@@ -116,6 +162,9 @@ test("published 30-member receipts are cached-only and retain exact membership a
     const old = published(); change(old);
     expect(() => bootstrapCachedRelease(cached(old))).toThrow(/release/i);
   }
+  // A truncated historical cache is still admitted by its own pinned digest.
+  const truncated = published(); truncated.members.pop();
+  expect(bootstrapCachedRelease(cached(truncated)).manifest.members).toHaveLength(publishedPaths.length - 1);
 });
 
 describe("bounded verified global release intake", () => {
@@ -156,14 +205,17 @@ describe("bounded verified global release intake", () => {
     }
   });
 
-  test("vendor membership rejects missing, substituted and extra vendor files before use", () => {
+  test("vendor membership rejects missing and substituted vendor files before use", () => {
     const vendor = fixture().members.filter(m => m.path.startsWith("agent-workflows/tools/radar/vendor/"));
     expect(vendor).toHaveLength(17);
     for (const member of vendor) {
       const missing = fixture(); missing.members = missing.members.filter(m => m.path !== member.path); rejects(missing);
       const changed = fixture(); changed.members.find(m => m.path === member.path).path += ".extra"; rejects(changed);
     }
-    const extra = fixture(); extra.members.push(member("agent-workflows/tools/radar/vendor/extra.go")); rejects(extra);
+    // A new canonical member is a legitimate newer roster and is admitted by digest;
+    // the build-side gate ("committed vendor drift ...") still forbids vendor growth.
+    const extra = fixture(); extra.members.push(member("agent-workflows/tools/radar/vendor/extra.go"));
+    expect(intake(encode(extra)).run().manifest.members).toHaveLength(94);
   });
 
   test("requires global skills, templates and signature sources but rejects the personal Notion map", () => {
