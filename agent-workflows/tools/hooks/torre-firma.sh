@@ -1,5 +1,6 @@
 #!/bin/sh
-# Optional Claude PreToolUse notice; installer copies this file but never registers it.
+# Claude PreToolUse notice ("🗼 Torre · …"): the installer copies AND registers this
+# hook in ~/.claude/settings.json (PreToolUse/Bash), per decision B4 (2026-10-05).
 # No tool invocation or admission decision is performed here.
 command -v python3 >/dev/null 2>&1 || exit 0
 python3 -c '
