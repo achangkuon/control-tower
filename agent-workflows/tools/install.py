@@ -221,6 +221,7 @@ PERSONAL_BLOCKS = tuple(
         ("agent-propagation-map.md", b"chanks:agent-propagation-map"),
         ("doc-guard-rule.md", b"chanks:doc-guard-rule"),
         ("explain-to-maintainer.md", b"chanks:explain-to-maintainer"),
+        ("main-freshness.md", b"chanks:main-freshness"),
     )
 )
 ADDED_WHEN_ABSENT_BLOCKS = (
@@ -232,6 +233,9 @@ PERSONAL_ADDED_WHEN_ABSENT = (
     b"<!-- chanks:doc-guard-rule -->",
     b"<!-- chanks:explain-to-maintainer -->",
 )
+# main-freshness is appended when absent in every runtime (S224); the codex-only
+# policy above stays untouched for the two blocks that already had it.
+PERSONAL_ALWAYS_ADDED_WHEN_ABSENT = (b"<!-- chanks:main-freshness -->",)
 ADDED_WHEN_ABSENT_FILES = (Path(".codex/AGENTS.md"),)
 
 # The plan-naming block is one text in every runtime (maintainer decision of 2026-10-01).
@@ -625,11 +629,14 @@ def desired_personal_content(path: Path, replacements: dict[bytes, bytes], *, ad
             content = content[:match.start()] + replacements[start] + content[match.end():]
             # Offsets belong to the original bytes; validate again after each splice.
             matches = _transition_matches(content, path)
+    aliases = {b"<!-- " + new + b" -->": b"<!-- " + old + b" -->"
+               for old, new in PERSONAL_NAMES.items()}
+    absent = tuple(start for start in PERSONAL_ALWAYS_ADDED_WHEN_ABSENT
+                   if matches[start] is None)
     if add_absent:
-        aliases = {b"<!-- " + new + b" -->": b"<!-- " + old + b" -->"
-                   for old, new in PERSONAL_NAMES.items()}
-        absent = tuple(start for start in PERSONAL_ADDED_WHEN_ABSENT
-                       if matches[start] is None and matches[aliases[start]] is None)
+        absent += tuple(start for start in PERSONAL_ADDED_WHEN_ABSENT
+                        if matches[start] is None and matches[aliases[start]] is None)
+    if absent:
         content = append_absent_blocks(content, replacements, absent)
     return content
 
@@ -793,6 +800,35 @@ def carril_changes(home: Path, root: Path) -> list[Change]:
     return [Change(target, "carril-launcher")]
 
 
+MAIN_AL_DIA_SOURCE = Path("tools/main-al-dia")
+MAIN_AL_DIA_RELATIVE = Path(".local/bin/main-al-dia")
+
+
+def main_al_dia_path(home: Path) -> Path:
+    return home / MAIN_AL_DIA_RELATIVE
+
+
+def main_al_dia_source(root: Path) -> Path:
+    source = root / MAIN_AL_DIA_SOURCE
+    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
+        raise InstallError("Main freshness launcher source must be a regular executable 755 file")
+    return source
+
+
+def main_al_dia_changes(home: Path, root: Path) -> list[Change]:
+    source = main_al_dia_source(root)
+    target = main_al_dia_path(home)
+    _validate_directory_path(target.parent, "local binary directory")
+    _validate_file_destination(home / ".local", target, "Main freshness launcher")
+    if (
+        target.is_file()
+        and target.read_bytes() == source.read_bytes()
+        and stat.S_IMODE(target.stat().st_mode) == 0o755
+    ):
+        return []
+    return [Change(target, "main-al-dia-launcher")]
+
+
 def etapa_hook_path(home: Path) -> Path:
     return home / ".claude/hooks/chanks-etapa.sh"
 
@@ -896,6 +932,7 @@ def build_plan(home: Path, root: Path | None = None) -> list[Change]:
         if path.read_bytes() != desired:
             changes.append(Change(path, "manual"))
     changes.extend(carril_changes(home, root))
+    changes.extend(main_al_dia_changes(home, root))
     changes.extend(pi_npm_host_peers_changes(home, root))
     changes.extend(pi_overlay_rebuild_changes(home, root))
     changes.extend(retired_control_changes(home))
@@ -1095,6 +1132,9 @@ def apply(home: Path, root: Path | None = None) -> list[Change]:
     if carril_path(home) in change_paths:
         _atomic_copy(carril_source(root), carril_path(home), home / ".local")
         os.chmod(carril_path(home), 0o755)
+    if main_al_dia_path(home) in change_paths:
+        _atomic_copy(main_al_dia_source(root), main_al_dia_path(home), home / ".local")
+        os.chmod(main_al_dia_path(home), 0o755)
     if pi_npm_wrapper_path(home) in change_paths or pi_settings_path(home) in change_paths:
         install_pi_npm_host_peers(home, root)
     if any(change.kind in ("pi-overlay-tool", "pi-overlay-data") for change in changes):

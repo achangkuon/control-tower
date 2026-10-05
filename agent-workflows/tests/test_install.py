@@ -183,7 +183,11 @@ class TowerMigrationTests(unittest.TestCase):
                                 env=self.env, capture_output=True, text=True)
         self.assertEqual(normal.returncode, 0, normal.stderr)
         self.assertEqual(normal.stdout.count("HINT: legacy Chanks blocks left untouched"), 1)
-        self.assertEqual(before, {path: path.read_bytes() for path in before})
+        # The normal install only appends the always-added freshness block; every
+        # legacy byte stays exactly where it was.
+        freshness = INSTALLER.render_personal_blocks(ROOT)[b"<!-- chanks:main-freshness -->"]
+        for path in INSTALLER.manual_paths(self.home):
+            self.assertEqual(path.read_bytes(), before[path] + b"\n\n" + freshness, path)
         self.assertEqual(self.cli("--apply").returncode, 0)
         targets = [".agents/skills/_shared/plan-naming-convention.md", ".local/bin/radar",
                    ".claude/hooks/chanks-etapa.sh", ".claude/hooks/torre-firma.sh",
@@ -442,6 +446,31 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(drifted.returncode, 1)
         self.assertIn(f"DRIFT carril-launcher: {target}", drifted.stdout)
 
+    def test_main_al_dia_launcher_is_installed_and_check_detects_drift(self):
+        INSTALLER.apply(self.home, ROOT)
+        target = self.home / ".local/bin/main-al-dia"
+        source = ROOT / "tools/main-al-dia"
+        self.assertEqual(target.read_bytes(), source.read_bytes())
+        self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o755)
+
+        clean = subprocess.run(
+            [sys.executable, str(SCRIPT), "--check", "--home", str(self.home)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
+
+        target.write_bytes(target.read_bytes() + b"\n# drift\n")
+        drifted = subprocess.run(
+            [sys.executable, str(SCRIPT), "--check", "--home", str(self.home)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(drifted.returncode, 1)
+        self.assertIn(f"DRIFT main-al-dia-launcher: {target}", drifted.stdout)
+
     def test_dry_run_does_not_write(self):
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--dry-run", "--home", str(self.home)],
@@ -539,6 +568,7 @@ class InstallerTests(unittest.TestCase):
         (b"chanks:agent-propagation-map", "agent-propagation-map.md"),
         (b"chanks:doc-guard-rule", "doc-guard-rule.md"),
         (b"chanks:explain-to-maintainer", "explain-to-maintainer.md"),
+        (b"chanks:main-freshness", "main-freshness.md"),
     )
     MANUAL_ANNOTATION = " (manual — NOT gentle-ai managed; do not overwrite on sync)".encode()
 
@@ -588,16 +618,36 @@ class InstallerTests(unittest.TestCase):
 
     PLAN_NAMING = b"PLAN-NAMING:GLOBAL"
     ADDED_TO_CODEX = (b"chanks:doc-guard-rule", b"chanks:explain-to-maintainer")
+    ADDED_TO_ALL_RUNTIMES = (b"chanks:main-freshness",)
 
-    def test_missing_personal_blocks_are_added_only_to_codex(self):
+    def test_missing_personal_blocks_are_added_to_their_runtime(self):
         INSTALLER.apply(self.home, ROOT)
         codex = self.home / ".codex/AGENTS.md"
         for path in INSTALLER.manual_paths(self.home):
-            for name, _ in self.TARGETED_BLOCKS:
-                expected = path == codex and name in self.ADDED_TO_CODEX
-                self.assertEqual(name in path.read_bytes(), expected, (path, name))
+            for name in self.ADDED_TO_ALL_RUNTIMES:
+                self.assertIn(name, path.read_bytes(), (path, name))
+            for name in self.ADDED_TO_CODEX:
+                self.assertEqual(name in path.read_bytes(), path == codex, (path, name))
             self.assertNotIn(self.PLAN_NAMING, path.read_bytes(), path)
         self.assertFalse((self.home / ".hermes").exists())
+
+    def test_main_freshness_block_reaches_every_runtime_and_is_idempotent(self):
+        self.assertEqual(INSTALLER.PERSONAL_ALWAYS_ADDED_WHEN_ABSENT,
+                         (b"<!-- chanks:main-freshness -->",))
+        replacements = INSTALLER.render_personal_blocks(ROOT)
+        self.assertIn(b"<!-- chanks:main-freshness -->", replacements)
+        self.assertEqual(
+            replacements[b"<!-- chanks:main-freshness -->"],
+            (ROOT / "templates/main-freshness.md").read_bytes(),
+        )
+        INSTALLER.apply(self.home, ROOT)
+        block = replacements[b"<!-- chanks:main-freshness -->"]
+        for path in INSTALLER.manual_paths(self.home):
+            with self.subTest(path=path):
+                self.assertIn(block, path.read_bytes())
+                self.assertNotIn(b"{{", path.read_bytes())
+                self.assertEqual(path.read_bytes().count(b"<!-- chanks:main-freshness -->"), 1)
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
 
     def test_codex_receives_absent_blocks_once_preserving_existing_bytes(self):
         codex = self.home / ".codex/AGENTS.md"
@@ -613,9 +663,10 @@ class InstallerTests(unittest.TestCase):
         self.assertTrue(content.startswith(managed))
         self.assertIn(unrelated + b"\n\n", content)
         self.assertEqual(stat.S_IMODE(codex.stat().st_mode), 0o640)
-        blocks = [replacements[b"<!-- " + name + b" -->"] for name in self.ADDED_TO_CODEX]
+        blocks = [replacements[b"<!-- " + name + b" -->"]
+                  for name in self.ADDED_TO_ALL_RUNTIMES + self.ADDED_TO_CODEX]
         self.assertTrue(content.endswith(unrelated + b"\n\n" + b"\n".join(blocks)))
-        for name in self.ADDED_TO_CODEX:
+        for name in self.ADDED_TO_ALL_RUNTIMES + self.ADDED_TO_CODEX:
             self.assertEqual(content.count(b"<!-- " + name + b" -->"), 1)
             self.assertEqual(content.count(b"<!-- /" + name + b" -->"), 1)
         self.assertNotIn(b"AGENT-PROPAGATION-MAP:MANUAL", content)
@@ -703,12 +754,14 @@ class InstallerTests(unittest.TestCase):
         for path, block in seeded.items():
             path.write_bytes(b"prefix\n" + block + path.read_bytes() + b"suffix\n")
         INSTALLER.apply(self.home, ROOT)
+        freshness = INSTALLER.render_personal_blocks(ROOT)[b"<!-- chanks:main-freshness -->"]
         for path, relative in ((claude, ".claude/CLAUDE.md"),
                                (opencode, ".config/opencode/AGENTS.md"),
                                (pi, ".pi/agent/APPEND_SYSTEM.md")):
             content = path.read_bytes()
             self.assertTrue(content.startswith(b"prefix\n" + seeded[path]), path)
-            self.assertTrue(content.endswith(b"suffix\n"), path)
+            self.assertIn(b"suffix\n", content, path)
+            self.assertTrue(content.endswith(freshness), path)
             self.assertEqual(content.count(self.PLAN_NAMING_START), 1, path)
         self.assertIn(b"The sole authority is", pi.read_bytes())
         changed = [
