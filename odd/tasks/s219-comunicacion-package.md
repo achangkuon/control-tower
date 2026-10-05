@@ -25,15 +25,17 @@ ODD execution continuity.
 
 ## Tasks
 - [x] T0 Planning: S219 archivos restored to product-only; S221 created; radar check 0 errors; commit fc97a5a (docs(plan): split ...). Writer delegated.
-- [ ] T1 S221 install.py: V1_PENDING_SKILLS -> ().
-- [ ] T2 S221 test_comunicacion_agentes.py: pending assertion flipped.
-- [ ] T3 S221 test_personal_config.py: 26 central, no pending-absence logic.
-- [ ] T4 S219 bundle.mjs: SKILL.md + references/casos-herdr.md in workflowNames.
-- [ ] T5 S219 bundle.test.mjs: membership fixtures.
-- [ ] T6 S219 project-agents.md: "Which skill to load" row.
-- [ ] T7 S219 install.mjs: verify whether roster-driven (report, change only if needed).
-- [ ] T8 Full suites green (bun/go/python) + radar check; two commits (one per session).
-- [ ] T9 Native review (maintainer asked for it), close S219+S221 in plan, push with permission.
+- [x] T1 S221 install.py: V1_PENDING_SKILLS -> ().
+- [x] T2 S221 test_comunicacion_agentes.py: pending assertion flipped.
+- [x] T3 S221 test_personal_config.py: 26 central, no pending-absence logic.
+- [x] T4 S219 bundle.mjs: SKILL.md + references/casos-herdr.md in workflowNames.
+- [x] T5 S219 bundle.test.mjs: membership fixtures.
+- [x] T6 S219 project-agents.md: "Which skill to load" row.
+- [x] T7 S219 install.mjs: verify whether roster-driven (report, change only if needed).
+- [x] T8 Full suites green (bun/go/python) + radar check; two commits (one per session).
+- [x] T9 Native review (maintainer asked for it), close S219+S221 in plan, push with permission.
 
 ## Progress
-- 2026-10-05: planning split committed; writer delegated (task muumbwru-4-432v).
+- 2026-10-05: planning split committed (05bd541); writer delegated and completed.
+- 2026-10-05: count-literal bumps in 4 test files authorized (mechanical consequence of the roster growth; the S219 encargo clause "las pruebas del paquete fijan la nueva membresia" covers them). Deriving bootstrap counts from preVendor.length recorded as candidate later work.
+- 2026-10-05: delivered - S219 commit b22f813 (7 product files), S221 commit 6a63461 (4 metodo files). Suites: bun 2126 pass/0 fail, go ok, python 501/0. Native review requested by maintainer; closure via radar archivar S219+S221 (0 errors/63 warnings baseline).
