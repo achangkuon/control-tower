@@ -2438,6 +2438,87 @@ sesiones:
 
   - {id: S226, entrega: {commit: 95b3bc9e192a1ddb56ed3959d211300a55bd046c}, historico: openspec/archive/sesiones/S226.md}
 
+  - id: S227
+    zona: producto-torre
+    prioridad: resolucion-problemas-v1
+    resultado: "El ciclo global valida el launcher legacy por su forma retenida en el estado, no por el origen del módulo en ejecución: el desinstalador servido desde el caché de versiones y el doctor del instalador standalone completan en máquinas adoptadas (issue #159, última pieza de la familia #156/#157/#159). Además evalúa y resuelve o consigna el advisory R3-2 de la revisión de S225 (runtime-config.mjs:480)."
+    autoridad: "Decisión del mantenedor el 2026-10-06 en conversación: resolver #159 y los menores para cerrar la familia antes de pasar a V2."
+    depende_de: []
+    archivos: [product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs]
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        original() (product/tower/v1/global.mjs:117) compara el launcher no-Torre contra
+        legacy(options) con knownLegacyRepository derivado de import.meta.url. En una máquina
+        adoptada el launcher legacy real apunta al checkout donde se adoptó, retenido en
+        state.original; el CLI cacheado (versions/) y el doctor del instalador standalone
+        (extracción temporal) nunca coinciden, y fallan «unknown launcher»: uninstall no completa
+        y el instalador standalone se bloquea (evidencia de la máquina del mantenedor, 2026-10-06;
+        la desinstalación sólo completó con el CLI servido desde Main, cuyo origen coincide).
+        Transacción compensa correctamente: no hay corrupción, la operación no termina.
+      resultado_comportamiento: >-
+        original() valida la forma de tres líneas del wrapper legacy (mismo shape que ya valida
+        originalRecord para la evidencia retenida) y retiene el repositorio descubierto como
+        parte del original del estado, sin exigir que apunte al origen del binario en ejecución;
+        el readback de uninstall compara el launcher restaurado contra la evidencia retenida en
+        state.original. Un uninstall servido desde el caché de versiones completa en una máquina
+        cuyo wrapper apunta a un checkout cualquiera, y el doctor del instalador standalone
+        (extracción temporal con launcher legacy presente) exit 0. Tests de regresión: uninstall
+        con CLI cuyo origen difiere del wrapper retenido completa; doctor standalone con wrapper
+        a otro checkout pasa; install retiene el repositorio descubierto en state.original; los
+        rechazos de forma inválida se conservan. R3-2: se recupera el texto del hallazgo del store
+        de la revisión (lineage review-3a5b4d6086f248ff) o, si es irrecuperable, se evalúa
+        runtime-config.mjs:470-486 (bookkeeping del record/settings) y se corrige mínimamente o
+        se consigna como aceptado con justificación en el registro ODD.
+      restricciones_decisiones: >-
+        La guarda de forma del wrapper sigue cerrada (tres líneas exactas, path canónico sin
+        metacaracteres): se acepta cualquier checkout, no cualquier contenido. No publica
+        release: publicar es decisión humana separada (v1.3.2 prevista). No toca la máquina del
+        mantenedor sin autorización explícita. Toda expansión de archivos requiere aprobación
+        humana. ODD nativo; SDD sólo por solicitud humana explícita.
+      referencias: >-
+        issue #159 (esta fricción, con las dos vías de falla reproducidas); #156 y #157 (familia,
+        arregladas en v1.3.1 y S225); product/tower/v1/global.mjs (original 115-120,
+        originalRecord 122-135, inspect 246-258, uninstallGlobal 557+);
+        product/tower/v1/test/global.test.mjs; product/tower/v1/runtime-config.mjs:470-486 (R3-2).
+
+  - id: S228
+    zona: metodo
+    prioridad: resolucion-problemas-generales
+    resultado: "Menores de S226 resueltos: código muerto del escritor del hook eliminado de install.py con su cobertura de test_install.py actualizada (superficie expandida con autorización del mantenedor), y los seis hallazgos informativos de la revisión triageados: arreglos baratos aplicados y decisiones de diseño vigentes documentadas como aceptadas."
+    autoridad: "Decisión del mantenedor el 2026-10-06 en conversación: «resolvamos eso» sobre los menores listados, incluyendo la expansión a test_install.py que la revisión de S226 marcó como necesaria."
+    depende_de: []
+    archivos: [agent-workflows/tools/install.py, agent-workflows/tools/install-radar.sh, agent-workflows/tests/test_personal_config.py, agent-workflows/tests/test_install.py]
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        La revisión nativa de S226 (lineage review-a9f0a09f40edcdbb) dejó seis hallazgos
+        informativos (R1-grep-fail-open, R3-check-mode-blindspot, R3-open-manifest-guard,
+        R3-untested-guard-knobs, R4-path-compare-bypass, R4-silent-failopen-ownership-guard,
+        todos en install-radar.sh o sus tests) y la revisión de S226 señaló código muerto:
+        etapa_hook_path/source/changes en install.py no está cableado a build_plan/apply pero
+        test_install.py aún lo ejercita (superficie que S226 no podía tocar). El texto exacto de
+        los seis hallazgos debe recuperarse del store de revisión de S226.
+      resultado_comportamiento: >-
+        install.py no conserva escritor ni datos muertos del hook de etapa; test_install.py queda
+        actualizado y la suite python completa pasa. De los seis hallazgos: los que corrigen
+        comportamiento barato y seguro se corrigen con test (p. ej. cobertura de knobs de la
+        guarda, comparación de rutas normalizada); los que describen decisiones de diseño vigentes
+        (fail-open ante manifiesto ilegible o grep sin dependencias) se documentan como aceptados
+        con su razón en el registro ODD y en comentarios del código donde corresponda. Ningún
+        cambio de comportamiento del instalador personal fuera de eso.
+      restricciones_decisiones: >-
+        El contrato de territorio de S226 no se relaja: sin manifiesto o ilegible, radar se
+        instala como siempre; --force sigue siendo el único escape. No se toca product/tower/ ni
+        los bloques personales. Toda expansión adicional de archivos requiere aprobación humana.
+        ODD nativo; SDD sólo por solicitud humana explícita.
+      referencias: >-
+        issue #158 (cerrada por S226, commit 95b3bc9); store de revisión
+        .git/gentle-ai/ (lineage review-a9f0a09f40edcdbb);
+        agent-workflows/tools/install.py (etapa_hook_* y comentarios Torre-owned);
+        agent-workflows/tools/install-radar.sh (guarda y --force de S226);
+        agent-workflows/tests/{test_personal_config.py,test_install.py}.
+
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
   - {id: S205, entrega: {commit: e6def96543ea6396a14d97404619ccf06f060d65}, historico: openspec/archive/sesiones/S205.md}

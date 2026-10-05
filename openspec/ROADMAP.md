@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 92% (153/165 S)
+- **Total:** 91% (153/167 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -22,8 +22,8 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 92% (51/55 S)
-- **Producto Torre:** 89% (35/39 S)
+- **Método:** 91% (51/56 S)
+- **Producto Torre:** 87% (35/40 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -1496,6 +1496,34 @@
   - Resultado y comportamiento: install-radar.sh detecta que el destino ~/.local/bin/radar es propiedad de la Torre (lectura del manifiesto de propiedad) y se niega a sobreescribirlo con un mensaje que indique la vía Torre; un escape explícito de desarrollo (--force, documentado) permite sobreescribir a sabiendas, dejando visible que el preflight de la Torre reportará la entrada modificada hasta la próxima instalación. install.py ya no escribe ~/.claude/hooks/chanks-etapa.sh: el hook queda Torre-owned (la release lo entrega y registra), igual que ya ocurre con torre-firma.sh (comentario install.py:163-165). Los tests de config personal existentes siguen pasando y cubren los dos cambios; los bloques personales de los 4 archivos de instrucciones no cambian (partición por marcas vigente).
   - Restricciones y decisiones: No se cambia el modelo de ownership de la Torre ni su instalador (product/tower/ queda fuera de alcance); no se tocan los bloques personales ni las plantillas; el hook conserva su fuente única agent-workflows/tools/hooks/chanks-etapa.sh (la Torre lo consume, no se duplica). El escape --force es explícito y documentado, nunca default. Toda expansión de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: issues &#35;158 (esta fricción), &#35;157 (arreglada en S225, commit d7bd8d1) y &#35;159 (abierta); agent-workflows/tools/install.py (163-165 protección de torre-firma.sh como modelo a extender, 695-716 escritura de chanks-etapa.sh); agent-workflows/tools/install-radar.sh:44-50; product/tower/v1/runtime-config.mjs (allowedEntries 155-163, buildRadar 213-247); agent-workflows/tests/test&#95;personal&#95;config.py (tests existentes del instalador personal).
+
+### S227 — El ciclo global valida el launcher legacy por su forma retenida en el estado, no por el origen del módulo en ejecución: el desinstalador servido desde el caché de versiones y el doctor del instalador standalone completan en máquinas adoptadas (issue &#35;159, última pieza de la familia &#35;156/&#35;157/&#35;159). Además evalúa y resuelve o consigna el advisory R3-2 de la revisión de S225 (runtime-config.mjs:480).
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/global.mjs, product/tower/v1/test/global.test.mjs, product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: original() (product/tower/v1/global.mjs:117) compara el launcher no-Torre contra legacy(options) con knownLegacyRepository derivado de import.meta.url. En una máquina adoptada el launcher legacy real apunta al checkout donde se adoptó, retenido en state.original; el CLI cacheado (versions/) y el doctor del instalador standalone (extracción temporal) nunca coinciden, y fallan «unknown launcher»: uninstall no completa y el instalador standalone se bloquea (evidencia de la máquina del mantenedor, 2026-10-06; la desinstalación sólo completó con el CLI servido desde Main, cuyo origen coincide). Transacción compensa correctamente: no hay corrupción, la operación no termina.
+  - Resultado y comportamiento: original() valida la forma de tres líneas del wrapper legacy (mismo shape que ya valida originalRecord para la evidencia retenida) y retiene el repositorio descubierto como parte del original del estado, sin exigir que apunte al origen del binario en ejecución; el readback de uninstall compara el launcher restaurado contra la evidencia retenida en state.original. Un uninstall servido desde el caché de versiones completa en una máquina cuyo wrapper apunta a un checkout cualquiera, y el doctor del instalador standalone (extracción temporal con launcher legacy presente) exit 0. Tests de regresión: uninstall con CLI cuyo origen difiere del wrapper retenido completa; doctor standalone con wrapper a otro checkout pasa; install retiene el repositorio descubierto en state.original; los rechazos de forma inválida se conservan. R3-2: se recupera el texto del hallazgo del store de la revisión (lineage review-3a5b4d6086f248ff) o, si es irrecuperable, se evalúa runtime-config.mjs:470-486 (bookkeeping del record/settings) y se corrige mínimamente o se consigna como aceptado con justificación en el registro ODD.
+  - Restricciones y decisiones: La guarda de forma del wrapper sigue cerrada (tres líneas exactas, path canónico sin metacaracteres): se acepta cualquier checkout, no cualquier contenido. No publica release: publicar es decisión humana separada (v1.3.2 prevista). No toca la máquina del mantenedor sin autorización explícita. Toda expansión de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: issue &#35;159 (esta fricción, con las dos vías de falla reproducidas); &#35;156 y &#35;157 (familia, arregladas en v1.3.1 y S225); product/tower/v1/global.mjs (original 115-120, originalRecord 122-135, inspect 246-258, uninstallGlobal 557+); product/tower/v1/test/global.test.mjs; product/tower/v1/runtime-config.mjs:470-486 (R3-2).
+
+### S228 — Menores de S226 resueltos: código muerto del escritor del hook eliminado de install.py con su cobertura de test&#95;install.py actualizada (superficie expandida con autorización del mantenedor), y los seis hallazgos informativos de la revisión triageados: arreglos baratos aplicados y decisiones de diseño vigentes documentadas como aceptadas.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tools/install-radar.sh, agent-workflows/tests/test&#95;personal&#95;config.py, agent-workflows/tests/test&#95;install.py
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: La revisión nativa de S226 (lineage review-a9f0a09f40edcdbb) dejó seis hallazgos informativos (R1-grep-fail-open, R3-check-mode-blindspot, R3-open-manifest-guard, R3-untested-guard-knobs, R4-path-compare-bypass, R4-silent-failopen-ownership-guard, todos en install-radar.sh o sus tests) y la revisión de S226 señaló código muerto: etapa&#95;hook&#95;path/source/changes en install.py no está cableado a build&#95;plan/apply pero test&#95;install.py aún lo ejercita (superficie que S226 no podía tocar). El texto exacto de los seis hallazgos debe recuperarse del store de revisión de S226.
+  - Resultado y comportamiento: install.py no conserva escritor ni datos muertos del hook de etapa; test&#95;install.py queda actualizado y la suite python completa pasa. De los seis hallazgos: los que corrigen comportamiento barato y seguro se corrigen con test (p. ej. cobertura de knobs de la guarda, comparación de rutas normalizada); los que describen decisiones de diseño vigentes (fail-open ante manifiesto ilegible o grep sin dependencias) se documentan como aceptados con su razón en el registro ODD y en comentarios del código donde corresponda. Ningún cambio de comportamiento del instalador personal fuera de eso.
+  - Restricciones y decisiones: El contrato de territorio de S226 no se relaja: sin manifiesto o ilegible, radar se instala como siempre; --force sigue siendo el único escape. No se toca product/tower/ ni los bloques personales. Toda expansión adicional de archivos requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: issue &#35;158 (cerrada por S226, commit 95b3bc9); store de revisión .git/gentle-ai/ (lineage review-a9f0a09f40edcdbb); agent-workflows/tools/install.py (etapa&#95;hook&#95;&#42; y comentarios Torre-owned); agent-workflows/tools/install-radar.sh (guarda y --force de S226); agent-workflows/tests/{test&#95;personal&#95;config.py,test&#95;install.py}.
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
