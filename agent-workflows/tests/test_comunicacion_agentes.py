@@ -153,15 +153,15 @@ class ComunicacionAgentesTests(unittest.TestCase):
                     self.assertIn(phrase, source)
         self.assertTrue((ROOT / "skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md").is_file())
 
-    def test_source_inventory_includes_the_skill_and_no_roster_ships_it_yet(self):
+    def test_source_inventory_includes_the_skill_and_the_tower_roster_ships_it(self):
         self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
         sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
         self.assertIn(SKILL_NAME, sources)
-        # Joining the Tower V1 package is a later Session; until then the personal
-        # installer must not adopt the skill either.
-        self.assertEqual(INSTALLER.V1_PENDING_SKILLS, (SKILL_NAME,))
-        self.assertNotIn(SKILL_NAME, INSTALLER.TOWER_V1_SKILLS)
-        self.assertNotIn(SKILL_NAME, INSTALLER.STOP_MANAGING_SKILLS)
+        # The packaging Session removed the pending gate: the skill now belongs to
+        # the Tower V1 package and this installer stops managing it personally.
+        self.assertEqual(INSTALLER.V1_PENDING_SKILLS, ())
+        self.assertIn(SKILL_NAME, INSTALLER.TOWER_V1_SKILLS)
+        self.assertIn(SKILL_NAME, INSTALLER.STOP_MANAGING_SKILLS)
         self.assertNotIn(SKILL_NAME, INSTALLER.PERSONAL_SKILLS)
 
     def test_shared_canon_and_readme_catalog_include_the_skill(self):

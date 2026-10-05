@@ -103,7 +103,7 @@ class TowerMigrationTests(unittest.TestCase):
                 self.assertIn(f"WOULD_REMOVE {path}: {name.decode()}", result.stdout)
         self.assertIn("STOP_MANAGING skill: chanks-1-adopcion (Tower-owned; files retained)", result.stdout)
         self.assertNotIn("STOP_MANAGING skill: chanks-0-agente-soporte", result.stdout)
-        self.assertEqual(len(result.stdout.splitlines()), 43)  # 23 skills + 20 block edits
+        self.assertEqual(len(result.stdout.splitlines()), 44)  # 24 skills + 20 block edits
         print(result.stdout, end="")  # Exact portable-fixture evidence for the handoff.
 
     def test_apply_backs_up_every_file_before_first_edit_preserves_bytes_and_is_idempotent(self):

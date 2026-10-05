@@ -239,14 +239,10 @@ class PersonalConfigMigrationTests(unittest.TestCase):
             if name in install.TOWER_V1_SKILLS:
                 shutil.copytree(install.skill_source_root(ROOT / "agent-workflows", name), central / name)
         central_names = {path.name for path in central.iterdir()}
-        # V1_PENDING_SKILLS are deliberately shipped by neither Tower nor this
-        # installer (install.py:89-91) until their packaging Session removes them
-        # from the pending list (S219): they must stay absent from central.
-        self.assertTrue(set(install.OWN_SKILLS) - set(install.V1_PENDING_SKILLS) <= central_names)
-        self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS
-                            if name not in install.V1_PENDING_SKILLS))
-        self.assertTrue(all(not (central / name).exists()
-                            for name in install.V1_PENDING_SKILLS))
+        # Every own skill is present centrally once the Tower V1 product installer
+        # has placed its roster (issue #154).
+        self.assertTrue(set(install.OWN_SKILLS) <= central_names)
+        self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS))
         self.assertTrue(all(not (central / name).exists() for name in install.DEFERRED_SKILLS))
         hermes_before = {
             name: {path.relative_to(hermes_skills / name).as_posix(): path.read_bytes()
@@ -264,16 +260,13 @@ class PersonalConfigMigrationTests(unittest.TestCase):
             self.assertEqual({path.relative_to(archived).as_posix(): path.read_bytes()
                               for path in archived.rglob("*") if path.is_file()}, expected)
         self.assertTrue((hermes_skills / "third-party").is_dir())
-        self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS
-                            if name not in install.V1_PENDING_SKILLS))
+        self.assertTrue(all((central / name).is_dir() for name in install.OWN_SKILLS))
         config = personal._hermes_yaml(personal.HERMES_YAML_PYTHON,
                                        (self.home / ".hermes/config.yaml").read_bytes(),
                                        str(central))
         self.assertIn(str(central).encode(), config)
         self.assertIn(b"creation_nudge_interval: 15", config)
         for name in install.OWN_SKILLS:
-            if name in install.V1_PENDING_SKILLS:
-                continue  # not installed centrally until its packaging Session (S219)
             source = install.skill_source_root(ROOT / "agent-workflows", name)
             installed = central / name
             expected = {path.relative_to(source).as_posix(): install.runtime_skill_bytes(name, path.relative_to(source), path)

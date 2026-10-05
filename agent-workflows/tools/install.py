@@ -87,11 +87,9 @@ PERSONAL_SOURCE_DIRS = MappingProxyType({
 })
 
 # Sources already in the Method whose Tower V1 packaging is a later Session.
-# Until the product export lists them, neither Tower nor this installer ships
-# them: they stay in the public source inventory only.
-V1_PENDING_SKILLS = (
-    "chanks-0-comunicacion-agentes",
-)
+# The pending list is empty: a skill enters the roster when its packaging
+# Session lands, and until then neither Tower nor this installer ships it.
+V1_PENDING_SKILLS = ()
 
 # The maintainer's own skills: one real copy each in the central folder, reached
 # from Claude Code through per-skill symlinks. Gentle AI skills are not part of
