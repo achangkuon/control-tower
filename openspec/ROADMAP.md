@@ -2,16 +2,16 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S219, S221, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: ninguno.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Prioridad activa: Método V1.
+- Próximo trabajo ejecutable: Producto Torre #3 → S219 — La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Producto Torre #3 → S219 — La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados.
 
 ## Avance
-- **Total:** 92% (148/160 S)
+- **Total:** 90% (146/161 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 50% (1/2 S)
@@ -22,8 +22,8 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 92% (49/53 S)
-- **Producto Torre:** 88% (32/36 S)
+- **Método:** 90% (48/53 S)
+- **Producto Torre:** 83% (31/37 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -59,10 +59,12 @@
 ### Método (metodo)
 1. **S215** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
 2. **S217** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
+3. **S221** · 📋 PLANIFICADO · espera-natural (S219) · prioridad Método V1 · El instalador personal deja de tratar chanks-0-comunicacion-agentes como pendiente de empaque: el roster V1 y el producto quedan espejados y los consumidores del Método reflejan su membresía.
 
 ### Producto Torre (producto-torre)
 1. **S203** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
 2. **S216** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
+3. **S219** · 🟢 LISTO · prioridad Método V1 · La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados.
 
 ## Bloqueos
 - Ningún bloqueo derivado.
@@ -1387,7 +1389,7 @@
 
 ### S219 — La skill chanks-0-comunicacion-agentes viaja en el paquete V1: queda instalada para todos los agentes y figura en la tabla «qué skill cargar» de los proyectos adoptados.
 - Coordinación:
-  - Estado derivado: 📚 ARCHIVADO
+  - Estado derivado: 🟢 LISTO
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/bundle.mjs, product/tower/v1/install.mjs, product/tower/v1/instructions/project-agents.md, product/tower/v1/test/bundle.test.mjs
   - Depende de: S218
@@ -1401,7 +1403,7 @@
 
 ### S221 — El instalador personal deja de tratar chanks-0-comunicacion-agentes como pendiente de empaque: el roster V1 y el producto quedan espejados y los consumidores del Método reflejan su membresía.
 - Coordinación:
-  - Estado derivado: 📚 ARCHIVADO
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S219)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/install.py, agent-workflows/tests/test&#95;personal&#95;config.py, agent-workflows/tests/test&#95;comunicacion&#95;agentes.py
   - Depende de: S219
@@ -1412,6 +1414,20 @@
   - Resultado y comportamiento: V1&#95;PENDING&#95;SKILLS queda vacía, TOWER&#95;V1&#95;SKILLS incluye chanks-0-comunicacion-agentes y es igual al roster publicado por S219. test&#95;personal&#95;config.py espera 26 skills en la carpeta central (sin entrada pendiente ausente) y test&#95;comunicacion&#95;agentes.py deja de afirmar que la skill está pendiente. Ningún otro comportamiento del instalador cambia.
   - Restricciones y decisiones: No se toca ningún archivo de producto-torre (eso es S219). El roster se enumera, nunca se descubre por recorrido. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana. Debe entregarse en el mismo push que S219 para que la frontera producto/Método no quede partida en ningún HEAD publicado. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: agent-workflows/tools/install.py:88-110 (V1&#95;PENDING&#95;SKILLS y TOWER&#95;V1&#95;SKILLS); agent-workflows/tests/test&#95;install.py:178 (frontera roster del producto); agent-workflows/tests/test&#95;personal&#95;config.py; agent-workflows/tests/test&#95;comunicacion&#95;agentes.py:162; S219; handoff de S218 (Engram 13187).
+
+### S222 — El doctor deja de invalidar un proyecto por el bit group-writable de una instrucción cuyo bloque propio verifica byte a byte, «project doctor» soporta --fix-permissions y la TUI ofrece la corrección como acción informativa.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/project-files.mjs, product/tower/v1/adoption.mjs, product/tower/v1/projects.mjs, product/tower/v1/cli.mjs, product/tower/v1/tui/projects.go, product/tower/v1/tui/model.go, product/tower/v1/test/project-files.test.mjs, product/tower/v1/test/cli.test.mjs, product/tower/v1/tui/projects&#95;test.go
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: En cada release que cambia las instrucciones generadas, un pull/checkout reescribe AGENTS.md de la Torre con umask 0002 y lo deja group-writable (664); preflightProjectPaths (project-files.mjs:155) rechaza mode &amp; 0o022 y la TUI marca el proyecto «inválido». La verificación de instrucciones ya compara el bloque propio byte a byte (projectInstructionState, project-files.mjs:275), así que el bit es una capa extra sobre contenido ya verificado, y el mensaje de error de permisos sugiere un --fix-permissions que el CLI rechaza para project doctor (cli.mjs:42).
+  - Resultado y comportamiento: doctorProject acepta una instrucción group-writable cuando su bloque propio verifica igual y sigue rechazando otros-writable y bloque modificado; directorios, journal y directos conservan su exigencia de modo. «torre-control project doctor --project X --fix-permissions» repara los permisos y reporta permissionsChanged, siguiendo el patrón existente de init/update. La TUI muestra, para un proyecto inválido por permisos, una acción informativa «Corregir permisos» con el comando exacto, como la pantalla «Actualizar la Torre».
+  - Restricciones y decisiones: La relajación es quirúrgica: sólo archivos de instrucciones cuyo bloque propio verifica, nunca directorios ni otros-writable; preflightProjectPaths no afloja su chequeo general. No se tocan los archivos de S219 ni S221 (Sesión hermana en curso en el checkout Main); toda expansión de archivos requiere aprobación humana. Publicar es decisión humana separada; la release esperada es patch v1.2.5 → v1.2.6. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: product/tower/v1/project-files.mjs (preflightProjectPaths, projectInstructionState); product/tower/v1/adoption.mjs (preflight, doctorProject); product/tower/v1/projects.mjs (doctorRegisteredProject, liveStatus); product/tower/v1/cli.mjs:42; issue &#35;155; AGENTS.md (subsección «Cuándo un cambio a master es una release").
 
 ### S220 — Diagnóstico de las copias de trabajo por vuelo: qué falta decidir sobre cómo se crean, cómo quedan listas para trabajar y cómo se retiran, antes de implementar &#96;piloto&#96;.
 - Coordinación:
@@ -4384,7 +4400,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: producto-torre.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references
