@@ -2213,48 +2213,7 @@ sesiones:
         docs/architecture/piloto-automatico.md (secciones 5 y 12; P9, P14);
         docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
 
-  - id: S214
-    zona: metodo
-    prioridad: v2-piloto
-    resultado: "Estados NOVEDAD y POR REVISAR en Radar con identidad de vuelo, y regla de LISTO según el interruptor del piloto."
-    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
-    depende_de: []
-    archivos: [agent-workflows/tools/radar/state.go, agent-workflows/tools/radar/state_test.go, agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot_test.go, agent-workflows/tools/radar/etapa.go, agent-workflows/tools/radar/etapa_test.go, agent-workflows/tools/radar/sesion.go, agent-workflows/tools/radar/faltan.go, agent-workflows/tools/radar/render.go, agent-workflows/tools/radar/roadmap.go, agent-workflows/tools/radar/avance.go, agent-workflows/tools/radar/git.go]
-    recurso: ["interruptor y marcas del piloto (radar.piloto/v1) en el directorio común de Git"]
-    encargo:
-      pedido_contexto: >-
-        El piloto necesita estados que distingan trabajo desatendido que requiere decisión humana
-        (NOVEDAD: decisión delicada, no se pudo inferir, interrumpida) de trabajo terminado esperando
-        revisión (POR REVISAR: limpia, con decisiones), y una regla de LISTO que dependa del interruptor:
-        prendido, las dependencias POR REVISAR pueden destrabar dentro del horizonte; apagado, rigen
-        COMPLETO/ARCHIVADO. Un LISTO sin empezar puede volver a PLANIFICADO; lo completado queda visible.
-      resultado_comportamiento: >-
-        Radar calcula y muestra los estados nuevos NOVEDAD (con motivo: decisión delicada, no se pudo
-        inferir, interrumpida) y POR REVISAR (con nota: limpia, o con N decisiones anotadas), junto a
-        la identidad del vuelo dueño de cada Sesión, leyendo las marcas radar.piloto/v1 que escribe
-        `piloto` en el directorio común de Git; Radar no las crea ni las edita (P2). POR REVISAR se
-        deduce de Git: el commit de la Sesión está en la rama de su vuelo y no se subió. La regla de
-        LISTO (state.go, bucle de dependencias) pasa a depender del interruptor: con el piloto prendido,
-        una dependencia en POR REVISAR destraba si la Sesión queda dentro del límite de rondas de la
-        corrida; con el piloto apagado rige la regla actual (COMPLETO o ARCHIVADO) y una Sesión LISTO
-        sin empezar vuelve a PLANIFICADO. Lo ya completado no cambia de estado. Los estados nuevos se
-        reflejan en el snapshot JSON, en sesion, faltan y avance, y en la vista generada (render y
-        ROADMAP); EN CURSO vuelve a contarse desde las marcas. Apagar el modo no borra NOVEDAD ni
-        POR REVISAR; sólo impide crear estados nuevos (P9).
-      restricciones_decisiones: >-
-        Radar sigue siendo el único que calcula estados (P2): lee las marcas del piloto y nunca las
-        escribe; `piloto` (S215) es quien las produce. NOVEDAD y POR REVISAR sólo se crean con el modo
-        prendido. Una Sesión con NOVEDAD no destraba a nadie, aunque el resto del plan y los demás
-        vuelos sigan. La ronda de una Sesión es su piso dentro de su vuelo y los límites son de la
-        corrida, no de la Sesión (P3, P5). Los estados se deducen de evidencia, nunca se declaran a
-        mano. Los archivos autorizados delimitan el cambio; toda expansión requiere aprobación humana.
-        ODD nativo; SDD sólo por solicitud humana explícita.
-      referencias: >-
-        docs/architecture/piloto-automatico.md (secciones 5 y 7; decisiones P1–P9);
-        docs/architecture/definiciones-v1-v2-v3.md; agent-workflows/tools/radar/state.go
-        (regla de LISTO vigente) y agent-workflows/tools/radar/etapa.go (lectura de marcas
-        radar.despacho/v1, patrón a replicar para radar.piloto/v1).
-
+  - {id: S214, entrega: {commit: d7a2af6fa609e5311d57bfabc26b0f994672456f}, historico: openspec/archive/sesiones/S214.md}
   - id: S215
     zona: metodo
     prioridad: v2-piloto
