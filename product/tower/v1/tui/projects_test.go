@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -245,5 +246,174 @@ func TestStaleDiagnosticAndScroll(t *testing.T) {
 		if len(strings.Split(m.View(), "\n")) > h {
 			t.Fatal("height overflow")
 		}
+	}
+}
+
+// ---- S203: per-project piloto switch in the installer/TUI ----
+
+// projectPilotoModel loads a projects page whose piloto reads go through the S216
+// runner seam, the same seam the panel uses. The TUI keeps no state of its own (P14).
+func projectPilotoModel(t *testing.T, projectJSON, estado string) model {
+	t.Helper()
+	m := loaded(t, healthyJSON)
+	m.status.Projects = json.RawMessage(projectJSON)
+	m.radarRun = func(string, []string) execution {
+		return execution{stdout: []byte(`{"schema":"radar.snapshot/v1"}`)}
+	}
+	m.pilotoRun = func(root string, args []string, input string) execution {
+		switch {
+		case slices.Equal(args, []string{"interruptor", "estado"}):
+			return execution{stdout: []byte(estado)}
+		case slices.Equal(args, []string{"informe"}):
+			return execution{}
+		}
+		return execution{stdout: []byte("✓ piloto\n")}
+	}
+	m.page = "projects"
+	m.projectSelected = 0
+	return m
+}
+
+func hasCall(calls [][]string, want []string) bool {
+	return slices.ContainsFunc(calls, func(call []string) bool { return slices.Equal(call, want) })
+}
+
+// openProjectPilotoToggle opens the first project's action menu and moves the
+// cursor onto the appended piloto switch, failing loudly if it is absent.
+func openProjectPilotoToggle(t *testing.T, m model) model {
+	t.Helper()
+	m = keys(m, "enter")
+	projects, ok := m.projectList()
+	if !ok || len(projects) == 0 {
+		t.Fatal("project list unavailable")
+	}
+	actions := m.actionsForProject(projects[0])
+	last := len(actions) - 1
+	if actions[last] != pilotoOnAction && actions[last] != pilotoOffAction {
+		t.Fatalf("last action is not the piloto switch: %v", actions)
+	}
+	for i := 0; i < last; i++ {
+		m = keys(m, "down")
+	}
+	return m
+}
+
+func TestS203AdoptedProjectOffersPilotoSwitch(t *testing.T) {
+	m := projectPilotoModel(t, `[{"projectRoot":"/adoptado","status":"healthy","towerState":"active"}]`, pilotApagado)
+	m = keys(m, "enter")
+	contains(t, m.View(), "/adoptado", "Comandos de Radar", "Revisar", "Desinstalar", "Limpiar residuos", pilotoOnAction)
+	if strings.Contains(m.View(), "Freno de emergencia") {
+		t.Fatal("the emergency brake belongs to the S216 panel, not the project detail")
+	}
+}
+
+func TestS203PilotoSwitchLabelFollowsPanelRead(t *testing.T) {
+	m := projectPilotoModel(t, `[{"projectRoot":"/adoptado","status":"healthy","towerState":"active"}]`, pilotPrendido)
+	m, cmd := key(m, "p")
+	if cmd == nil {
+		t.Fatal("opening the pilot panel must read the switch state")
+	}
+	m = finish(m, cmd)
+	m = keys(m, "esc")
+	if m.page != "projects" {
+		t.Fatalf("page = %s", m.page)
+	}
+	m = keys(m, "enter")
+	contains(t, m.View(), pilotoOffAction)
+	if strings.Contains(m.View(), pilotoOnAction) {
+		t.Fatalf("stale switch label after a fresh read:\n%s", m.View())
+	}
+}
+
+func TestS203FreshPilotoBadgeInProjectList(t *testing.T) {
+	m := projectPilotoModel(t, `[{"projectRoot":"/adoptado","status":"healthy","towerState":"active"},{"projectRoot":"/otro","status":"healthy","towerState":"active"}]`, pilotPrendido)
+	if strings.Contains(m.View(), "piloto prendido") {
+		t.Fatal("badge appeared before any fresh read")
+	}
+	m, cmd := key(m, "p")
+	m = finish(m, cmd)
+	m = keys(m, "esc")
+	contains(t, m.View(), "piloto prendido")
+	if strings.Count(m.View(), "piloto prendido") != 1 {
+		t.Fatalf("the badge must describe only the read project:\n%s", m.View())
+	}
+	if strings.Contains(m.View(), "piloto apagado") {
+		t.Fatal("an unread project invented a switch state")
+	}
+}
+
+func TestS203ApagarPilotoInvokesCLIAndNotesP9(t *testing.T) {
+	m := projectPilotoModel(t, `[{"projectRoot":"/adoptado","status":"healthy","towerState":"active"}]`, pilotPrendido)
+	m.pilot.root, m.pilot.estado = "/adoptado", pilotPrendido
+	var calls [][]string
+	m.pilotoRun = func(root string, args []string, input string) execution {
+		calls = append(calls, append([]string(nil), args...))
+		switch {
+		case slices.Equal(args, []string{"interruptor", "estado"}):
+			return execution{stdout: []byte(pilotApagado)}
+		case slices.Equal(args, []string{"informe"}):
+			return execution{}
+		}
+		return execution{stdout: []byte("✓ piloto apagado · 3 rondas · tope 10 Sesiones\n")}
+	}
+	m = openProjectPilotoToggle(t, m)
+	contains(t, m.View(), pilotoOffAction)
+	m, cmd := key(m, "enter")
+	if cmd == nil {
+		t.Fatal("the switch must call the S216 runner seam")
+	}
+	m = finish(m, cmd)
+	if !hasCall(calls, []string{"interruptor", "off"}) {
+		t.Fatalf("piloto switch args: %v", calls)
+	}
+	contains(t, m.View(), "piloto apagado", "Piloto · /adoptado", "NOVEDAD", "POR REVISAR", "revisión")
+}
+
+func TestS203PrenderPilotoInvokesCLI(t *testing.T) {
+	m := projectPilotoModel(t, `[{"projectRoot":"/adoptado","status":"healthy","towerState":"active"}]`, pilotApagado)
+	m.pilot.root, m.pilot.estado = "/adoptado", pilotApagado
+	var calls [][]string
+	m.pilotoRun = func(root string, args []string, input string) execution {
+		calls = append(calls, append([]string(nil), args...))
+		switch {
+		case slices.Equal(args, []string{"interruptor", "estado"}):
+			return execution{stdout: []byte(pilotPrendido)}
+		case slices.Equal(args, []string{"informe"}):
+			return execution{}
+		}
+		return execution{stdout: []byte("✓ piloto prendido · 3 rondas · tope 10 Sesiones\n")}
+	}
+	m = openProjectPilotoToggle(t, m)
+	contains(t, m.View(), pilotoOnAction)
+	m, cmd := key(m, "enter")
+	m = finish(m, cmd)
+	if !hasCall(calls, []string{"interruptor", "on"}) {
+		t.Fatalf("piloto switch args: %v", calls)
+	}
+	if strings.Contains(m.View(), "NOVEDAD ni POR REVISAR") {
+		t.Fatal("the P9 note only belongs to turning the mode off")
+	}
+}
+
+func TestS203PilotoSwitchOnlyForAdoptedProjects(t *testing.T) {
+	for _, tt := range []struct {
+		name, project string
+		want          bool
+	}{
+		{"active", `{"projectRoot":"/p","status":"healthy","towerState":"active"}`, true},
+		{"needs plan", `{"projectRoot":"/p","status":"healthy","towerState":"needs-plan"}`, true},
+		{"skills only", `{"projectRoot":"/p","status":"unadopted","towerState":"skills-only"}`, false},
+		{"unadopted", `{"projectRoot":"/p","status":"healthy"}`, false},
+		{"outdated", `{"projectRoot":"/p","status":"outdated","towerState":"active"}`, false},
+		{"invalid", `{"projectRoot":"/p","status":"invalid"}`, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			m := projectPilotoModel(t, `[`+tt.project+`]`, pilotApagado)
+			m = keys(m, "enter")
+			got := strings.Contains(m.View(), pilotoOnAction) || strings.Contains(m.View(), pilotoOffAction)
+			if got != tt.want {
+				t.Fatalf("piloto switch offered: got %v want %v\n%s", got, tt.want, m.View())
+			}
+		})
 	}
 }
