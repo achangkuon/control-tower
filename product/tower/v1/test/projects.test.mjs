@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS } from "../bundle.mjs";
 import { captureProjectFiles, restoreProjectFiles } from "../project-files.mjs";
 import { initRegisteredProject, doctorRegisteredProject, uninstallRegisteredProject,
-  cleanupRegisteredProject, listProjects, projectStatus } from "../projects.mjs";
+  cleanupRegisteredProject, listProjects, projectStatus, pilotoRegisteredProject } from "../projects.mjs";
 
 const journal = ".control-tower-adoption-v1";
 const schema = "tower.v1.projects/1";
@@ -420,4 +420,43 @@ test("trusted copied release layout derives adoption sources from installed modu
     if (uninstallRegisteredProject(options).localResult.status !== "uninstalled") throw Error("uninstall");`;
   const result = spawnSync(process.execPath, ["--eval", program], { env, cwd: base });
   expect(result.stderr.toString()).toBe(""); expect(result.status).toBe(0);
+}));
+
+test("S203 piloto switch delegates to the deterministic CLI without persisting state", () => fixture(({ options, trusted, registryRoot, projectRoot }) => {
+  initRegisteredProject(trusted);
+  const before = snapshot(registryRoot), local = snapshot(projectRoot);
+  const calls = [];
+  const runner = (args) => { calls.push(args); return { status: 0, stdout: "Interruptor del piloto: apagado · 3 rondas · tope 10 Sesiones\n", stderr: "" }; };
+  const off = pilotoRegisteredProject({ ...options, action: "off", runner });
+  expect(calls).toEqual([["interruptor", "off", "-C", projectRoot]]);
+  expect(off).toMatchObject({ projectRoot, action: "off" });
+  expect(off.result.status).toBe(0);
+  expect(off.nota).toContain("NOVEDAD");
+  expect(off.nota).toContain("POR REVISAR");
+  const on = pilotoRegisteredProject({ ...options, action: "on", runner });
+  expect(on.nota).toBeUndefined();
+  expect(calls.at(-1)).toEqual(["interruptor", "on", "-C", projectRoot]);
+  // The switch is a thin pass-through: neither the registry nor the project is touched.
+  expect(snapshot(registryRoot)).toEqual(before);
+  expect(snapshot(projectRoot)).toEqual(local);
+}));
+
+test("S203 piloto switch fails closed for unregistered projects, closed options and corrupt storage", () => fixture(({ options, registryRoot }) => {
+  const runner = () => { throw new Error("runner must not run"); };
+  registry(registryRoot, encode([]));
+  const before = snapshot(registryRoot);
+  for (const value of [undefined, null, [],
+    { ...options, action: "on", runner },
+    { ...options, action: "toggle", runner },
+    { ...options, action: "on", runner, extra: true },
+    { ...options, action: "on", runner: "not-a-function" },
+    { ...options, projectRoot: "relative", action: "on", runner },
+    { ...options, runtime: "on" }]) {
+    expect(() => pilotoRegisteredProject(value)).toThrow();
+  }
+  expect(snapshot(registryRoot)).toEqual(before);
+  put(join(registryRoot, "registry.json"), "not JSON");
+  const corrupt = snapshot(registryRoot);
+  expect(() => pilotoRegisteredProject({ ...options, action: "off", runner })).toThrow();
+  expect(snapshot(registryRoot)).toEqual(corrupt);
 }));
