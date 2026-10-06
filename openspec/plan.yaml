@@ -2215,40 +2215,7 @@ sesiones:
 
   - {id: S214, entrega: {commit: d7a2af6fa609e5311d57bfabc26b0f994672456f}, historico: openspec/archive/sesiones/S214.md}
   - {id: S215, entrega: {commit: 1c188a383dc122cb8752c4105369d750a28d8471}, historico: openspec/archive/sesiones/S215.md}
-  - id: S216
-    zona: producto-torre
-    prioridad: v2-piloto
-    resultado: "Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano."
-    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
-    depende_de:
-      - S215
-    archivos: [product/tower/v1/tui/model.go, product/tower/v1/tui/model_test.go, product/tower/v1/tui/radar.go, product/tower/v1/tui/radar_test.go, product/tower/v1/tui/main.go, product/tower/v1/tui/styles.go]
-    recurso: ["estado del piloto y de los vuelos vía Radar (radar snapshot/status --json); mutación sólo a través de `piloto`"]
-    encargo:
-      pedido_contexto: >-
-        El piloto corre sin el mantenedor presente; la TUI tiene que dar control humano directo
-        sobre el interruptor, la observación de vuelos y la parada de emergencia que detiene la
-        corrida de forma segura.
-      resultado_comportamiento: >-
-        La TUI de la Torre suma un panel de control del piloto: el interruptor prende y apaga el
-        modo, la vista de vuelos muestra los vuelos en curso con su ronda, su tope y el estado de
-        cada Sesión (NOVEDAD con motivo, POR REVISAR, EN CURSO) leyendo el estado que Radar publica
-        (radar snapshot/status --json), y el freno de emergencia detiene la corrida a mano de forma
-        segura. La TUI sigue siendo consultiva para el estado (P14): los controles llaman a `piloto`,
-        que es quien muta el interruptor, las marcas y el freno; la TUI no escribe marcas ni estados
-        por su cuenta. El despegue desde la TUI muestra la cuenta regresiva y el resumen de la
-        corrida (vuelos, rondas, tope).
-      restricciones_decisiones: >-
-        No hay proceso siempre prendido (P14): la TUI consulta y convoca, nunca mantiene estado
-        propio del piloto. El freno de emergencia es accesible en todo momento y su efecto es el
-        que define S215 (nada nuevo arranca; lo en el aire queda NOVEDAD · interrumpida). Los
-        archivos autorizados delimitan el cambio en la TUI; toda expansión requiere aprobación
-        humana. ODD nativo; SDD sólo por solicitud humana explícita.
-      referencias: >-
-        docs/architecture/piloto-automatico.md (secciones 5 y 12; P14);
-        docs/architecture/definiciones-v1-v2-v3.md; product/tower/v1/tui/radar.go
-        (hoy la TUI sólo hace consultas de lectura a Radar).
-
+  - {id: S216, entrega: {commit: 6b11dacf5ac22656aa92454e0a4738acadc1c13a}, historico: openspec/archive/sesiones/S216.md}
   - id: S217
     zona: metodo
     prioridad: v2-piloto
