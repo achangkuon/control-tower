@@ -12,7 +12,9 @@ requieren cambios.
 ## Tareas
 - [x] T1: Anotar en S215 la sonda de consentimiento RDD al despegue y el reintento de fallos mecánicos de revisión.
 - [x] T2: Anotar en S217 el flujo commit-por-commit (revisión humana, entrega según política, actualización de plan y estados por el orquestador).
-- [ ] T3: Validar con `radar check`, commit de unidad de trabajo en rama, revisión nativa RDD del candidato.
+- [x] T3: Validar con `radar check`, commit de unidad de trabajo en rama, revisión nativa RDD del candidato.
 
 ## Evidencia de commits
-- (pendiente)
+- `38f01fe` docs(plan): record maintainer-confirmed delivery rules in V2 encargos (S215, S217) — rama `feat/v2-reglas-entrega`.
+- Revisión nativa `review-f4fe1adf14d296e7` (lente review-reliability, tier medium): APPROVED, acuse quemado (consumed_revision 36b44a2b…).
+- `radar check`: 0 errores, 63 avisos base.
