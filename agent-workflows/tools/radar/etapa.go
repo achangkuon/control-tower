@@ -57,6 +57,8 @@ type dispatchObservation struct {
 	live    map[string]bool
 	orphan  []string
 	invalid []string
+
+	piloto pilotObservation
 }
 
 func (p *Plan) observarDespachos(root string) dispatchObservation {
@@ -82,6 +84,7 @@ func (p *Plan) observarDespachos(root string) dispatchObservation {
 	}
 	sort.Strings(obs.orphan)
 	sort.Strings(obs.invalid)
+	obs.piloto = p.observarPiloto(root)
 	return obs
 }
 
@@ -203,11 +206,19 @@ func identidadDespacho(r rutaDespacho) error {
 // descriptor to its Lstat identity, and recheck the whole chain before and
 // after reading. No evidence is changed when a path becomes uncertain.
 func leerArchivoDespacho(common, id string) ([]byte, error) {
-	paths := []rutaDespacho{
-		{path: common, dir: true},
-		{path: filepath.Join(common, "chanks"), dir: true},
-		{path: filepath.Join(common, "chanks", "despachos"), dir: true},
-		{path: filepath.Join(common, "chanks", "despachos", id+".json")},
+	return leerArchivoEvidencia(common, []string{"chanks", "despachos", id + ".json"})
+}
+
+// leerArchivoEvidencia reads one small evidence file under the Git common
+// directory with the same fail-closed path discipline for every reader: reject
+// symlinks and non-regular nodes before opening, compare each opened descriptor
+// to its Lstat identity, and recheck the whole chain before and after reading.
+func leerArchivoEvidencia(common string, partes []string) ([]byte, error) {
+	paths := []rutaDespacho{{path: common, dir: true}}
+	actual := common
+	for i, parte := range partes {
+		actual = filepath.Join(actual, parte)
+		paths = append(paths, rutaDespacho{path: actual, dir: i < len(partes)-1})
 	}
 	var file *os.File
 	for i := range paths {
@@ -217,7 +228,7 @@ func leerArchivoDespacho(common, id string) ([]byte, error) {
 			return nil, err
 		}
 		if (r.dir && !info.IsDir()) || (!r.dir && !info.Mode().IsRegular()) {
-			return nil, fmt.Errorf("ruta de despacho no regular: %s", r.path)
+			return nil, fmt.Errorf("ruta de evidencia no regular: %s", r.path)
 		}
 		opened, err := openDispatchPath(r.path)
 		if err != nil {
@@ -226,7 +237,7 @@ func leerArchivoDespacho(common, id string) ([]byte, error) {
 		openedInfo, err := opened.Stat()
 		if err != nil || !os.SameFile(info, openedInfo) {
 			opened.Close()
-			return nil, fmt.Errorf("identidad de despacho cambiada: %s: %v", r.path, err)
+			return nil, fmt.Errorf("identidad de evidencia cambiada: %s: %v", r.path, err)
 		}
 		if r.dir {
 			opened.Close()
@@ -234,7 +245,7 @@ func leerArchivoDespacho(common, id string) ([]byte, error) {
 			file = opened
 			defer file.Close()
 			if openedInfo.Size() > 4096 {
-				return nil, fmt.Errorf("marcador de despacho demasiado grande")
+				return nil, fmt.Errorf("evidencia demasiado grande")
 			}
 		}
 		r.info = info
@@ -249,7 +260,7 @@ func leerArchivoDespacho(common, id string) ([]byte, error) {
 		return nil, err
 	}
 	if len(data) > 4096 {
-		return nil, fmt.Errorf("marcador de despacho demasiado grande")
+		return nil, fmt.Errorf("evidencia demasiado grande")
 	}
 	for _, r := range paths {
 		if err := identidadDespacho(r); err != nil {
@@ -282,6 +293,257 @@ func despachoVivo(root string, m despacho) bool {
 	}
 	_, err = gitOutput(root, "show-ref", "--verify", m.Branch)
 	return err == nil
+}
+
+// marcaPiloto is the radar.piloto/v1 mark `piloto` writes in the Git common
+// directory, next to Radar's dispatch markers. Radar only ever reads it: it
+// computes states from this evidence and never creates, edits or removes one
+// (decision P2). The schema is fixed so the writer tool (S215) implements the
+// same contract:
+//
+//   - schema: always "radar.piloto/v1".
+//   - sesion: the Sesión ID this mark belongs to; it must match the file name.
+//   - vuelo: the flight that owns the Sesión, a safe identifier.
+//   - rama: the flight branch, exactly
+//     "refs/heads/piloto/<fecha>/vuelo-<vuelo>".
+//   - estado: one of "en-curso" (a live dispatch), "novedad" (stopped for a
+//     decision) or "cierre" (finished, awaiting review).
+//   - motivo: required for "novedad", one of "decisión delicada",
+//     "no se pudo inferir" or "interrumpida"; empty otherwise.
+//   - decisiones: count of minor decisions the agent annotated; "cierre" only.
+//   - commit: the Sesión's delivery commit; "cierre" only. Radar checks with
+//     Git that it is reachable from rama and that rama was not pushed, which
+//     is what turns the mark into POR REVISAR.
+//   - ronda: the Sesión's floor inside its flight, at least 1.
+//
+// A malformed mark never grants a state: Radar fails closed and reports it as
+// invalid, exactly like a malformed dispatch marker.
+type marcaPiloto struct {
+	Schema     string `json:"schema"`
+	Sesion     string `json:"sesion"`
+	Vuelo      string `json:"vuelo"`
+	Rama       string `json:"rama"`
+	Estado     string `json:"estado"`
+	Motivo     string `json:"motivo,omitempty"`
+	Decisiones int    `json:"decisiones,omitempty"`
+	Commit     string `json:"commit,omitempty"`
+	Ronda      int    `json:"ronda"`
+}
+
+// interruptorPiloto is the radar.piloto.interruptor/v1 switch `piloto` writes in
+// the Git common directory. Radar reads it to choose the LISTO rule and never
+// writes it (P2, P6). Schema:
+//
+//   - schema: always "radar.piloto.interruptor/v1".
+//   - prendido: whether the pilot mode is on.
+//   - rondas: the run's round ceiling; 0 means no limit, otherwise 1..3.
+//   - tope: the run's Sesión cap; 0 means no cap.
+//
+// An absent switch reads as off, and a malformed one reads as off too, so a
+// corrupt file can only make the rule more conservative, never less.
+type interruptorPiloto struct {
+	Schema   string `json:"schema"`
+	Prendido bool   `json:"prendido"`
+	Rondas   int    `json:"rondas"`
+	Tope     int    `json:"tope"`
+}
+
+const (
+	marcaPilotoSchema       = "radar.piloto/v1"
+	interruptorPilotoSchema = "radar.piloto.interruptor/v1"
+
+	pilotoEnCurso = "en-curso"
+	pilotoNovedad = "novedad"
+	pilotoCierre  = "cierre"
+)
+
+var vueloID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+
+// ramaDeVuelo accepts exactly the branch naming the design fixes:
+// refs/heads/piloto/<fecha>/vuelo-<vuelo>.
+func ramaDeVuelo(rama, vuelo string) bool {
+	if !strings.HasPrefix(rama, "refs/heads/piloto/") || !strings.HasSuffix(rama, "/vuelo-"+vuelo) {
+		return false
+	}
+	if strings.ContainsAny(rama, " \t\n\r~^:?*[\\") || strings.Contains(rama, "..") || strings.Contains(rama, "//") || strings.HasSuffix(rama, "/") {
+		return false
+	}
+	return strings.TrimPrefix(strings.TrimSuffix(rama, "/vuelo-"+vuelo), "refs/heads/piloto/") != ""
+}
+
+func motivoDePilotoValido(motivo string) bool {
+	return motivo == MotivoDecisionDelicada || motivo == MotivoNoSePudoInferir || motivo == MotivoInterrumpida
+}
+
+func validarMarcaPiloto(m marcaPiloto, id string) error {
+	if m.Schema != marcaPilotoSchema || m.Sesion != id {
+		return fmt.Errorf("contrato de piloto inválido")
+	}
+	if !vueloID.MatchString(m.Vuelo) || !ramaDeVuelo(m.Rama, m.Vuelo) || m.Ronda < 1 || m.Decisiones < 0 {
+		return fmt.Errorf("contrato de piloto inválido")
+	}
+	switch m.Estado {
+	case pilotoEnCurso:
+		if m.Motivo != "" || m.Commit != "" {
+			return fmt.Errorf("contrato de piloto inválido")
+		}
+	case pilotoNovedad:
+		if !motivoDePilotoValido(m.Motivo) || m.Commit != "" {
+			return fmt.Errorf("contrato de piloto inválido")
+		}
+	case pilotoCierre:
+		if m.Motivo != "" || m.Commit == "" {
+			return fmt.Errorf("contrato de piloto inválido")
+		}
+	default:
+		return fmt.Errorf("contrato de piloto inválido")
+	}
+	return nil
+}
+
+func decodificarEvidencia(data []byte, out any) error {
+	probe := json.NewDecoder(bytes.NewReader(data))
+	token, err := probe.Token()
+	if err != nil || token != json.Delim('{') {
+		return fmt.Errorf("la evidencia no es un objeto")
+	}
+	if err := camposUnicos(probe); err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(out); err != nil {
+		return err
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		return fmt.Errorf("la evidencia contiene datos adicionales")
+	}
+	return nil
+}
+
+func leerMarcaPiloto(root, id string) (*marcaPiloto, error) {
+	if !dispatchID.MatchString(id) || id == "." || id == ".." {
+		return nil, fmt.Errorf("ID de piloto inválido")
+	}
+	if root == "" {
+		return nil, nil
+	}
+	common, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		return nil, err
+	}
+	data, err := leerArchivoEvidencia(common, []string{"chanks", "piloto", "marcas", id + ".json"})
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var m marcaPiloto
+	if err := decodificarEvidencia(data, &m); err != nil {
+		return nil, err
+	}
+	if err := validarMarcaPiloto(m, id); err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+func leerInterruptorPiloto(root string) (*interruptorPiloto, error) {
+	if root == "" {
+		return nil, nil
+	}
+	common, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		return nil, err
+	}
+	data, err := leerArchivoEvidencia(common, []string{"chanks", "piloto", "interruptor.json"})
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var i interruptorPiloto
+	if err := decodificarEvidencia(data, &i); err != nil {
+		return nil, err
+	}
+	if i.Schema != interruptorPilotoSchema || i.Rondas < 0 || i.Rondas > 3 || i.Tope < 0 {
+		return nil, fmt.Errorf("contrato de interruptor inválido")
+	}
+	return &i, nil
+}
+
+// pilotObservation is the immutable sample of pilot evidence every projection of
+// one command reads: the switch and each Sesión's mark. A command captures it
+// once, exactly like the dispatch markers, so nothing rereads changing on-disk
+// state mid-render. Radar never writes any of it (P2).
+type pilotObservation struct {
+	interruptor         *interruptorPiloto
+	interruptorInvalido bool
+	marcas              map[string]*marcaPiloto
+	enCurso             map[string]bool
+	novedad             map[string]string
+	porRevisar          map[string]string
+	vuelo               map[string]string
+	invalid             []string
+}
+
+func (o pilotObservation) activo() bool { return o.interruptor != nil && o.interruptor.Prendido }
+
+func (p *Plan) observarPiloto(root string) pilotObservation {
+	po := pilotObservation{
+		marcas:     map[string]*marcaPiloto{},
+		enCurso:    map[string]bool{},
+		novedad:    map[string]string{},
+		porRevisar: map[string]string{},
+		vuelo:      map[string]string{},
+	}
+	if root == "" {
+		return po
+	}
+	if i, err := leerInterruptorPiloto(root); err != nil {
+		po.interruptorInvalido = true
+	} else {
+		po.interruptor = i
+	}
+	for _, s := range p.Sesiones {
+		m, err := leerMarcaPiloto(root, s.ID)
+		switch {
+		case err != nil:
+			po.invalid = append(po.invalid, s.ID)
+		case m == nil:
+			continue
+		default:
+			po.marcas[s.ID] = m
+			po.vuelo[s.ID] = m.Vuelo
+			switch m.Estado {
+			case pilotoEnCurso:
+				po.enCurso[s.ID] = true
+			case pilotoNovedad:
+				po.novedad[s.ID] = m.Motivo
+			case pilotoCierre:
+				if nota, ok := p.revisionPendiente(root, *m); ok {
+					po.porRevisar[s.ID] = nota
+				}
+			}
+		}
+	}
+	sort.Strings(po.invalid)
+	return po
+}
+
+// revisionPendiente is POR REVISAR deduced from Git, never declared by the mark:
+// the Sesión's delivery commit has to be reachable from the flight branch and
+// that branch must not have been pushed or integrated yet.
+func (p *Plan) revisionPendiente(root string, m marcaPiloto) (string, bool) {
+	if !commitEnRamaDeVuelo(root, m.Commit, m.Rama) {
+		return "", false
+	}
+	if ramaVueloSubida(root, m.Rama) {
+		return "", false
+	}
+	return notaRevision(m.Decisiones), true
 }
 
 // motivoEtapa is serialized as a single machine-readable reason on refusal.

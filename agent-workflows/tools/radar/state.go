@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // Status is derived, never authored. Convention §9.
@@ -14,7 +15,61 @@ const (
 	Diferido    = "🟡 DIFERIDO"
 	Completo    = "✅ COMPLETO"
 	Archivado   = "📚 ARCHIVADO"
+	// Novedad and PorRevisar are the unattended states Radar reads from the
+	// pilot's radar.piloto/v1 marks and from Git. They are derived, not
+	// authored: NOVEDAD carries the motivo the pilot recorded and POR REVISAR
+	// carries the nota Radar deduces from the flight branch.
+	Novedad    = "🟠 NOVEDAD"
+	PorRevisar = "🟣 POR REVISAR"
 )
+
+// The closed set of reasons a NOVEDAD mark may carry (P7, design section 8).
+const (
+	MotivoDecisionDelicada = "decisión delicada"
+	MotivoNoSePudoInferir  = "no se pudo inferir"
+	MotivoInterrumpida     = "interrumpida"
+)
+
+// notaRevision is POR REVISAR's nota: clean when the agent decided nothing on
+// its own, otherwise the count of minor decisions it annotated in the commit.
+func notaRevision(decisiones int) string {
+	switch {
+	case decisiones <= 0:
+		return "limpia"
+	case decisiones == 1:
+		return "con 1 decisión anotada"
+	default:
+		return fmt.Sprintf("con %d decisiones anotadas", decisiones)
+	}
+}
+
+// textoPilotoPlano is the plain-text suffix a Sesión carries from pilot
+// evidence: NOVEDAD's motivo, POR REVISAR's nota, and the owning flight.
+func textoPilotoPlano(po pilotObservation, id string) string {
+	return sufijoPiloto(po, id, func(s string) string { return s })
+}
+
+// textoPilotoMarkdown is the same suffix for the generated view.
+func textoPilotoMarkdown(po pilotObservation, id string) string {
+	return sufijoPiloto(po, id, markdownText)
+}
+
+func sufijoPiloto(po pilotObservation, id string, escapar func(string) string) string {
+	var partes []string
+	if m := po.novedad[id]; m != "" {
+		partes = append(partes, escapar(m))
+	}
+	if n := po.porRevisar[id]; n != "" {
+		partes = append(partes, escapar(n))
+	}
+	if v := po.vuelo[id]; v != "" {
+		partes = append(partes, "vuelo "+escapar(v))
+	}
+	if len(partes) == 0 {
+		return ""
+	}
+	return " · " + strings.Join(partes, " · ")
+}
 
 // Estados computes every Sesión's state in one pass.
 //
@@ -100,6 +155,12 @@ func (p *Plan) Motivos(estados map[string]string) map[string]Motivo {
 				sort.Strings(reason.Raices)
 			}
 		case Listo:
+			reason = Motivo{Tipo: "espera-natural", Raices: []string{id}}
+		case Novedad:
+			// The dependency is not stalled: a human decision is what it waits on.
+			reason = Motivo{Tipo: "falta-decision", Raices: []string{id}}
+		case PorRevisar:
+			// It finished and only awaits review, so the wait is natural.
 			reason = Motivo{Tipo: "espera-natural", Raices: []string{id}}
 		case Planificado:
 			visiting[id] = len(path)
@@ -222,7 +283,64 @@ func (p *Plan) estadosConObservacion(root, head string, cerradas map[string]bool
 		}
 	}
 
-	// Everything else falls out of the dependency graph.
+	// Unattended pilot evidence, derived and never authored. NOVEDAD is the
+	// mark's motivo; POR REVISAR was already deduced from Git when the mark was
+	// read. Neither is gated on the switch: turning the mode off prevents new
+	// states, it never erases the work already done (P9).
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
+		if _, ya := estados[s.ID]; ya {
+			continue
+		}
+		switch {
+		case obs.piloto.novedad[s.ID] != "":
+			estados[s.ID] = Novedad
+		case obs.piloto.porRevisar[s.ID] != "":
+			estados[s.ID] = PorRevisar
+		}
+	}
+
+	// Rounds are per-flight floors: a Sesión whose POR REVISAR dependency sits
+	// on floor N is on floor N+1. The pass memoizes so a chain is walked once.
+	pisos := map[string]int{}
+	enPiso := map[string]bool{}
+	var piso func(string) int
+	piso = func(id string) int {
+		if v, ok := pisos[id]; ok {
+			return v
+		}
+		if enPiso[id] {
+			return 1 // a cycle is Check's to report, never this pass's to loop on
+		}
+		enPiso[id] = true
+		max := 1
+		if s := index[id]; s != nil {
+			for _, dep := range s.DependeDe {
+				if estados[dep] == PorRevisar {
+					if k := piso(dep) + 1; k > max {
+						max = k
+					}
+				}
+			}
+		}
+		// A mark's recorded floor is the pilot's own evidence; it can only raise
+		// the derived floor, never lower it below what the graph proves.
+		if m := obs.piloto.marcas[id]; m != nil && m.Ronda > max {
+			max = m.Ronda
+		}
+		delete(enPiso, id)
+		pisos[id] = max
+		return max
+	}
+	pilotoActivo := obs.piloto.activo()
+	limiteRondas := 0
+	if obs.piloto.interruptor != nil {
+		limiteRondas = obs.piloto.interruptor.Rondas
+	}
+
+	// Everything else falls out of the dependency graph. With the pilot on, a
+	// POR REVISAR dependency also unblocks, as long as the dependent Sesión
+	// stays inside the run's round ceiling; a NOVEDAD never unblocks anyone.
 	for i := range p.Sesiones {
 		s := &p.Sesiones[i]
 		if _, ya := estados[s.ID]; ya {
@@ -235,10 +353,14 @@ func (p *Plan) estadosConObservacion(root, head string, cerradas map[string]bool
 				listo = false
 				break
 			}
-			if !(estados[d.ID] == Completo || estados[d.ID] == Archivado) {
-				listo = false
-				break
+			if estados[d.ID] == Completo || estados[d.ID] == Archivado {
+				continue
 			}
+			if pilotoActivo && estados[d.ID] == PorRevisar && (limiteRondas == 0 || piso(s.ID) <= limiteRondas) {
+				continue
+			}
+			listo = false
+			break
 		}
 		if listo {
 			estados[s.ID] = Listo
@@ -250,7 +372,7 @@ func (p *Plan) estadosConObservacion(root, head string, cerradas map[string]bool
 	p.aplicarPrioridades(estados)
 	if cerradas == nil {
 		for _, s := range p.Sesiones {
-			if estados[s.ID] == Listo && obs.live[s.ID] {
+			if estados[s.ID] == Listo && (obs.live[s.ID] || obs.piloto.enCurso[s.ID]) {
 				estados[s.ID] = EnCurso
 			}
 		}
@@ -431,6 +553,11 @@ func ordenTopologico(sesiones []*Sesion, index map[string]*Sesion) []string {
 type Avance struct {
 	Cerradas int
 	Total    int
+	// PorRevisar and Novedad are the unattended work a human still owes:
+	// finished awaiting review, or stopped for a decision. They are projections
+	// of derived states and never count as closed.
+	PorRevisar int
+	Novedad    int
 }
 
 func (a Avance) String() string {
@@ -460,6 +587,12 @@ func (p *Plan) avanceConEstados(estados map[string]string) (map[string]Avance, A
 		if cerrada {
 			total.Cerradas++
 		}
+		switch estados[s.ID] {
+		case PorRevisar:
+			total.PorRevisar++
+		case Novedad:
+			total.Novedad++
+		}
 		if esTerritorioPendiente(s) || esTerritorioHistorico(s) {
 			continue
 		}
@@ -467,6 +600,12 @@ func (p *Plan) avanceConEstados(estados map[string]string) (map[string]Avance, A
 		a.Total++
 		if cerrada {
 			a.Cerradas++
+		}
+		switch estados[s.ID] {
+		case PorRevisar:
+			a.PorRevisar++
+		case Novedad:
+			a.Novedad++
 		}
 		porZona[s.Zona] = a
 	}

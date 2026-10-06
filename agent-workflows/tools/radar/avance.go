@@ -106,3 +106,22 @@ func (p *Plan) avisosDeTrailers(root string) []Hallazgo {
 	}
 	return h
 }
+
+// resumenRevision names the unattended work a human still owes: POR REVISAR
+// and NOVEDAD, projected from derived states. It is empty when there is none,
+// so a plan without pilot evidence keeps its exact views.
+func resumenRevision(estados map[string]string) string {
+	revisar, novedad := 0, 0
+	for _, estado := range estados {
+		switch estado {
+		case PorRevisar:
+			revisar++
+		case Novedad:
+			novedad++
+		}
+	}
+	if revisar == 0 && novedad == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d POR REVISAR · %d NOVEDAD", revisar, novedad)
+}

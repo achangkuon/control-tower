@@ -30,6 +30,8 @@ type Snapshot struct {
 	Sesiones            []SesionEstado  `json:"sesiones"`
 	DespachosHuerfanos  []string        `json:"despachos_huerfanos,omitempty"`
 	DespachosInvalidos  []string        `json:"despachos_invalidos,omitempty"`
+	PilotosInvalidos    []string        `json:"pilotos_invalidos,omitempty"`
+	InterruptorInvalido bool            `json:"interruptor_invalido,omitempty"`
 	Asientos            []string        `json:"asientos"`
 	TerritorioPendiente int             `json:"territorio_pendiente"`
 	// Compatibilidad and Escenarios are the machine side of `radar roadmap`.
@@ -72,6 +74,11 @@ type RetenidaJSON struct {
 type AvanceJSON struct {
 	Cerradas int `json:"cerradas"`
 	Total    int `json:"total"`
+	// PorRevisar and Novedad are the unattended work left for a human. They are
+	// omitted when zero so a plan without pilot evidence keeps its exact wire
+	// shape; they never count as closed above.
+	PorRevisar int `json:"por_revisar,omitempty"`
+	Novedad    int `json:"novedad,omitempty"`
 }
 
 type ZonaSnapshot struct {
@@ -104,6 +111,12 @@ type SesionEstado struct {
 	Resultado string  `json:"resultado"`
 	Prioridad string  `json:"prioridad,omitempty"`
 	Motivo    *Motivo `json:"motivo,omitempty"`
+	// MotivoNovedad is the reason a NOVEDAD mark recorded; NotaRevision is
+	// POR REVISAR's deduction (limpia or N annotated decisions). Vuelo names
+	// the flight that owns the Sesión. All three stay absent without evidence.
+	MotivoNovedad string `json:"motivo_novedad,omitempty"`
+	NotaRevision  string `json:"nota_revision,omitempty"`
+	Vuelo         string `json:"vuelo,omitempty"`
 	// The declarations every compatibility conclusion is derived from. They are
 	// omitted when undeclared rather than emitted empty, because an absent
 	// declaration and an empty one are different claims: the first is unknown,
@@ -218,16 +231,19 @@ func (p *Plan) snapshotConObservacion(root, head string, obs dispatchObservation
 			motivo = &reason
 		}
 		sesiones = append(sesiones, SesionEstado{
-			Motivo:    motivo,
-			ID:        s.ID,
-			Zona:      s.Zona,
-			Estado:    vocabulario(estados[s.ID]),
-			Resultado: s.Resultado,
-			Prioridad: s.Prioridad,
-			Archivos:  copiaOrdenada(s.Archivos),
-			Cimientos: copiaOrdenada(s.Cimientos),
-			Recurso:   copiaOrdenada(s.Recurso),
-			DependeDe: copiaOrdenada(s.DependeDe),
+			Motivo:        motivo,
+			ID:            s.ID,
+			Zona:          s.Zona,
+			Estado:        vocabulario(estados[s.ID]),
+			Resultado:     s.Resultado,
+			Prioridad:     s.Prioridad,
+			MotivoNovedad: obs.piloto.novedad[s.ID],
+			NotaRevision:  obs.piloto.porRevisar[s.ID],
+			Vuelo:         obs.piloto.vuelo[s.ID],
+			Archivos:      copiaOrdenada(s.Archivos),
+			Cimientos:     copiaOrdenada(s.Cimientos),
+			Recurso:       copiaOrdenada(s.Recurso),
+			DependeDe:     copiaOrdenada(s.DependeDe),
 		})
 	}
 
@@ -251,7 +267,7 @@ func (p *Plan) snapshotConObservacion(root, head string, obs dispatchObservation
 		activa = &PrioridadJSON{ID: pr.ID, Nombre: pr.Nombre}
 	}
 
-	roadmap := p.roadmapConEstados(root, head, estados, colas)
+	roadmap := p.roadmapConEstados(root, head, estados, colas, obs.piloto)
 	compatibilidad := make([]ParJSON, 0, len(roadmap.Pares))
 	for _, par := range roadmap.Pares {
 		compatibilidad = append(compatibilidad, ParJSON{
@@ -273,13 +289,15 @@ func (p *Plan) snapshotConObservacion(root, head string, obs dispatchObservation
 		Schema:              SnapshotSchema,
 		Producto:            p.Producto,
 		Head:                head,
-		Avance:              AvanceJSON{Cerradas: total.Cerradas, Total: total.Total},
+		Avance:              AvanceJSON{Cerradas: total.Cerradas, Total: total.Total, PorRevisar: total.PorRevisar, Novedad: total.Novedad},
 		PrioridadActiva:     activa,
 		Prioridades:         prioridades,
 		Zonas:               zonas,
 		Sesiones:            sesiones,
 		DespachosHuerfanos:  obs.orphan,
 		DespachosInvalidos:  obs.invalid,
+		PilotosInvalidos:    obs.piloto.invalid,
+		InterruptorInvalido: obs.piloto.interruptorInvalido,
 		Asientos:            asientos,
 		TerritorioPendiente: pendiente,
 		Compatibilidad:      compatibilidad,

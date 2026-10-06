@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -79,6 +80,12 @@ type Roadmap struct {
 	Head            string
 	PrioridadActiva string
 	Prevision       string
+	// Interruptor names the pilot switch the LISTO rule used; Novedades and
+	// Revisiones list the unattended work left for a human. All three derive from
+	// the same captured observation as the states above, never from a reread.
+	Interruptor string
+	Novedades   []SesionPiloto
+	Revisiones  []SesionPiloto
 	// Autoriza exists to be read as false. A consumer that looks for execution
 	// authority in this report finds an explicit denial rather than silence.
 	Autoriza     bool
@@ -95,6 +102,14 @@ type Escenario struct {
 	Desbloquea     []string
 	QuedanListo    []string
 	SiguenSinAbrir []Retenida
+}
+
+// SesionPiloto is one Sesión the unattended run left for a human: its estado's
+// motivo/nota and the flight that owns it. Radar derives it, never authors it.
+type SesionPiloto struct {
+	Sesion string
+	Vuelo  string
+	Nota   string
 }
 
 // Retenida is a Sesión whose declared dependencies would all be satisfied and
@@ -119,12 +134,12 @@ func (p *Plan) RoadmapAt(root, head string) Roadmap {
 
 func (p *Plan) roadmapConObservacion(root, head string, obs dispatchObservation) Roadmap {
 	estados := p.estadosConObservacion(root, head, nil, obs)
-	return p.roadmapConEstados(root, head, estados, p.colaConEstados(estados))
+	return p.roadmapConEstados(root, head, estados, p.colaConEstados(estados), obs.piloto)
 }
 
 // roadmapConEstados is shared by Roadmap and Snapshot so their forecasts use
 // exactly the states and queues derived from each command's single observation.
-func (p *Plan) roadmapConEstados(root, head string, estados map[string]string, colas map[string][]string) Roadmap {
+func (p *Plan) roadmapConEstados(root, head string, estados map[string]string, colas map[string][]string, piloto pilotObservation) Roadmap {
 	index := p.SesionPorID()
 	alternativas := make([]Alternativa, 0)
 	zonas := make([]string, 0, len(colas))
@@ -154,11 +169,50 @@ func (p *Plan) roadmapConEstados(root, head string, estados map[string]string, c
 	if pos, ok := p.prioridadActiva(estados); ok {
 		activa = p.Prioridades[pos].ID
 	}
+	novedades, revisiones := p.sesionesPiloto(estados, piloto)
 	return Roadmap{
 		Head: head, PrioridadActiva: activa, Prevision: previsionNoEsPermiso,
+		Interruptor:  interruptorTexto(piloto),
+		Novedades:    novedades,
+		Revisiones:   revisiones,
 		Alternativas: alternativas, Pares: pares,
 		Escenarios: p.escenariosAt(root, head, estados, index),
 	}
+}
+
+// sesionesPiloto lists the unattended work in plan order: stopped for a decision
+// (NOVEDAD) and finished awaiting review (POR REVISAR).
+func (p *Plan) sesionesPiloto(estados map[string]string, po pilotObservation) ([]SesionPiloto, []SesionPiloto) {
+	var novedades, revisiones []SesionPiloto
+	for i := range p.Sesiones {
+		s := &p.Sesiones[i]
+		switch estados[s.ID] {
+		case Novedad:
+			novedades = append(novedades, SesionPiloto{Sesion: s.ID, Vuelo: po.vuelo[s.ID], Nota: po.novedad[s.ID]})
+		case PorRevisar:
+			revisiones = append(revisiones, SesionPiloto{Sesion: s.ID, Vuelo: po.vuelo[s.ID], Nota: po.porRevisar[s.ID]})
+		}
+	}
+	return novedades, revisiones
+}
+
+// interruptorTexto renders the switch the rule used, so the view says which
+// rule produced its verdict instead of leaving the reader to guess.
+func interruptorTexto(po pilotObservation) string {
+	if po.interruptor == nil {
+		return "apagado"
+	}
+	if !po.interruptor.Prendido {
+		return "apagado"
+	}
+	rondas, tope := "sin límite", "sin tope"
+	if po.interruptor.Rondas > 0 {
+		rondas = strconv.Itoa(po.interruptor.Rondas)
+	}
+	if po.interruptor.Tope > 0 {
+		tope = strconv.Itoa(po.interruptor.Tope)
+	}
+	return fmt.Sprintf("prendido (%s rondas, tope %s)", rondas, tope)
 }
 
 // escenariosAt builds one scenario per Sesión that actually holds someone else
@@ -382,11 +436,13 @@ func cmdRoadmap(w io.Writer, p *Plan, root string) error {
 func escribirRoadmap(w io.Writer, producto string, r Roadmap, nombres map[string]*Zona) {
 	fmt.Fprintf(w, "%s — roadmap de alternativas\n", producto)
 	fmt.Fprintf(w, "Base: %s\n", r.Head)
-	fmt.Fprintf(w, "Prioridad activa: %s\n\n", r.PrioridadActiva)
+	fmt.Fprintf(w, "Prioridad activa: %s\n", r.PrioridadActiva)
+	fmt.Fprintf(w, "Interruptor del piloto: %s\n\n", markdownText(r.Interruptor))
 	fmt.Fprintf(w, "%s\n\n", ajustar(r.Prevision, 78))
 
 	if len(r.Alternativas) == 0 {
-		fmt.Fprintf(w, "Alternativas: ninguna Sesión LISTO sobre esta base.\n")
+		fmt.Fprintf(w, "Alternativas: ninguna Sesión LISTO sobre esta base.\n\n")
+		escribirPiloto(w, r)
 		return
 	}
 
@@ -449,8 +505,35 @@ func escribirRoadmap(w io.Writer, producto string, r Roadmap, nombres map[string
 		fmt.Fprintln(w)
 	}
 
+	escribirPiloto(w, r)
 	fmt.Fprintf(w, "Los escenarios no modifican el plan, Git ni la evidencia de entrega real.\n")
 	fmt.Fprintf(w, "Contrato completo de una Sesión: radar sesion <ID>\n")
+}
+
+// escribirPiloto draws the unattended work the pilot left behind. It is empty
+// when there is none, so a plan without pilot evidence renders as before.
+func escribirPiloto(w io.Writer, r Roadmap) {
+	if len(r.Novedades) > 0 {
+		fmt.Fprintf(w, "NOVEDAD (%d)\n", len(r.Novedades))
+		for _, n := range r.Novedades {
+			fmt.Fprintf(w, "  %s — %s%s\n", markdownText(n.Sesion), markdownText(n.Nota), vueloTexto(n.Vuelo))
+		}
+		fmt.Fprintln(w)
+	}
+	if len(r.Revisiones) > 0 {
+		fmt.Fprintf(w, "POR REVISAR (%d)\n", len(r.Revisiones))
+		for _, n := range r.Revisiones {
+			fmt.Fprintf(w, "  %s — %s%s\n", markdownText(n.Sesion), markdownText(n.Nota), vueloTexto(n.Vuelo))
+		}
+		fmt.Fprintln(w)
+	}
+}
+
+func vueloTexto(vuelo string) string {
+	if vuelo == "" {
+		return ""
+	}
+	return " · vuelo " + markdownText(vuelo)
 }
 
 // sangrar wraps prose and indents every continuation line, so a long result or

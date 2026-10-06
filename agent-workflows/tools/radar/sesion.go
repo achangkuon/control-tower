@@ -30,7 +30,8 @@ func cmdSesion(w io.Writer, p *Plan, root, id string) error {
 	if err != nil {
 		return fmt.Errorf("no se pudo leer el avance de Módulos: %w", err)
 	}
-	escribirSesionConAvance(w, p, s, p.EstadosAt(root, head), entregados)
+	obs := p.observarDespachos(root)
+	escribirSesionConAvance(w, p, s, p.estadosConObservacion(root, head, nil, obs), entregados, obs.piloto)
 	return nil
 }
 
@@ -41,10 +42,16 @@ func escribirSesion(w io.Writer, p *Plan, s *Sesion, estados map[string]string) 
 
 // escribirSesionConAvance writes one Sesión's contract. Other Sesiones appear only
 // as dependency IDs next to their computed state. A non-nil entregados marks each
-// Módulo delivered or pending and names the Módulo to resume from.
-func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string]string, entregados map[string]string) {
+// Módulo delivered or pending and names the Módulo to resume from. The optional
+// pilot observation adds the unattended estado's motivo/nota and the owning
+// flight; callers without it render exactly as before.
+func escribirSesionConAvance(w io.Writer, p *Plan, s *Sesion, estados map[string]string, entregados map[string]string, piloto ...pilotObservation) {
+	var po pilotObservation
+	if len(piloto) > 0 {
+		po = piloto[0]
+	}
 	fmt.Fprintf(w, "%s — %s\n", s.ID, s.Resultado)
-	fmt.Fprintf(w, "Estado: %s\n", estados[s.ID])
+	fmt.Fprintf(w, "Estado: %s%s\n", estados[s.ID], textoPilotoPlano(po, s.ID))
 	if s.esEncargo() {
 		fmt.Fprintln(w, "Coordinación:")
 	}

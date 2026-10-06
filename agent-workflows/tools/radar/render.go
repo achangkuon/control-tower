@@ -96,6 +96,12 @@ func renderConObservacion(p *Plan, root, head string, obs dispatchObservation) [
 	if len(obs.invalid) > 0 {
 		fmt.Fprintf(&b, "- Despachos inválidos (no EN CURSO): %s.\n", markdownList(obs.invalid))
 	}
+	if len(obs.piloto.invalid) > 0 {
+		fmt.Fprintf(&b, "- Marcas de piloto inválidas (no otorgan estado): %s.\n", markdownList(obs.piloto.invalid))
+	}
+	if obs.piloto.interruptorInvalido {
+		fmt.Fprintln(&b, "- Interruptor del piloto inválido (se lee como apagado).")
+	}
 	fmt.Fprintf(&b, "- Próximo trabajo ejecutable: %s.\n", proximoTrabajo(p, estados, colas))
 	fmt.Fprintf(&b, "- Decisión pendiente: %s.\n\n", primeraDecisionPendiente(p))
 
@@ -114,6 +120,9 @@ func renderConObservacion(p *Plan, root, head string, obs dispatchObservation) [
 
 	fmt.Fprintln(&b, "## Avance")
 	fmt.Fprintf(&b, "- **Total:** %s\n", total)
+	if resumen := resumenRevision(estados); resumen != "" {
+		fmt.Fprintf(&b, "- **Pendiente de revisión:** %s\n", resumen)
+	}
 	if n := territoriosPendientes(p); n > 0 {
 		fmt.Fprintf(&b, "- %d Sesión(es) con territorio pendiente o Encargo incompleto cuentan sólo en el avance total y no están asignadas a una Zona.\n", n)
 	}
@@ -130,7 +139,7 @@ func renderConObservacion(p *Plan, root, head string, obs dispatchObservation) [
 		} else {
 			for pos, id := range colas[zid] {
 				s := index[id]
-				fmt.Fprintf(&b, "%d. **%s** · %s%s%s · %s\n", pos+1, markdownText(id), estados[id], textoMotivo(motivos[id]), textoPrioridad(p, s), markdownText(s.Resultado))
+				fmt.Fprintf(&b, "%d. **%s** · %s%s%s%s · %s\n", pos+1, markdownText(id), estados[id], textoPilotoMarkdown(obs.piloto, id), textoMotivo(motivos[id]), textoPrioridad(p, s), markdownText(s.Resultado))
 			}
 		}
 		fmt.Fprintln(&b)
@@ -174,7 +183,7 @@ func renderConObservacion(p *Plan, root, head string, obs dispatchObservation) [
 			if !s.esEncargo() {
 				continue
 			}
-			renderEncargo(&b, p, s, estados[s.ID]+textoMotivo(motivos[s.ID]))
+			renderEncargo(&b, p, s, estados[s.ID]+textoPilotoMarkdown(obs.piloto, s.ID)+textoMotivo(motivos[s.ID]))
 		}
 	}
 
@@ -184,7 +193,7 @@ func renderConObservacion(p *Plan, root, head string, obs dispatchObservation) [
 			continue
 		}
 		fmt.Fprintf(&b, "### %s — %s\n", markdownText(s.ID), markdownText(s.Resultado))
-		fmt.Fprintf(&b, "- Estado derivado: %s%s\n", estados[s.ID], textoMotivo(motivos[s.ID]))
+		fmt.Fprintf(&b, "- Estado derivado: %s%s%s\n", estados[s.ID], textoPilotoMarkdown(obs.piloto, s.ID), textoMotivo(motivos[s.ID]))
 		if esTerritorioPendiente(&s) {
 			fmt.Fprintln(&b, "- Importación legacy con territorio pendiente probado; sin asignación de Zona ni capacidad.")
 		} else if esTerritorioHistorico(&s) {

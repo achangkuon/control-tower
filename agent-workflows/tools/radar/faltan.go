@@ -146,12 +146,12 @@ func estadoFaltan(estados map[string]string, s *Sesion) string {
 // reuses resumenBloqueo — the same blocker summary `radar render` writes to
 // the ROADMAP's "## Bloqueos" section — so a Sesión never explains its own
 // block two different ways.
-func lineaFaltan(estados map[string]string, ledgerDecisionRequired map[string]bool, s *Sesion) string {
+func lineaFaltan(estados map[string]string, ledgerDecisionRequired map[string]bool, po pilotObservation, s *Sesion) string {
 	estado := estadoFaltan(estados, s)
 	if estados[s.ID] == Bloqueado {
 		estado = fmt.Sprintf("%s: %s", estado, resumenBloqueo(s, ledgerDecisionRequired[s.ID]))
 	}
-	return fmt.Sprintf("%s — %s (%s)", s.ID, s.Resultado, estado)
+	return fmt.Sprintf("%s — %s (%s%s)", s.ID, s.Resultado, estado, textoPilotoPlano(po, s.ID))
 }
 
 // RenderFaltan is the pure convenience boundary for tests and callers that do
@@ -187,6 +187,12 @@ func renderFaltanConObservacion(p *Plan, root, head string, obs dispatchObservat
 	if len(obs.invalid) > 0 {
 		fmt.Fprintf(&b, "Despachos inválidos (no EN CURSO): %s\n\n", strings.Join(obs.invalid, ", "))
 	}
+	if len(obs.piloto.invalid) > 0 {
+		fmt.Fprintf(&b, "Marcas de piloto inválidas (no otorgan estado): %s\n\n", strings.Join(obs.piloto.invalid, ", "))
+	}
+	if obs.piloto.interruptorInvalido {
+		fmt.Fprintf(&b, "Interruptor del piloto inválido (se lee como apagado).\n\n")
+	}
 
 	for _, m := range metas {
 		if m.Nombre == metaSinDeclarar && !tieneAbiertas(m) {
@@ -201,13 +207,13 @@ func renderFaltanConObservacion(p *Plan, root, head string, obs dispatchObservat
 			huboSesiones = true
 			if sub.Nombre == "" {
 				for _, s := range sub.Sesiones {
-					fmt.Fprintf(&b, "  - %s\n", lineaFaltan(estados, p.ledgerDecisionRequired, s))
+					fmt.Fprintf(&b, "  - %s\n", lineaFaltan(estados, p.ledgerDecisionRequired, obs.piloto, s))
 				}
 				continue
 			}
 			fmt.Fprintf(&b, "  %s\n", sub.Nombre)
 			for _, s := range sub.Sesiones {
-				fmt.Fprintf(&b, "    - %s\n", lineaFaltan(estados, p.ledgerDecisionRequired, s))
+				fmt.Fprintf(&b, "    - %s\n", lineaFaltan(estados, p.ledgerDecisionRequired, obs.piloto, s))
 			}
 		}
 		if !huboSesiones {
@@ -250,7 +256,8 @@ func LineaFaltanUno(p *Plan, root, head, id string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("la Sesión %s no existe en el plan", id)
 	}
-	estados := p.EstadosAt(root, head)
+	obs := p.observarDespachos(root)
+	estados := p.estadosConObservacion(root, head, nil, obs)
 
 	meta, sub := metaSinDeclarar, ""
 	if pr, ok := prioridadDeclarada(p, s.Prioridad); ok {
@@ -267,7 +274,7 @@ func LineaFaltanUno(p *Plan, root, head, id string) (string, error) {
 	}
 	migajas += " › " + zona
 
-	return fmt.Sprintf("%s (%s — %s, %s)", s.ID, migajas, s.Resultado, estadoFaltan(estados, s)), nil
+	return fmt.Sprintf("%s (%s — %s, %s%s)", s.ID, migajas, s.Resultado, estadoFaltan(estados, s), textoPilotoPlano(obs.piloto, s.ID)), nil
 }
 
 func cmdFaltan(w io.Writer, p *Plan, root, id string) error {

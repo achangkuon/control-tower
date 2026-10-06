@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -486,5 +487,56 @@ func TestSnapshotConservaElContratoV1YSoloCrece(t *testing.T) {
 		if _, hay := primera[campo]; hay {
 			t.Fatalf("%q debe omitirse cuando la Sesión no lo declara", campo)
 		}
+	}
+}
+
+// --- S214: the machine side of the unattended states ------------------------
+
+func TestSnapshotExponeLosEstadosDelPiloto(t *testing.T) {
+	root, head := repoGit(t)
+	commit := ramaVueloConCommit(t, root, "piloto/2026-10-08/vuelo-v1", "s1.txt")
+	testMarcaPiloto(t, root, "S1", marcaPiloto{Vuelo: "v1", Rama: "refs/heads/piloto/2026-10-08/vuelo-v1", Estado: pilotoCierre, Commit: commit, Ronda: 1, Decisiones: 1})
+	testMarcaPiloto(t, root, "S2", marcaPiloto{Vuelo: "v2", Rama: "refs/heads/piloto/2026-10-08/vuelo-v2", Estado: pilotoNovedad, Motivo: MotivoDecisionDelicada, Ronda: 1})
+	p := &Plan{Producto: "control-tower", Sesiones: []Sesion{abierta("S1", "z"), abierta("S2", "z")}}
+
+	s := p.SnapshotAt(root, head)
+	porID := map[string]SesionEstado{}
+	for _, ses := range s.Sesiones {
+		porID[ses.ID] = ses
+	}
+	if got := porID["S1"]; got.Estado != "POR REVISAR" || got.NotaRevision != "con 1 decisión anotada" || got.Vuelo != "v1" {
+		t.Fatalf("POR REVISAR mal expuesto: %#v", got)
+	}
+	if got := porID["S2"]; got.Estado != "NOVEDAD" || got.MotivoNovedad != MotivoDecisionDelicada || got.Vuelo != "v2" {
+		t.Fatalf("NOVEDAD mal expuesta: %#v", got)
+	}
+	if s.Avance.PorRevisar != 1 || s.Avance.Novedad != 1 {
+		t.Fatalf("el avance debe contar el trabajo sin revisar: %#v", s.Avance)
+	}
+}
+
+func TestSnapshotOmiteLosCamposDelPilotoSinEvidencia(t *testing.T) {
+	root, commit := repoGit(t)
+	p := &Plan{Producto: "control-tower", Zonas: []Zona{{ID: "z", Nombre: "Z"}}, Sesiones: []Sesion{entregada("S1", "z", commit)}}
+	raw, err := json.Marshal(p.SnapshotAt(root, commit))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, campo := range []string{"motivo_novedad", "nota_revision", "vuelo", "por_revisar", "novedad"} {
+		if strings.Contains(string(raw), campo) {
+			t.Fatalf("%q debe omitirse sin evidencia del piloto: %s", campo, raw)
+		}
+	}
+}
+
+func TestSnapshotReportaMarcasDePilotoInvalidas(t *testing.T) {
+	root, head := repoGit(t)
+	path := testMarcaPiloto(t, root, "S1", marcaPiloto{Vuelo: "v1", Rama: "refs/heads/piloto/2026-10-08/vuelo-v1", Estado: pilotoEnCurso, Ronda: 1})
+	if err := os.WriteFile(path, []byte(`{"schema":"otro"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p := &Plan{Sesiones: []Sesion{abierta("S1", "z")}}
+	if snap := p.SnapshotAt(root, head); len(snap.PilotosInvalidos) != 1 || snap.PilotosInvalidos[0] != "S1" {
+		t.Fatalf("una marca inválida debe reportarse, no otorgar estado: %#v", snap)
 	}
 }

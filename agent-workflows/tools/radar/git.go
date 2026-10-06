@@ -172,3 +172,37 @@ func verificarIntegracion(root, commit, head string) (bool, string, bool) {
 	}
 	return true, "", true
 }
+
+// commitEnRamaDeVuelo reports whether commit is reachable from the flight
+// branch. Both ends are immutable OIDs, so the shared ancestry cache applies.
+func commitEnRamaDeVuelo(root, commit, rama string) bool {
+	ramaOID, err := gitOutput(root, "rev-parse", "--verify", "--end-of-options", rama+"^{commit}")
+	if err != nil {
+		return false
+	}
+	ok, _ := entregaIntegrada(root, commit, ramaOID)
+	return ok
+}
+
+// ramaVueloSubida reports whether the flight branch left the machine: it has an
+// upstream, or it is already integrated into the local integrated branch. Either
+// way its work is no longer waiting for review. Any uncertainty reads as pushed,
+// so a Sesión never claims POR REVISAR on evidence Radar cannot prove.
+func ramaVueloSubida(root, rama string) bool {
+	if upstream, err := gitOutput(root, "for-each-ref", "--format=%(upstream)", rama); err == nil && upstream != "" {
+		return true
+	}
+	_, integrado, err := integratedLocalBranch(root)
+	if err != nil {
+		return true
+	}
+	ramaOID, err := gitOutput(root, "rev-parse", "--verify", "--end-of-options", rama+"^{commit}")
+	if err != nil {
+		return true
+	}
+	ok, _, definitiva := verificarIntegracion(root, ramaOID, integrado)
+	if !definitiva {
+		return true
+	}
+	return ok
+}

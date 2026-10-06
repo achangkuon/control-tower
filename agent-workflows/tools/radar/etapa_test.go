@@ -459,3 +459,174 @@ func TestMarcadorDeWorktreeVinculadoYReanudacionPrimero(t *testing.T) {
 		t.Fatalf("orphan should remain visible but not EN CURSO: %#v", orphan)
 	}
 }
+
+// --- S214: the radar.piloto/v1 marks and the pilot switch -------------------
+
+func testMarcaPiloto(t *testing.T, root, id string, m marcaPiloto) string {
+	t.Helper()
+	common, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(common, "chanks", "piloto", "marcas")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if m.Schema == "" {
+		m.Schema = marcaPilotoSchema
+	}
+	if m.Sesion == "" {
+		m.Sesion = id
+	}
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, id+".json")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func testInterruptorPiloto(t *testing.T, root string, i interruptorPiloto) string {
+	t.Helper()
+	common, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(common, "chanks", "piloto")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if i.Schema == "" {
+		i.Schema = interruptorPilotoSchema
+	}
+	data, err := json.Marshal(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "interruptor.json")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func TestMarcaPilotoLeeElContrato(t *testing.T) {
+	root, _ := repoGit(t)
+	testMarcaPiloto(t, root, "S1", marcaPiloto{
+		Vuelo: "v1", Rama: "refs/heads/piloto/2026-10-08/vuelo-v1",
+		Estado: pilotoCierre, Commit: "abc", Ronda: 1, Decisiones: 2,
+	})
+	m, err := leerMarcaPiloto(root, "S1")
+	if err != nil {
+		t.Fatalf("marca válida rechazada: %v", err)
+	}
+	if m == nil || m.Estado != pilotoCierre || m.Decisiones != 2 || m.Vuelo != "v1" || m.Ronda != 1 {
+		t.Fatalf("marca mal leída: %#v", m)
+	}
+	if m.Sesion != "S1" || m.Schema != marcaPilotoSchema {
+		t.Fatalf("identidad de la marca alterada: %#v", m)
+	}
+}
+
+func TestMarcaPilotoAusenteNoEsError(t *testing.T) {
+	root, _ := repoGit(t)
+	m, err := leerMarcaPiloto(root, "S1")
+	if err != nil || m != nil {
+		t.Fatalf("sin marca debe ser (nil, nil): %v %#v", err, m)
+	}
+}
+
+func TestMarcaPilotoRechazaContratoInvalido(t *testing.T) {
+	root, _ := repoGit(t)
+	base := marcaPiloto{Vuelo: "v1", Rama: "refs/heads/piloto/2026-10-08/vuelo-v1", Estado: pilotoCierre, Commit: "abc", Ronda: 1}
+	for _, tc := range []struct {
+		name  string
+		mutar func(*marcaPiloto)
+	}{
+		{"esquema desconocido", func(m *marcaPiloto) { m.Schema = "radar.piloto/v2" }},
+		{"sesión distinta", func(m *marcaPiloto) { m.Sesion = "S2" }},
+		{"vuelo vacío", func(m *marcaPiloto) { m.Vuelo = "" }},
+		{"rama no de vuelo", func(m *marcaPiloto) { m.Rama = "refs/heads/main" }},
+		{"rama de otro vuelo", func(m *marcaPiloto) { m.Rama = "refs/heads/piloto/2026-10-08/vuelo-v2" }},
+		{"estado desconocido", func(m *marcaPiloto) { m.Estado = "otro" }},
+		{"novedad sin motivo", func(m *marcaPiloto) { m.Estado = pilotoNovedad; m.Commit = "" }},
+		{"novedad con motivo inválido", func(m *marcaPiloto) { m.Estado = pilotoNovedad; m.Commit = ""; m.Motivo = "porque sí" }},
+		{"cierre sin commit", func(m *marcaPiloto) { m.Commit = "" }},
+		{"cierre con motivo", func(m *marcaPiloto) { m.Motivo = "x" }},
+		{"en-curso con commit", func(m *marcaPiloto) { m.Estado = pilotoEnCurso }},
+		{"ronda cero", func(m *marcaPiloto) { m.Ronda = 0 }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m := base
+			tc.mutar(&m)
+			testMarcaPiloto(t, root, "S1", m)
+			if _, err := leerMarcaPiloto(root, "S1"); err == nil {
+				t.Fatalf("marca inválida aceptada: %s", tc.name)
+			}
+		})
+	}
+}
+
+func TestMarcaPilotoFailClosed(t *testing.T) {
+	root, _ := repoGit(t)
+	path := testMarcaPiloto(t, root, "S1", marcaPiloto{Vuelo: "v1", Rama: "refs/heads/piloto/2026-10-08/vuelo-v1", Estado: pilotoEnCurso, Ronda: 1})
+	original, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ name, data string }{
+		{"campo desconocido", strings.TrimSuffix(string(original), "}") + `,"extra":true}`},
+		{"identidad duplicada", strings.TrimSuffix(string(original), "}") + `,"sesion":"S1"}`},
+		{"no es objeto", `[]`},
+		{"objeto extra", string(original) + `{}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := os.WriteFile(path, []byte(tc.data), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := leerMarcaPiloto(root, "S1"); err == nil {
+				t.Fatalf("marca malformada aceptada: %s", tc.name)
+			}
+		})
+	}
+}
+
+func TestInterruptorPilotoPorDefectoApagado(t *testing.T) {
+	root, _ := repoGit(t)
+	i, err := leerInterruptorPiloto(root)
+	if err != nil || i != nil {
+		t.Fatalf("sin interruptor debe leerse como apagado: %v %#v", err, i)
+	}
+	if (pilotObservation{}).activo() {
+		t.Fatal("una observación vacía no puede estar activa")
+	}
+}
+
+func TestInterruptorPilotoLeeElContratoYRechazaInvalidos(t *testing.T) {
+	root, _ := repoGit(t)
+	testInterruptorPiloto(t, root, interruptorPiloto{Prendido: true, Rondas: 3, Tope: 10})
+	i, err := leerInterruptorPiloto(root)
+	if err != nil || i == nil || !i.Prendido || i.Rondas != 3 || i.Tope != 10 {
+		t.Fatalf("interruptor mal leído: %v %#v", err, i)
+	}
+	for _, tc := range []struct {
+		name  string
+		mutar func(*interruptorPiloto)
+	}{
+		{"rondas fuera de rango", func(i *interruptorPiloto) { i.Rondas = 4 }},
+		{"tope negativo", func(i *interruptorPiloto) { i.Tope = -1 }},
+		{"esquema desconocido", func(i *interruptorPiloto) { i.Schema = "radar.piloto/v2" }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			j := interruptorPiloto{Prendido: true, Rondas: 1, Tope: 1}
+			tc.mutar(&j)
+			testInterruptorPiloto(t, root, j)
+			if _, err := leerInterruptorPiloto(root); err == nil {
+				t.Fatalf("interruptor inválido aceptado: %s", tc.name)
+			}
+		})
+	}
+}
