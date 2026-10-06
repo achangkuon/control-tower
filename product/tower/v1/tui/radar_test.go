@@ -515,3 +515,117 @@ func TestRadarCommandTitlesUseTheTowerColor(t *testing.T) {
 		t.Fatal("no-color mode must not emit escape sequences")
 	}
 }
+
+// ---- S216: piloto runner ----
+
+func fakePilotoHome(t *testing.T) (string, string) {
+	t.Helper()
+	home := t.TempDir()
+	binary := filepath.Join(home, ".local", "bin", "piloto")
+	if err := os.MkdirAll(filepath.Dir(binary), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(binary, []byte("fake piloto"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	return home, binary
+}
+
+func TestS216PilotoRunnerAdmissionAndProcessBoundary(t *testing.T) {
+	// Keep a real `piloto` from PATH out of this test's candidate list.
+	t.Setenv("PATH", t.TempDir())
+	home, binary := fakePilotoHome(t)
+	root := t.TempDir()
+	calls := 0
+	executor := func(ctx context.Context, path string, args []string, cwd string, input io.Reader, output io.Writer) (int, error) {
+		calls++
+		if path != binary || cwd != root {
+			t.Fatalf("binary/cwd: %q %q", path, cwd)
+		}
+		deadline, ok := ctx.Deadline()
+		if !ok || time.Until(deadline) > 30*time.Second || time.Until(deadline) < 29*time.Second {
+			t.Fatal("missing 30-second timeout")
+		}
+		if !reflect.DeepEqual(args, []string{"interruptor", "on"}) {
+			t.Fatalf("argv changed: %q", args)
+		}
+		if got, _ := io.ReadAll(input); string(got) != "s\n" {
+			t.Fatalf("stdin not passed through: %q", got)
+		}
+		_, _ = io.WriteString(output, "✓ piloto prendido\n")
+		return 7, errors.New("exit status 7")
+	}
+	run := pilotoRunner(home, executor)
+	result := run(root, []string{"interruptor", "on"}, "s\n")
+	if result.code != 7 || result.err == nil || string(result.stdout) != "✓ piloto prendido\n" {
+		t.Fatalf("lost process result: %+v", result)
+	}
+	for _, args := range [][]string{
+		nil, {"despegar"}, {"marcar", "S1"}, {"ronda", "S1"}, {"retirar", "S1"},
+		{"interruptor", "on", "x"}, {"interruptor", "toggle"}, {"interruptor", "--rondas", "2"},
+		{"freno", "-C", "/"}, {"informe", "S1"}, {"sh", "-c", "piloto freno"},
+	} {
+		if result := run(root, args, ""); result.err == nil {
+			t.Fatalf("unsafe argv accepted: %q", args)
+		}
+	}
+	if calls != 1 {
+		t.Fatal("mutating/malformed command reached executor")
+	}
+	read := pilotoRunner(home, func(_ context.Context, _ string, _ []string, _ string, _ io.Reader, _ io.Writer) (int, error) {
+		calls++
+		return 0, nil
+	})
+	for _, args := range [][]string{{"interruptor"}, {"interruptor", "estado"}, {"interruptor", "off"}, {"freno"}, {"informe"}} {
+		if result := read(root, args, ""); result.err != nil {
+			t.Fatalf("read-only command refused: %q %v", args, result.err)
+		}
+	}
+}
+
+func TestS216PilotoRunnerResolutionRejectsMissingAndPlanted(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	root := t.TempDir()
+	if _, err := resolverPilotoBin(root, t.TempDir()); err == nil {
+		t.Fatal("missing piloto accepted")
+	} else if !strings.Contains(err.Error(), "install-piloto.sh") {
+		t.Fatalf("missing piloto message: %v", err)
+	}
+	planted := filepath.Join(root, ".local", "bin")
+	if err := os.MkdirAll(planted, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(planted, "piloto"), []byte("x"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := resolverPilotoBin(root, filepath.Join(root, ".local")); err == nil {
+		t.Fatal("planted binary inside the checkout accepted")
+	}
+	// A legit install location that resolves back inside the checkout is still planted.
+	home, _ := fakePilotoHome(t)
+	legit := filepath.Join(home, ".local", "bin", "piloto")
+	if err := os.Remove(legit); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(planted, "piloto"), legit); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := resolverPilotoBin(root, home); err == nil {
+		t.Fatal("symlink to a planted binary accepted")
+	}
+}
+
+func TestS216RadarStatusJSONIsAdmitted(t *testing.T) {
+	home, _ := fakeRadarHome(t)
+	called := false
+	run := radarRunner(home, func(_ context.Context, _ string, got []string, _ string, _ io.Writer) (int, error) {
+		called = true
+		if !reflect.DeepEqual(got, []string{"status", "--json"}) {
+			t.Fatalf("argv mismatch: %q", got)
+		}
+		return 0, nil
+	})
+	if result := run(t.TempDir(), []string{"status", "--json"}); result.err != nil || !called {
+		t.Fatalf("status --json refused: %v", result.err)
+	}
+}

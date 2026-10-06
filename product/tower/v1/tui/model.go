@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -58,10 +59,14 @@ type model struct {
 	promptOrigin, copyFeedback      string
 	radarRun                        radarRunFunc
 	radar                           radarScreen
+	pilotoRun                       pilotoRunFunc
+	pilotoBin                       func(string) (string, error)
+	pilotExec                       pilotExecFunc
+	pilot                           pilotScreen
 }
 
 func newModel(run runner, noColor bool) model {
-	return model{run: run, radarRun: installedRadarRunner, palette: newPalette(noColor), page: "home", width: 100, height: 40, loading: true, statusSequence: 1}
+	return model{run: run, radarRun: installedRadarRunner, pilotoRun: installedPilotoRunner, palette: newPalette(noColor), page: "home", width: 100, height: 40, loading: true, statusSequence: 1}
 }
 
 func (m model) command(action string) tea.Cmd {
@@ -86,8 +91,16 @@ func (m *model) reloadStatus() tea.Cmd {
 	m.loading = true
 	return m.command("status")
 }
+
+func (m model) currentProject() (projectState, bool) {
+	projects, ok := m.projectList()
+	if !ok || m.projectSelected >= len(projects) {
+		return projectState{}, false
+	}
+	return projects[m.projectSelected], true
+}
 func (m model) operationRunning() bool {
-	return (m.page == "wizard" && m.flow.step == 5) || (m.page == "radar-output" && m.radar.running)
+	return (m.page == "wizard" && m.flow.step == 5) || (m.page == "radar-output" && m.radar.running) || m.pilot.running
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -116,6 +129,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.flow.frame++
 			return m, m.tick()
 		}
+	case pilotRefreshMsg:
+		if msg.id != m.sequence {
+			return m, nil
+		}
+		m.pilot.running = false
+		if msg.mutating {
+			m.pilot.output, m.pilot.code = radarOutputLines(msg.result), msg.result.code
+			if msg.result.err != nil {
+				m.pilot.code = -1
+			}
+		}
+		m.pilot.apply(msg.snap, msg.estado, msg.informe)
+	case pilotTick:
+		if m.page != "pilot-despegue" || m.pilot.countdown == 0 {
+			return m, nil
+		}
+		m.pilot.countdown++
+		if m.pilot.countdown > 3 {
+			m.pilot.countdown = 0
+			return m.startPilotDespegue()
+		}
+		return m, m.pilotTickCmd()
+	case pilotExecDone:
+		m.pilot.running = false
+		if msg.err != nil {
+			m.pilot.output, m.pilot.code = []string{"No se pudo completar el despegue: " + clean(msg.err.Error())}, -1
+		} else {
+			m.pilot.output, m.pilot.code = []string{"Despegue finalizado. Revisá el resumen que mostró el piloto."}, 0
+		}
+		return m.pilotRefresh()
 	case commandResult:
 		if msg.action == "operation" {
 			if m.page == "wizard" && m.flow.step == 5 && msg.id == m.sequence {
@@ -183,6 +226,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.page == "radar-list" || m.page == "radar-id" || m.page == "radar-output" {
 			return m.radarKey(msg)
 		}
+		if strings.HasPrefix(m.page, "pilot") {
+			return m.pilotKey(msg)
+		}
 		if m.operationRunning() {
 			switch msg.String() {
 			case "enter":
@@ -211,6 +257,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.wizardKey(msg)
 		}
 		if m.page == "projects" {
+			if msg.String() == "p" {
+				if project, ok := m.currentProject(); ok {
+					return m.openPilot(project.ProjectRoot)
+				}
+			}
 			return m.projectsKey(msg)
 		}
 		if m.page == "project-prompt" {
@@ -296,6 +347,9 @@ func (m model) pageLines() []string {
 	if m.page == "radar-list" || m.page == "radar-id" || m.page == "radar-output" {
 		return m.radarLines()
 	}
+	if strings.HasPrefix(m.page, "pilot") {
+		return m.pilotLines()
+	}
 	if m.page == "wizard" {
 		return m.wrap(m.wizardLines())
 	}
@@ -361,6 +415,21 @@ func (m model) View() string {
 		if m.radar.running {
 			footer = "Esperá a que termine Radar (máximo 30 s)."
 		}
+	} else if strings.HasPrefix(m.page, "pilot") {
+		switch m.page {
+		case "pilot":
+			footer = "enter: ejecutar · f: freno · r: refrescar · esc: volver"
+		case "pilot-flights":
+			footer = "esc: volver · f: freno · ↑↓/PgUp/PgDn: desplazar"
+		case "pilot-freno":
+			footer = "enter/s: frenar · esc/n: volver"
+		case "pilot-despegue":
+			footer = "esc: cancelar"
+		case "pilot-output":
+			footer = "esc: volver · f: freno · ↑↓/PgUp/PgDn: desplazar"
+		}
+	} else if m.page == "projects" {
+		footer = "enter: abrir acciones · p: piloto · esc: volver · ↑↓: mover"
 	} else if m.page == "project-prompt" {
 		footer = "c: copiar · esc: volver · ↑↓: desplazar"
 		if m.copyFeedback != "" {
