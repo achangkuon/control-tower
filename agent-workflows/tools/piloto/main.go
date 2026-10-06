@@ -422,18 +422,21 @@ func cmdDespegar(w io.Writer, entrada io.Reader, root string, aprobar []string, 
 		}
 		return nil
 	}
-	if err := despegar(); err != nil {
+	if err := func() error {
+		if err := despegar(); err != nil {
+			return err
+		}
+		if err := escribirCorrida(root, c); err != nil {
+			return err
+		}
+		return escribirInterruptor(root, Interruptor{Prendido: true, Rondas: rondas, Tope: tope})
+	}(); err != nil {
 		// Un despegue a medias no deja ramas ni copias huérfanas: nada se perdió,
-		// así que se retiran las que este mismo comando creó.
+		// así que se retiran las que este mismo comando creó — sin importar en qué
+		// paso de la preparación falló (copia, corrida o interruptor).
 		for _, v := range c.Vuelos {
 			_ = retirarCopiaForce(root, v.Rama, v.Copia)
 		}
-		return err
-	}
-	if err := escribirCorrida(root, c); err != nil {
-		return err
-	}
-	if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: rondas, Tope: tope}); err != nil {
 		return err
 	}
 	fmt.Fprintf(w, "🛫 Despegue confirmado — %d vuelos · hasta %s · %s\n", len(c.Vuelos), textoRondas(rondas), textoTope(tope))

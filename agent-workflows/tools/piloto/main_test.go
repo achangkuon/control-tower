@@ -292,6 +292,38 @@ func TestDespegar(t *testing.T) {
 			t.Fatalf("un despegue fallido no prende el interruptor: %+v (%v)", i, err)
 		}
 	})
+	t.Run("un fallo al escribir la corrida no deja copias ni ramas", func(t *testing.T) {
+		root, _ := repoGit(t)
+		conRelojFijo(t)
+		common, err := commonDir(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Las marcas se leen pero no se pueden escribir: el despegue completa
+		// las copias y falla recién al escribir la corrida.
+		dir, err := dirPiloto(common, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(dir, 0o500); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+		var salida bytes.Buffer
+		if err := cmdDespegar(&salida, strings.NewReader("s\n"), root, []string{"S1"}, 3, 10, true); err == nil {
+			t.Fatal("el despegue debe fallar si la corrida no se puede escribir")
+		}
+		if _, err := gitOutput(root, "show-ref", "--verify", ramaDeVuelo("2026-10-02", "S1")); err == nil {
+			t.Fatal("un despegue que falla después de crear las copias no debe dejar la rama")
+		}
+		copia, _ := rutaCopia(root, "2026-10-02", "S1")
+		if _, err := os.Lstat(copia); !os.IsNotExist(err) {
+			t.Fatalf("un despegue que falla después de crear las copias no debe dejar la copia: %v", err)
+		}
+		if i, err := leerInterruptor(root); err != nil || i != nil {
+			t.Fatalf("un despegue que falla no debe dejar el interruptor prendido: %+v (%v)", i, err)
+		}
+	})
 }
 
 func TestInterruptorCLI(t *testing.T) {
