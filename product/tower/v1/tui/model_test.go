@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os/exec"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -742,5 +744,226 @@ func TestSmallLayoutAndNoColor(t *testing.T) {
 		if len(strings.Split(view, "\n")) > size.Height {
 			t.Fatal("view exceeds terminal height")
 		}
+	}
+}
+
+// ---- S216: pilot control panel ----
+
+const pilotSnapJSON = `{"schema":"radar.snapshot/v1","avance":{"cerradas":10,"total":13,"por_revisar":1,"novedad":1},"sesiones":[{"id":"S216","estado":"EN CURSO","vuelo":"S216"},{"id":"S217","estado":"POR REVISAR","vuelo":"S216","nota_revision":"limpia"},{"id":"S218","estado":"NOVEDAD","vuelo":"S217","motivo_novedad":"decisión delicada"}],"pilotos_invalidos":["S99"],"interruptor_invalido":true}`
+
+const pilotInformeJSON = "Vuelo S216 — ronda 2 · 1 POR REVISAR · 0 NOVEDAD · 0 sin empezar\n  S216  EN CURSO\n  S217  POR REVISAR  limpia\nVuelo S217 — ronda 1 · 0 POR REVISAR · 1 NOVEDAD · 0 sin empezar\n  S218  NOVEDAD  decisión delicada\n"
+
+const pilotPrendido = "Interruptor del piloto: prendido · 3 rondas · tope 10 Sesiones\n"
+const pilotApagado = "Interruptor del piloto: apagado · 3 rondas · tope 10 Sesiones\n"
+
+func pilotModel(t *testing.T, snap, estado, informe string) model {
+	t.Helper()
+	m := loaded(t, healthyJSON)
+	m.status.Projects = json.RawMessage(`[{"projectRoot":"/proyecto","status":"healthy","towerState":"active"}]`)
+	m.radarRun = func(root string, args []string) execution {
+		if !slices.Equal(args, []string{"status", "--json"}) {
+			t.Fatalf("radar args: %v", args)
+		}
+		return execution{stdout: []byte(snap)}
+	}
+	m.pilotoRun = func(root string, args []string, input string) execution {
+		switch {
+		case slices.Equal(args, []string{"interruptor", "estado"}):
+			return execution{stdout: []byte(estado)}
+		case slices.Equal(args, []string{"informe"}):
+			return execution{stdout: []byte(informe)}
+		}
+		return execution{stdout: []byte("ok\n")}
+	}
+	m.page = "projects"
+	m.projectSelected = 0
+	m, cmd := key(m, "p")
+	if m.page != "pilot" {
+		t.Fatalf("pilot panel did not open: %s", m.page)
+	}
+	if cmd == nil {
+		t.Fatal("pilot panel did not read its state")
+	}
+	return finish(m, cmd)
+}
+
+func TestS216PilotPanelShowsSwitchAndControls(t *testing.T) {
+	m := pilotModel(t, pilotSnapJSON, pilotPrendido, pilotInformeJSON)
+	contains(t, m.View(), "Piloto automático", "/proyecto", "prendido", "3 rondas", "tope 10 Sesiones",
+		"Apagar el piloto", "Vuelos en curso", "Despegar", "Freno de emergencia", "f: freno")
+}
+
+func TestS216PilotToggleInvokesCLIAndReflectsState(t *testing.T) {
+	m := pilotModel(t, pilotSnapJSON, pilotPrendido, pilotInformeJSON)
+	var calls [][]string
+	m.pilotoRun = func(root string, args []string, input string) execution {
+		calls = append(calls, append([]string(nil), args...))
+		switch {
+		case slices.Equal(args, []string{"interruptor", "estado"}):
+			return execution{stdout: []byte(pilotApagado)}
+		case slices.Equal(args, []string{"informe"}):
+			return execution{stdout: []byte(pilotInformeJSON)}
+		}
+		return execution{stdout: []byte("✓ piloto apagado · 3 rondas · tope 10 Sesiones\n")}
+	}
+	m, cmd := key(m, "enter")
+	if cmd == nil {
+		t.Fatal("interruptor control did not run the CLI")
+	}
+	m = finish(m, cmd)
+	if len(calls) == 0 || !slices.Equal(calls[0], []string{"interruptor", "off"}) {
+		t.Fatalf("toggle args: %v", calls)
+	}
+	contains(t, m.View(), "piloto apagado")
+	m = keys(m, "esc")
+	if m.page != "pilot" {
+		t.Fatalf("output did not return to the panel: %s", m.page)
+	}
+	contains(t, m.View(), "Interruptor del piloto: apagado", "Prender el piloto")
+}
+
+func TestS216PilotFlightsViewReadsRadarAndSurfacesWarnings(t *testing.T) {
+	m := pilotModel(t, pilotSnapJSON, pilotPrendido, pilotInformeJSON)
+	m = keys(m, "down", "enter")
+	if m.page != "pilot-flights" {
+		t.Fatalf("flights view did not open: %s", m.page)
+	}
+	contains(t, m.View(), "Vuelos en curso", "S216", "EN CURSO", "S217", "POR REVISAR", "limpia",
+		"S218", "NOVEDAD", "decisión delicada", "Vuelo S216", "ronda 2",
+		"Marcas de piloto inválidas", "S99", "Interruptor del piloto inválido",
+		"POR REVISAR: 1", "NOVEDAD: 1")
+	m = keys(m, "esc")
+	if m.page != "pilot" {
+		t.Fatalf("flights view did not return to the panel: %s", m.page)
+	}
+}
+
+func TestS216PilotFrenoRequiresConfirmationThenRuns(t *testing.T) {
+	m := pilotModel(t, pilotSnapJSON, pilotPrendido, pilotInformeJSON)
+	var calls [][]string
+	m.pilotoRun = func(root string, args []string, input string) execution {
+		calls = append(calls, append([]string(nil), args...))
+		switch {
+		case slices.Equal(args, []string{"interruptor", "estado"}):
+			return execution{stdout: []byte(pilotApagado)}
+		case slices.Equal(args, []string{"informe"}):
+			return execution{stdout: []byte(pilotInformeJSON)}
+		}
+		return execution{stdout: []byte("🛑 Piloto apagado.\n")}
+	}
+	m, cmd := key(m, "f")
+	if cmd != nil || m.page != "pilot-freno" {
+		t.Fatalf("freno not gated by confirmation: %s", m.page)
+	}
+	contains(t, m.View(), "Freno de emergencia", "Confirm", "enter")
+	m = keys(m, "x")
+	if len(calls) != 0 {
+		t.Fatal("a stray key fired the emergency brake")
+	}
+	m, cmd = key(m, "enter")
+	if cmd == nil {
+		t.Fatal("confirmed brake did not run")
+	}
+	m = finish(m, cmd)
+	found := false
+	for _, c := range calls {
+		if slices.Equal(c, []string{"freno"}) {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("piloto freno not invoked: %v", calls)
+	}
+	contains(t, m.View(), "Piloto apagado")
+	m = keys(m, "esc")
+	if m.page != "pilot" {
+		t.Fatalf("brake output did not return to the panel: %s", m.page)
+	}
+	contains(t, m.View(), "Interruptor del piloto: apagado")
+	// esc after a chord must leave the panel, not fire the brake again.
+	m = keys(m, "esc")
+	if m.page == "pilot-freno" || m.page == "pilot" {
+		t.Fatalf("esc did not leave the pilot panel: %s", m.page)
+	}
+}
+
+func TestS216PilotFrenoKeyReachableFromEveryView(t *testing.T) {
+	for _, open := range [][]string{{}, {"down", "enter"}} {
+		m := pilotModel(t, pilotSnapJSON, pilotPrendido, pilotInformeJSON)
+		m = keys(m, open...)
+		m = keys(m, "f")
+		if m.page != "pilot-freno" {
+			t.Fatalf("freno not reachable from %v (page %s)", open, m.page)
+		}
+	}
+}
+
+func TestS216PilotDespegueCountdownThenInteractiveExec(t *testing.T) {
+	m := pilotModel(t, pilotSnapJSON, pilotApagado, "")
+	reads := 0
+	m.radarRun = func(root string, args []string) execution {
+		reads++
+		return execution{stdout: []byte(pilotSnapJSON)}
+	}
+	var got *exec.Cmd
+	m.pilotoBin = func(string) (string, error) { return "/usr/local/bin/piloto", nil }
+	m.pilotExec = func(cmd *exec.Cmd, fn tea.ExecCallback) tea.Cmd {
+		got = cmd
+		return func() tea.Msg { return pilotExecDone{} }
+	}
+	m = keys(m, "down", "down")
+	m, cmd := key(m, "enter")
+	if cmd == nil || m.page != "pilot-despegue" {
+		t.Fatalf("countdown did not start: %s", m.page)
+	}
+	contains(t, m.View(), "Empezando vuelo", "3")
+	if got != nil {
+		t.Fatal("takeoff ran before the countdown finished")
+	}
+	for i := 0; i < 3; i++ {
+		next, _ := m.Update(pilotTick{})
+		m = next.(model)
+	}
+	if got == nil {
+		t.Fatal("takeoff did not hand the terminal to piloto")
+	}
+	if !reflect.DeepEqual(got.Args, []string{"/usr/local/bin/piloto", "despegar"}) || got.Dir != "/proyecto" {
+		t.Fatalf("takeoff command: %v dir=%s", got.Args, got.Dir)
+	}
+	before := reads
+	next, cmd := m.Update(pilotExecDone{})
+	m = next.(model)
+	if cmd == nil {
+		t.Fatal("takeoff completion did not refresh Radar state")
+	}
+	m = finish(m, cmd)
+	if reads <= before {
+		t.Fatal("Radar state was not re-read after takeoff")
+	}
+	contains(t, m.View(), "Despegue finalizado")
+}
+
+func TestS216PilotMissingBinarySurfacesError(t *testing.T) {
+	m := pilotModel(t, pilotSnapJSON, pilotApagado, "")
+	m.pilotoBin = func(string) (string, error) { return "", errors.New("piloto no está disponible") }
+	m = keys(m, "down", "down", "enter")
+	for i := 0; i < 3; i++ {
+		next, _ := m.Update(pilotTick{})
+		m = next.(model)
+	}
+	contains(t, m.View(), "piloto no está disponible")
+}
+
+func TestS216PilotRefreshFailureDoesNotInventState(t *testing.T) {
+	m := pilotModel(t, pilotSnapJSON, pilotPrendido, pilotInformeJSON)
+	m.radarRun = func(string, []string) execution { return execution{code: 1, stderr: []byte("status no disponible")} }
+	m, cmd := key(m, "r")
+	if cmd == nil {
+		t.Fatal("refresh did not run")
+	}
+	m = finish(m, cmd)
+	contains(t, m.View(), "No se pudo leer el estado del piloto")
+	if strings.Contains(m.View(), "EN CURSO") {
+		t.Fatal("stale flight state survived a failed read")
 	}
 }
