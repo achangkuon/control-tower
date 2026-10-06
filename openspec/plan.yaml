@@ -2259,7 +2259,7 @@ sesiones:
     zona: metodo
     prioridad: v2-piloto
     resultado: "Herramienta determinista `piloto`: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida."
-    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
+    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04. Reglas de entrega confirmadas por el maintainer el 2026-10-06 (Engram 13259)."
     depende_de:
       - S214
       - S220
@@ -2277,10 +2277,19 @@ sesiones:
         `piloto` es una herramienta determinista de línea de comando, módulo Go propio con el patrón
         de Radar, sin daemon, instalable junto a radar (install-piloto.sh con el mismo convenio de
         TORRE_BIN_DIR). Despegue: lista los vuelos posibles con lo que Radar tiene LISTO, agrupado
-        por Zonas que no chocan, pide la aprobación del usuario vuelo por vuelo y arranca la corrida.
-        Rondas: cada vuelo avanza sin esperar al más lento (P5), con un subagente por Sesión despachado
+        por Zonas que no chocan, pide la aprobación del usuario vuelo por vuelo, realiza la sonda de
+        consentimiento RDD y arranca la corrida. Sonda de consentimiento RDD: antes de arrancar la
+        corrida, el orquestador levanta la pregunta de consentimiento de revisión sobre un cambio
+        trivial de una línea; el usuario elige autorizar siempre; el lineage de la sonda se abandona
+        con su visto antes de que corra ningún revisor. Es una vez por corrida: la autorización vive
+        en la sesión viva del orquestador y cubre los worktrees hermanos del mismo repositorio; si el
+        proceso se cierra, el despegue de la corrida nueva repite la sonda. Rondas: cada vuelo avanza
+        sin esperar al más lento (P5), con un subagente por Sesión despachado
         por la conversación orquestadora; los límites de rondas y tope de Sesiones son de la corrida
-        entera. Aterrizaje: al alcanzar el límite, al no quedar nada LISTO, o cuando el usuario dice
+        entera. Un fallo mecánico de revisión nativa durante la ronda (payload truncado del
+        proveedor, hash mal transcrito) se reintenta con STATUS fresco y recaptura del mismo slot,
+        hasta tres veces, sin frenar la Sesión; cualquier otra duda frena esa Sesión como NOVEDAD
+        conservando el trabajo (P7). Aterrizaje: al alcanzar el límite, al no quedar nada LISTO, o cuando el usuario dice
         que volvió (termina lo en el aire y muestra el resumen de la corrida). Freno de emergencia:
         ninguna Sesión nueva arranca y las en el aire quedan NOVEDAD · interrumpida, con su trabajo
         en la copia de trabajo de su vuelo. Cada vuelo crea su rama (piloto/<fecha>/vuelo-<id>) y su
@@ -2342,7 +2351,7 @@ sesiones:
     zona: metodo
     prioridad: v2-piloto
     resultado: "Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo."
-    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04."
+    autoridad: "Diseño de Piloto automático definido con el maintainer el 2026-10-03 (decisiones P1–P14) y mapa V2/V3 aprobado el 2026-10-04. Reglas de entrega confirmadas por el maintainer el 2026-10-06 (Engram 13259)."
     depende_de:
       - S215
     archivos: [agent-workflows/tools/piloto/revision.go, agent-workflows/tools/piloto/revision_test.go, agent-workflows/tools/piloto/aterrizaje.go, agent-workflows/tools/piloto/aterrizaje_test.go]
@@ -2360,7 +2369,11 @@ sesiones:
         alcanzada y las Sesiones sin empezar. La revisión ocurre en una conversación, vuelo por
         vuelo (P12): primero los vuelos con NOVEDAD, y dentro de cada vuelo la cascada base-arriba —
         se contestan las decisiones de las NOVEDAD y después se revisa cada commit desde la base
-        hacia arriba según las dependencias. Antes de corregir, el análisis de impacto mide el
+        hacia arriba según las dependencias. La revisión avanza commit por commit — un commit es la
+        entrega de una Sesión del plan: se revisa, se aprueba o se corrige con parche, se entrega
+        según la política ordinaria del repositorio, y el orquestador actualiza el plan y los estados
+        (radar archivar, radar check, radar render) por cada commit entregado antes de pasar al
+        siguiente. Antes de corregir, el análisis de impacto mide el
         efecto del arreglo sobre las Sesiones de arriba y lo clasifica: Leve (se traslada el
         parche), Medio (parche y nueva revisión de cada Sesión afectada) o Grave (esas Sesiones
         vuelven a LISTO y se rehacen); el tipo lo decide si el arreglo cambia algo que las Sesiones
