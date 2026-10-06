@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, opendirSync,
   readSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
@@ -28,12 +29,17 @@ function plain(value) {
 }
 function optionsFor(value, operation) {
   const options = plain(value);
-  const required = operation === "list" ? ["registryRoot"] : ["registryRoot", "projectRoot"];
+  const required = operation === "list" ? ["registryRoot"] :
+    operation === "piloto" ? ["registryRoot", "projectRoot", "action"] : ["registryRoot", "projectRoot"];
   if (operation === "init") required.push("trustResolution");
-  const allowed = [...required, ...(["init", "doctor", "uninstall", "cleanup"].includes(operation) ? ["fault"] : [])];
+  const allowed = [...required,
+    ...(["init", "doctor", "uninstall", "cleanup"].includes(operation) ? ["fault"] : []),
+    ...(operation === "piloto" ? ["runner"] : [])];
   if (required.some((key) => !(key in options)) || Object.keys(options).some((key) => !allowed.includes(key)) ||
       !canonical(options.registryRoot) || (operation !== "list" && !canonical(options.projectRoot)) ||
       (operation === "init" && options.trustResolution !== "trusted") ||
+      (operation === "piloto" && !["on", "off", "estado"].includes(options.action)) ||
+      (operation === "piloto" && "runner" in options && typeof options.runner !== "function") ||
       ("fault" in options && typeof options.fault !== "function")) fail("options, paths or explicit trust");
   if (options.projectRoot && (options.registryRoot === options.projectRoot ||
       options.registryRoot.startsWith(options.projectRoot + sep) ||
@@ -226,4 +232,26 @@ export function projectStatus(value) {
   const options = optionsFor(value, "status");
   const { roots } = load(options.registryRoot);
   return liveStatus(options.projectRoot, roots.includes(options.projectRoot));
+}
+
+const PILOTO_NOTA_APAGADO = "Apagar no borra NOVEDAD ni POR REVISAR: lo trabajado queda visible hasta su revisión (P9).";
+
+// S203: thin pass-through to the deterministic `piloto` CLI. The switch lives in
+// the project's Git common directory and `piloto` owns it (P14); this validates
+// registry discipline and delegates, but never parses marks nor persists state.
+// `runner` is injectable for tests and future wiring; the default runs `piloto`.
+export function pilotoRegisteredProject(value) {
+  const options = optionsFor(value, "piloto");
+  const { roots } = load(options.registryRoot);
+  if (!roots.includes(options.projectRoot)) fail("project is not registered");
+  const runner = options.runner ?? ((args) => spawnSync("piloto", args,
+    { encoding: "utf8", timeout: 30000, maxBuffer: 64 * 1024, stdio: ["ignore", "pipe", "pipe"] }));
+  const result = runner(["interruptor", options.action, "-C", options.projectRoot]);
+  return Object.freeze({
+    projectRoot: options.projectRoot,
+    action: options.action,
+    ...(options.action === "off" ? { nota: PILOTO_NOTA_APAGADO } : {}),
+    result: Object.freeze({ status: result.status, stdout: result.stdout, stderr: result.stderr,
+      ...(result.error ? { error: result.error } : {}) }),
+  });
 }
