@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S219, S221, S222, S223, S224, S225, S226, S227, S228, S229, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
 - Próximo trabajo ejecutable: ninguno.
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
@@ -11,10 +11,10 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 92% (156/168 S)
+- **Total:** 93% (157/168 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
-- **Autoridad:** 50% (1/2 S)
+- **Autoridad:** 100% (2/2 S)
 - **Capacidades:** — (sin Sesiones enumeradas)
 - **Contratos:** 100% (1/1 S)
 - **Enrolamiento:** — (sin Sesiones enumeradas)
@@ -57,12 +57,12 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-1. **S215** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
-2. **S217** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
+1. **S215** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
+2. **S217** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
 
 ### Producto Torre (producto-torre)
-1. **S203** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
-2. **S216** · 📋 PLANIFICADO · espera-atascada (S214, S220) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
+1. **S203** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Cada proyecto puede prender o apagar la Torre desde el instalador.
+2. **S216** · 📋 PLANIFICADO · espera-atascada (S214) · prioridad V2 · Piloto automático desatendido · Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
 
 ## Bloqueos
 - Ningún bloqueo derivado.
@@ -1303,7 +1303,7 @@
 
 ### S203 — Cada proyecto puede prender o apagar la Torre desde el instalador.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/tui/projects.go, product/tower/v1/projects.mjs
   - Depende de: S215
@@ -1331,7 +1331,7 @@
 
 ### S215 — Herramienta determinista &#96;piloto&#96;: despegue de vuelos aprobados por el usuario, rondas con límites configurables, aterrizaje y freno de emergencia, sin push durante la corrida.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/piloto/go.mod, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/marca.go, agent-workflows/tools/piloto/worktree.go, agent-workflows/tools/piloto/main&#95;test.go, agent-workflows/tools/piloto/vuelo&#95;test.go, agent-workflows/tools/piloto/marca&#95;test.go, agent-workflows/tools/piloto/worktree&#95;test.go, agent-workflows/tools/install-piloto.sh
   - Depende de: S214, S220
@@ -1339,13 +1339,13 @@
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: V2 ejecuta varios vuelos con una conversación orquestadora por corrida y un subagente por Sesión; hace falta una herramienta determinista (no daemon) que despegue, avance rondas y aterrice sin empujar nada a remoto. Radar propone vuelos y el usuario aprueba; se resuelven preguntas previsibles antes del despegue; límites por defecto de tres rondas de profundidad y diez Sesiones, configurables; ante la duda se detiene esa Sesión conservando el trabajo por separado y siguen los vuelos independientes.
-  - Resultado y comportamiento: &#96;piloto&#96; es una herramienta determinista de línea de comando, módulo Go propio con el patrón de Radar, sin daemon, instalable junto a radar (install-piloto.sh con el mismo convenio de TORRE&#95;BIN&#95;DIR). Despegue: lista los vuelos posibles con lo que Radar tiene LISTO, agrupado por Zonas que no chocan, pide la aprobación del usuario vuelo por vuelo y arranca la corrida. Rondas: cada vuelo avanza sin esperar al más lento (P5), con un subagente por Sesión despachado por la conversación orquestadora; los límites de rondas y tope de Sesiones son de la corrida entera. Aterrizaje: al alcanzar el límite, al no quedar nada LISTO, o cuando el usuario dice que volvió (termina lo en el aire y muestra el resumen de la corrida). Freno de emergencia: ninguna Sesión nueva arranca y las en el aire quedan NOVEDAD · interrumpida, con su trabajo en la copia de trabajo de su vuelo. Cada vuelo crea su rama (piloto/&lt;fecha&gt;/vuelo-&lt;id&gt;) y su copia de trabajo; nunca escribe en la rama principal. El interruptor, los límites y las marcas viven en el directorio común de Git, fuera de openspec/plan.yaml. Toda mutación se registra con marcas radar.piloto/v1 (EN CURSO, NOVEDAD con motivo, cierre) que Radar lee (S214). La corrida nunca pushea, nunca publica y nunca toca la configuración personal del usuario. El orquestador guarda sólo resúmenes: el estado vive en &#96;piloto&#96; y Radar (P12).
+  - Resultado y comportamiento: &#96;piloto&#96; es una herramienta determinista de línea de comando, módulo Go propio con el patrón de Radar, sin daemon, instalable junto a radar (install-piloto.sh con el mismo convenio de TORRE&#95;BIN&#95;DIR). Despegue: lista los vuelos posibles con lo que Radar tiene LISTO, agrupado por Zonas que no chocan, pide la aprobación del usuario vuelo por vuelo, realiza la sonda de consentimiento RDD y arranca la corrida. Sonda de consentimiento RDD: antes de arrancar la corrida, el orquestador levanta la pregunta de consentimiento de revisión sobre un cambio trivial de una línea; el usuario elige autorizar siempre; el lineage de la sonda se abandona con su visto antes de que corra ningún revisor. Es una vez por corrida: la autorización vive en la sesión viva del orquestador y cubre los worktrees hermanos del mismo repositorio; si el proceso se cierra, el despegue de la corrida nueva repite la sonda. Rondas: cada vuelo avanza sin esperar al más lento (P5), con un subagente por Sesión despachado por la conversación orquestadora; los límites de rondas y tope de Sesiones son de la corrida entera. Un fallo mecánico de revisión nativa durante la ronda (payload truncado del proveedor, hash mal transcrito) se reintenta con STATUS fresco y recaptura del mismo slot, hasta tres veces, sin frenar la Sesión; cualquier otra duda frena esa Sesión como NOVEDAD conservando el trabajo (P7). Aterrizaje: al alcanzar el límite, al no quedar nada LISTO, o cuando el usuario dice que volvió (termina lo en el aire y muestra el resumen de la corrida). Freno de emergencia: ninguna Sesión nueva arranca y las en el aire quedan NOVEDAD · interrumpida, con su trabajo en la copia de trabajo de su vuelo. Cada vuelo crea su rama (piloto/&lt;fecha&gt;/vuelo-&lt;id&gt;) y su copia de trabajo; nunca escribe en la rama principal. El interruptor, los límites y las marcas viven en el directorio común de Git, fuera de openspec/plan.yaml. Toda mutación se registra con marcas radar.piloto/v1 (EN CURSO, NOVEDAD con motivo, cierre) que Radar lee (S214). La corrida nunca pushea, nunca publica y nunca toca la configuración personal del usuario. El orquestador guarda sólo resúmenes: el estado vive en &#96;piloto&#96; y Radar (P12).
   - Restricciones y decisiones: Herramienta determinista, no instrucciones: los límites y las reglas son de código y un agente no se los puede saltar (P1). Radar propone y el usuario aprueba antes de despegar (P4); &#96;piloto&#96; agrupa Sesiones LISTO por Zona leyendo radar status --json y no recalcula estados. Las preguntas previsibles de los contratos se hacen antes de despegar, no durante el vuelo. Ante la duda el agente frena y el vuelo sigue sin esa Sesión (P7); el freno apaga el modo de golpe. Apagar no borra NOVEDAD ni POR REVISAR (P9). Una Sesión que une dos vuelos no arranca con el piloto prendido (P10). Los archivos autorizados son prospectivos: delimitan el módulo nuevo sin afirmar una implementación elegida; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: docs/architecture/piloto-automatico.md (secciones 5, 6 y 12; P1–P7, P10, P12); docs/architecture/definiciones-v1-v2-v3.md; agent-workflows/tools/install-radar.sh (patrón de instalador) y agent-workflows/tools/radar/ (forma de módulo Go determinista).
 
 ### S216 — Controles del piloto en la TUI: prender y apagar, ver los vuelos en curso y su estado, y freno de emergencia a mano.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/tui/model.go, product/tower/v1/tui/model&#95;test.go, product/tower/v1/tui/radar.go, product/tower/v1/tui/radar&#95;test.go, product/tower/v1/tui/main.go, product/tower/v1/tui/styles.go
   - Depende de: S215
@@ -1359,7 +1359,7 @@
 
 ### S217 — Revisión al volver: estado por vuelo, atención de NOVEDAD primero, revisión base-arriba según dependencias y entrega de la porción aprobada del vuelo.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214, S220)
+  - Estado derivado: 📋 PLANIFICADO · espera-atascada (S214)
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/piloto/revision.go, agent-workflows/tools/piloto/revision&#95;test.go, agent-workflows/tools/piloto/aterrizaje.go, agent-workflows/tools/piloto/aterrizaje&#95;test.go
   - Depende de: S215
@@ -1367,7 +1367,7 @@
   - Ejecución: ODD nativo.
 - Encargo:
   - Pedido y contexto: Al regresar, el usuario recibe el estado y deja terminar los vuelos; la revisión sigue las dependencias base-arriba aunque la atención empiece por los vuelos con NOVEDAD. La revisión evalúa el vuelo completo, califica Leve/Medio/Grave por esfuerzo semántico, analiza impacto antes de parchar y entrega sólo la porción aprobada; un vuelo que une dos espera la revisión de ambos.
-  - Resultado y comportamiento: Al aterrizar, &#96;piloto&#96; produce el informe por vuelo: qué Sesiones quedaron POR REVISAR (limpia o con N decisiones anotadas en su commit), cuáles NOVEDAD (con motivo), la ronda alcanzada y las Sesiones sin empezar. La revisión ocurre en una conversación, vuelo por vuelo (P12): primero los vuelos con NOVEDAD, y dentro de cada vuelo la cascada base-arriba — se contestan las decisiones de las NOVEDAD y después se revisa cada commit desde la base hacia arriba según las dependencias. Antes de corregir, el análisis de impacto mide el efecto del arreglo sobre las Sesiones de arriba y lo clasifica: Leve (se traslada el parche), Medio (parche y nueva revisión de cada Sesión afectada) o Grave (esas Sesiones vuelven a LISTO y se rehacen); el tipo lo decide si el arreglo cambia algo que las Sesiones de arriba usan, y cuántas afecta es un dato del informe. El traslado reaplica las Sesiones de arriba sobre la base corregida, posible por el un-commit-por-Sesión. La subida es única por vuelo, hasta la última Sesión aprobada de forma consecutiva, y una Sesión que une dos vuelos espera la revisión de ambos. &#96;piloto&#96; expone estos pasos como comandos deterministas (informe, orden de cascada, registro de resolución de NOVEDAD, aterrizaje de la porción aprobada) y nunca sube sin la aprobación explícita del usuario.
+  - Resultado y comportamiento: Al aterrizar, &#96;piloto&#96; produce el informe por vuelo: qué Sesiones quedaron POR REVISAR (limpia o con N decisiones anotadas en su commit), cuáles NOVEDAD (con motivo), la ronda alcanzada y las Sesiones sin empezar. La revisión ocurre en una conversación, vuelo por vuelo (P12): primero los vuelos con NOVEDAD, y dentro de cada vuelo la cascada base-arriba — se contestan las decisiones de las NOVEDAD y después se revisa cada commit desde la base hacia arriba según las dependencias. La revisión avanza commit por commit — un commit es la entrega de una Sesión del plan: se revisa, se aprueba o se corrige con parche, se entrega según la política ordinaria del repositorio, y el orquestador actualiza el plan y los estados (radar archivar, radar check, radar render) por cada commit entregado antes de pasar al siguiente. Antes de corregir, el análisis de impacto mide el efecto del arreglo sobre las Sesiones de arriba y lo clasifica: Leve (se traslada el parche), Medio (parche y nueva revisión de cada Sesión afectada) o Grave (esas Sesiones vuelven a LISTO y se rehacen); el tipo lo decide si el arreglo cambia algo que las Sesiones de arriba usan, y cuántas afecta es un dato del informe. El traslado reaplica las Sesiones de arriba sobre la base corregida, posible por el un-commit-por-Sesión. La subida es única por vuelo, hasta la última Sesión aprobada de forma consecutiva, y una Sesión que une dos vuelos espera la revisión de ambos. &#96;piloto&#96; expone estos pasos como comandos deterministas (informe, orden de cascada, registro de resolución de NOVEDAD, aterrizaje de la porción aprobada) y nunca sube sin la aprobación explícita del usuario.
   - Restricciones y decisiones: La revisión es humana; &#96;piloto&#96; determiniza el orden y el registro, no el juicio de calidad. Apagar el modo no borra estados (P9): la revisión puede retomarse en otra conversación. La subida por vuelo requiere aprobación explícita y sigue la política ordinaria de entrega del repositorio. Archivos prospectivos que delimitan el módulo de S215; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: docs/architecture/piloto-automatico.md (secciones 9 y 10; P8, P12); docs/architecture/definiciones-v1-v2-v3.md; docs/architecture/pista-entrega-ordenada.md (sección 4, cola de revisión análoga).
 
@@ -1443,7 +1443,7 @@
 
 ### S220 — Diagnóstico de las copias de trabajo por vuelo: qué falta decidir sobre cómo se crean, cómo quedan listas para trabajar y cómo se retiran, antes de implementar &#96;piloto&#96;.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: autoridad · openspec/plans/, openspec/plan.yaml, openspec/ROADMAP.md, openspec/prd/, openspec/rfc/, openspec/specs/, openspec/maintenance/, openspec/config.yaml, docs/
   - Archivos autorizados: docs/architecture/piloto-copias-de-trabajo.md
   - Depende de: —
