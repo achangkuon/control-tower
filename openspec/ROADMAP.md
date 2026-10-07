@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: Torre V1 · Adopción project-local reversible.
 - Próximo trabajo ejecutable: ninguno.
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
@@ -11,7 +11,7 @@
 - No hay Sesiones LISTO.
 
 ## Avance
-- **Total:** 96% (162/168 S)
+- **Total:** 97% (163/168 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (2/2 S)
@@ -22,7 +22,7 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 98% (55/56 S)
+- **Método:** 100% (56/56 S)
 - **Producto Torre:** 95% (38/40 S)
 
 ## Zonas y colas
@@ -909,7 +909,7 @@
 
 ### S169 — chanks-4-unattended-implementation sella un mandato humano de una o más Sesiones LISTO, ordenadas por dependencia (un paso puede agrupar Sesiones que corren en paralelo cuando no dependen entre sí), cada una con su propio worker asignado bajo un único vencimiento para todo el mandato, en vez de sólo una Sesión; el coordinador avanza sólo dentro de esa lista y se detiene ante cualquier imprevisto.
 - Coordinación:
-  - Estado derivado: 🟡 DIFERIDO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/skills/chanks-4-unattended-implementation/SKILL.md, agent-workflows/skills/chanks-4-unattended-implementation/assets/execution-contract.schema.json, agent-workflows/skills/chanks-4-unattended-implementation/references/sealing-and-routing.md, agent-workflows/skills/chanks-4-unattended-implementation/references/night-mode.md, agent-workflows/skills/chanks-4-unattended-implementation/references/runtime-standalone.md
   - Depende de: —
