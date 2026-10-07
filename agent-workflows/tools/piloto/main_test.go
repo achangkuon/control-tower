@@ -189,11 +189,11 @@ func TestDespegar(t *testing.T) {
 		root, _ := repoGit(t)
 		conRelojFijo(t)
 		var salida bytes.Buffer
-		if err := cmdDespegar(&salida, strings.NewReader("s\ns\n"), root, nil, 3, 10, false); err != nil {
+		if err := cmdDespegar(&salida, strings.NewReader("s\nn\n"), root, nil, 3, 10, false); err != nil {
 			t.Fatalf("cmdDespegar: %v\n%s", err, salida.String())
 		}
 		c, err := leerCorrida(root)
-		if err != nil || c == nil || c.Fecha != "2026-10-02" || len(c.Vuelos) != 2 {
+		if err != nil || c == nil || c.Fecha != "2026-10-02" || len(c.Vuelos) != 1 {
 			t.Fatalf("corrida = %+v (%v)", c, err)
 		}
 		i, err := leerInterruptor(root)
@@ -259,15 +259,39 @@ func TestDespegar(t *testing.T) {
 			t.Fatal(err)
 		}
 		var salida bytes.Buffer
-		if err := cmdDespegar(&salida, strings.NewReader("s\ns\n"), root, []string{"S1"}, 3, 10, true); err == nil {
+		if err := cmdDespegar(&salida, strings.NewReader("s\n"), root, []string{"S1"}, 3, 10, true); err == nil {
 			t.Fatal("con el piloto prendido no se despega otra corrida")
+		}
+	})
+	t.Run("despega un solo vuelo por corrida en V2", func(t *testing.T) {
+		root, _ := repoGit(t)
+		conRelojFijo(t)
+		var salida bytes.Buffer
+		err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S1", "S2"}, 3, 10, true)
+		if err == nil {
+			t.Fatal("aprobar dos vuelos debe negarse en V2")
+		}
+		if !strings.Contains(err.Error(), "V2") || !strings.Contains(err.Error(), "V3") {
+			t.Fatalf("el rechazo nombra el contrato V2 y el paralelo V3: %q", err.Error())
+		}
+		if _, err := gitOutput(root, "show-ref", "--verify", ramaDeVuelo("2026-10-02", "S1")); err == nil {
+			t.Fatal("un rechazo no debe crear la rama del primer vuelo")
+		}
+		if _, err := gitOutput(root, "show-ref", "--verify", ramaDeVuelo("2026-10-02", "S2")); err == nil {
+			t.Fatal("un rechazo no debe crear la rama del segundo vuelo")
+		}
+		if c, err := leerCorrida(root); err != nil || c != nil {
+			t.Fatalf("un rechazo no escribe corrida: %+v (%v)", c, err)
+		}
+		if i, err := leerInterruptor(root); err != nil || i != nil {
+			t.Fatalf("un rechazo no prende el interruptor: %+v (%v)", i, err)
 		}
 	})
 	t.Run("un despegue que falla no deja copias ni ramas", func(t *testing.T) {
 		root, _ := repoGit(t)
 		conRelojFijo(t)
-		// El segundo vuelo choca con una copia preexistente: el despegue falla después de crear el primero.
-		ocupada, err := rutaCopia(root, "2026-10-02", "S2")
+		// V2 vuela uno por corrida: el único vuelo choca con una copia preexistente.
+		ocupada, err := rutaCopia(root, "2026-10-02", "S1")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -275,15 +299,11 @@ func TestDespegar(t *testing.T) {
 			t.Fatal(err)
 		}
 		var salida bytes.Buffer
-		if err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S1", "S2"}, 3, 10, true); err == nil {
-			t.Fatal("el despegue debe fallar si un vuelo no puede crear su copia")
+		if err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S1"}, 3, 10, true); err == nil {
+			t.Fatal("el despegue debe fallar si el vuelo no puede crear su copia")
 		}
 		if _, err := gitOutput(root, "show-ref", "--verify", ramaDeVuelo("2026-10-02", "S1")); err == nil {
-			t.Fatal("un despegue fallido no debe dejar la rama del primer vuelo")
-		}
-		primera, _ := rutaCopia(root, "2026-10-02", "S1")
-		if _, err := os.Lstat(primera); !os.IsNotExist(err) {
-			t.Fatalf("un despegue fallido no debe dejar la copia del primer vuelo: %v", err)
+			t.Fatal("un despegue fallido no debe dejar la rama del vuelo")
 		}
 		if c, err := leerCorrida(root); err != nil || c != nil {
 			t.Fatalf("un despegue fallido no escribe corrida: %+v (%v)", c, err)

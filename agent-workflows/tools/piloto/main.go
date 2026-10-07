@@ -14,9 +14,10 @@ import (
 
 const uso = `piloto — herramienta determinista del piloto automático
 
-  piloto despegar [-C raíz] [--rondas N] [--tope N] [--aprobar <id,id>] [--sin-preparar]
+  piloto despegar [-C raíz] [--rondas N] [--tope N] [--aprobar <id>] [--sin-preparar]
                   propone los vuelos posibles con lo LISTO de Radar, pide aprobación
-                  vuelo por vuelo y despega los aprobados (rama y copia de trabajo)
+                  y despega el único vuelo aprobado (rama y copia de trabajo); en V2
+                  vuela uno por corrida y el paralelo llega en V3
   piloto ronda <vuelo> [-C raíz]
                   muestra los pisos del vuelo y qué Sesión puede arrancar
   piloto marcar <sesión> (--en-curso | --cierre --commit <sha> [--decisiones N] |
@@ -489,6 +490,11 @@ func cmdDespegar(w io.Writer, entrada io.Reader, root string, aprobar []string, 
 	}
 	if len(aprobados) == 0 {
 		return fmt.Errorf("no se aprobó ningún vuelo")
+	}
+	// S235: V2 flies exactly one flight per corrida. Real parallelism (Pista)
+	// arrives in V3; two flights can never both land today (ff-only integration).
+	if len(aprobados) > 1 {
+		return fmt.Errorf("en V2 despega un solo vuelo por corrida (aprobaste %d); el paralelo real llega en V3", len(aprobados))
 	}
 	fecha := ahora().Format("2006-01-02")
 	base, err := ramaIntegrada(root)
