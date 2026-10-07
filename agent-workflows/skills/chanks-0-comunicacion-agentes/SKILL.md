@@ -26,6 +26,8 @@ un agente nuevo. Cubre la comunicación manual entre agentes de cualquier tipo, 
   interrumpir: dice de quién viene, que no frene y que lo sume a sus pendientes.
 - Frená a otro agente sólo cuando el usuario lo pide con esas palabras. Observar es sólo lectura.
 - Atendé sólo lo pedido. No cierres paneles ni agentes que no creaste.
+- Un agente lanzado para trabajar va en pestaña propia de Herdr; un panel para mirar queda junto al
+  tuyo. Si el pedido no aclara cuál es, preguntá.
 - Fuera de alcance: el despacho automático de Sesiones, el pool de workers y la topología de la
   Torre siguen diferidos a V3 en `agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/`.
   Intercom sigue siendo el transporte entre workers Pi (decisión S137).

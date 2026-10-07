@@ -51,8 +51,13 @@ Este archivo dice qué hacer en cada caso. Cómo se escribe cada comando lo dice
 
 ## Abrir un panel o iniciar un agente
 
-- Abrí el panel junto al tuyo, sin sacarle el foco al usuario y conservando el directorio de
-  trabajo, salvo que pida otra cosa.
+- Un agente lanzado para trabajar va en una pestaña nueva de Herdr con la etiqueta del trabajo:
+  el agente arranca con nombre único en el panel raíz de esa pestaña, sin sacarle el foco al
+  usuario y conservando el directorio de trabajo. Leé los identificadores de la respuesta JSON de
+  la CLI y nunca los deduzcas.
+- Un panel para mirar es un panel hermano: abrilo junto al tuyo, sin sacarle el foco al usuario y
+  conservando el directorio de trabajo, salvo que pida otra cosa.
+- Si el pedido no deja claro si es para trabajar o para mirar, preguntá antes de abrir nada.
 - Iniciá un agente sólo en un panel que acabás de crear, con un nombre único. Si el usuario no dijo
   qué agente quiere, preguntá.
 - Dale una instrucción inicial sólo si el usuario la dictó.

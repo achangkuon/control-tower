@@ -122,6 +122,28 @@ class ComunicacionAgentesTests(unittest.TestCase):
                 self.assertIn("esperando una aprobación", section)
                 self.assertIn("no le envíes nada", section)
 
+    def test_a_working_agent_gets_its_own_tab_and_a_viewer_panel_stays_a_sibling(self):
+        launch = compact(
+            self.cases.split("\n## Abrir un panel o iniciar un agente\n", 1)[1].split("\n## ", 1)[0]
+        )
+        for phrase in (
+            "pestaña nueva de Herdr",
+            "etiqueta del trabajo",
+            "panel raíz de esa pestaña",
+            "sin sacarle el foco al usuario",
+            "conservando el directorio de trabajo",
+            "nombre único",
+            "panel hermano",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, launch)
+        # Identifiers come from the CLI's JSON response, never predicted.
+        self.assertIn("respuesta JSON", launch)
+        self.assertIn("nunca los deduzcas", launch)
+        # An ambiguous request opens nothing: ask first.
+        self.assertIn("preguntá antes de abrir nada", launch)
+        self.assertIn("Un agente lanzado para trabajar va en pestaña propia", self.rules)
+
     def test_outside_herdr_the_skill_says_so_and_stops(self):
         self.assertIn("`HERDR_ENV=1`", self.rules)
         self.assertIn("Fuera de Herdr decilo y detenete", self.rules)
