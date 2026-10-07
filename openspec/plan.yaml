@@ -98,6 +98,10 @@ prioridades:
     nombre: Resolución de problemas · Torre V1
   - id: v2-piloto
     nombre: V2 · Piloto automático desatendido
+  # Copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md); va después
+  # del piloto para no postergar los arreglos del smoke en curso.
+  - id: v2-copiloto
+    nombre: V2 · Copiloto
   # El maintainer pidió el 2026-10-07 que las Sesiones de distribución para socios (S184, S190),
   # diferidas hasta la prueba en macOS, dejen de retener la prioridad torre-v1 y no posterguen V2.
   - id: torre-v1-distribucion-socios
@@ -2306,6 +2310,127 @@ sesiones:
       referencias: >-
         Engram 13294; agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md
         (regla de pestaña declarada por worker); test_comunicacion_agentes.py.
+
+  # Copiloto (V2): el flujo chanks guiado por una herramienta determinista que se dispara en cada
+  # mensaje. Análisis por tramos cerrado por el maintainer el 2026-10-07 en
+  # docs/architecture/copiloto.md (orden derivado §7, pasos 2 a 6).
+  - id: S237
+    zona: metodo
+    prioridad: v2-copiloto
+    resultado: "`radar archivar <ID> --commit <sha>` cierra una Sesión en un solo comando: registra la entrega, archiva, corre check y render, y si falta un paso el error dice cuál."
+    autoridad: "Diseño del copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md, Tramo 6 y §7 paso 2); el cierre a mano se rehizo cinco veces y rompió el plan dos veces (Engram 13295)."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos: [agent-workflows/tools/radar/archivar.go, agent-workflows/tools/radar/archivar_test.go, agent-workflows/tools/radar/main.go, agent-workflows/skills/chanks-5-session-doc/SKILL.md]
+    encargo:
+      pedido_contexto: >-
+        Hoy `radar archivar` se niega si `entrega.commit` no fue editado antes a mano en plan.yaml y
+        su error no lo dice; los agentes rearman el cierre con sed/awk y corrompen el plan.
+      resultado_comportamiento: >-
+        `radar archivar <ID> --commit <oid completo>` valida el commit, registra la entrega, archiva,
+        corre check y render de forma atómica: o queda todo hecho o nada cambia. Cada rechazo nombra
+        el paso que falta. Sin `--commit` sigue funcionando como hoy. chanks-5-session-doc pasa a
+        describir ese único comando.
+      restricciones_decisiones: >-
+        No cambia el formato compacto {id, entrega.commit, historico}. TDD con RED observado.
+      referencias: >-
+        docs/architecture/copiloto.md; Engram 13295.
+
+  - id: S238
+    zona: metodo
+    prioridad: v2-copiloto
+    resultado: "Existe la herramienta `copiloto`: guarda el foco de cada conversación y produce el panorama y la tarjeta de la etapa (0 a 5) a partir de Radar, de forma determinista."
+    autoridad: "Diseño del copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md, Tramos 0 a 6 y §7 paso 3; Engram 13298, 13299)."
+    depende_de: [S231]
+    cimientos: []
+    recurso: []
+    archivos: [agent-workflows/tools/copiloto/go.mod, agent-workflows/tools/copiloto/main.go, agent-workflows/tools/copiloto/main_test.go, agent-workflows/tools/copiloto/foco.go, agent-workflows/tools/copiloto/foco_test.go, agent-workflows/tools/copiloto/tarjeta.go, agent-workflows/tools/copiloto/tarjeta_test.go, agent-workflows/tools/install-copiloto.sh, agent-workflows/tools/hooks/chanks-etapa.sh]
+    encargo:
+      pedido_contexto: >-
+        El flujo chanks no se ejecuta porque depende de que el agente se acuerde de cargar skills;
+        `radar etapa` sin Sesión siempre devuelve 1 · Definir y el hook de Claude no sabe el foco.
+      resultado_comportamiento: >-
+        `copiloto foco <ninguno|idea|S###>` registra el foco de la conversación (por conversación;
+        cada conversación nueva arranca en ninguno). La copia de trabajo de una Sesión con marcador
+        de despacho fija el foco sin preguntar. `copiloto tarjeta` devuelve: con foco ninguno, una
+        sola línea de panorama al inicio y luego nada (Etapa 0); con idea, la tarjeta de Etapa 1
+        (cierre de ambigüedades + skill); con S###, la etapa de `radar etapa <S###>` con su skill,
+        siguiente paso y archivos autorizados; en Etapa 3 con el interruptor prendido, la pregunta
+        piloto o conversación. Tarjeta de 1 a 3 líneas firmada 🧭. chanks-etapa.sh pasa a llamar a
+        copiloto (retira CHANKS_PREVIOUS_ETAPA_JSON).
+      restricciones_decisiones: >-
+        Guía, no bloquea. Nunca fija un foco sin aprobación humana salvo el hecho de la carpeta de
+        trabajo. Engram no es fuente: sólo Radar. En Etapa 4 no repite ni contradice a Gentle AI.
+        TDD con RED observado por etapa.
+      referencias: >-
+        docs/architecture/copiloto.md; radar/etapa.go:608-644; agent-workflows/tools/piloto (patrón
+        de herramienta e instalador).
+
+  - id: S239
+    zona: metodo
+    prioridad: v2-copiloto
+    resultado: "Las skills de la Etapa 1 cierran las ambigüedades como paso explícito y hablan el mismo lenguaje que la tarjeta del copiloto."
+    autoridad: "El maintainer definió el 2026-10-07 que la Etapa 1 es donde se cierran las dudas que dejó la Etapa 0 y que probablemente haya que ajustar esas skills (docs/architecture/copiloto.md, Tramo 2 y §7 paso 4)."
+    depende_de: [S238]
+    cimientos: []
+    recurso: []
+    archivos: [agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md, agent-workflows/skills/chanks-1-brain-dump/SKILL.md, agent-workflows/skills/chanks-1-feature/SKILL.md, agent-workflows/skills/chanks-1-descubrimiento/SKILL.md, agent-workflows/tests/test_builder_flow.py]
+    encargo:
+      pedido_contexto: >-
+        Nada debe entrar al plan con preguntas abiertas; hoy la tarjeta de Etapa 1 nombra estas
+        skills pero ninguna trata el cierre de ambigüedades como paso obligatorio previo al plan.
+      resultado_comportamiento: >-
+        Cada skill de Etapa 1 lista las dudas abiertas y las cierra con el humano antes de proponer
+        escribir en plan.yaml; reconoce la tarjeta del copiloto como su disparador.
+      restricciones_decisiones: >-
+        Ajuste mínimo de texto; no crea skills nuevas. Tests de contrato existentes en verde.
+      referencias: >-
+        docs/architecture/copiloto.md (Tramo 2).
+
+  - id: S240
+    zona: producto-torre
+    prioridad: v2-copiloto
+    resultado: "La Torre instala el copiloto y lo engancha en cada mensaje: hook de Claude Code y extensión de Pi que inyectan la tarjeta."
+    autoridad: "Diseño del copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md §7 paso 5)."
+    depende_de: [S238]
+    cimientos: []
+    recurso: []
+    archivos: [product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs, product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs]
+    encargo:
+      pedido_contexto: >-
+        Sin un enganche que corra solo en cada mensaje, el copiloto vuelve a depender de que el
+        agente se acuerde; Pi hoy no tiene ningún enganche de etapa.
+      resultado_comportamiento: >-
+        El paquete incluye el binario copiloto. Claude: el hook UserPromptSubmit inyecta la tarjeta
+        de `copiloto tarjeta`. Pi: la extensión generada inyecta la misma tarjeta en cada turno y
+        la muestra al humano. Sin copiloto instalado, nada falla: no se inyecta tarjeta.
+      restricciones_decisiones: >-
+        Mismo modelo de confianza del instalador (sin binarios dentro del checkout). TDD con RED
+        observado. Instalar en la máquina es una decisión aparte del maintainer.
+      referencias: >-
+        docs/architecture/copiloto.md; runtime-config.mjs:23,100,351 (hook actual).
+
+  - id: S241
+    zona: producto-torre
+    prioridad: v2-copiloto
+    resultado: "El bloque de AGENTS.md que instala la Torre queda corto: la tabla de skills por etapa pasa al copiloto y la regla es seguir su tarjeta."
+    autoridad: "Diseño del copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md §7 paso 6)."
+    depende_de: [S232, S240]
+    cimientos: []
+    recurso: []
+    archivos: [product/tower/v1/instructions/project-agents.md, product/tower/v1/test/instructions.test.mjs]
+    encargo:
+      pedido_contexto: >-
+        El bloque mezcla guía y reglas duras y repite lo que ahora dice el copiloto; la evaluación
+        del 2026-10-07 mostró que un texto largo no se cumple (Engram 13295).
+      resultado_comportamiento: >-
+        El bloque conserva el mapa del flujo, la Etapa 0 libre y las reglas que protegen al humano;
+        la tabla «qué skill en cada etapa» se reemplaza por «seguí la tarjeta 🧭 del copiloto».
+      restricciones_decisiones: >-
+        No toca las reglas que agregó S232. Test RED en instructions.test.mjs.
+      referencias: >-
+        docs/architecture/copiloto.md; Engram 13295.
 
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
