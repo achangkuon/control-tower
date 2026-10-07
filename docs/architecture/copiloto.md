@@ -216,6 +216,10 @@ medio revisar, ¿retomamos?». Lo que decide es Radar.
   - la cola de salida ordenada de la etapa 5 y Pista (V3).
 - El copiloto **guía, no bloquea**: no agrega candados nuevos.
 
+**Idea anotada para después (maintainer, 2026-10-07):** redefinir una idea o una Sesión
+tiene que poder hacerse de forma orgánica, como en ODD: un *parche* sobre lo ya definido, sin
+reescribir la Sesión entera. Es otra idea y se analiza aparte.
+
 **Tramos sin cierre humano:** 2 a 6 (Etapas 1 a 5). Se presentan en este documento para
 aprobarlos juntos.
 **Choques escalados:** sólo C8, ya resuelto por el maintainer.
