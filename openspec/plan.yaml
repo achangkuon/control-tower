@@ -98,6 +98,10 @@ prioridades:
     nombre: Resolución de problemas · Torre V1
   - id: v2-piloto
     nombre: V2 · Piloto automático desatendido
+  # El maintainer pidió el 2026-10-07 que las Sesiones de distribución para socios (S184, S190),
+  # diferidas hasta la prueba en macOS, dejen de retener la prioridad torre-v1 y no posterguen V2.
+  - id: torre-v1-distribucion-socios
+    nombre: Torre V1 · Distribución para socios (pendiente de prueba en macOS)
   - id: resolucion-problemas-v3
     nombre: Resolución de problemas · Torre V3
   - id: v3-flota
@@ -2046,7 +2050,7 @@ sesiones:
 
   - id: S184
     zona: producto-torre
-    prioridad: torre-v1
+    prioridad: torre-v1-distribucion-socios
     diferida: true
     resultado: "Un socio con acceso al repo instala torre-control con un solo comando gh, en Linux y Mac, sin clonar el repositorio."
     autoridad: "Emilio eligió el 2026-10-02 en esta Conversación un instalador de un solo comando con gh, privado, para socios que ya tienen acceso al repositorio, y confirmó que hay una Mac disponible para probarlo. El mismo día pidió además una guía en el repositorio para que el agente de un socio instale la Torre solo con el enlace de GitHub (product/tower/v1/INSTALL-AGENTS.md)."
@@ -2098,7 +2102,7 @@ sesiones:
 
   - id: S190
     zona: producto-torre
-    prioridad: torre-v1
+    prioridad: torre-v1-distribucion-socios
     diferida: true
     resultado: "La interfaz Go llega verificada a cada máquina Linux y Mac y torre-control la abre por defecto, publicada como v1.1.0."
     autoridad: "Emilio aprobó el 2026-10-02 en esta Conversación el rediseño del instalador al estilo Gentle AI en Go + Bubbletea y en español, dividido en S187–S190."
