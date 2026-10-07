@@ -2185,34 +2185,7 @@ sesiones:
 
   - {id: S202, entrega: {commit: 4919f001561347f0713725cebb4720c3399250a8}, historico: openspec/archive/sesiones/S202.md}
 
-  - id: S203
-    zona: producto-torre
-    prioridad: v2-piloto
-    resultado: "Cada proyecto puede prender o apagar la Torre desde el instalador."
-    autoridad: "Emilio decidió el 2026-10-02 en esta Conversación que el interruptor sea por proyecto y llegue con V2; reencuadrada el 2026-10-04 al diseño de Piloto automático (P9, P14): lo que se prende y apaga es el modo `piloto`."
-    depende_de:
-      - S215
-    archivos: [product/tower/v1/tui/projects.go, product/tower/v1/projects.mjs]
-    encargo:
-      pedido_contexto: >-
-        V1 no tiene interruptor: adoptar un proyecto equivale a prenderla. Con el diseño aprobado,
-        lo que de verdad se prende y apaga es el modo piloto automático, cuyo interruptor vive con
-        `piloto` en el directorio común de Git (P14) y no en el plan; el freno de emergencia es una
-        acción aparte del interruptor y no se confunde con apagar el modo.
-      resultado_comportamiento: >-
-        Desde el detalle de un proyecto adoptado (instalador/TUI) se prende o apaga el piloto para
-        ese proyecto, y el estado del modo se ve en la lista de proyectos y en los controles del
-        piloto de la TUI (S216). Apagar no borra NOVEDAD ni POR REVISAR (P9): lo trabajado queda
-        visible hasta su revisión.
-      restricciones_decisiones: >-
-        La TUI llama a `piloto` (S215) y no mantiene estado propio (P14): el interruptor y el freno
-        son mutaciones de `piloto`. Los archivos declarados se confirman contra el diseño de S216 al
-        preparar la ejecución; toda expansión requiere aprobación humana. ODD nativo; SDD sólo por
-        solicitud humana explícita.
-      referencias: >-
-        docs/architecture/piloto-automatico.md (secciones 5 y 12; P9, P14);
-        docs/architecture/definiciones-v1-v2-v3.md; Engram tower-v1/tui-patch-2026-10.
-
+  - {id: S203, entrega: {commit: cc51442448b90366138e2579296848c42033e4af}, historico: openspec/archive/sesiones/S203.md}
   - {id: S214, entrega: {commit: d7a2af6fa609e5311d57bfabc26b0f994672456f}, historico: openspec/archive/sesiones/S214.md}
   - {id: S215, entrega: {commit: 1c188a383dc122cb8752c4105369d750a28d8471}, historico: openspec/archive/sesiones/S215.md}
   - {id: S216, entrega: {commit: 6b11dacf5ac22656aa92454e0a4738acadc1c13a}, historico: openspec/archive/sesiones/S216.md}
