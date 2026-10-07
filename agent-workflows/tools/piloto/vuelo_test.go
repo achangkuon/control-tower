@@ -236,6 +236,20 @@ func TestMarcarEnCursoCierreYNovedad(t *testing.T) {
 	}
 }
 
+func TestMarcarEnCursoExigeSonda(t *testing.T) {
+	root, _ := repoGit(t)
+	corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}))
+	_ = escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10})
+	if _, err := marcarEnCurso(root, &Interruptor{Prendido: true, Rondas: 3, Tope: 10}, "S1"); err == nil {
+		t.Fatal("sin la sonda el EN CURSO debe negarse")
+	}
+	conSonda(t, root)
+	m, err := marcarEnCurso(root, &Interruptor{Prendido: true, Rondas: 3, Tope: 10}, "S1")
+	if err != nil || m.Estado != estadoEnCurso {
+		t.Fatalf("con la sonda S1 arranca: %v (%+v)", err, m)
+	}
+}
+
 func TestFreno(t *testing.T) {
 	root, _ := repoGit(t)
 	conSonda(t, root)
