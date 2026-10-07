@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S230, S234, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S230, S234, S235, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: V2 · Piloto automático desatendido.
 - Próximo trabajo ejecutable: Método #1 → S231 — La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
@@ -11,7 +11,7 @@
 - Método #1 → S231 — La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar.
 
 ## Avance
-- **Total:** 94% (165/175 S)
+- **Total:** 94% (166/175 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (2/2 S)
@@ -22,7 +22,7 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 93% (58/62 S)
+- **Método:** 95% (59/62 S)
 - **Producto Torre:** 92% (38/41 S)
 
 ## Zonas y colas
@@ -59,8 +59,7 @@
 ### Método (metodo)
 1. **S231** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar.
 2. **S233** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · &#96;piloto aterrizar&#96; se niega a integrar una Sesión sin la aprobación humana registrada de su commit exacto.
-3. **S235** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · En V2 despega un solo vuelo por corrida; pedir más se rechaza con un mensaje claro de que el paralelo llega en V3.
-4. **S236** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · Cuando el usuario pide lanzar un agente para trabajar, chanks-0-comunicacion-agentes lo abre en una pestaña nueva de Herdr con el nombre del trabajo; el panel al lado queda sólo para mirar en paralelo.
+3. **S236** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · Cuando el usuario pide lanzar un agente para trabajar, chanks-0-comunicacion-agentes lo abre en una pestaña nueva de Herdr con el nombre del trabajo; el panel al lado queda sólo para mirar en paralelo.
 
 ### Producto Torre (producto-torre)
 1. **S232** · 📋 PLANIFICADO · espera-natural (S231, S233) · prioridad V2 · Piloto automático desatendido · Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar.
@@ -1612,7 +1611,7 @@
 
 ### S235 — En V2 despega un solo vuelo por corrida; pedir más se rechaza con un mensaje claro de que el paralelo llega en V3.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main&#95;test.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/vuelo&#95;test.go
   - Depende de: —

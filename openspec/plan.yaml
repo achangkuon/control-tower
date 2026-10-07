@@ -2275,27 +2275,7 @@ sesiones:
 
   - {id: S234, entrega: {commit: 74db1894e0570fd23ed98825609a660fc13f50aa}, historico: openspec/archive/sesiones/S234.md}
 
-  - id: S235
-    zona: metodo
-    prioridad: v2-piloto
-    resultado: "En V2 despega un solo vuelo por corrida; pedir más se rechaza con un mensaje claro de que el paralelo llega en V3."
-    autoridad: "Hallazgo #5 del smoke de V2 (Engram 13286). El maintainer decidió el 2026-10-07: un solo vuelo por corrida en V2, paralelo real (Pista) en V3 (Engram 13292)."
-    depende_de: []
-    cimientos: []
-    recurso: ["directorio común de Git (estado del piloto)"]
-    archivos: [agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main_test.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/vuelo_test.go]
-    encargo:
-      pedido_contexto: >-
-        Con dos vuelos, el segundo nunca puede aterrizar (aterrizaje.go:235 exige avance en línea
-        recta) y el estado compartido no tiene candado (marca.go:303, vuelo.go:454).
-      resultado_comportamiento: >-
-        `piloto despegar` acepta exactamente un vuelo aprobado; si se aprueban más, o ya hay una
-        corrida con vuelo activo, se niega antes de crear ramas o copias con un mensaje que dice
-        que en V2 vuela uno por corrida y el paralelo llega en V3.
-      restricciones_decisiones: >-
-        No construir Pista ni elevar. TDD con RED observado.
-      referencias: >-
-        Engram 13291; docs/architecture/piloto-automatico.md §10.
+  - {id: S235, entrega: {commit: cdf1d8693eea000ac5b01806340d7a78181d5bca}, historico: openspec/archive/sesiones/S235.md}
 
   - id: S236
     zona: metodo
