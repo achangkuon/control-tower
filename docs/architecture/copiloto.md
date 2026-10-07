@@ -90,6 +90,9 @@ Etapa 0 · Libre ──(el agente propone «¿lo definimos?», el humano aprueba
 
 ### Tramo 0 — ¿Sobre qué Sesión estamos? (cerrado)
 
+En simple: el copiloto necesita saber en qué está la conversación (nada, una idea o una
+Sesión) para darle al agente la indicación correcta.
+
 El foco se resuelve en este orden:
 
 1. **Carpeta de trabajo.** Si el agente está en la copia de trabajo de una Sesión, el foco
@@ -117,11 +120,16 @@ medio revisar, ¿retomamos?». Lo que decide es Radar.
 ### Tramo 2 — Etapa 1 · Definir
 
 - **Cuándo:** foco = idea.
-- **Tarjeta:** «Armá la propuesta de alcance. No escribas en `plan.yaml` sin aprobación
-  humana.» La skill que corresponda va según el caso:
-  - `chanks-1-brain-dump` para una idea suelta;
-  - `chanks-1-feature` para capacidad nueva;
-  - `chanks-1-descubrimiento` para auditar un producto vivo.
+- **Para qué sirve (maintainer, 2026-10-07):** es donde se cierran las dudas y ambigüedades que
+  dejó la Etapa 0. No es sólo «pasar la idea al plan»: nada entra al plan con preguntas
+  abiertas.
+- **Tarjeta:** «Cerrá las dudas abiertas con el humano y armá la propuesta de alcance. No
+  escribas en `plan.yaml` sin aprobación humana.» Skills:
+  - `chanks-1-cierre-de-decisiones` para las dudas abiertas;
+  - según el caso, `chanks-1-brain-dump` (idea suelta), `chanks-1-feature` (capacidad nueva)
+    o `chanks-1-descubrimiento` (auditar un producto vivo).
+- **Ajuste previsto:** revisar y ajustar las skills de la etapa 1 para que trabajen con la
+  tarjeta del copiloto y con el cierre de ambigüedades como paso explícito.
 - **Cierre:** las Sesiones nuevas quedan en el plan y `radar check` da 0 errores. El foco pasa a
   la Sesión elegida, propuesta por el agente y aprobada por el humano.
 
@@ -198,12 +206,14 @@ medio revisar, ¿retomamos?». Lo que decide es Radar.
    el cierre a mano.
 3. **Núcleo del copiloto** (Método): CLI `copiloto` con foco por conversación, panorama y
    tarjeta derivados de `radar etapa`/`status --json`. Pruebas deterministas por etapa.
-4. **Enganches por runtime** (Producto Torre, instalador):
+4. **Ajuste de las skills de la etapa 1** (Método): cierre de ambigüedades como paso
+   explícito y lenguaje alineado con la tarjeta del copiloto.
+5. **Enganches por runtime** (Producto Torre, instalador):
    - Claude: hook en cada mensaje que reemplaza a `chanks-etapa.sh` (C4).
    - Pi: extensión que inyecta la tarjeta en cada turno.
-5. **Adelgazar el bloque de AGENTS.md** (Producto Torre): la tabla de skills pasa al copiloto
+6. **Adelgazar el bloque de AGENTS.md** (Producto Torre): la tabla de skills pasa al copiloto
    y la regla queda en una línea: «seguí la tarjeta del copiloto».
-6. **Smoke** en el sandbox con el carril candidato, recorriendo las etapas 0 a 5.
+7. **Smoke** en el sandbox con el carril candidato, recorriendo las etapas 0 a 5.
 
 ## 8. Lo que no se toca
 
@@ -220,8 +230,8 @@ medio revisar, ¿retomamos?». Lo que decide es Radar.
 tiene que poder hacerse de forma orgánica, como en ODD: un *parche* sobre lo ya definido, sin
 reescribir la Sesión entera. Es otra idea y se analiza aparte.
 
-**Tramos sin cierre humano:** 2 a 6 (Etapas 1 a 5). Se presentan en este documento para
-aprobarlos juntos.
+**Tramos cerrados por el maintainer:** todos (2026-10-07). El Tramo 2 se ajustó con el cierre de
+ambigüedades en la Etapa 1.
 **Choques escalados:** sólo C8, ya resuelto por el maintainer.
 
 **Lecciones de verificación:** una regla escrita sin herramienta detrás no se cumple (smoke
