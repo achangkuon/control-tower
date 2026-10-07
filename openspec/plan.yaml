@@ -2319,6 +2319,37 @@ sesiones:
         No construir Pista ni elevar. TDD con RED observado.
       referencias: >-
         Engram 13291; docs/architecture/piloto-automatico.md §10.
+
+  - id: S236
+    zona: metodo
+    prioridad: v2-piloto
+    resultado: "Cuando el usuario pide lanzar un agente para trabajar, chanks-0-comunicacion-agentes lo abre en una pestaña nueva de Herdr con el nombre del trabajo; el panel al lado queda sólo para mirar en paralelo."
+    autoridad: "El maintainer pidió el 2026-10-07 que todo agente lanzado para trabajar vaya en pestaña nueva; la regla vivía sólo en chanks-3-despacho-herdr, diferida a V3 y retirada el 2026-10-01 (Engram 13294, 13298)."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos: [agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md, agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md, agent-workflows/tests/test_comunicacion_agentes.py]
+    encargo:
+      pedido_contexto: >-
+        Al lanzar la sesión implementadora se abrió en un panel de la misma pestaña, porque
+        casos-herdr.md:54 dice «abrí el panel junto al tuyo» y la skill herdr nativa también usa
+        panel hermano por defecto. La regla de pestaña propia por agente de trabajo se perdió al
+        diferir chanks-3-despacho-herdr.
+      resultado_comportamiento: >-
+        Caso «iniciar un agente para trabajar»: pestaña nueva con etiqueta del trabajo, sin foco,
+        conservando el directorio de trabajo, y el agente con nombre único en el panel raíz de esa
+        pestaña (herdr tab create; IDs leídos del JSON). Caso «abrí un panel para mirar»: panel
+        hermano como hoy. Si el pedido no deja claro cuál es, preguntá. Sigue sin copiar
+        procedimiento de la skill herdr nativa.
+      restricciones_decisiones: >-
+        No edita la skill herdr nativa (la emite el binario). Refrescar la copia de Pi
+        ~/.pi/agent/skills/herdr/SKILL.md desde `herdr --skill` (0.9.1) y quitar su párrafo viejo de
+        la Torre (chanks-3-despacho-herdr, torre-control → torre asiento) es una acción de máquina
+        aparte que requiere autorización del maintainer. TDD con RED observado.
+      referencias: >-
+        Engram 13294; agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md
+        (regla de pestaña declarada por worker); test_comunicacion_agentes.py.
+
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
   - {id: S205, entrega: {commit: e6def96543ea6396a14d97404619ccf06f060d65}, historico: openspec/archive/sesiones/S205.md}
