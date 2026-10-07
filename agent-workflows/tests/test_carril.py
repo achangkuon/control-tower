@@ -172,9 +172,18 @@ class CarrilTests(unittest.TestCase):
             "    name: str\n"
             "SKILLS = ('_shared', 'chanks-a', 'chanks-b')\n"
             "def render_manual_blocks(root):\n"
-            "    return {b'block': str(root).encode()}\n"
+            "    raise AssertionError('legacy contract must not be used by candidato')\n"
             "def desired_manual_content(path, replacements):\n"
-            "    return path.read_bytes() + b'|' + replacements[b'block']\n"
+            "    raise AssertionError('legacy contract must not be used by candidato')\n"
+            "def render_personal_blocks(root):\n"
+            "    return {b'<!-- chanks:doc-guard-rule -->': b'NEW-CHANKS',\n"
+            "            b'<!-- chanks:main-freshness -->': b'FRESH'}\n"
+            "def desired_personal_content(path, replacements):\n"
+            "    content = path.read_bytes()\n"
+            "    content = content.replace(b'OLD-CHANKS', b'NEW-CHANKS')\n"
+            "    if b'FRESH' not in content:\n"
+            "        content += b'\\n\\nFRESH'\n"
+            "    return content\n"
             "def desired_pi_extension(root):\n"
             "    return ('// chanks from ' + str(root)).encode()\n"
         )
@@ -253,11 +262,10 @@ class CarrilTests(unittest.TestCase):
                      "agents/sdd-research.md", "chains/sdd-full.chain.md"):
             self.assertFalse((lane / name).is_symlink(), name)
             self.assertEqual((lane / name).read_bytes(), (stable / name).read_bytes())
-        # Rendered from the worktree.
-        self.assertEqual(
-            (lane / "APPEND_SYSTEM.md").read_text(),
-            f"personal rules|{root}",
-        )
+        # Rendered from the worktree under the personal block contract: the stable
+        # file has no personal blocks, so the always-added one is appended and no
+        # legacy block is demanded or written.
+        self.assertEqual((lane / "APPEND_SYSTEM.md").read_text(), "personal rules\n\nFRESH")
         self.assertEqual(
             (lane / "extensions/chanks-controls.ts").read_text(),
             f"// chanks from {root}",
@@ -267,6 +275,29 @@ class CarrilTests(unittest.TestCase):
         self.assertEqual(os.path.realpath(herdr), str(stable / "extensions/herdr-agent-state.ts"))
 
         self.assertEqual(before, self.snapshot(stable))
+
+    def test_candidato_append_follows_the_personal_block_contract(self):
+        """S230: an adopted machine whose APPEND_SYSTEM.md carries the personal chanks
+        blocks but no legacy session-routing block must build the lane (the legacy
+        contract is never demanded nor written)."""
+        self.seed_candidate_stable()
+        (self.home / ".pi/agent/APPEND_SYSTEM.md").write_text(
+            "<!-- chanks:doc-guard-rule -->\nOLD-CHANKS\n<!-- /chanks:doc-guard-rule -->\n"
+        )
+        self.make_worktree()
+        before = (self.home / ".pi/agent/APPEND_SYSTEM.md").read_bytes()
+
+        result = self.run_carril("candidato", "implementer-1", "--no-session")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        lane = self.candidate_dir()
+        rendered = (lane / "APPEND_SYSTEM.md").read_text()
+        self.assertIn("NEW-CHANKS", rendered)
+        self.assertNotIn("OLD-CHANKS", rendered)
+        self.assertIn("FRESH", rendered)
+        self.assertNotIn("SESSION-SKILL-ARCHITECTURE", rendered)
+        # The stable file is never touched by the lane build.
+        self.assertEqual((self.home / ".pi/agent/APPEND_SYSTEM.md").read_bytes(), before)
 
     def test_candidato_does_not_launch_when_the_worktree_installer_is_broken(self):
         self.seed_candidate_stable()
@@ -296,7 +327,7 @@ class CarrilTests(unittest.TestCase):
         result = self.run_carril("candidato", "implementer-1")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(
-            (self.candidate_dir() / "APPEND_SYSTEM.md").read_text().startswith("personal rules v2|")
+            (self.candidate_dir() / "APPEND_SYSTEM.md").read_text().startswith("personal rules v2\n\nFRESH")
         )
         self.assertEqual((sessions / "s.jsonl").read_text(), "kept")
 

@@ -245,8 +245,12 @@ installer = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = installer
 spec.loader.exec_module(installer)
 if mode == "append":
-    blocks = installer.render_manual_blocks(root)
-    sys.stdout.buffer.write(installer.desired_manual_content(Path(sys.argv[3]), blocks))
+    # S230: the lane follows the personal block contract the installer actually
+    # writes to Pi (the four chanks blocks) — never the legacy MANUAL_BLOCKS,
+    # whose session-routing block is required there but never written to the
+    # Tower-covered runtimes, which broke every adopted machine's lane build.
+    blocks = installer.render_personal_blocks(root)
+    sys.stdout.buffer.write(installer.desired_personal_content(Path(sys.argv[3]), blocks))
 elif mode == "extension":
     sys.stdout.buffer.write(installer.desired_pi_extension(root))
 elif mode == "settings":
