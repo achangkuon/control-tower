@@ -2,7 +2,7 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S230, S234, S235, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S230, S233, S234, S235, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
 - Prioridad activa: V2 · Piloto automático desatendido.
 - Próximo trabajo ejecutable: Método #1 → S231 — La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
@@ -11,7 +11,7 @@
 - Método #1 → S231 — La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar.
 
 ## Avance
-- **Total:** 94% (166/175 S)
+- **Total:** 92% (167/180 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (2/2 S)
@@ -22,8 +22,8 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 95% (59/62 S)
-- **Producto Torre:** 92% (38/41 S)
+- **Método:** 92% (60/65 S)
+- **Producto Torre:** 88% (38/43 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -58,11 +58,14 @@
 
 ### Método (metodo)
 1. **S231** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar.
-2. **S233** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · &#96;piloto aterrizar&#96; se niega a integrar una Sesión sin la aprobación humana registrada de su commit exacto.
-3. **S236** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · Cuando el usuario pide lanzar un agente para trabajar, chanks-0-comunicacion-agentes lo abre en una pestaña nueva de Herdr con el nombre del trabajo; el panel al lado queda sólo para mirar en paralelo.
+2. **S236** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · Cuando el usuario pide lanzar un agente para trabajar, chanks-0-comunicacion-agentes lo abre en una pestaña nueva de Herdr con el nombre del trabajo; el panel al lado queda sólo para mirar en paralelo.
+3. **S238** · 📋 PLANIFICADO · espera-natural (S231) · prioridad V2 · Copiloto · Existe la herramienta &#96;copiloto&#96;: guarda el foco de cada conversación y produce el panorama y la tarjeta de la etapa (0 a 5) a partir de Radar, de forma determinista.
+4. **S239** · 📋 PLANIFICADO · espera-natural (S231) · prioridad V2 · Copiloto · Las skills de la Etapa 1 cierran las ambigüedades como paso explícito y hablan el mismo lenguaje que la tarjeta del copiloto.
 
 ### Producto Torre (producto-torre)
-1. **S232** · 📋 PLANIFICADO · espera-natural (S231, S233) · prioridad V2 · Piloto automático desatendido · Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar.
+1. **S232** · 📋 PLANIFICADO · espera-natural (S231) · prioridad V2 · Piloto automático desatendido · Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar.
+2. **S240** · 📋 PLANIFICADO · espera-natural (S231) · prioridad V2 · Copiloto · La Torre instala el copiloto y lo engancha en cada mensaje: hook de Claude Code y extensión de Pi que inyectan la tarjeta.
+3. **S241** · 📋 PLANIFICADO · espera-natural (S231) · prioridad V2 · Copiloto · El bloque de AGENTS.md que instala la Torre queda corto: la tabla de skills por etapa pasa al copiloto y la regla es seguir su tarjeta.
 
 ## Bloqueos
 - Ningún bloqueo derivado.
@@ -1569,7 +1572,7 @@
 
 ### S232 — Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar.
 - Coordinación:
-  - Estado derivado: 📋 PLANIFICADO · espera-natural (S231, S233)
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S231)
   - Zona/Área: producto-torre · product/tower/
   - Archivos autorizados: product/tower/v1/instructions/project-agents.md, product/tower/v1/test/instructions.test.mjs
   - Depende de: S231, S233
@@ -1583,7 +1586,7 @@
 
 ### S233 — &#96;piloto aterrizar&#96; se niega a integrar una Sesión sin la aprobación humana registrada de su commit exacto.
 - Coordinación:
-  - Estado derivado: 🟢 LISTO
+  - Estado derivado: 📚 ARCHIVADO
   - Zona/Área: metodo · agent-workflows/, odd/tasks/
   - Archivos autorizados: agent-workflows/tools/piloto/aterrizaje.go, agent-workflows/tools/piloto/aterrizaje&#95;test.go, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main&#95;test.go
   - Depende de: —
@@ -1636,6 +1639,76 @@
   - Resultado y comportamiento: Caso «iniciar un agente para trabajar»: pestaña nueva con etiqueta del trabajo, sin foco, conservando el directorio de trabajo, y el agente con nombre único en el panel raíz de esa pestaña (herdr tab create; IDs leídos del JSON). Caso «abrí un panel para mirar»: panel hermano como hoy. Si el pedido no deja claro cuál es, preguntá. Sigue sin copiar procedimiento de la skill herdr nativa.
   - Restricciones y decisiones: No edita la skill herdr nativa (la emite el binario). Refrescar la copia de Pi ~/.pi/agent/skills/herdr/SKILL.md desde &#96;herdr --skill&#96; (0.9.1) y quitar su párrafo viejo de la Torre (chanks-3-despacho-herdr, torre-control → torre asiento) es una acción de máquina aparte que requiere autorización del maintainer. TDD con RED observado.
   - Referencias: Engram 13294; agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md (regla de pestaña declarada por worker); test&#95;comunicacion&#95;agentes.py.
+
+### S237 — &#96;radar archivar &lt;ID&gt; --commit &lt;sha&gt;&#96; cierra una Sesión en un solo comando: registra la entrega, archiva, corre check y render, y si falta un paso el error dice cuál.
+- Coordinación:
+  - Estado derivado: 🟡 DIFERIDO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/archivar.go, agent-workflows/tools/radar/archivar&#95;test.go, agent-workflows/tools/radar/main.go, agent-workflows/skills/chanks-5-session-doc/SKILL.md
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Hoy &#96;radar archivar&#96; se niega si &#96;entrega.commit&#96; no fue editado antes a mano en plan.yaml y su error no lo dice; los agentes rearman el cierre con sed/awk y corrompen el plan.
+  - Resultado y comportamiento: &#96;radar archivar &lt;ID&gt; --commit &lt;oid completo&gt;&#96; valida el commit, registra la entrega, archiva, corre check y render de forma atómica: o queda todo hecho o nada cambia. Cada rechazo nombra el paso que falta. Sin &#96;--commit&#96; sigue funcionando como hoy. chanks-5-session-doc pasa a describir ese único comando.
+  - Restricciones y decisiones: No cambia el formato compacto {id, entrega.commit, historico}. TDD con RED observado.
+  - Referencias: docs/architecture/copiloto.md; Engram 13295.
+
+### S238 — Existe la herramienta &#96;copiloto&#96;: guarda el foco de cada conversación y produce el panorama y la tarjeta de la etapa (0 a 5) a partir de Radar, de forma determinista.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S231)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/copiloto/go.mod, agent-workflows/tools/copiloto/main.go, agent-workflows/tools/copiloto/main&#95;test.go, agent-workflows/tools/copiloto/foco.go, agent-workflows/tools/copiloto/foco&#95;test.go, agent-workflows/tools/copiloto/tarjeta.go, agent-workflows/tools/copiloto/tarjeta&#95;test.go, agent-workflows/tools/install-copiloto.sh, agent-workflows/tools/hooks/chanks-etapa.sh
+  - Depende de: S231
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El flujo chanks no se ejecuta porque depende de que el agente se acuerde de cargar skills; &#96;radar etapa&#96; sin Sesión siempre devuelve 1 · Definir y el hook de Claude no sabe el foco.
+  - Resultado y comportamiento: &#96;copiloto foco &lt;ninguno&#124;idea&#124;S&#35;&#35;&#35;&gt;&#96; registra el foco de la conversación (por conversación; cada conversación nueva arranca en ninguno). La copia de trabajo de una Sesión con marcador de despacho fija el foco sin preguntar. &#96;copiloto tarjeta&#96; devuelve: con foco ninguno, una sola línea de panorama al inicio y luego nada (Etapa 0); con idea, la tarjeta de Etapa 1 (cierre de ambigüedades + skill); con S&#35;&#35;&#35;, la etapa de &#96;radar etapa &lt;S&#35;&#35;&#35;&gt;&#96; con su skill, siguiente paso y archivos autorizados; en Etapa 3 con el interruptor prendido, la pregunta piloto o conversación. Tarjeta de 1 a 3 líneas firmada 🧭. chanks-etapa.sh pasa a llamar a copiloto (retira CHANKS&#95;PREVIOUS&#95;ETAPA&#95;JSON).
+  - Restricciones y decisiones: Guía, no bloquea. Nunca fija un foco sin aprobación humana salvo el hecho de la carpeta de trabajo. Engram no es fuente: sólo Radar. En Etapa 4 no repite ni contradice a Gentle AI. TDD con RED observado por etapa.
+  - Referencias: docs/architecture/copiloto.md; radar/etapa.go:608-644; agent-workflows/tools/piloto (patrón de herramienta e instalador).
+
+### S239 — Las skills de la Etapa 1 cierran las ambigüedades como paso explícito y hablan el mismo lenguaje que la tarjeta del copiloto.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S231)
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md, agent-workflows/skills/chanks-1-brain-dump/SKILL.md, agent-workflows/skills/chanks-1-feature/SKILL.md, agent-workflows/skills/chanks-1-descubrimiento/SKILL.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+  - Depende de: S238
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Nada debe entrar al plan con preguntas abiertas; hoy la tarjeta de Etapa 1 nombra estas skills pero ninguna trata el cierre de ambigüedades como paso obligatorio previo al plan.
+  - Resultado y comportamiento: Cada skill de Etapa 1 lista las dudas abiertas y las cierra con el humano antes de proponer escribir en plan.yaml; reconoce la tarjeta del copiloto como su disparador.
+  - Restricciones y decisiones: Ajuste mínimo de texto; no crea skills nuevas. Tests de contrato existentes en verde.
+  - Referencias: docs/architecture/copiloto.md (Tramo 2).
+
+### S240 — La Torre instala el copiloto y lo engancha en cada mensaje: hook de Claude Code y extensión de Pi que inyectan la tarjeta.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S231)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs, product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs
+  - Depende de: S238
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Sin un enganche que corra solo en cada mensaje, el copiloto vuelve a depender de que el agente se acuerde; Pi hoy no tiene ningún enganche de etapa.
+  - Resultado y comportamiento: El paquete incluye el binario copiloto. Claude: el hook UserPromptSubmit inyecta la tarjeta de &#96;copiloto tarjeta&#96;. Pi: la extensión generada inyecta la misma tarjeta en cada turno y la muestra al humano. Sin copiloto instalado, nada falla: no se inyecta tarjeta.
+  - Restricciones y decisiones: Mismo modelo de confianza del instalador (sin binarios dentro del checkout). TDD con RED observado. Instalar en la máquina es una decisión aparte del maintainer.
+  - Referencias: docs/architecture/copiloto.md; runtime-config.mjs:23,100,351 (hook actual).
+
+### S241 — El bloque de AGENTS.md que instala la Torre queda corto: la tabla de skills por etapa pasa al copiloto y la regla es seguir su tarjeta.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S231)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/instructions/project-agents.md, product/tower/v1/test/instructions.test.mjs
+  - Depende de: S232, S240
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El bloque mezcla guía y reglas duras y repite lo que ahora dice el copiloto; la evaluación del 2026-10-07 mostró que un texto largo no se cumple (Engram 13295).
+  - Resultado y comportamiento: El bloque conserva el mapa del flujo, la Etapa 0 libre y las reglas que protegen al humano; la tabla «qué skill en cada etapa» se reemplaza por «seguí la tarjeta 🧭 del copiloto».
+  - Restricciones y decisiones: No toca las reglas que agregó S232. Test RED en instructions.test.mjs.
+  - Referencias: docs/architecture/copiloto.md; Engram 13295.
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
