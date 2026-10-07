@@ -30,6 +30,23 @@ const uso = `piloto — herramienta determinista del piloto automático
                   prende, apaga o muestra el interruptor y los límites de la corrida
   piloto retirar <vuelo> [-C raíz]
                   retira copia de trabajo y rama de un vuelo ya integrado
+  piloto informe-vuelo [-C raíz]
+                  informe de la revisión por vuelo: POR REVISAR con su nota, NOVEDAD
+                  con su motivo, ronda alcanzada y Sesiones sin empezar
+  piloto orden-revision [-C raíz]
+                  orden de revisión en cascada: NOVEDAD primero y, dentro del vuelo,
+                  base-arriba según las dependencias
+  piloto resolver-novedad <sesión> --decision <texto> [-C raíz]
+                  registra la decisión del mantenedor que resuelve una NOVEDAD
+  piloto impacto <sesión> [--tipo leve|medio|grave] [-C raíz]
+                  mide el impacto del arreglo sobre las Sesiones de arriba; con --tipo
+                  registra la clasificación Leve/Medio/Grave que decide el mantenedor
+  piloto trasladar <sesión> [--base <sha>] [-C raíz]
+                  reaplica las Sesiones de arriba sobre la base corregida (cherry-pick
+                  por Sesión; no sube)
+  piloto aterrizar <vuelo> --aprobar <id,id> --confirmar [-C raíz]
+                  integra localmente la porción aprobada del vuelo hasta la última
+                  Sesión consecutiva; exige aprobación explícita y no sube
 
 El estado vive en el directorio común de Git: el interruptor, los límites y las
 marcas que Radar lee. La corrida nunca escribe en la rama principal, nunca sube
@@ -220,6 +237,81 @@ func ejecutar(args []string, salida, errores io.Writer, entrada io.Reader) int {
 			return 2
 		}
 		if err := cmdRetirar(salida, root, pos[0]); err != nil {
+			return falla(err)
+		}
+	case "informe-vuelo":
+		if err := cmdInformeRevision(salida, root); err != nil {
+			return falla(err)
+		}
+	case "orden-revision":
+		if err := cmdOrdenRevision(salida, root); err != nil {
+			return falla(err)
+		}
+	case "resolver-novedad":
+		fs := flag.NewFlagSet("resolver-novedad", flag.ContinueOnError)
+		fs.SetOutput(errores)
+		decision := fs.String("decision", "", "texto de la decisión del mantenedor")
+		pos, err := parsearConPosicionales(fs, resto)
+		if err != nil {
+			return 2
+		}
+		if len(pos) != 1 {
+			fmt.Fprint(errores, "uso: piloto resolver-novedad <sesión> --decision <texto> [-C raíz]\n")
+			return 2
+		}
+		if err := cmdResolverNovedad(salida, root, pos[0], *decision); err != nil {
+			return falla(err)
+		}
+	case "impacto":
+		fs := flag.NewFlagSet("impacto", flag.ContinueOnError)
+		fs.SetOutput(errores)
+		tipo := fs.String("tipo", "", "clasificación del arreglo: leve, medio o grave")
+		pos, err := parsearConPosicionales(fs, resto)
+		if err != nil {
+			return 2
+		}
+		if len(pos) != 1 {
+			fmt.Fprint(errores, "uso: piloto impacto <sesión> [--tipo leve|medio|grave] [-C raíz]\n")
+			return 2
+		}
+		if err := cmdImpacto(salida, root, pos[0], *tipo); err != nil {
+			return falla(err)
+		}
+	case "trasladar":
+		fs := flag.NewFlagSet("trasladar", flag.ContinueOnError)
+		fs.SetOutput(errores)
+		base := fs.String("base", "", "commit de la base corregida (por defecto HEAD de la copia)")
+		pos, err := parsearConPosicionales(fs, resto)
+		if err != nil {
+			return 2
+		}
+		if len(pos) != 1 {
+			fmt.Fprint(errores, "uso: piloto trasladar <sesión> [--base <sha>] [-C raíz]\n")
+			return 2
+		}
+		if err := cmdTraslado(salida, root, pos[0], *base); err != nil {
+			return falla(err)
+		}
+	case "aterrizar":
+		fs := flag.NewFlagSet("aterrizar", flag.ContinueOnError)
+		fs.SetOutput(errores)
+		aprobar := fs.String("aprobar", "", "IDs de Sesión aprobados, separados por coma")
+		confirmar := fs.Bool("confirmar", false, "confirma el aterrizaje de la porción aprobada")
+		pos, err := parsearConPosicionales(fs, resto)
+		if err != nil {
+			return 2
+		}
+		if len(pos) != 1 {
+			fmt.Fprint(errores, "uso: piloto aterrizar <vuelo> --aprobar <id,id> --confirmar [-C raíz]\n")
+			return 2
+		}
+		var ids []string
+		for _, id := range strings.Split(*aprobar, ",") {
+			if id = strings.TrimSpace(id); id != "" {
+				ids = append(ids, id)
+			}
+		}
+		if err := cmdAterrizar(salida, root, pos[0], ids, *confirmar); err != nil {
 			return falla(err)
 		}
 	default:
