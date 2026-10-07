@@ -87,6 +87,14 @@ can run together:
    worktree; Gentle AI implements and reviews each one; results are integrated one at a time.
 A single Session needs none of this: hand it to Gentle AI with `chanks-4-puente`.
 
+### Automatic pilot (when the switch is on)
+- Before handing any Session to implementation (stage 4), read `piloto` in `radar status --json`.
+  If `piloto.prendido` is true, ask the blocking question «¿con piloto automático o en esta
+  conversación?» and stop until the human answers. With the pilot off, nothing here changes.
+- When a flight comes back: show the human every delivered commit, ask the blocking approval per
+  commit, record it with `piloto aprobar <sesión> --decision <texto>`, and only then run
+  `piloto aterrizar`. Never land without those recorded approvals.
+
 ### Hard rules
 - Propose only LISTO Sessions and let the human choose. Never self-assign work.
 - Write only the files a Session declares. Expanding scope needs human approval first.

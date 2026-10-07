@@ -55,6 +55,18 @@ describe("Control Tower V1 instruction templates", () => {
     }
   });
 
+  test("project instructions gate stage 4 on the automatic pilot and the landing approvals", () => {
+    const text = readTemplate("project-agents.md").replace(/\s+/g, " ");
+    for (const line of [
+      "read `piloto` in `radar status --json`",
+      "¿con piloto automático o en esta conversación?",
+      "piloto aprobar <sesión> --decision <texto>",
+      "only then run `piloto aterrizar`",
+    ]) {
+      expect(text).toContain(line);
+    }
+  });
+
   test("referenced skills belong to the shipped V1 roster and cover its stage entry points", () => {
     expect(problems("skills")).toEqual([]);
   });
