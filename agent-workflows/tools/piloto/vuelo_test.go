@@ -184,6 +184,7 @@ func TestPuedeEmpezar(t *testing.T) {
 
 func TestMarcarEnCursoCierreYNovedad(t *testing.T) {
 	root, _ := repoGit(t)
+	conSonda(t, root)
 	c := corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}, Miembro{Sesion: "S3", DependeDe: []string{"S1"}}))
 	i := &Interruptor{Prendido: true, Rondas: 3, Tope: 10}
 	if err := escribirInterruptor(root, *i); err != nil {
@@ -237,6 +238,7 @@ func TestMarcarEnCursoCierreYNovedad(t *testing.T) {
 
 func TestFreno(t *testing.T) {
 	root, _ := repoGit(t)
+	conSonda(t, root)
 	c := corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}, Miembro{Sesion: "S2"}))
 	i := &Interruptor{Prendido: true, Rondas: 2, Tope: 5}
 	if err := escribirInterruptor(root, *i); err != nil {

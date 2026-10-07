@@ -26,6 +26,11 @@ implements nothing, prescribes nothing about how the work is done, and never wri
   does not become a second product plan. Reconcile record, code, and evidence on resume.
   Under historical legacy evidence, Módulos and Tareas stay as written; it never imposes Módulos on
   a native Session.
+- Read the pilot switch from `radar status --json` (field `piloto.prendido`) before handing a
+  Session to Gentle AI. When it is on, ask the blocking question «¿con piloto automático o
+  en esta conversación?». If the user chooses the automatic pilot, the takeoff probe applies:
+  Gentle AI records the human's answer to the question `piloto despegar` enforces with
+  `piloto sonda --confirmar`; that record never stores a review lineage or identity.
 - V1 reserves nothing and tracks no "in progress" state: the Session stays `LISTO` until stage 5
   records its commit. Never mark, lock or reserve it.
 - Only a delivered commit that resolves in Git is delivery evidence for stage 5. Accept it only

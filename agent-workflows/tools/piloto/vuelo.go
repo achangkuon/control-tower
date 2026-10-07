@@ -320,6 +320,16 @@ func marcarEnCurso(root string, i *Interruptor, sesion string) (*Marca, error) {
 	if err != nil {
 		return nil, err
 	}
+	// S231 hard lock: nothing starts before the human answered the corrida's
+	// RDD consent question. The mark records states; the consent lives in the
+	// sonda record, not in interruptor.json.
+	s, err := leerSonda(root)
+	if err != nil {
+		return nil, err
+	}
+	if s == nil || !s.Confirmada {
+		return nil, fmt.Errorf("falta la sonda de consentimiento RDD de la corrida: confirmá la respuesta del humano con `piloto sonda --confirmar`")
+	}
 	marcas, err := leerMarcas(root, c)
 	if err != nil {
 		return nil, err

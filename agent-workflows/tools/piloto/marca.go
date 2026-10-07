@@ -20,6 +20,7 @@ const (
 	esquemaMarca       = "radar.piloto/v1"
 	esquemaInterruptor = "radar.piloto.interruptor/v1"
 	esquemaCorrida     = "radar.piloto.corrida/v1"
+	esquemaSonda       = "radar.piloto.sonda/v1"
 
 	estadoEnCurso = "en-curso"
 	estadoNovedad = "novedad"
@@ -369,6 +370,63 @@ func escribirInterruptor(root string, i Interruptor) error {
 		return err
 	}
 	return escribirJSONAtomico(dir, "interruptor.json", i)
+}
+
+// Sonda records that the human answered the corrida's RDD consent question
+// (S231). It stores only that fact — never an RDD lineage or review identity:
+// this Tower does not decide RDD consent, and no field lands in interruptor.json.
+type Sonda struct {
+	Schema     string `json:"schema"`
+	Confirmada bool   `json:"confirmada"`
+	Fecha      string `json:"fecha"`
+}
+
+func validarSonda(s Sonda) error {
+	if s.Schema != esquemaSonda || !s.Confirmada || s.Fecha == "" {
+		return fmt.Errorf("contrato de sonda inválido")
+	}
+	return nil
+}
+
+func leerSonda(root string) (*Sonda, error) {
+	common, err := commonDir(root)
+	if err != nil {
+		return nil, err
+	}
+	data, err := leerArchivoRegular(common, []string{"chanks", "piloto", "sonda.json"})
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var s Sonda
+	if err := decodificarEstricto(data, &s); err != nil {
+		return nil, err
+	}
+	if err := validarSonda(s); err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+// registrarSonda writes the consent answer of the current corrida: the human
+// was asked and answered. It is idempotent — a later confirm overwrites the
+// earlier record with the same contract.
+func registrarSonda(root string) error {
+	s := Sonda{Schema: esquemaSonda, Confirmada: true, Fecha: ahora().UTC().Format("2006-01-02T15:04:05Z07:00")}
+	if err := validarSonda(s); err != nil {
+		return err
+	}
+	common, err := commonDir(root)
+	if err != nil {
+		return err
+	}
+	dir, err := dirPiloto(common, true)
+	if err != nil {
+		return err
+	}
+	return escribirJSONAtomico(dir, "sonda.json", s)
 }
 
 func leerMarca(root, id string) (*Marca, error) {

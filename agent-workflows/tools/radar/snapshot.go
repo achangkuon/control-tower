@@ -32,6 +32,10 @@ type Snapshot struct {
 	DespachosInvalidos  []string        `json:"despachos_invalidos,omitempty"`
 	PilotosInvalidos    []string        `json:"pilotos_invalidos,omitempty"`
 	InterruptorInvalido bool            `json:"interruptor_invalido,omitempty"`
+	// Piloto is the read-only projection of radar.piloto.interruptor/v1 (S231):
+	// an agent that must offer the automatic pilot reads it here, in the same
+	// projection it already reads, instead of poking at pilot state files.
+	Piloto              *PilotoJSON     `json:"piloto,omitempty"`
 	Asientos            []string        `json:"asientos"`
 	TerritorioPendiente int             `json:"territorio_pendiente"`
 	// Compatibilidad and Escenarios are the machine side of `radar roadmap`.
@@ -43,6 +47,13 @@ type Snapshot struct {
 	// access, or changes what admission allows.
 	Compatibilidad []ParJSON       `json:"compatibilidad,omitempty"`
 	Escenarios     []EscenarioJSON `json:"escenarios,omitempty"`
+}
+
+// PilotoJSON mirrors the pilot switch the moment the snapshot was taken.
+type PilotoJSON struct {
+	Prendido bool `json:"prendido"`
+	Rondas   int  `json:"rondas"`
+	Tope     int  `json:"tope"`
 }
 
 // ParJSON is one pairwise verdict with the exact evidence behind it.
@@ -298,11 +309,21 @@ func (p *Plan) snapshotConObservacion(root, head string, obs dispatchObservation
 		DespachosInvalidos:  obs.invalid,
 		PilotosInvalidos:    obs.piloto.invalid,
 		InterruptorInvalido: obs.piloto.interruptorInvalido,
+		Piloto:              proyectarPiloto(obs.piloto.interruptor),
 		Asientos:            asientos,
 		TerritorioPendiente: pendiente,
 		Compatibilidad:      compatibilidad,
 		Escenarios:          escenarios,
 	}
+}
+
+// proyectarPiloto returns nil when no switch exists: the field is omitted from
+// the snapshot, never guessed as apagado.
+func proyectarPiloto(i *interruptorPiloto) *PilotoJSON {
+	if i == nil {
+		return nil
+	}
+	return &PilotoJSON{Prendido: i.Prendido, Rondas: i.Rondas, Tope: i.Tope}
 }
 
 // vocabulario strips the presentation emoji so a consumer compares against the

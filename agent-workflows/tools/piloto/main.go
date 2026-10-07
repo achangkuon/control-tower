@@ -27,6 +27,9 @@ const uso = `piloto — herramienta determinista del piloto automático
                   resumen de la corrida: POR REVISAR, NOVEDAD, ronda y sin empezar
   piloto freno [-C raíz]
                   frena la corrida: nada nuevo arranca y lo EN CURSO queda NOVEDAD · interrumpida
+  piloto sonda --confirmar [-C raíz]
+                  registra la respuesta del humano a la pregunta de consentimiento RDD de la corrida;
+                  despegar y marcar --en-curso se niegan sin ella
   piloto interruptor [on|off|estado] [--rondas N] [--tope N] [-C raíz]
                   prende, apaga o muestra el interruptor y los límites de la corrida
   piloto retirar <vuelo> [-C raíz]
@@ -198,6 +201,21 @@ func ejecutar(args []string, salida, errores io.Writer, entrada io.Reader) int {
 			return 2
 		}
 		if err := cmdMarcar(salida, root, pos[0], estado, *commit, *motivo, *decisiones); err != nil {
+			return falla(err)
+		}
+	case "sonda":
+		fs := flag.NewFlagSet("sonda", flag.ContinueOnError)
+		fs.SetOutput(errores)
+		confirmar := fs.Bool("confirmar", false, "confirma que el humano respondió la pregunta de consentimiento RDD")
+		pos, err := parsearConPosicionales(fs, resto)
+		if err != nil {
+			return 2
+		}
+		if len(pos) != 0 {
+			fmt.Fprint(errores, "uso: piloto sonda --confirmar [-C raíz]\n")
+			return 2
+		}
+		if err := cmdSonda(salida, root, *confirmar); err != nil {
 			return falla(err)
 		}
 	case "informe":
@@ -475,6 +493,14 @@ func cmdDespegar(w io.Writer, entrada io.Reader, root string, aprobar []string, 
 	if actual != nil && actual.Prendido {
 		return fmt.Errorf("ya hay una corrida prendida: aterrizá o apagá el piloto antes de despegar otra")
 	}
+	// S231 hard lock: the takeoff asks nothing itself, but it refuses while the
+	// corrida's RDD consent question was never answered by a human. The refusal
+	// names the question and the command that records the answer.
+	if s, err := leerSonda(root); err != nil {
+		return err
+	} else if s == nil || !s.Confirmada {
+		return fmt.Errorf("falta la sonda de consentimiento RDD: preguntale al humano «¿corremos con revisión RDD activa? — “autorizar siempre” vale toda la sesión» y confirmá su respuesta con `piloto sonda --confirmar`")
+	}
 	if c, err := leerCorrida(root); err != nil {
 		return err
 	} else if c != nil && len(c.Vuelos) > 0 {
@@ -557,7 +583,7 @@ func cmdDespegar(w io.Writer, entrada io.Reader, root string, aprobar []string, 
 	fmt.Fprintf(w, "🚀 Despegue confirmado — %d vuelos · hasta %s · %s\n", len(c.Vuelos), textoRondas(rondas), textoTope(tope))
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Lista de despegue (lo que el orquestador cierra antes de volar):")
-	fmt.Fprintln(w, "  [ ] Sonda de consentimiento RDD: una pregunta sobre un cambio trivial de una línea; el usuario elige «autorizar siempre» y el lineage se abandona antes de que corra ningún revisor. Es una vez por corrida.")
+	fmt.Fprintln(w, "  [x] Sonda de consentimiento RDD: ya confirmada — el despegue no habría corrido sin ella («autorizar siempre» vale toda la sesión).")
 	fmt.Fprintln(w, "  [ ] Preguntas previsibles de los contratos, ya cerradas con el usuario.")
 	fmt.Fprintln(w, "  [ ] Confirmado: la corrida no sube, no publica y no toca la configuración personal del usuario.")
 	return nil
@@ -735,5 +761,19 @@ func cmdRetirar(w io.Writer, root, vuelo string) error {
 		return err
 	}
 	fmt.Fprintf(w, "🧹 vuelo %s retirado (copia y rama)\n", vuelo)
+	return nil
+}
+
+// cmdSonda records the human's answer to the corrida's RDD consent question
+// (S231). It only ever records that the answer happened: no lineage, no
+// review identity.
+func cmdSonda(w io.Writer, root string, confirmar bool) error {
+	if !confirmar {
+		return fmt.Errorf("la sonda necesita --confirmar: registrá sólo la respuesta real del humano a la pregunta de consentimiento RDD")
+	}
+	if err := registrarSonda(root); err != nil {
+		return err
+	}
+	fmt.Fprintln(w, "✓ sonda de consentimiento RDD confirmada (vale la corrida)")
 	return nil
 }

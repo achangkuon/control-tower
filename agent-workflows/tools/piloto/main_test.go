@@ -171,7 +171,7 @@ func snapshotPrueba() string {
 // prepararNoop avoids touching the network or CodeGraph inside tests.
 func prepararNoop(ruta string) error { return nil }
 
-func conRelojFijo(t *testing.T) {
+func conRelojFijo(t *testing.T, root string) {
 	t.Helper()
 	previo := ahora
 	ahora = func() time.Time { return time.Date(2026, 10, 2, 22, 0, 0, 0, time.UTC) }
@@ -179,6 +179,9 @@ func conRelojFijo(t *testing.T) {
 	previoPrep := prepararCopia
 	prepararCopia = prepararNoop
 	t.Cleanup(func() { prepararCopia = previoPrep })
+	if err := registrarSonda(root); err != nil {
+		t.Fatalf("registrarSonda: %v", err)
+	}
 	previoRadar := radarStatus
 	radarStatus = func(bin, root string) ([]byte, error) { return []byte(snapshotPrueba()), nil }
 	t.Cleanup(func() { radarStatus = previoRadar })
@@ -187,7 +190,7 @@ func conRelojFijo(t *testing.T) {
 func TestDespegar(t *testing.T) {
 	t.Run("aprueba cada vuelo por stdin", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		var salida bytes.Buffer
 		if err := cmdDespegar(&salida, strings.NewReader("s\nn\n"), root, nil, 3, 10, false); err != nil {
 			t.Fatalf("cmdDespegar: %v\n%s", err, salida.String())
@@ -217,7 +220,7 @@ func TestDespegar(t *testing.T) {
 	})
 	t.Run("sin aprobación no despega", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		var salida bytes.Buffer
 		if err := cmdDespegar(&salida, strings.NewReader(""), root, nil, 3, 10, false); err == nil {
 			t.Fatal("sin aprobación el despegue se niega")
@@ -231,7 +234,7 @@ func TestDespegar(t *testing.T) {
 	})
 	t.Run("aprobación explícita de un subconjunto", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		var salida bytes.Buffer
 		if err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S2"}, 1, 5, true); err != nil {
 			t.Fatalf("cmdDespegar: %v", err)
@@ -246,7 +249,7 @@ func TestDespegar(t *testing.T) {
 	})
 	t.Run("vuelo aprobado desconocido", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		var salida bytes.Buffer
 		if err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S9"}, 3, 10, true); err == nil {
 			t.Fatal("aprobar un vuelo que no existe debe fallar")
@@ -254,7 +257,7 @@ func TestDespegar(t *testing.T) {
 	})
 	t.Run("no despega con una corrida prendida", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10}); err != nil {
 			t.Fatal(err)
 		}
@@ -263,9 +266,31 @@ func TestDespegar(t *testing.T) {
 			t.Fatal("con el piloto prendido no se despega otra corrida")
 		}
 	})
+	t.Run("sin la sonda de consentimiento RDD no despega", func(t *testing.T) {
+		root, _ := repoGit(t)
+		conRelojFijo(t, root)
+		quitarSonda(t, root)
+		var salida bytes.Buffer
+		err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S1"}, 3, 10, true)
+		if err == nil {
+			t.Fatal("sin la sonda el despegue debe negarse")
+		}
+		if !strings.Contains(err.Error(), "consentimiento") || !strings.Contains(err.Error(), "sonda --confirmar") {
+			t.Fatalf("el rechazo nombra la pregunta y el comando: %q", err.Error())
+		}
+		if _, err := gitOutput(root, "show-ref", "--verify", ramaDeVuelo("2026-10-02", "S1")); err == nil {
+			t.Fatal("un rechazo no debe crear la rama del vuelo")
+		}
+		if c, _ := leerCorrida(root); c != nil {
+			t.Fatal("un rechazo no escribe corrida")
+		}
+		if i, _ := leerInterruptor(root); i != nil {
+			t.Fatal("un rechazo no prende el interruptor")
+		}
+	})
 	t.Run("despega un solo vuelo por corrida en V2", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		var salida bytes.Buffer
 		err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S1", "S2"}, 3, 10, true)
 		if err == nil {
@@ -289,7 +314,7 @@ func TestDespegar(t *testing.T) {
 	})
 	t.Run("un despegue que falla no deja copias ni ramas", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		// V2 vuela uno por corrida: el único vuelo choca con una copia preexistente.
 		ocupada, err := rutaCopia(root, "2026-10-02", "S1")
 		if err != nil {
@@ -314,7 +339,7 @@ func TestDespegar(t *testing.T) {
 	})
 	t.Run("un fallo al escribir la corrida no deja copias ni ramas", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		common, err := commonDir(root)
 		if err != nil {
 			t.Fatal(err)
@@ -379,7 +404,7 @@ func TestInterruptorCLI(t *testing.T) {
 
 func TestMarcarCLI(t *testing.T) {
 	root, _ := repoGit(t)
-	conRelojFijo(t)
+	conRelojFijo(t, root)
 	corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}, Miembro{Sesion: "S3", DependeDe: []string{"S1"}}))
 	if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10}); err != nil {
 		t.Fatal(err)
@@ -404,6 +429,7 @@ func TestMarcarCLI(t *testing.T) {
 
 func TestInformeYFrenoCLI(t *testing.T) {
 	root, _ := repoGit(t)
+	conSonda(t, root)
 	corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}))
 	if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10}); err != nil {
 		t.Fatal(err)
@@ -433,7 +459,7 @@ func TestInformeYFrenoCLI(t *testing.T) {
 func TestEmojiContratoSalidas(t *testing.T) {
 	t.Run("despegue confirmado con 🚀", func(t *testing.T) {
 		root, _ := repoGit(t)
-		conRelojFijo(t)
+		conRelojFijo(t, root)
 		var salida bytes.Buffer
 		if err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S1"}, 3, 10, true); err != nil {
 			t.Fatalf("cmdDespegar: %v\n%s", err, salida.String())
@@ -447,6 +473,7 @@ func TestEmojiContratoSalidas(t *testing.T) {
 	})
 	t.Run("informe de la corrida con 🧭 y vuelos con 🛫", func(t *testing.T) {
 		root, _ := repoGit(t)
+		conSonda(t, root)
 		corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}))
 		if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10}); err != nil {
 			t.Fatal(err)

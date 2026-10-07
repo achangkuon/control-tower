@@ -540,3 +540,34 @@ func TestSnapshotReportaMarcasDePilotoInvalidas(t *testing.T) {
 		t.Fatalf("una marca inválida debe reportarse, no otorgar estado: %#v", snap)
 	}
 }
+
+func TestSnapshotExponeElInterruptorDelPiloto(t *testing.T) {
+	root, head := repoGit(t)
+	p := planConDosSesiones(head)
+	testInterruptorPiloto(t, root, interruptorPiloto{Prendido: true, Rondas: 2, Tope: 5})
+	var out strings.Builder
+	if err := cmdStatusJSONView(&out, p, root, false); err != nil {
+		t.Fatal(err)
+	}
+	var snapshot Snapshot
+	if err := json.Unmarshal([]byte(out.String()), &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Piloto == nil || !snapshot.Piloto.Prendido || snapshot.Piloto.Rondas != 2 || snapshot.Piloto.Tope != 5 {
+		t.Fatalf("piloto = %+v", snapshot.Piloto)
+	}
+	// Sin interruptor no hay proyección del piloto.
+	rootSin, headSin := repoGit(t)
+	pSin := planConDosSesiones(headSin)
+	var outSin strings.Builder
+	if err := cmdStatusJSONView(&outSin, pSin, rootSin, false); err != nil {
+		t.Fatal(err)
+	}
+	var sSin Snapshot
+	if err := json.Unmarshal([]byte(outSin.String()), &sSin); err != nil {
+		t.Fatal(err)
+	}
+	if sSin.Piloto != nil {
+		t.Fatalf("sin interruptor no hay proyección del piloto: %+v", sSin.Piloto)
+	}
+}

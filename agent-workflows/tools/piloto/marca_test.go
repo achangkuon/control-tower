@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -272,4 +273,59 @@ func TestDirPilotoRechazaEnlace(t *testing.T) {
 	if _, err := dirPiloto(common, true); err == nil {
 		t.Fatal("dirPiloto debe rechazar un componente que es enlace simbólico")
 	}
+}
+
+// conSonda registers the corrida's RDD consent answer; the hard lock (S231)
+// refuses despegar and en-curso without it. conRelojFijo installs it, so a
+// test that needs the missing-sonda case calls quitarSonda instead.
+func conSonda(t *testing.T, root string) {
+	t.Helper()
+	if err := registrarSonda(root); err != nil {
+		t.Fatalf("registrarSonda: %v", err)
+	}
+}
+
+func quitarSonda(t *testing.T, root string) {
+	t.Helper()
+	common, err := commonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(common, "chanks", "piloto", "sonda.json")); err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+}
+
+func TestSonda(t *testing.T) {
+	t.Run("registra la respuesta humana en el directorio común", func(t *testing.T) {
+		root, _ := repoGit(t)
+		conRelojFijo(t, root)
+		s, err := leerSonda(root)
+		if err != nil || s == nil || !s.Confirmada || s.Schema != "radar.piloto.sonda/v1" || s.Fecha == "" {
+			t.Fatalf("sonda = %+v (%v)", s, err)
+		}
+	})
+	t.Run("sin sonda no hay registro", func(t *testing.T) {
+		root, _ := repoGit(t)
+		s, err := leerSonda(root)
+		if err != nil || s != nil {
+			t.Fatalf("sonda = %+v (%v), quiere nil", s, err)
+		}
+	})
+	t.Run("la CLI exige --confirmar", func(t *testing.T) {
+		root, _ := repoGit(t)
+		var salida bytes.Buffer
+		if err := cmdSonda(&salida, root, false); err == nil {
+			t.Fatal("sonda sin --confirmar debe fallar")
+		}
+		if s, _ := leerSonda(root); s != nil {
+			t.Fatalf("un rechazo no registra la sonda: %+v", s)
+		}
+		if err := cmdSonda(&salida, root, true); err != nil {
+			t.Fatalf("cmdSonda: %v", err)
+		}
+		if s, _ := leerSonda(root); s == nil || !s.Confirmada {
+			t.Fatalf("la CLI no registró la sonda: %+v", s)
+		}
+	})
 }
