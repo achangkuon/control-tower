@@ -1,11 +1,11 @@
 ---
 name: chanks-4-unattended-implementation
-description: "Trigger: V2 only; explicitly requested chanks-4-unattended-implementation, unattended implementation, sealed execution, overnight apply or modo nocturno. Seal one LISTO Session for a dispatched Pi worker; never launch it."
+description: "Trigger: V2 only; explicitly requested chanks-4-unattended-implementation, unattended implementation, sealed execution, overnight apply or modo nocturno. Seal a dependency-ordered mandate of LISTO Sessions; never launch it."
 disable-model-invocation: true
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "4.0"
+  version: "5.0"
 ---
 
 ## Activation Contract
@@ -18,54 +18,66 @@ Gentle AI consent envelope on the human's behalf. The `review_policy` fields in 
 inert in V2-pending state: the schema still requires them with their fixed legacy values, they
 carry no authority, and the worker never applies them.
 
-Activate only for a Session that is already 🟢 `LISTO` in the installed Radar. The unit of work is
-exactly one plan Session (`openspec/plan.yaml`, read through `radar sesion <ID>`), executed with
-Organic Driven Development — never a separately authored task list. This skill validates
-preconditions, collects the human's standing decisions once, and seals a standalone, zero-decision
-approval; it never implements, dispatches a worker, starts a session, or delivers anything itself.
+Activate only for Sessions that are already 🟢 `LISTO` in the installed Radar. The unit of work is a
+**dependency-ordered mandate**: one or more plan Sessions (`openspec/plan.yaml`, each read through
+`radar sesion <ID>`), ordered into explicit steps and executed with Organic Driven Development —
+never a separately authored task list. This skill validates preconditions, collects the human's
+standing decisions once, and seals a standalone, zero-decision mandate approval; it never
+implements, dispatches a worker, starts a session, or delivers anything itself.
 
 Native SDD (`solicitud_sdd`) is the sole exception, and only with an explicit human request recorded
-as one or two lines of evidence; absent that, ODD applies without exception.
+as one or two lines of evidence per Session; absent that, ODD applies without exception.
 
-Unattended is a **mode of Chanks stage 3 (Despachar)**: it changes how a `LISTO` Session gets its
-one dispatch decision made in advance, not how many stages Chanks has. Stage 4 (Implementar y
-revisar, owned by Gentle AI) runs exactly as it would attended, just without a human present to
-ask. There is no separate unattended stage and no 7-stage numbering.
+Unattended is a **mode of Chanks stage 3 (Despachar)**: it changes how `LISTO` Sessions get their
+step-by-step dispatch decisions made in advance, not how many stages Chanks has. Stage 4
+(Implementar y revisar, owned by Gentle AI) runs exactly as it would attended, just without a human
+present to ask. There is no separate unattended stage and no 7-stage numbering.
 
 ## Hard Rules
 
-- The approved contract IS the plan Session: read `radar sesion <ID>` verbatim (Encargo,
-  Cimientos, Recurso, `archivos`, `decisiones`) and never re-author it. Do not invent scope,
-  criteria, or task IDs the Session does not declare.
-- Require the Session to be `LISTO` in a fresh `radar status --json` and `radar sesion <ID>`, with
-  no unresolved escalating decision contaminating its outcome, its first required work, or another
-  Session. `radar` failing closed is a `NOT_READY` cause, not something to route around.
-- Validate `assets/execution-contract.schema.json` and `references/sealing-and-routing.md` before
-  returning `READY`.
-- Collect the human's standing decisions exactly once, at seal time: delivery ceiling and
-  `expires_at`. The worker must not ask either again mid-run.
-- Default delivery ceiling is `commit` — commits land only on the Session's own `work/<ID>`
+- The approved contract IS the mandate: read `radar sesion <ID>` verbatim for every Session in it
+  (Encargo, Cimientos, Recurso, `archivos`, `decisiones`) and never re-author it. Do not invent
+  scope, criteria, or task IDs a Session does not declare.
+- Require every Session in the mandate to be `LISTO` in a fresh `radar status --json` and
+  `radar sesion <ID>`, with no unresolved escalating decision contaminating its outcome, its first
+  required work, or another Session. `radar` failing closed is a `NOT_READY` cause, not something to
+  route around.
+- The mandate is an explicit, dependency-ordered list of steps: a Session in step `N` starts only
+  after every Session in steps `< N` reached `COMPLETED` and integrated its commit; Sessions in the
+  same step are independent and may run in parallel. It is `NOT_READY` for an expired, empty, or
+  repeated mandate, or one without an explicit step order — a per-Session expiry included.
+- Collect the human's standing decisions exactly once, at seal time: delivery ceiling and a single
+  mandate-wide `expires_at` that governs every step and every Session. The worker must not ask
+  either again mid-run.
+- Default delivery ceiling is `commit` — commits land only on each Session's own `work/<ID>`
   branch. Push, merge, PR creation/update, and integration to master stay with Main at Chanks
-  stage 5, with the human present. `none` (no commits at all) is the only other allowed value.
+  stage 5, with the human present. `none` (no commits at all) is the only other allowed value, and
+  the same ceiling applies to every Session.
 - The human decides every Gentle AI consent envelope. A consent envelope, a correction it cannot
   make, or any decision stops that Session; the worker answers none of them on the human's behalf.
 - `expires_at` must be explicit and, per the human's own statement, before their declared return.
 - On any question outside the sealed scope, including a consent envelope or a correction it cannot
   make, the worker stops that Session only and leaves one self-contained decision block (question,
-  evidence, options with consequences, class, checkpoint); other dispatched Sessions continue
-  independently.
+  evidence, options with consequences, class, checkpoint). An imprevisto affects that Session only:
+  other dispatched Sessions continue independently, Sessions that depend on it do not start, and no
+  Session outside the sealed list is ever chosen.
+- The coordinator advances only inside the mandate's sealed steps, in the declared order. It never
+  selects, derives, or appends a Session the human did not seal, and never continues the mandate by
+  inference after an imprevisto.
 - Never invoke Tower or another coordination API; never start a session, dispatch an agent, create
   a worktree, claim a lock, create a queue, or simulate a wake/terminal result.
 - Never commit, amend, rebase, tag, push, create/update a PR, merge, release, deploy, mutate a
   database, write `openspec/plan.yaml`, or alter global closure. Delivery beyond the sealed
   ceiling is never inferred, and the sealed contract never degrades into a looser one.
-- The sealed record only prepares a dispatch; it does not perform one. Dispatch — worker
-  assignment, worktree, branch, the Herdr/Intercom handoff — is `chanks-3-despacho-herdr`'s job,
-  with the Torre off. If the base moves before dispatch, the seal is stale and needs a fresh one.
+- The sealed mandate prepares a record, never executes one. Dispatch —
+  worker assignment, worktree, branch, the Herdr/Intercom handoff — is
+  `chanks-3-despacho-herdr`'s job, with the Torre off. If the base moves before dispatch, the seal
+  is stale and needs a fresh one.
 - Do not depend on Pi's activation key/click (`chanks_request_activation`); it is being retired.
-  The dispatched worker's own `chanks-3-session-kickoff` run supplies its own fresh admission.
+  Each dispatched worker's own `chanks-3-session-kickoff` run supplies its own fresh admission
+  (self-admission).
 - Worker-side revalidation after dispatch tolerates exactly one drift: `chanks-3-despacho-herdr`'s
-  own `radar.despacho/v1` marker turning this Session from `LISTO` to `EN CURSO`, only when the
+  own `radar.despacho/v1` marker turning a Session from `LISTO` to `EN CURSO`, only when the
   marker matches the seal's Session, branch, worktree, and worker exactly. See
   `references/sealing-and-routing.md` for the exact byte-for-byte match rule; every other drift
   still invalidates the seal.
@@ -76,34 +88,39 @@ ask. There is no separate unattended stage and no 7-stage numbering.
 
 | Condition | Result |
 |---|---|
-| Session `LISTO`, no unresolved escalating decision, contract and schema gates complete | Return sealed standalone approval at `READY`. |
-| Session not `LISTO`, ownership, policy, scope, or a human choice unresolved | `NOT_READY`; name the exact missing evidence. |
+| Every Session `LISTO`, explicit step order, no unresolved escalating decision, contract and schema gates complete | Return sealed mandate approval at `READY`. |
+| A Session not `LISTO`, ownership, policy, scope, or a human choice unresolved | `NOT_READY`; name the exact missing evidence. |
+| Expired, empty, or repeated mandate, or one without an explicit step order (including a per-Session expiry) | `NOT_READY`; name the exact mandate defect. |
 | Unresolved escalating decision or Git contamination affecting the base | `NOT_READY`; preserve evidence and require parent/human resolution. |
 | `solicitud_sdd` requested without the human's one/two-line evidence | `NOT_READY`; ODD remains the default until that evidence exists. |
 | Required verification evidence fails | `BLOCKED`; preserve evidence without a retry route. |
 
 ## Execution Steps
 
-1. Fetch a fresh `radar status --json` and `radar sesion <ID>`; confirm 🟢 `LISTO` and no
-   unresolved escalating decision touching this Session's outcome, its first required work, or
-   another Session.
-2. Collect the human's standing decisions once: delivery ceiling and `expires_at`. Fill the
-   schema's inert `review_policy` fields with their fixed constants. Reject a placeholder, an
-   alternative, or prose that defers any of them to the worker.
-3. Validate the schema and semantic gates; return `NOT_READY` on any failure.
-4. Canonicalize the contract — repository/branch/base identity, the two Radar stdout digests, and
-   the human's decisions, without `contract_digest` — compute its SHA-256, insert it, and obtain
-   human approval for that exact digest.
-5. Return the sealed approval to the responsible parent. Do not launch, dispatch, or contact a
+1. Fetch a fresh `radar status --json` and `radar sesion <ID>` for every Session in the mandate;
+   confirm 🟢 `LISTO` for each and no unresolved escalating decision touching a Session's outcome,
+   its first required work, or another Session.
+2. Collect the human's standing decisions once for the whole mandate: delivery ceiling and the
+   single `expires_at`. Fill the schema's inert `review_policy` fields with their fixed constants.
+   Reject a placeholder, an alternative, a per-Session expiry, or prose that defers any of them to
+   the worker.
+3. Canonicalize the ordered steps: explicit `step` numbers, each Session with its own `sesion_id`,
+   `worker`, `branch`, and fresh Radar digests. Return `NOT_READY` on any failure.
+4. Validate the schema and semantic gates; return `NOT_READY` on any failure, naming the exact
+   mandate defect.
+5. Compute the mandate's SHA-256 without `contract_digest`, insert it, and obtain human approval
+   for that exact digest.
+6. Return the sealed approval to the responsible parent. Do not launch, dispatch, or contact any
    worker; `chanks-3-despacho-herdr` carries the seal inside its own handoff when the human later
-   selects this Session for dispatch.
+   selects the mandate for dispatch.
 
 ## Output Contract
 
-Return `status: NOT_READY|READY|BLOCKED`, `contract_digest`, `sesion_id`, exact
-repository/branch/base, the sealed delivery ceiling, `expires_at`,
-required verification, blockers, and `skill_resolution: paths-injected`. State plainly that this
-is a standalone sealed approval, not an active runtime, a dispatch, or a delivery authorization.
+Return `status: NOT_READY|READY|BLOCKED`, `contract_digest`, exact
+repository/base, the ordered steps with each `sesion_id` and `worker`, the sealed delivery ceiling,
+the single mandate-wide `expires_at`, required verification, blockers, and
+`skill_resolution: paths-injected`. State plainly that this is a standalone sealed mandate
+approval, not an active runtime, a dispatch, or a delivery authorization.
 
 ## References
 

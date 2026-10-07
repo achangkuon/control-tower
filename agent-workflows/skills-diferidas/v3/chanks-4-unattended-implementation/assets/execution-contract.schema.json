@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v4.json",
-  "title": "Sealed Plan-Session Unattended Execution Contract",
+  "$id": "https://gentle-ai.local/schemas/unattended-execution-contract-v5.json",
+  "title": "Sealed Plan-Mandate Unattended Execution Contract",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,7 +11,7 @@
     "expires_at",
     "contract_digest",
     "repository",
-    "session",
+    "mandate",
     "permissions",
     "ownership",
     "artifact_policy",
@@ -20,7 +20,7 @@
     "retries"
   ],
   "properties": {
-    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v4" },
+    "schema_version": { "const": "gentle-ai.unattended-execution-contract/v5" },
     "contract_id": { "$ref": "#/$defs/nonEmpty" },
     "sealed_at": { "$ref": "#/$defs/dateTime" },
     "expires_at": { "$ref": "#/$defs/dateTime" },
@@ -28,46 +28,23 @@
     "repository": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["identity", "root", "branch", "base_ref", "base_sha"],
+      "required": ["identity", "root", "base_ref", "base_sha"],
       "properties": {
         "identity": { "$ref": "#/$defs/nonEmpty" },
         "root": { "$ref": "#/$defs/absolutePath" },
-        "branch": { "type": "string", "pattern": "^work/[^\\s]+$" },
         "base_ref": { "$ref": "#/$defs/nonEmpty" },
         "base_sha": { "$ref": "#/$defs/gitSha" }
       }
     },
-    "session": {
+    "mandate": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "sesion_id",
-        "radar_status_stdout_sha256",
-        "radar_sesion_stdout_sha256",
-        "listo_confirmed",
-        "unresolved_escalating_decision",
-        "solicitud_sdd"
-      ],
+      "required": ["steps"],
       "properties": {
-        "sesion_id": { "$ref": "#/$defs/nonEmpty" },
-        "radar_status_stdout_sha256": { "$ref": "#/$defs/sha256" },
-        "radar_sesion_stdout_sha256": { "$ref": "#/$defs/sha256" },
-        "listo_confirmed": { "const": true },
-        "unresolved_escalating_decision": { "const": false },
-        "solicitud_sdd": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["requested"],
-          "properties": {
-            "requested": { "type": "boolean" },
-            "evidence": { "$ref": "#/$defs/nonEmpty" }
-          },
-          "allOf": [
-            {
-              "if": { "properties": { "requested": { "const": true } }, "required": ["requested"] },
-              "then": { "required": ["evidence"] }
-            }
-          ]
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/mandateStep" }
         }
       }
     },
@@ -171,45 +148,49 @@
         "corrections_after_final_verification_failure": { "const": 0 }
       }
     },
-    "result": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["state", "sesion_id", "worker", "checks", "commits", "changed_paths", "reviews", "stopped_questions", "budget_used"],
-      "properties": {
-        "state": { "enum": ["COMPLETED", "BLOCKED", "FAILED"] },
-        "sesion_id": { "$ref": "#/$defs/nonEmpty" },
-        "worker": { "$ref": "#/$defs/nonEmpty" },
-        "checks": { "$ref": "#/$defs/evidenceList" },
-        "commits": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/gitSha" } },
-        "changed_paths": { "$ref": "#/$defs/pathList" },
-        "reviews": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["risk", "outcome"],
-            "properties": {
-              "risk": { "enum": ["high", "medium", "passive"] },
-              "outcome": { "enum": ["granted", "declined", "not_needed"] }
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["state", "sesion_id", "worker", "checks", "commits", "changed_paths", "reviews", "stopped_questions", "budget_used"],
+        "properties": {
+          "state": { "enum": ["COMPLETED", "BLOCKED", "FAILED"] },
+          "sesion_id": { "$ref": "#/$defs/nonEmpty" },
+          "worker": { "$ref": "#/$defs/nonEmpty" },
+          "checks": { "$ref": "#/$defs/evidenceList" },
+          "commits": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/gitSha" } },
+          "changed_paths": { "$ref": "#/$defs/pathList" },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["risk", "outcome"],
+              "properties": {
+                "risk": { "enum": ["high", "medium", "passive"] },
+                "outcome": { "enum": ["granted", "declined", "not_needed"] }
+              }
             }
-          }
-        },
-        "stopped_questions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["question", "evidence", "options", "decision_class", "checkpoint"],
-            "properties": {
-              "question": { "$ref": "#/$defs/nonEmpty" },
-              "evidence": { "$ref": "#/$defs/nonEmpty" },
-              "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nonEmpty" } },
-              "decision_class": { "$ref": "#/$defs/nonEmpty" },
-              "checkpoint": { "$ref": "#/$defs/nonEmpty" }
+          },
+          "stopped_questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["question", "evidence", "options", "decision_class", "checkpoint"],
+              "properties": {
+                "question": { "$ref": "#/$defs/nonEmpty" },
+                "evidence": { "$ref": "#/$defs/nonEmpty" },
+                "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nonEmpty" } },
+                "decision_class": { "$ref": "#/$defs/nonEmpty" },
+                "checkpoint": { "$ref": "#/$defs/nonEmpty" }
+              }
             }
-          }
-        },
-        "budget_used": { "$ref": "#/$defs/nonEmpty" }
+          },
+          "budget_used": { "$ref": "#/$defs/nonEmpty" }
+        }
       }
     }
   },
@@ -234,6 +215,57 @@
     "pathList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/exactPath" } },
     "exactPath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?/)(?!.*[*?\\[\\]{}]).+$" },
     "commandList": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^(?:bun|go|npm|pnpm|python3?|pytest|node|git|radar|make|cargo)(?: [^;|&`$<>\\n]*)?$" } },
+    "mandateStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "sesiones"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1 },
+        "sesiones": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/mandateSession" }
+        }
+      }
+    },
+    "mandateSession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sesion_id",
+        "worker",
+        "branch",
+        "radar_status_stdout_sha256",
+        "radar_sesion_stdout_sha256",
+        "listo_confirmed",
+        "unresolved_escalating_decision",
+        "solicitud_sdd"
+      ],
+      "properties": {
+        "sesion_id": { "$ref": "#/$defs/nonEmpty" },
+        "worker": { "$ref": "#/$defs/nonEmpty" },
+        "branch": { "type": "string", "pattern": "^work/[^\\s]+$" },
+        "radar_status_stdout_sha256": { "$ref": "#/$defs/sha256" },
+        "radar_sesion_stdout_sha256": { "$ref": "#/$defs/sha256" },
+        "listo_confirmed": { "const": true },
+        "unresolved_escalating_decision": { "const": false },
+        "solicitud_sdd": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requested"],
+          "properties": {
+            "requested": { "type": "boolean" },
+            "evidence": { "$ref": "#/$defs/nonEmpty" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "requested": { "const": true } }, "required": ["requested"] },
+              "then": { "required": ["evidence"] }
+            }
+          ]
+        }
+      }
+    },
     "localArtifactDisposition": {
       "type": "object",
       "additionalProperties": false,
