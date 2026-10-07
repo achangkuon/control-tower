@@ -239,8 +239,8 @@ func integrarLocal(root, commit string) error {
 
 func formatearAterrizaje(w io.Writer, a *Aterrizaje) {
 	ultimaSesion := a.Aprobadas[len(a.Aprobadas)-1]
-	fmt.Fprintf(w, "🛬 Vuelo %s — porción aprobada integrada: %s\n", a.Vuelo, strings.Join(a.Aprobadas, " → "))
-	fmt.Fprintf(w, "   Última Sesión aprobada: %s (%s)\n", ultimaSesion, a.Ultima)
+	fmt.Fprintf(w, "🛬 Vuelo %s aterrizó — porción aprobada integrada: %s\n", a.Vuelo, strings.Join(a.Aprobadas, " → "))
+	fmt.Fprintf(w, "   ✅ Última Sesión aprobada: %s (%s)\n", ultimaSesion, a.Ultima)
 	fmt.Fprintln(w, "   La subida sigue la política ordinaria de entrega del repositorio; piloto no sube.")
 }
 

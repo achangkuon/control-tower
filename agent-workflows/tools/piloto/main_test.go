@@ -407,6 +407,89 @@ func TestInformeYFrenoCLI(t *testing.T) {
 	}
 }
 
+// TestEmojiContratoSalidas pins the S234 emoji contract: 🚀 takeoff confirmed,
+// 🛫 per flight, 🛬 flight landed, ✅ last approved Session, 🧹 flight withdrawn,
+// 🧭 corrida report. Rejections keep ✗ and the landing keeps "no sube".
+func TestEmojiContratoSalidas(t *testing.T) {
+	t.Run("despegue confirmado con 🚀", func(t *testing.T) {
+		root, _ := repoGit(t)
+		conRelojFijo(t)
+		var salida bytes.Buffer
+		if err := cmdDespegar(&salida, strings.NewReader(""), root, []string{"S1"}, 3, 10, true); err != nil {
+			t.Fatalf("cmdDespegar: %v\n%s", err, salida.String())
+		}
+		if !strings.Contains(salida.String(), "🚀 Despegue confirmado") {
+			t.Fatalf("el despegue confirmado usa 🚀: %q", salida.String())
+		}
+		if strings.Contains(salida.String(), "🛫 Despegue") {
+			t.Fatalf("el despegue confirmado ya no usa 🛫: %q", salida.String())
+		}
+	})
+	t.Run("informe de la corrida con 🧭 y vuelos con 🛫", func(t *testing.T) {
+		root, _ := repoGit(t)
+		corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}))
+		if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := marcarEnCurso(root, &Interruptor{Prendido: true, Rondas: 3, Tope: 10}, "S1"); err != nil {
+			t.Fatal(err)
+		}
+		var salida bytes.Buffer
+		if err := cmdInforme(&salida, root); err != nil {
+			t.Fatalf("cmdInforme: %v", err)
+		}
+		texto := salida.String()
+		if !strings.Contains(texto, "🧭 Informe de la corrida") {
+			t.Fatalf("el informe abre con 🧭 Informe de la corrida: %q", texto)
+		}
+		if !strings.Contains(texto, "🛫 Vuelo S1") {
+			t.Fatalf("cada vuelo del informe se marca con 🛫: %q", texto)
+		}
+	})
+	t.Run("aterrizaje con 🛬 aterrizó y ✅ última aprobada", func(t *testing.T) {
+		var salida bytes.Buffer
+		a := &Aterrizaje{Vuelo: "S1", Aprobadas: []string{"S1"}, Ultima: strings.Repeat("a", 40)}
+		formatearAterrizaje(&salida, a)
+		texto := salida.String()
+		if !strings.Contains(texto, "🛬 Vuelo S1 aterrizó") {
+			t.Fatalf("el aterrizaje informa 🛬 ... aterrizó: %q", texto)
+		}
+		if !strings.Contains(texto, "✅ Última Sesión aprobada") {
+			t.Fatalf("la última Sesión aprobada se marca con ✅: %q", texto)
+		}
+		if !strings.Contains(texto, "no sube") {
+			t.Fatalf("el aterrizaje debe recordar que piloto no sube: %q", texto)
+		}
+	})
+	t.Run("retiro con 🧹", func(t *testing.T) {
+		root, _ := repoGit(t)
+		rama := ramaDeVuelo("2026-10-02", "S1")
+		ruta, err := rutaCopia(root, "2026-10-02", "S1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := crearCopia(root, "refs/heads/master", rama, ruta); err != nil {
+			t.Fatal(err)
+		}
+		writeTestFile(t, filepath.Join(ruta, "entrega.txt"), "entrega S1\n", 0o644)
+		gitFixture(t, ruta, "add", "entrega.txt")
+		gitFixture(t, ruta, "commit", "-qm", "entrega S1")
+		entrega := gitFixture(t, ruta, "rev-parse", "HEAD^{commit}")
+		corridaConVuelos(t, root, Vuelo{ID: "S1", Ancla: "S1", Rama: rama, Copia: ruta, Sesiones: []Miembro{{Sesion: "S1"}}})
+		if err := escribirMarca(root, Marca{Sesion: "S1", Vuelo: "S1", Rama: rama, Estado: estadoCierre, Commit: entrega, Ronda: 1}); err != nil {
+			t.Fatal(err)
+		}
+		gitFixture(t, root, "merge", "--ff-only", rama)
+		var salida bytes.Buffer
+		if err := cmdRetirar(&salida, root, "S1"); err != nil {
+			t.Fatalf("cmdRetirar: %v", err)
+		}
+		if !strings.Contains(salida.String(), "🧹 vuelo S1 retirado") {
+			t.Fatalf("el retiro usa 🧹: %q", salida.String())
+		}
+	})
+}
+
 func TestRondaCLI(t *testing.T) {
 	root, _ := repoGit(t)
 	corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}, Miembro{Sesion: "S3", DependeDe: []string{"S1"}}))

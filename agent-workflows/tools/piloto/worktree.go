@@ -118,10 +118,10 @@ func comandoEn(dir, nombre string, args ...string) error {
 	return nil
 }
 
-// prepararCopiaReal is the S220 D4 minimum plus the CodeGraph index: bun install
-// when the copy carries a package.json, then codegraph init. Go shares GOCACHE
-// and Python is stdlib, so neither needs anything. A missing codegraph warns but
-// does not stop the flight: no suite depends on the index.
+// prepararCopiaReal is the S220 D4 minimum: bun install when the copy carries a
+// package.json. Go shares GOCACHE and Python is stdlib, so neither needs
+// anything. S234: `codegraph init` is no longer run — it left .codegraph/ with
+// no real index (the agent recreates it on demand), so takeoff gains nothing.
 func prepararCopiaReal(ruta string) error {
 	if _, err := os.Lstat(filepath.Join(ruta, "package.json")); err == nil {
 		if _, err := exec.LookPath("bun"); err != nil {
@@ -133,20 +133,15 @@ func prepararCopiaReal(ruta string) error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	if _, err := exec.LookPath("codegraph"); err == nil {
-		if err := comandoEn(ruta, "codegraph", "init"); err != nil {
-			fmt.Fprintf(os.Stderr, "  ! codegraph init falló en %s: %v\n", ruta, err)
-		}
-	} else {
-		fmt.Fprintf(os.Stderr, "  ~ codegraph no está instalado; la copia %s queda sin índice\n", ruta)
-	}
 	return nil
 }
 
 var prepararCopia = prepararCopiaReal
 
 func trabajoPendiente(ruta string) (bool, error) {
-	out, err := gitOutput(ruta, "status", "--porcelain")
+	// S234: .codegraph/ is a tool artifact the agent recreates on demand, never
+	// pending work; any other untracked file still blocks the withdrawal.
+	out, err := gitOutput(ruta, "status", "--porcelain", ".", ":(exclude).codegraph")
 	if err != nil {
 		return false, err
 	}

@@ -105,15 +105,77 @@ func TestTrabajoPendiente(t *testing.T) {
 	if err := crearCopia(root, "refs/heads/master", ramaDeVuelo("2026-10-02", "S1"), ruta); err != nil {
 		t.Fatal(err)
 	}
-	pending, err := trabajoPendiente(ruta)
-	if err != nil || pending {
-		t.Fatalf("una copia recién creada no tiene trabajo pendiente: %v (%v)", pending, err)
-	}
-	writeTestFile(t, filepath.Join(ruta, "borrador.txt"), "sin confirmar\n", 0o644)
-	pending, err = trabajoPendiente(ruta)
-	if err != nil || !pending {
-		t.Fatalf("un archivo sin confirmar es trabajo pendiente: %v (%v)", pending, err)
-	}
+	t.Run("código auxiliar: la copia recién creada está limpia", func(t *testing.T) {
+		pending, err := trabajoPendiente(ruta)
+		if err != nil || pending {
+			t.Fatalf("una copia recién creada no tiene trabajo pendiente: %v (%v)", pending, err)
+		}
+	})
+	t.Run(".codegraph/ es artefacto de herramienta, no trabajo pendiente", func(t *testing.T) {
+		if err := os.MkdirAll(filepath.Join(ruta, ".codegraph"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		writeTestFile(t, filepath.Join(ruta, ".codegraph", "indice.db"), "x", 0o644)
+		pending, err := trabajoPendiente(ruta)
+		if err != nil || pending {
+			t.Fatalf(".codegraph/ sin seguimiento no es trabajo pendiente: %v (%v)", pending, err)
+		}
+	})
+	t.Run("cualquier otro archivo sin seguimiento sigue frenando", func(t *testing.T) {
+		writeTestFile(t, filepath.Join(ruta, "borrador.txt"), "sin confirmar\n", 0o644)
+		pending, err := trabajoPendiente(ruta)
+		if err != nil || !pending {
+			t.Fatalf("un archivo sin confirmar es trabajo pendiente: %v (%v)", pending, err)
+		}
+	})
+	t.Run("retirar tolera una copia con sólo .codegraph/", func(t *testing.T) {
+		root, _ := repoGit(t)
+		ruta2, _ := rutaCopia(root, "2026-10-02", "S1")
+		rama := ramaDeVuelo("2026-10-02", "S1")
+		if err := crearCopia(root, "refs/heads/master", rama, ruta2); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(ruta2, ".codegraph"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := retirarCopia(root, rama, ruta2); err != nil {
+			t.Fatalf("retirarCopia con sólo .codegraph/: %v", err)
+		}
+	})
+}
+
+// TestPrepararCopiaSinCodegraph pins S234: the takeoff preparation never runs
+// `codegraph init` (it leaves an empty index the agent recreates anyway), while
+// bun install keeps running when a package.json is present.
+func TestPrepararCopiaSinCodegraph(t *testing.T) {
+	t.Run("bun corre, codegraph no", func(t *testing.T) {
+		ruta := t.TempDir()
+		bin := t.TempDir()
+		marcadorCodegraph := filepath.Join(bin, "codegraph-corrio")
+		writeTestFile(t, filepath.Join(bin, "codegraph"), "#!/bin/sh\n: > "+marcadorCodegraph+"\nexit 0\n", 0o755)
+		marcadorBun := filepath.Join(bin, "bun-corrio")
+		writeTestFile(t, filepath.Join(bin, "bun"), "#!/bin/sh\n: > "+marcadorBun+"\nexit 0\n", 0o755)
+		t.Setenv("PATH", bin)
+		writeTestFile(t, filepath.Join(ruta, "package.json"), "{\n}\n", 0o644)
+		if err := prepararCopiaReal(ruta); err != nil {
+			t.Fatalf("prepararCopiaReal: %v", err)
+		}
+		if _, err := os.Lstat(marcadorCodegraph); !os.IsNotExist(err) {
+			t.Fatalf("el despegue ya no corre codegraph init: %v", err)
+		}
+		if _, err := os.Lstat(marcadorBun); err != nil {
+			t.Fatalf("bun install sigue corriendo: %v", err)
+		}
+	})
+	t.Run("sin package.json no necesita bun", func(t *testing.T) {
+		ruta := t.TempDir()
+		bin := t.TempDir()
+		writeTestFile(t, filepath.Join(bin, "codegraph"), "#!/bin/sh\nexit 0\n", 0o755)
+		t.Setenv("PATH", bin)
+		if err := prepararCopiaReal(ruta); err != nil {
+			t.Fatalf("prepararCopiaReal sin package.json: %v", err)
+		}
+	})
 }
 
 func TestRetirarCopia(t *testing.T) {

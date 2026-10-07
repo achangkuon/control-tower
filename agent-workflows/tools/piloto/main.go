@@ -531,7 +531,7 @@ func cmdDespegar(w io.Writer, entrada io.Reader, root string, aprobar []string, 
 		}
 		return err
 	}
-	fmt.Fprintf(w, "🛫 Despegue confirmado — %d vuelos · hasta %s · %s\n", len(c.Vuelos), textoRondas(rondas), textoTope(tope))
+	fmt.Fprintf(w, "🚀 Despegue confirmado — %d vuelos · hasta %s · %s\n", len(c.Vuelos), textoRondas(rondas), textoTope(tope))
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Lista de despegue (lo que el orquestador cierra antes de volar):")
 	fmt.Fprintln(w, "  [ ] Sonda de consentimiento RDD: una pregunta sobre un cambio trivial de una línea; el usuario elige «autorizar siempre» y el lineage se abandona antes de que corra ningún revisor. Es una vez por corrida.")
@@ -659,8 +659,9 @@ func cmdInforme(w io.Writer, root string) error {
 	if len(r.Vuelos) == 0 {
 		fmt.Fprintln(w, "No hay vuelos en la corrida.")
 	}
+	fmt.Fprintln(w, "🧭 Informe de la corrida")
 	for _, v := range r.Vuelos {
-		fmt.Fprintf(w, "Vuelo %s — ronda %d · %d POR REVISAR · %d NOVEDAD · %d sin empezar\n",
+		fmt.Fprintf(w, "🛫 Vuelo %s — ronda %d · %d POR REVISAR · %d NOVEDAD · %d sin empezar\n",
 			v.ID, v.RondaAlcanzada, v.PorRevisar, v.Novedad, v.SinEmpezar)
 		for _, s := range v.Sesiones {
 			nota := s.Nota
@@ -710,6 +711,6 @@ func cmdRetirar(w io.Writer, root, vuelo string) error {
 	if err := retirarVuelo(root, vuelo); err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "✓ vuelo %s retirado (copia y rama)\n", vuelo)
+	fmt.Fprintf(w, "🧹 vuelo %s retirado (copia y rama)\n", vuelo)
 	return nil
 }
