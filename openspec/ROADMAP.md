@@ -2,16 +2,16 @@
 # Hoja de ruta — control-tower
 
 ## 📍 Punto de retoma
-- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Torre V1 · Adopción project-local reversible.
-- Próximo trabajo ejecutable: ninguno.
+- Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S230, S234, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
+- Prioridad activa: V2 · Piloto automático desatendido.
+- Próximo trabajo ejecutable: Método #1 → S231 — La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Método #1 → S231 — La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar.
 
 ## Avance
-- **Total:** 97% (163/168 S)
+- **Total:** 94% (165/175 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (2/2 S)
@@ -22,8 +22,8 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 100% (56/56 S)
-- **Producto Torre:** 95% (38/40 S)
+- **Método:** 93% (58/62 S)
+- **Producto Torre:** 92% (38/41 S)
 
 ## Zonas y colas
 ### Archivo (archivo)
@@ -57,10 +57,13 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-- Sin Sesiones abiertas.
+1. **S231** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar.
+2. **S233** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · &#96;piloto aterrizar&#96; se niega a integrar una Sesión sin la aprobación humana registrada de su commit exacto.
+3. **S235** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · En V2 despega un solo vuelo por corrida; pedir más se rechaza con un mensaje claro de que el paralelo llega en V3.
+4. **S236** · 🟢 LISTO · prioridad V2 · Piloto automático desatendido · Cuando el usuario pide lanzar un agente para trabajar, chanks-0-comunicacion-agentes lo abre en una pestaña nueva de Herdr con el nombre del trabajo; el panel al lado queda sólo para mirar en paralelo.
 
 ### Producto Torre (producto-torre)
-- Sin Sesiones abiertas.
+1. **S232** · 📋 PLANIFICADO · espera-natural (S231, S233) · prioridad V2 · Piloto automático desatendido · Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar.
 
 ## Bloqueos
 - Ningún bloqueo derivado.
@@ -1536,6 +1539,104 @@
   - Resultado y comportamiento: Los tests afectados de test/fail-closed.test.mjs aprovisionan en el HOME del fixture un core mínimo funcional con el contrato que bin/torre y el core legacy esperan (fixture hermético definido dentro del propio archivo de test para no expandir la autoridad), de modo que en un HOME desechable sin aprovisionar la suite raíz corre completa: los tests de seguridad pasan en sandbox exactamente con las mismas aserciones que pasan en el HOME real (ninguna aserción se debilita, se saltea ni se reformula). &#96;bun run test&#96; en sandbox termina exit 0, y en el HOME real también, con el mismo conteo de tests. Si el aprovisionamiento requiere un archivo aparte, tocar bin/torre o el core legacy, se reporta como expansión de alcance y no se ejecuta sin aprobación.
   - Restricciones y decisiones: Prohibido debilitar, saltar (skip) o reformular aserciones de seguridad: el rediseño es de aprovisionamiento, no de contratos. El fixture es de test only y no viaja en la release (fuera del roster del bundle). Toda expansión de archivos (bin/torre, core legacy, otros tests) requiere aprobación humana. ODD nativo; SDD sólo por solicitud humana explícita.
   - Referencias: notas de release v1.3.0 (limitación documentada, decisión del mantenedor); test/fail-closed.test.mjs:90-230 (los tests afectados y su execFileSync); test/fixtures/ (convención de fixtures); friction &#35;147 (flaky intermitente, ajeno); controles de la fase 3 de torre-release/references/publicar.md.
+
+### S230 — carril candidato construye el lane de Pi con el contrato vigente de bloques personales (los cuatro bloques chanks) sin exigir bloques legacy que el instalador ya no escribe a los runtimes Torre.
+- Coordinación:
+  - Estado derivado: 📚 ARCHIVADO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/carril, agent-workflows/tests/test&#95;carril.py
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: &#96;carril candidato&#96; falla en toda máquina adoptada: su render del APPEND&#95;SYSTEM.md exige exactamente un bloque legacy session-routing que el instalador personal nunca escribe a los runtimes Torre (install.py: "never used by the four Tower-covered runtime writers"). El lane debe construirse con el mismo contrato que usa el instalador para Pi.
+  - Resultado y comportamiento: El render append del APPEND&#95;SYSTEM.md aplica el contrato personal vigente (render&#95;personal&#95;blocks + desired&#95;personal&#95;content): reemplaza los bloques chanks presentes, agrega los always-added-when-absent y jamás exige bloques legacy. Una máquina adoptada sin el bloque legacy construye el lane completo; una con el bloque legacy también funciona (el legacy se ignora, no se toca). El resto del carril no cambia.
+  - Restricciones y decisiones: Fix mínimo; no se cambia el instalador ni el contrato de bloques. TDD con RED observado. ODD nativo; SDD sólo por solicitud humana explícita.
+  - Referencias: agent-workflows/tools/install.py (MANUAL&#95;BLOCKS legado vs PERSONAL&#95;BLOCKS); agent-workflows/tests/test&#95;carril.py (tests candidato existentes); smoke V2 del 2026-10-06 ( hallazgo del maintainer).
+
+### S231 — La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/marca.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/main&#95;test.go, agent-workflows/tools/piloto/marca&#95;test.go, agent-workflows/tools/piloto/vuelo&#95;test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot&#95;test.go, agent-workflows/skills/chanks-4-puente/SKILL.md
+  - Depende de: —
+  - Recursos: directorio común de Git (estado del piloto)
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: En el smoke la pregunta de consentimiento RDD nunca apareció: la sonda es sólo una línea de checklist (piloto main.go:537) y el test sólo busca la palabra «consentimiento». Además ningún texto de agente ofrece el piloto y &#96;radar status --json&#96; no expone el interruptor (snapshot.go:22-35), aunque project-agents.md manda a los agentes a leer esa proyección.
+  - Resultado y comportamiento: &#96;piloto sonda --confirmar&#96; registra que el humano respondió la pregunta de consentimiento RDD de la corrida (schema propio radar.piloto.sonda/v1 en el directorio común; no se agrega ningún campo a interruptor.json). &#96;piloto despegar&#96; se niega antes de crear ramas o copias cuando falta la sonda, nombrando la pregunta y el comando; &#96;marcar --en-curso&#96; también se niega sin sonda. &#96;radar status --json&#96; expone &#96;piloto: {prendido, rondas, tope}&#96;. chanks-4-puente lee el interruptor antes de entregar a Gentle AI y, si está prendido, hace la pregunta bloqueante «¿con piloto automático o en esta conversación?».
+  - Restricciones y decisiones: La sonda registra sólo que el humano respondió; jamás guarda un lineage ni identidad de revisión RDD (plan.yaml: esta Torre no decide el consentimiento de RDD). Candado duro desde ya. TDD con RED observado. ODD nativo.
+  - Referencias: Engram 13286, 13290, 13291, 13292; openspec/archive/sesiones/S215.md (regla de la sonda); radar/etapa.go:452-477 (lector estricto del interruptor); marca&#95;test.go:40-110.
+
+### S232 — Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar.
+- Coordinación:
+  - Estado derivado: 📋 PLANIFICADO · espera-natural (S231, S233)
+  - Zona/Área: producto-torre · product/tower/
+  - Archivos autorizados: product/tower/v1/instructions/project-agents.md, product/tower/v1/test/instructions.test.mjs
+  - Depende de: S231, S233
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: project-agents.md:28,70 manda la etapa 4 directo a chanks-4-puente sin mencionar el piloto, y no hay ninguna instrucción de agente para el regreso del vuelo; por eso el agente aterrizó sin mostrar lo hecho.
+  - Resultado y comportamiento: Regla dura: antes de toda entrega de etapa 4, el agente lee &#96;piloto&#96; en &#96;radar status --json&#96;; si está prendido, hace la pregunta bloqueante de modo y se detiene. Al regreso del vuelo: muestra cada commit, pide la aprobación bloqueante y la registra con el comando de S233 antes de &#96;piloto aterrizar&#96;. Sin piloto prendido nada cambia.
+  - Restricciones y decisiones: Texto mínimo dentro del bloque gestionado existente. Test RED en instructions.test.mjs.
+  - Referencias: Engram 13291; product/tower/v1/test/instructions.test.mjs:44-58.
+
+### S233 — &#96;piloto aterrizar&#96; se niega a integrar una Sesión sin la aprobación humana registrada de su commit exacto.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/piloto/aterrizaje.go, agent-workflows/tools/piloto/aterrizaje&#95;test.go, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main&#95;test.go
+  - Depende de: —
+  - Recursos: directorio común de Git (estado del piloto)
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: aterrizarVuelo (aterrizaje.go:140-205) sólo exige --confirmar, la lista --aprobar y las marcas de cierre, todo escrito por el agente; no existe registro de aprobación humana.
+  - Resultado y comportamiento: &#96;piloto aprobar &lt;Sesión&gt; --decision &lt;texto&gt;&#96; exige marca de cierre y registra la aprobación atada al SHA del commit (schema radar.piloto.aprobacion/v1, mismo patrón que la resolución de NOVEDAD). &#96;aterrizar&#96; falla cerrado si alguna Sesión de la porción no tiene aprobación o su SHA no coincide con la marca, con un mensaje que pide revisar commit por commit.
+  - Restricciones y decisiones: La revisión es humana; piloto determiniza el registro, no el juicio. TDD con RED observado: hoy aterrizar con marcas y sin aprobación pasa.
+  - Referencias: Engram 13291; revision.go resolverNovedad; aterrizaje&#95;test.go:200-234.
+
+### S234 — El despegue ya no arma el índice CodeGraph, el retiro del vuelo tolera &#96;.codegraph/&#96; como artefacto de herramienta, y despegue y aterrizaje muestran emojis claros.
+- Coordinación:
+  - Estado derivado: 📚 ARCHIVADO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/piloto/worktree.go, agent-workflows/tools/piloto/worktree&#95;test.go, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main&#95;test.go, agent-workflows/tools/piloto/aterrizaje.go
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: &#96;codegraph init&#96; deja &#96;.codegraph/&#96; sin índice real; en un repo sin .gitignore esa carpeta es trabajo pendiente (worktree.go:148) y &#96;piloto retirar&#96; se niega. El agente la recrea solo al consultar, así que el despegue no gana nada.
+  - Resultado y comportamiento: prepararCopia deja de correr codegraph init (bun install queda). trabajoPendiente ignora sólo &#96;.codegraph/&#96;; cualquier otro archivo sin seguimiento sigue frenando el retiro. Salidas: 🚀 despegue confirmado, 🛫 por vuelo, 🛬 vuelo aterrizó, ✅ última Sesión aprobada, 🧹 vuelo retirado, 🧭 informe de la corrida.
+  - Restricciones y decisiones: No escribir el .gitignore del repo destino. Mantener ✗ en rechazos y «no sube» en el aterrizaje. TDD con RED observado.
+  - Referencias: Engram 13291; docs/architecture/piloto-copias-de-trabajo.md (D4); main&#95;test.go:405.
+
+### S235 — En V2 despega un solo vuelo por corrida; pedir más se rechaza con un mensaje claro de que el paralelo llega en V3.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main&#95;test.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/vuelo&#95;test.go
+  - Depende de: —
+  - Recursos: directorio común de Git (estado del piloto)
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Con dos vuelos, el segundo nunca puede aterrizar (aterrizaje.go:235 exige avance en línea recta) y el estado compartido no tiene candado (marca.go:303, vuelo.go:454).
+  - Resultado y comportamiento: &#96;piloto despegar&#96; acepta exactamente un vuelo aprobado; si se aprueban más, o ya hay una corrida con vuelo activo, se niega antes de crear ramas o copias con un mensaje que dice que en V2 vuela uno por corrida y el paralelo llega en V3.
+  - Restricciones y decisiones: No construir Pista ni elevar. TDD con RED observado.
+  - Referencias: Engram 13291; docs/architecture/piloto-automatico.md §10.
+
+### S236 — Cuando el usuario pide lanzar un agente para trabajar, chanks-0-comunicacion-agentes lo abre en una pestaña nueva de Herdr con el nombre del trabajo; el panel al lado queda sólo para mirar en paralelo.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md, agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md, agent-workflows/tests/test&#95;comunicacion&#95;agentes.py
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Al lanzar la sesión implementadora se abrió en un panel de la misma pestaña, porque casos-herdr.md:54 dice «abrí el panel junto al tuyo» y la skill herdr nativa también usa panel hermano por defecto. La regla de pestaña propia por agente de trabajo se perdió al diferir chanks-3-despacho-herdr.
+  - Resultado y comportamiento: Caso «iniciar un agente para trabajar»: pestaña nueva con etiqueta del trabajo, sin foco, conservando el directorio de trabajo, y el agente con nombre único en el panel raíz de esa pestaña (herdr tab create; IDs leídos del JSON). Caso «abrí un panel para mirar»: panel hermano como hoy. Si el pedido no deja claro cuál es, preguntá. Sigue sin copiar procedimiento de la skill herdr nativa.
+  - Restricciones y decisiones: No edita la skill herdr nativa (la emite el binario). Refrescar la copia de Pi ~/.pi/agent/skills/herdr/SKILL.md desde &#96;herdr --skill&#96; (0.9.1) y quitar su párrafo viejo de la Torre (chanks-3-despacho-herdr, torre-control → torre asiento) es una acción de máquina aparte que requiere autorización del maintainer. TDD con RED observado.
+  - Referencias: Engram 13294; agent-workflows/skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md (regla de pestaña declarada por worker); test&#95;comunicacion&#95;agentes.py.
 
 ### S204 — Radar se compila sin internet en cualquier máquina porque su dependencia viaja dentro del repo.
 - Coordinación:
@@ -4494,7 +4595,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

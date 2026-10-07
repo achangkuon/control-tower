@@ -2273,30 +2273,7 @@ sesiones:
       referencias: >-
         Engram 13291; revision.go resolverNovedad; aterrizaje_test.go:200-234.
 
-  - id: S234
-    zona: metodo
-    prioridad: v2-piloto
-    resultado: "El despegue ya no arma el índice CodeGraph, el retiro del vuelo tolera `.codegraph/` como artefacto de herramienta, y despegue y aterrizaje muestran emojis claros."
-    autoridad: "Hallazgos #3 y #4 del smoke de V2 (Engram 13286). El maintainer decidió el 2026-10-07 quitar codegraph init del despegue, revirtiendo S220 D4 (Engram 13292)."
-    depende_de: []
-    cimientos: []
-    recurso: []
-    archivos: [agent-workflows/tools/piloto/worktree.go, agent-workflows/tools/piloto/worktree_test.go, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main_test.go, agent-workflows/tools/piloto/aterrizaje.go]
-    encargo:
-      pedido_contexto: >-
-        `codegraph init` deja `.codegraph/` sin índice real; en un repo sin .gitignore esa carpeta
-        es trabajo pendiente (worktree.go:148) y `piloto retirar` se niega. El agente la recrea
-        solo al consultar, así que el despegue no gana nada.
-      resultado_comportamiento: >-
-        prepararCopia deja de correr codegraph init (bun install queda). trabajoPendiente ignora
-        sólo `.codegraph/`; cualquier otro archivo sin seguimiento sigue frenando el retiro.
-        Salidas: 🚀 despegue confirmado, 🛫 por vuelo, 🛬 vuelo aterrizó, ✅ última Sesión
-        aprobada, 🧹 vuelo retirado, 🧭 informe de la corrida.
-      restricciones_decisiones: >-
-        No escribir el .gitignore del repo destino. Mantener ✗ en rechazos y «no sube» en el
-        aterrizaje. TDD con RED observado.
-      referencias: >-
-        Engram 13291; docs/architecture/piloto-copias-de-trabajo.md (D4); main_test.go:405.
+  - {id: S234, entrega: {commit: 74db1894e0570fd23ed98825609a660fc13f50aa}, historico: openspec/archive/sesiones/S234.md}
 
   - id: S235
     zona: metodo
