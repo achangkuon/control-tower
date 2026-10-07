@@ -197,10 +197,103 @@ func prepararVueloConCierres(t *testing.T, root string) (Vuelo, map[string]strin
 	return v, commits
 }
 
+func TestAprobarSesion(t *testing.T) {
+	t.Run("registra la aprobación atada al SHA del cierre", func(t *testing.T) {
+		root, _ := repoGit(t)
+		_, commits := prepararVueloConCierres(t, root)
+		a, err := aprobarSesion(root, "S1", "revisado commit por commit, ok")
+		if err != nil {
+			t.Fatalf("aprobarSesion: %v", err)
+		}
+		if a.Commit != commits["S1"] || a.Sesion != "S1" || a.Vuelo != "S1" || a.Ronda != 1 {
+			t.Fatalf("aprobación = %+v", a)
+		}
+		guardada, err := leerAprobacion(root, "S1")
+		if err != nil || guardada == nil || guardada.Commit != commits["S1"] {
+			t.Fatalf("la aprobación no quedó registrada: %+v (%v)", guardada, err)
+		}
+	})
+	t.Run("exige la marca de cierre", func(t *testing.T) {
+		root, _ := repoGit(t)
+		prepararVueloConCierres(t, root)
+		if _, err := aprobarSesion(root, "S9", "ok"); err == nil {
+			t.Fatal("aprobar una Sesión sin cierre debe fallar")
+		}
+	})
+	t.Run("exige texto de decisión", func(t *testing.T) {
+		root, _ := repoGit(t)
+		prepararVueloConCierres(t, root)
+		if _, err := aprobarSesion(root, "S1", "   "); err == nil {
+			t.Fatal("aprobar sin decisión debe fallar")
+		}
+	})
+}
+
+func TestAterrizajeExigeAprobacion(t *testing.T) {
+	t.Run("se niega sin la aprobación humana registrada", func(t *testing.T) {
+		root, _ := repoGit(t)
+		prepararVueloConCierres(t, root)
+		_, err := aterrizarVuelo(root, "S1", []string{"S1", "S3", "S5"}, true)
+		if err == nil {
+			t.Fatal("aterrizar con marcas y sin aprobación debe fallar cerrado")
+		}
+		if !strings.Contains(err.Error(), "aprobación") {
+			t.Fatalf("el rechazo nombra la aprobación humana: %q", err.Error())
+		}
+	})
+	t.Run("con la aprobación de cada commit aterriza", func(t *testing.T) {
+		root, _ := repoGit(t)
+		prepararVueloConCierres(t, root)
+		for _, s := range []string{"S1", "S3", "S5"} {
+			if _, err := aprobarSesion(root, s, "ok "+s); err != nil {
+				t.Fatalf("aprobar %s: %v", s, err)
+			}
+		}
+		if _, err := aterrizarVuelo(root, "S1", []string{"S1", "S3", "S5"}, true); err != nil {
+			t.Fatalf("con las aprobaciones registradas el aterrizaje procede: %v", err)
+		}
+	})
+	t.Run("un SHA que no coincide se niega", func(t *testing.T) {
+		root, _ := repoGit(t)
+		v, _ := prepararVueloConCierres(t, root)
+		for _, s := range []string{"S1", "S3", "S5"} {
+			if _, err := aprobarSesion(root, s, "ok "+s); err != nil {
+				t.Fatal(err)
+			}
+		}
+		// La marca de S3 se re-apunta a otro commit después de la aprobación:
+		// el aterrizaje debe negarse porque el SHA aprobado ya no coincide.
+		gitFixture(t, v.Copia, "commit", "--allow-empty", "-qm", "otro commit")
+		nuevo := gitFixture(t, v.Copia, "rev-parse", "HEAD^{commit}")
+		if err := escribirMarca(root, Marca{Sesion: "S3", Vuelo: v.ID, Rama: v.Rama, Estado: estadoCierre, Commit: nuevo, Ronda: 1}); err != nil {
+			t.Fatal(err)
+		}
+		_, err := aterrizarVuelo(root, "S1", []string{"S1", "S3", "S5"}, true)
+		if err == nil {
+			t.Fatal("un SHA aprobado que ya no coincide con la marca debe negar el aterrizaje")
+		}
+		if !strings.Contains(err.Error(), "commit por commit") {
+			t.Fatalf("el rechazo pide revisar commit por commit: %q", err.Error())
+		}
+	})
+}
+
+// aprobarCierres registers the human approval of each Sesión's delivered
+// commit, the step the landing now requires (S233).
+func aprobarCierres(t *testing.T, root string, sesiones ...string) {
+	t.Helper()
+	for _, s := range sesiones {
+		if _, err := aprobarSesion(root, s, "revisado commit por commit"); err != nil {
+			t.Fatalf("aprobar %s: %v", s, err)
+		}
+	}
+}
+
 func TestAterrizajeVuelo(t *testing.T) {
 	t.Run("integra la porción aprobada consecutiva", func(t *testing.T) {
 		root, _ := repoGit(t)
 		v, commits := prepararVueloConCierres(t, root)
+		aprobarCierres(t, root, "S1", "S3", "S5")
 		a, err := aterrizarVuelo(root, v.ID, []string{"S1", "S3", "S5"}, true)
 		if err != nil {
 			t.Fatalf("aterrizarVuelo: %v", err)
@@ -215,6 +308,7 @@ func TestAterrizajeVuelo(t *testing.T) {
 	t.Run("sólo hasta la última aprobada", func(t *testing.T) {
 		root, _ := repoGit(t)
 		v, commits := prepararVueloConCierres(t, root)
+		aprobarCierres(t, root, "S1", "S3")
 		a, err := aterrizarVuelo(root, v.ID, []string{"S1", "S3"}, true)
 		if err != nil {
 			t.Fatalf("aterrizarVuelo: %v", err)
@@ -309,6 +403,7 @@ func TestAterrizajeVueloUnionEspera(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	aprobarCierres(t, root, "A1", "S7")
 	if _, err := aterrizarVuelo(root, "A1", []string{"A1", "S7"}, true); err == nil {
 		t.Fatal("una Sesión que une dos vuelos espera la revisión del otro")
 	}
@@ -316,6 +411,7 @@ func TestAterrizajeVueloUnionEspera(t *testing.T) {
 	if err := escribirMarca(root, Marca{Sesion: "B1", Vuelo: "B1", Rama: ramaB, Estado: estadoCierre, Commit: base, Ronda: 1}); err != nil {
 		t.Fatal(err)
 	}
+	aprobarCierres(t, root, "B1")
 	if _, err := aterrizarVuelo(root, "A1", []string{"A1", "S7"}, true); err != nil {
 		t.Fatalf("con ambos vuelos revisados el aterrizaje procede: %v", err)
 	}

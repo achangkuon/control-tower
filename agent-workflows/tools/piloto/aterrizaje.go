@@ -132,6 +132,79 @@ type Aterrizaje struct {
 	Ultima    string
 }
 
+// esquemaAprobacion is the schema of one recorded human approval (S233).
+const esquemaAprobacion = "radar.piloto.aprobacion/v1"
+
+// Aprobacion records the maintainer's approval of one delivered Sesión, bound
+// to the exact commit SHA of its cierre mark. The review is human; piloto
+// determinizes the record, not the judgment.
+type Aprobacion struct {
+	Schema   string `json:"schema"`
+	Sesion   string `json:"sesion"`
+	Vuelo    string `json:"vuelo"`
+	Commit   string `json:"commit"`
+	Decision string `json:"decision"`
+	Ronda    int    `json:"ronda"`
+}
+
+// aprobarSesion registers the human approval of one delivered Sesión, tied to
+// the exact commit SHA of its cierre mark. It fails closed unless the Sesión
+// actually has a cierre mark with a commit, and the decision carries real text.
+func aprobarSesion(root, sesion, decision string) (*Aprobacion, error) {
+	if !idValido(sesion) {
+		return nil, fmt.Errorf("ID de piloto inválido: %q", sesion)
+	}
+	decision = strings.TrimSpace(decision)
+	if decision == "" {
+		return nil, fmt.Errorf("la aprobación necesita el texto de la revisión humana")
+	}
+	if len(decision) > topeDecision {
+		return nil, fmt.Errorf("la decisión supera los %d caracteres admisibles", topeDecision)
+	}
+	c, err := corridaActual(root)
+	if err != nil {
+		return nil, err
+	}
+	v, ok := vueloDe(c, sesion)
+	if !ok {
+		return nil, fmt.Errorf("la Sesión %s no pertenece a ningún vuelo de la corrida", sesion)
+	}
+	marca, err := leerMarca(root, sesion)
+	if err != nil {
+		return nil, err
+	}
+	if marca == nil || marca.Estado != estadoCierre || marca.Commit == "" {
+		return nil, fmt.Errorf("la Sesión %s no tiene una entrega cerrada para aprobar", sesion)
+	}
+	commit, err := commitValido(root, marca.Commit)
+	if err != nil {
+		return nil, err
+	}
+	a := Aprobacion{Schema: esquemaAprobacion, Sesion: sesion, Vuelo: v.ID, Commit: commit, Decision: decision, Ronda: marca.Ronda}
+	if err := escribirRegistro(root, "aprobaciones", sesion, a); err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+// leerAprobacion returns the recorded approval of a Sesión, or nil when none
+// exists. A stored record that no longer decodes as the schema is an error,
+// never a silent "no approval".
+func leerAprobacion(root, sesion string) (*Aprobacion, error) {
+	var a Aprobacion
+	ok, err := leerRegistro(root, "aprobaciones", sesion, &a)
+	if err != nil || !ok {
+		return nil, err
+	}
+	if a.Schema != esquemaAprobacion || a.Sesion != sesion || !idValido(a.Vuelo) || strings.TrimSpace(a.Decision) == "" || a.Ronda < 1 {
+		return nil, fmt.Errorf("aprobación de %s inválida", sesion)
+	}
+	if _, err := commitValido(root, a.Commit); err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
 // aterrizarVuelo validates and integrates the approved portion of a flight into
 // the local integrated branch. It refuses without an explicit approval flag and
 // unless every Sesión up to the last approved one is POR REVISAR in the record;
@@ -184,6 +257,23 @@ func aterrizarVuelo(root, vuelo string, aprobadas []string, confirmado bool) (*A
 		m := marcas[s]
 		if m == nil || m.Estado != estadoCierre {
 			return nil, fmt.Errorf("la Sesión %s no está POR REVISAR en el registro: no se aterriza", s)
+		}
+		// S233: the human approval of this exact commit is mandatory. The agent
+		// registers it with `piloto aprobar` after the maintainer reviews the
+		// commit; landing fails closed without it or on any SHA mismatch.
+		a, err := leerAprobacion(root, s)
+		if err != nil {
+			return nil, err
+		}
+		if a == nil {
+			return nil, fmt.Errorf("la Sesión %s no tiene la aprobación humana registrada (piloto aprobar %s --decision <texto>): revisá commit por commit", s, s)
+		}
+		commit, err := commitValido(root, m.Commit)
+		if err != nil {
+			return nil, err
+		}
+		if !strings.EqualFold(a.Commit, commit) {
+			return nil, fmt.Errorf("la aprobación de %s fue para %s y la entrega cerrada es %s: revisá commit por commit", s, a.Commit, commit)
 		}
 		dentro, err := commitEnRama(root, m.Commit, v.Rama)
 		if err != nil {
@@ -242,6 +332,16 @@ func formatearAterrizaje(w io.Writer, a *Aterrizaje) {
 	fmt.Fprintf(w, "🛬 Vuelo %s aterrizó — porción aprobada integrada: %s\n", a.Vuelo, strings.Join(a.Aprobadas, " → "))
 	fmt.Fprintf(w, "   ✅ Última Sesión aprobada: %s (%s)\n", ultimaSesion, a.Ultima)
 	fmt.Fprintln(w, "   La subida sigue la política ordinaria de entrega del repositorio; piloto no sube.")
+}
+
+// cmdAprobar registers the human approval of one delivered Sesión (S233).
+func cmdAprobar(w io.Writer, root, sesion, decision string) error {
+	a, err := aprobarSesion(root, sesion, decision)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(w, "✓ %s aprobada (vuelo %s · commit %s): %s\n", a.Sesion, a.Vuelo, a.Commit, a.Decision)
+	return nil
 }
 
 func formatearPlanTraslado(w io.Writer, plan *PlanTraslado) {

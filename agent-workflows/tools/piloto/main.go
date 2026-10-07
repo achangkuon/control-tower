@@ -37,6 +37,8 @@ const uso = `piloto — herramienta determinista del piloto automático
   piloto orden-revision [-C raíz]
                   orden de revisión en cascada: NOVEDAD primero y, dentro del vuelo,
                   base-arriba según las dependencias
+  piloto aprobar <sesión> --decision <texto> [-C raíz]
+                  registra la aprobación humana de la entrega de esa Sesión, atada al SHA del commit
   piloto resolver-novedad <sesión> --decision <texto> [-C raíz]
                   registra la decisión del mantenedor que resuelve una NOVEDAD
   piloto impacto <sesión> [--tipo leve|medio|grave] [-C raíz]
@@ -261,6 +263,21 @@ func ejecutar(args []string, salida, errores io.Writer, entrada io.Reader) int {
 			return 2
 		}
 		if err := cmdResolverNovedad(salida, root, pos[0], *decision); err != nil {
+			return falla(err)
+		}
+	case "aprobar":
+		fs := flag.NewFlagSet("aprobar", flag.ContinueOnError)
+		fs.SetOutput(errores)
+		decision := fs.String("decision", "", "texto de la revisión humana del commit")
+		pos, err := parsearConPosicionales(fs, resto)
+		if err != nil {
+			return 2
+		}
+		if len(pos) != 1 {
+			fmt.Fprint(errores, "uso: piloto aprobar <sesión> --decision <texto> [-C raíz]\n")
+			return 2
+		}
+		if err := cmdAprobar(salida, root, pos[0], *decision); err != nil {
 			return falla(err)
 		}
 	case "impacto":

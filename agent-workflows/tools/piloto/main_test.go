@@ -510,6 +510,21 @@ func TestEmojiContratoSalidas(t *testing.T) {
 	})
 }
 
+func TestAprobarCLI(t *testing.T) {
+	root, _ := repoGit(t)
+	v, _ := prepararVueloConCierres(t, root)
+	var salida bytes.Buffer
+	if err := cmdAprobar(&salida, root, "S1", "revisado commit por commit"); err != nil {
+		t.Fatalf("cmdAprobar: %v", err)
+	}
+	if !strings.Contains(salida.String(), "S1 aprobada") || !strings.Contains(salida.String(), v.ID) {
+		t.Fatalf("salida = %q", salida.String())
+	}
+	if err := cmdAprobar(&salida, root, "S9", "ok"); err == nil {
+		t.Fatal("aprobar una Sesión sin entrega cerrada debe fallar")
+	}
+}
+
 func TestRondaCLI(t *testing.T) {
 	root, _ := repoGit(t)
 	corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}, Miembro{Sesion: "S3", DependeDe: []string{"S1"}}))
