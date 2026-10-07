@@ -2186,6 +2186,135 @@ sesiones:
   - {id: S229, entrega: {commit: dae9df488164524ce312503e3bb5a5a18ad4f4ae}, historico: openspec/archive/sesiones/S229.md}
 
   - {id: S230, entrega: {commit: 802727fde1f961990a4716348cd474550d8e696f}, historico: openspec/archive/sesiones/S230.md}
+
+  # Arreglos del smoke de V2 (2026-10-06/07): auditorías read-only en Engram 13291,
+  # decisiones del maintainer en Engram 13290/13292. Causa común: reglas escritas en prosa
+  # que ninguna herramienta obliga a cumplir.
+  - id: S231
+    zona: metodo
+    prioridad: v2-piloto
+    resultado: "La sonda de consentimiento RDD es un candado: el despegue y el EN CURSO se niegan sin ella, y Radar expone si el piloto está prendido para que el agente ofrezca el piloto al implementar."
+    autoridad: "Hallazgos #1 y #7 del smoke de V2 (Engram 13286). El maintainer decidió el 2026-10-07: el piloto se ofrece al pasar a implementar sólo con el interruptor prendido (Engram 13290); la sonda es candado duro, su propósito es que «autorizar siempre» deje correr RDD toda la sesión sin apagarlo global (Engram 13292)."
+    depende_de: []
+    cimientos: []
+    recurso: ["directorio común de Git (estado del piloto)"]
+    archivos: [agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/marca.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/main_test.go, agent-workflows/tools/piloto/marca_test.go, agent-workflows/tools/piloto/vuelo_test.go, agent-workflows/tools/radar/snapshot.go, agent-workflows/tools/radar/snapshot_test.go, agent-workflows/skills/chanks-4-puente/SKILL.md]
+    encargo:
+      pedido_contexto: >-
+        En el smoke la pregunta de consentimiento RDD nunca apareció: la sonda es sólo una línea
+        de checklist (piloto main.go:537) y el test sólo busca la palabra «consentimiento». Además
+        ningún texto de agente ofrece el piloto y `radar status --json` no expone el interruptor
+        (snapshot.go:22-35), aunque project-agents.md manda a los agentes a leer esa proyección.
+      resultado_comportamiento: >-
+        `piloto sonda --confirmar` registra que el humano respondió la pregunta de consentimiento
+        RDD de la corrida (schema propio radar.piloto.sonda/v1 en el directorio común; no se agrega
+        ningún campo a interruptor.json). `piloto despegar` se niega antes de crear ramas o copias
+        cuando falta la sonda, nombrando la pregunta y el comando; `marcar --en-curso` también se
+        niega sin sonda. `radar status --json` expone `piloto: {prendido, rondas, tope}`.
+        chanks-4-puente lee el interruptor antes de entregar a Gentle AI y, si está prendido, hace
+        la pregunta bloqueante «¿con piloto automático o en esta conversación?».
+      restricciones_decisiones: >-
+        La sonda registra sólo que el humano respondió; jamás guarda un lineage ni identidad de
+        revisión RDD (plan.yaml: esta Torre no decide el consentimiento de RDD). Candado duro desde
+        ya. TDD con RED observado. ODD nativo.
+      referencias: >-
+        Engram 13286, 13290, 13291, 13292; openspec/archive/sesiones/S215.md (regla de la sonda);
+        radar/etapa.go:452-477 (lector estricto del interruptor); marca_test.go:40-110.
+
+  - id: S232
+    zona: producto-torre
+    prioridad: v2-piloto
+    resultado: "Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar."
+    autoridad: "Hallazgos #7 y #2 del smoke de V2 (Engram 13286); decisiones del maintainer del 2026-10-07 (Engram 13290/13292)."
+    depende_de: [S231, S233]
+    cimientos: []
+    recurso: []
+    archivos: [product/tower/v1/instructions/project-agents.md, product/tower/v1/test/instructions.test.mjs]
+    encargo:
+      pedido_contexto: >-
+        project-agents.md:28,70 manda la etapa 4 directo a chanks-4-puente sin mencionar el
+        piloto, y no hay ninguna instrucción de agente para el regreso del vuelo; por eso el
+        agente aterrizó sin mostrar lo hecho.
+      resultado_comportamiento: >-
+        Regla dura: antes de toda entrega de etapa 4, el agente lee `piloto` en `radar status
+        --json`; si está prendido, hace la pregunta bloqueante de modo y se detiene. Al regreso
+        del vuelo: muestra cada commit, pide la aprobación bloqueante y la registra con el comando
+        de S233 antes de `piloto aterrizar`. Sin piloto prendido nada cambia.
+      restricciones_decisiones: >-
+        Texto mínimo dentro del bloque gestionado existente. Test RED en instructions.test.mjs.
+      referencias: >-
+        Engram 13291; product/tower/v1/test/instructions.test.mjs:44-58.
+
+  - id: S233
+    zona: metodo
+    prioridad: v2-piloto
+    resultado: "`piloto aterrizar` se niega a integrar una Sesión sin la aprobación humana registrada de su commit exacto."
+    autoridad: "Hallazgo #2 del smoke de V2 (Engram 13286); regla S217/Engram 13259 (revisión humana commit por commit). El maintainer decidió el 2026-10-07 que el agente pregunte y registre la respuesta (Engram 13292)."
+    depende_de: []
+    cimientos: []
+    recurso: ["directorio común de Git (estado del piloto)"]
+    archivos: [agent-workflows/tools/piloto/aterrizaje.go, agent-workflows/tools/piloto/aterrizaje_test.go, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main_test.go]
+    encargo:
+      pedido_contexto: >-
+        aterrizarVuelo (aterrizaje.go:140-205) sólo exige --confirmar, la lista --aprobar y las
+        marcas de cierre, todo escrito por el agente; no existe registro de aprobación humana.
+      resultado_comportamiento: >-
+        `piloto aprobar <Sesión> --decision <texto>` exige marca de cierre y registra la aprobación
+        atada al SHA del commit (schema radar.piloto.aprobacion/v1, mismo patrón que la resolución
+        de NOVEDAD). `aterrizar` falla cerrado si alguna Sesión de la porción no tiene aprobación o
+        su SHA no coincide con la marca, con un mensaje que pide revisar commit por commit.
+      restricciones_decisiones: >-
+        La revisión es humana; piloto determiniza el registro, no el juicio. TDD con RED observado:
+        hoy aterrizar con marcas y sin aprobación pasa.
+      referencias: >-
+        Engram 13291; revision.go resolverNovedad; aterrizaje_test.go:200-234.
+
+  - id: S234
+    zona: metodo
+    prioridad: v2-piloto
+    resultado: "El despegue ya no arma el índice CodeGraph, el retiro del vuelo tolera `.codegraph/` como artefacto de herramienta, y despegue y aterrizaje muestran emojis claros."
+    autoridad: "Hallazgos #3 y #4 del smoke de V2 (Engram 13286). El maintainer decidió el 2026-10-07 quitar codegraph init del despegue, revirtiendo S220 D4 (Engram 13292)."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos: [agent-workflows/tools/piloto/worktree.go, agent-workflows/tools/piloto/worktree_test.go, agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main_test.go, agent-workflows/tools/piloto/aterrizaje.go]
+    encargo:
+      pedido_contexto: >-
+        `codegraph init` deja `.codegraph/` sin índice real; en un repo sin .gitignore esa carpeta
+        es trabajo pendiente (worktree.go:148) y `piloto retirar` se niega. El agente la recrea
+        solo al consultar, así que el despegue no gana nada.
+      resultado_comportamiento: >-
+        prepararCopia deja de correr codegraph init (bun install queda). trabajoPendiente ignora
+        sólo `.codegraph/`; cualquier otro archivo sin seguimiento sigue frenando el retiro.
+        Salidas: 🚀 despegue confirmado, 🛫 por vuelo, 🛬 vuelo aterrizó, ✅ última Sesión
+        aprobada, 🧹 vuelo retirado, 🧭 informe de la corrida.
+      restricciones_decisiones: >-
+        No escribir el .gitignore del repo destino. Mantener ✗ en rechazos y «no sube» en el
+        aterrizaje. TDD con RED observado.
+      referencias: >-
+        Engram 13291; docs/architecture/piloto-copias-de-trabajo.md (D4); main_test.go:405.
+
+  - id: S235
+    zona: metodo
+    prioridad: v2-piloto
+    resultado: "En V2 despega un solo vuelo por corrida; pedir más se rechaza con un mensaje claro de que el paralelo llega en V3."
+    autoridad: "Hallazgo #5 del smoke de V2 (Engram 13286). El maintainer decidió el 2026-10-07: un solo vuelo por corrida en V2, paralelo real (Pista) en V3 (Engram 13292)."
+    depende_de: []
+    cimientos: []
+    recurso: ["directorio común de Git (estado del piloto)"]
+    archivos: [agent-workflows/tools/piloto/main.go, agent-workflows/tools/piloto/main_test.go, agent-workflows/tools/piloto/vuelo.go, agent-workflows/tools/piloto/vuelo_test.go]
+    encargo:
+      pedido_contexto: >-
+        Con dos vuelos, el segundo nunca puede aterrizar (aterrizaje.go:235 exige avance en línea
+        recta) y el estado compartido no tiene candado (marca.go:303, vuelo.go:454).
+      resultado_comportamiento: >-
+        `piloto despegar` acepta exactamente un vuelo aprobado; si se aprueban más, o ya hay una
+        corrida con vuelo activo, se niega antes de crear ramas o copias con un mensaje que dice
+        que en V2 vuela uno por corrida y el paralelo llega en V3.
+      restricciones_decisiones: >-
+        No construir Pista ni elevar. TDD con RED observado.
+      referencias: >-
+        Engram 13291; docs/architecture/piloto-automatico.md §10.
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
   - {id: S205, entrega: {commit: e6def96543ea6396a14d97404619ccf06f060d65}, historico: openspec/archive/sesiones/S205.md}
