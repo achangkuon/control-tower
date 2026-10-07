@@ -33,4 +33,6 @@ S231 and S233 (both archived).
 
 ## Evidence
 
-- Work-unit commit on branch s232-oferta-piloto (recorded below).
+- Work-unit commit 6afe7a68d46690715ac9d409724a97c0ff5bb11f on master
+  (feat(instructions): gate stage 4 on the automatic pilot and the landing
+  approvals). Instructions test 16 pass, 0 fail.

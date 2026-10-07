@@ -2200,29 +2200,7 @@ sesiones:
   # que ninguna herramienta obliga a cumplir.
   - {id: S231, entrega: {commit: c1dd2893ceca9c9add816e3887aff86af5995f54}, historico: openspec/archive/sesiones/S231.md}
 
-  - id: S232
-    zona: producto-torre
-    prioridad: v2-piloto
-    resultado: "Las instrucciones que la Torre instala en cada proyecto obligan a ofrecer el piloto antes de implementar cuando el interruptor está prendido, y a revisar commit por commit con el humano antes de aterrizar."
-    autoridad: "Hallazgos #7 y #2 del smoke de V2 (Engram 13286); decisiones del maintainer del 2026-10-07 (Engram 13290/13292)."
-    depende_de: [S231, S233]
-    cimientos: []
-    recurso: []
-    archivos: [product/tower/v1/instructions/project-agents.md, product/tower/v1/test/instructions.test.mjs]
-    encargo:
-      pedido_contexto: >-
-        project-agents.md:28,70 manda la etapa 4 directo a chanks-4-puente sin mencionar el
-        piloto, y no hay ninguna instrucción de agente para el regreso del vuelo; por eso el
-        agente aterrizó sin mostrar lo hecho.
-      resultado_comportamiento: >-
-        Regla dura: antes de toda entrega de etapa 4, el agente lee `piloto` en `radar status
-        --json`; si está prendido, hace la pregunta bloqueante de modo y se detiene. Al regreso
-        del vuelo: muestra cada commit, pide la aprobación bloqueante y la registra con el comando
-        de S233 antes de `piloto aterrizar`. Sin piloto prendido nada cambia.
-      restricciones_decisiones: >-
-        Texto mínimo dentro del bloque gestionado existente. Test RED en instructions.test.mjs.
-      referencias: >-
-        Engram 13291; product/tower/v1/test/instructions.test.mjs:44-58.
+  - {id: S232, entrega: {commit: 6afe7a68d46690715ac9d409724a97c0ff5bb11f}, historico: openspec/archive/sesiones/S232.md}
 
   - {id: S233, entrega: {commit: 9f1576c607f7fcbd1c5391ee80e7a3a17d1e5b72}, historico: openspec/archive/sesiones/S233.md}
 
