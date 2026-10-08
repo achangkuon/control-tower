@@ -15,6 +15,12 @@ const root = join(fileURLToPath(new URL("../..", import.meta.url)))
 const directories = []
 afterEach(() => directories.splice(0).forEach((directory) => rmSync(directory, { recursive: true, force: true })))
 
+// Issue #147: this integration test runs real git init/worktree, spawns an
+// opencode fixture server and several launch-worker processes — a measured
+// ~3.2s baseline in isolation. The 5s default leaves too little headroom: under
+// full-suite load the run intermittently crossed the limit once (S117), blocking
+// a green candidate behind a blind retry. The generous budget makes the suite
+// deterministic; a timeout here now names a genuine stall instead of load noise.
 test("installed torre launch-worker ignores legacy and PATH shims while consuming its deterministic Main binding", () => {
   const directory = mkdtempSync(join(tmpdir(), "ct-launch-cli-")), main = join(directory, "Main"), worker = join(directory, "Worker"), commands = join(directory, "commands")
   directories.push(directory)
@@ -72,4 +78,4 @@ if (Bun.argv[2] === "serve") {
   const beforeStale = readFileSync(effects, "utf8")
   expect(spawnSync(installed, ["launch-worker", "--request-ref", "request-stale"], { cwd: main, env: installEnv, encoding: "utf8" }).stderr).toContain("CT_LAUNCH_BINDING_STALE")
   expect(readFileSync(effects, "utf8")).toBe(beforeStale)
-})
+}, 60_000)
