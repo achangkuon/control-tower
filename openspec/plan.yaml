@@ -2215,35 +2215,7 @@ sesiones:
   # docs/architecture/copiloto.md (orden derivado §7, pasos 2 a 6).
   - {id: S237, entrega: {commit: d907e10f89d6bf472f39b8aec505ecaf4b0f04a1}, historico: openspec/archive/sesiones/S237.md}
 
-  - id: S238
-    zona: metodo
-    prioridad: v2-copiloto
-    resultado: "Existe la herramienta `copiloto`: guarda el foco de cada conversación y produce el panorama y la tarjeta de la etapa (0 a 5) a partir de Radar, de forma determinista."
-    autoridad: "Diseño del copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md, Tramos 0 a 6 y §7 paso 3; Engram 13298, 13299)."
-    depende_de: [S231]
-    cimientos: []
-    recurso: []
-    archivos: [agent-workflows/tools/copiloto/go.mod, agent-workflows/tools/copiloto/main.go, agent-workflows/tools/copiloto/main_test.go, agent-workflows/tools/copiloto/foco.go, agent-workflows/tools/copiloto/foco_test.go, agent-workflows/tools/copiloto/tarjeta.go, agent-workflows/tools/copiloto/tarjeta_test.go, agent-workflows/tools/install-copiloto.sh, agent-workflows/tools/hooks/chanks-etapa.sh]
-    encargo:
-      pedido_contexto: >-
-        El flujo chanks no se ejecuta porque depende de que el agente se acuerde de cargar skills;
-        `radar etapa` sin Sesión siempre devuelve 1 · Definir y el hook de Claude no sabe el foco.
-      resultado_comportamiento: >-
-        `copiloto foco <ninguno|idea|S###>` registra el foco de la conversación (por conversación;
-        cada conversación nueva arranca en ninguno). La copia de trabajo de una Sesión con marcador
-        de despacho fija el foco sin preguntar. `copiloto tarjeta` devuelve: con foco ninguno, una
-        sola línea de panorama al inicio y luego nada (Etapa 0); con idea, la tarjeta de Etapa 1
-        (cierre de ambigüedades + skill); con S###, la etapa de `radar etapa <S###>` con su skill,
-        siguiente paso y archivos autorizados; en Etapa 3 con el interruptor prendido, la pregunta
-        piloto o conversación. Tarjeta de 1 a 3 líneas firmada 🧭. chanks-etapa.sh pasa a llamar a
-        copiloto (retira CHANKS_PREVIOUS_ETAPA_JSON).
-      restricciones_decisiones: >-
-        Guía, no bloquea. Nunca fija un foco sin aprobación humana salvo el hecho de la carpeta de
-        trabajo. Engram no es fuente: sólo Radar. En Etapa 4 no repite ni contradice a Gentle AI.
-        TDD con RED observado por etapa.
-      referencias: >-
-        docs/architecture/copiloto.md; radar/etapa.go:608-644; agent-workflows/tools/piloto (patrón
-        de herramienta e instalador).
+  - {id: S238, entrega: {commit: 62382edb7ed9d9f6ee633c307e3b4a084e58f06e}, historico: openspec/archive/sesiones/S238.md}
 
   - id: S239
     zona: metodo
