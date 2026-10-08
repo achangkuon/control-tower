@@ -3,8 +3,68 @@ package main
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
+
+// testsContratoAcoplados lists tracked test files whose content references one of
+// the Sesión's declared archivos by their two-segment suffix. Contract tests pin
+// literal skill and tool prose (issue #161): a Session whose contract legitimately
+// rewrites that prose fails the suite at push time, and the asserting test files
+// are never in the Session's declared archivos. Naming them in the contract lets
+// preparation include them in the authorized surfaces instead of expanding scope
+// mid-delivery. The scan is informational and deterministic over the same HEAD
+// snapshot as the rest of the contract; any lookup failure yields no section, never
+// an error.
+func testsContratoAcoplados(root string, s *Sesion) []string {
+	declarados := append(append([]string{}, s.Archivos...), s.Cimientos...)
+	for _, m := range s.Modulos {
+		declarados = append(declarados, m.Rutas...)
+	}
+	sufijos := map[string]bool{}
+	for _, a := range declarados {
+		partes := strings.Split(a, "/")
+		if len(partes) >= 2 {
+			sufijos[partes[len(partes)-2]+"/"+partes[len(partes)-1]] = true
+		}
+	}
+	if len(sufijos) == 0 {
+		return nil
+	}
+	head, err := gitHEAD(root)
+	if err != nil {
+		return nil
+	}
+	files, err := trackedFilesAt(root, head)
+	if err != nil {
+		return nil
+	}
+	var acoplados []string
+	for _, f := range files {
+		esTest := false
+		for _, seg := range strings.Split(f, "/") {
+			if strings.Contains(strings.ToLower(seg), "test") {
+				esTest = true
+				break
+			}
+		}
+		if !esTest {
+			continue
+		}
+		contenido, err := gitOutput(root, "cat-file", "blob", head+":"+f)
+		if err != nil {
+			continue
+		}
+		for sufijo := range sufijos {
+			if strings.Contains(contenido, sufijo) {
+				acoplados = append(acoplados, f)
+				break
+			}
+		}
+	}
+	sort.Strings(acoplados)
+	return acoplados
+}
 
 // cmdSesion prints the complete contract of exactly one Sesión, so an agent reads
 // the work it was handed instead of the whole plan. It refuses exactly where
@@ -32,6 +92,12 @@ func cmdSesion(w io.Writer, p *Plan, root, id string) error {
 	}
 	obs := p.observarDespachos(root)
 	escribirSesionConAvance(w, p, s, p.estadosConObservacion(root, head, nil, obs), entregados, obs.piloto)
+	if tests := testsContratoAcoplados(root, s); len(tests) > 0 {
+		fmt.Fprintln(w, "\nTests de contrato acoplados (incluyelos en las superficies autorizadas):")
+		for _, t := range tests {
+			fmt.Fprintf(w, "  - %s\n", t)
+		}
+	}
 	return nil
 }
 
