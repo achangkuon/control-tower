@@ -131,7 +131,7 @@ class IssuePatchContractTests(unittest.TestCase):
     def test_closure_skill_is_session_only_and_the_router_keeps_the_patch_rules(self):
         self.assertNotIn("Issue-Patch Closure", self.closure)
         self.assertNotIn("Herdr", self.closure)
-        self.assert_terms(self.closure, "nada que registrar", "`radar archivar <ID>`")
+        self.assert_terms(self.closure, "nada que registrar", "`radar archivar <ID> --commit <oid completo>`")
         self.assert_terms(self.router, "never changes Radar Session progress",
                           "nada que registrar", "No review outcome grants delivery",
                           "references/issue-patch-closure.md")
