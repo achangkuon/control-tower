@@ -199,6 +199,10 @@ func ejecutar(args []string, salida, errores io.Writer) int {
 	switch comando {
 	case "foco":
 		return cmdFoco(salida, errores, root, common, resto)
+	case "tarjeta":
+		return cmdTarjeta(salida, errores, root, common, resto)
+	case "panorama":
+		return cmdPanorama(salida, errores, root)
 	default:
 		fmt.Fprintf(errores, "comando desconocido: %s\n\n%s", comando, uso)
 		return 2
