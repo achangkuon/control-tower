@@ -273,7 +273,9 @@ test("generated Pi extension injects the copiloto card per turn, bounded and fai
   expect(pi).toContain('pi.on("before_agent_start"');
   expect(pi).toContain('spawnSync');
   expect(pi).toContain('"copiloto"');
-  expect(pi).toContain('"tarjeta", "-C", cwd');
+  expect(pi).toContain('args.push("-C", cwd)');
+  expect(pi).toContain('"--conversacion"');
+  expect(pi).toContain('sessionManager?.sessionId');
   expect(pi).toContain("timeout: 10_000");
   expect(pi).toContain("maxBuffer: 64 * 1024");
   expect(pi).toContain('customType: "copiloto-card"');
@@ -312,16 +314,21 @@ test("generated Pi extension injects and shows the copiloto card when the tool i
   const script = `const extension = await import(${JSON.stringify(pathToFileURL(join(home, ".pi/agent/extensions/chanks-notices.ts")).href)});
     const home = process.env.HOME; const handlers = new Map(); const notices = [];
     extension.default({ on: (event, callback) => handlers.set(event, callback) });
-    const ctx = { hasUI: true, cwd: home, ui: { notify: (text, level) => notices.push([text, level]) } };
+    const ctx = { hasUI: true, cwd: home, sessionManager: { sessionId: "sm-01_X.9" }, ui: { notify: (text, level) => notices.push([text, level]) } };
     const result = handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "hola" }, ctx);
     const hidden = handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "hola" }, { ...ctx, hasUI: false });
-    process.stdout.write(JSON.stringify({ result, hidden, notices }));`;
+    const unnamed = handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "hola" }, { ...ctx, sessionManager: {} });
+    const unsafe = handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "hola" }, { ...ctx, sessionManager: { sessionId: "a b/c" } });
+    process.stdout.write(JSON.stringify({ result, hidden, unnamed, unsafe, notices }));`;
   const result = spawnSync(process.execPath, ["--eval", script], { env: { HOME: home, PATH: bin }, encoding: "utf8", timeout: 10_000, maxBuffer: 64 * 1024 });
   expect(result.status).toBe(0); expect(result.stderr).toBe("");
-  const card = `DIR=${home} ARGS=tarjeta -C ${home}`;
+  const card = `DIR=${home} ARGS=tarjeta --conversacion sm-01_X.9 -C ${home}`;
+  const plain = `DIR=${home} ARGS=tarjeta -C ${home}`;
   expect(JSON.parse(result.stdout)).toEqual({ result: { message: { customType: "copiloto-card", content: card, display: false } },
     hidden: { message: { customType: "copiloto-card", content: card, display: false } },
-    notices: [[`🧭 Copiloto\n${card}`, "info"]] });
+    unnamed: { message: { customType: "copiloto-card", content: plain, display: false } },
+    unsafe: { message: { customType: "copiloto-card", content: plain, display: false } },
+    notices: [[`🧭 Copiloto\n${card}`, "info"], [`🧭 Copiloto\n${plain}`, "info"], [`🧭 Copiloto\n${plain}`, "info"]] });
 }));
 
 test("invalid settings JSON refuses before any install write", () => fixture(({ home, write, install }) => {
