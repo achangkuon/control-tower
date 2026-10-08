@@ -11,6 +11,9 @@ metadata:
 
 Activa para agregar o cambiar capacidad de producto en un repositorio vivo con autoridad y PRD existentes.
 
+Cuando la tarjeta 🧭 de Etapa 1 (foco = idea) trae capacidad nueva, esta skill acota el resultado y
+no avanza hacia el plan con dudas abiertas.
+
 ## Hard Rules
 
 - Leé primero la autoridad de producto, PRD vigente, Zonas y evidencia del comportamiento actual.
@@ -20,6 +23,8 @@ Activa para agregar o cambiar capacidad de producto en un repositorio vivo con a
 - No cambies tecnología ni partición territorial por conveniencia de implementación.
 - Cargá `chanks-1-prd` de forma independiente; no reinicies el arranque de proyecto.
 - Devolvé cambios del dato de planificación como delta al responsible parent; no escribas el plan.
+- Cerrá las dudas abiertas con el humano antes de proponer cualquier escritura en
+  `openspec/plan.yaml`. No escribas en `plan.yaml` sin aprobación humana.
 
 ## Decision Gates
 

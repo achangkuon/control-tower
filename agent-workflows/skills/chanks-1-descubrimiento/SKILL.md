@@ -11,6 +11,9 @@ metadata:
 
 Activa para entender qué existe, qué es real o simulado y dónde falla un producto vivo. Reporta; no implementa.
 
+Cuando la tarjeta 🧭 de Etapa 1 (foco = idea) pide auditar un producto vivo, esta skill traza el
+comportamiento real; las dudas se cierran con el humano, no desde el código.
+
 ## Hard Rules
 
 - Leé completos los archivos de código auditados y citá `archivo:línea` para cada afirmación material.
@@ -19,6 +22,8 @@ Activa para entender qué existe, qué es real o simulado y dónde falla un prod
 - Trazá interfaz → adaptación → servicio → backend y distinguí lectura de superficie modificada.
 - No inventes reglas de dominio ni conviertas carpetas en ownership.
 - No escribas código, documentos de producto ni dato de planificación.
+- Cerrá las dudas abiertas con el humano antes de proponer cualquier escritura en
+  `openspec/plan.yaml`. No escribas en `plan.yaml` sin aprobación humana.
 - Cargá la técnica territorial compartida sólo cuando el diagnóstico requiera Zonas o Cimientos.
 
 ## Decision Gates

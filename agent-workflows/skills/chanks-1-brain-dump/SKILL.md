@@ -11,12 +11,17 @@ metadata:
 
 Activa cuando existe una idea suelta y todavía no está claro qué producto, problema o alcance representa.
 
+Cuando la tarjeta 🧭 de Etapa 1 (foco = idea) trae una idea suelta, esta skill la ordena sin
+cerrar por sí sola ninguna duda de producto.
+
 ## Hard Rules
 
 - Dejá terminar el volcado antes de ordenar o cuestionar.
 - Separá hechos, hipótesis, deseos, restricciones y decisiones.
 - No inventes usuarios, métricas, reglas de negocio, Zonas ni soluciones técnicas.
 - Toda decisión de producto sin autoridad queda explícita para gate humano.
+- Cerrá las dudas abiertas con el humano antes de proponer cualquier escritura en
+  `openspec/plan.yaml`. No escribas en `plan.yaml` sin aprobación humana.
 
 ## Decision Gates
 

@@ -11,6 +11,9 @@ metadata:
 
 Activa sólo ante un new explicit human request para resolver la decisión nombrada de una Sesión o distinguirla de una dependencia. Una continuación manual rechazada nunca activa este skill.
 
+Es la skill que nombra la tarjeta 🧭 de Etapa 1 (foco = idea) para las dudas abiertas: no hay
+propuesta de alcance mientras queden preguntas sin cerrar con el humano.
+
 ## Hard Rules
 
 - Nunca leas `openspec/plan.yaml` entero. Consumí evidencia fresca del Radar instalado:
@@ -21,6 +24,8 @@ Activa sólo ante un new explicit human request para resolver la decisión nombr
 - Presentá una pregunta humana por vez, con consecuencias reales y una recomendación.
 - No respondas por el maintainer ni amplíes el alcance de una resolución.
 - No escribas plan, estado, porcentajes, registro ni vista.
+- Cerrá las dudas abiertas con el humano antes de proponer cualquier escritura en
+  `openspec/plan.yaml`. No escribas en `plan.yaml` sin aprobación humana.
 - Convertí resoluciones en un delta con precondición y devolvelo al responsible parent.
 - Una resolución no garantiza ejecución: el estado se recalcula desde todos sus datos.
 

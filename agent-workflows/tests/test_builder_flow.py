@@ -664,6 +664,19 @@ class StageSkillBoundaryTests(unittest.TestCase):
         self.assertNotIn("nueva feature", read("skills/chanks-1-feature/SKILL.md").splitlines()[2])
         self.assertNotIn("diagnóstico", read("skills/chanks-1-descubrimiento/SKILL.md").splitlines()[2])
 
+    def test_stage_one_skills_close_open_ambiguities_before_writing_the_plan(self):
+        for name in (
+            "chanks-1-cierre-de-decisiones",
+            "chanks-1-brain-dump",
+            "chanks-1-feature",
+            "chanks-1-descubrimiento",
+        ):
+            skill = read(f"skills/{name}/SKILL.md")
+            with self.subTest(skill=name):
+                self.assertIn("🧭", skill)
+                self.assertIn("cerrá las dudas abiertas con el humano antes de proponer", skill.lower())
+                self.assertIn("No escribas en `plan.yaml` sin aprobación humana.", skill)
+
     def test_activation_requires_the_approved_request_not_a_chanks_token(self):
         for name, description in (
             ("chanks-1-autoridad", "Chanks decides how to build any feature."),
