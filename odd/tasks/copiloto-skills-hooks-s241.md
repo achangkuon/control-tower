@@ -39,8 +39,12 @@ para habilitar smoke test y release (v2.0.0 según tabla de releases).
 - Restricciones: no toca las reglas que agregó S232. Test RED en instructions.test.mjs.
 - Referencia: docs/architecture/copiloto.md §7 paso 6; Engram 13295.
 
-### T4 — Smoke test (después del lote)
-Recorrido de etapas 0 a 5 en sandbox con el carril candidato (docs/architecture/copiloto.md §7 paso 7).
+### T4 — Smoke test (COMPLETO 2026-10-08)
+Sandbox /tmp/torre-sandbox (HOME desechable + proyecto fantasma). Recorrido 0→5 determinista OK con
+binarios candidatos. Defecto real encontrado y corregido: la extensión Pi no pasaba el id de
+conversación al copiloto (fix 7345822). Inyección real verificada end-to-end: el modelo citó la
+tarjeta. Hallazgo menor: Friction Report issue #163. Copiloto candidato instalado en ~/.local/bin
+con autorización del maintainer.
 
 ### T5 — Release
 Solo con autorización humana explícita y separada; skill `torre-release`. Meta V2 completa → salto major.
