@@ -5,6 +5,7 @@ import { isAbsolute, join, parse, resolve, sep } from "node:path";
 export const BUNDLE_SCHEMA = "tower.v1.bundle/1";
 
 const radarRoot = "agent-workflows/tools/radar";
+const copilotoRoot = "agent-workflows/tools/copiloto";
 const skillRoot = "product/tower/v1/skills/control-tower";
 const radarNames = ["go.mod", "go.sum", ...[
   "archivar", "avance", "check", "encargo", "etapa", "faltan", "git", "ledger", "main",
@@ -17,6 +18,9 @@ const radarVendorNames = [
     "readerc.go", "resolve.go", "scannerc.go", "sorter.go", "writerc.go", "yaml.go", "yamlh.go", "yamlprivateh.go"]
     .map(name => `vendor/gopkg.in/yaml.v3/${name}`),
 ];
+// Copiloto has no dependencies and no vendor tree: only plain Go sources ship, and
+// the binary is BUILT at install time like Radar. Its *_test.go files stay in the checkout.
+const copilotoNames = ["go.mod", "main.go", "foco.go", "tarjeta.go"];
 const skillNames = ["SKILL.md", "references/adoption.md", "references/authority-and-questions.md"];
 const workflowRoot = "agent-workflows/skills";
 // Reviewed, bytewise-sorted V1 membership. Adding a file requires an explicit
@@ -66,6 +70,7 @@ const workflowNames = [
 const excludedWorkflow = "chanks-5-session-doc/assets/project-notion-map.json";
 export const BUNDLE_MEMBERS = Object.freeze([
   ...[...radarNames, ...radarVendorNames].map((name) => Object.freeze({ source: `${radarRoot}/${name}`, destination: `radar/${name}` })),
+  ...copilotoNames.map((name) => Object.freeze({ source: `${copilotoRoot}/${name}`, destination: `copiloto/${name}` })),
   ...skillNames.map((name) => Object.freeze({ source: `${skillRoot}/${name}`, destination: `skills/control-tower/${name}` })),
   ...workflowNames.map((name) => Object.freeze({ source: `${workflowRoot}/${name}`, destination: `skills/${name}` })),
   ...["global-pointer.md", "project-agents.md"].map((name) => Object.freeze({
@@ -146,6 +151,17 @@ function validateSourceTree(root) {
     } else {
       throw new Error(`Unexpected Radar member: ${name}`);
     }
+  }
+  // Copiloto is a second, self-contained Go tool. Its tests live beside the sources
+  // in the checkout and are admitted as non-members, never bundled.
+  const copiloto = safeEntry(join(root, copilotoRoot), true);
+  const copilotoEntries = readdirSync(copiloto);
+  for (const name of copilotoNames) {
+    if (!copilotoEntries.includes(name)) throw new Error(`Missing copiloto member: ${name}`);
+  }
+  for (const name of copilotoEntries) {
+    if (copilotoNames.includes(name) || name.endsWith("_test.go")) safeEntry(join(copiloto, name), false);
+    else throw new Error(`Unexpected copiloto member: ${name}`);
   }
   directory(root, skillRoot, ["SKILL.md", "references"]);
   directory(root, `${skillRoot}/references`, ["adoption.md", "authority-and-questions.md"]);

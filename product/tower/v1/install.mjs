@@ -59,8 +59,17 @@ const RADAR_VENDOR_PATHS = new Set([
     "readerc.go", "resolve.go", "scannerc.go", "sorter.go", "writerc.go", "yaml.go", "yamlh.go", "yamlprivateh.go"]
     .map(name => `agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/${name}`),
 ]);
+// Copiloto has no dependencies and no vendor tree. Its Go tests stay in the checkout
+// and the binary is BUILT at install time, so only these four sources may ever ship.
+const COPILOTO_PATHS = new Set([
+  "agent-workflows/tools/copiloto/go.mod",
+  "agent-workflows/tools/copiloto/main.go",
+  "agent-workflows/tools/copiloto/foco.go",
+  "agent-workflows/tools/copiloto/tarjeta.go",
+]);
 function canonicalSource(path) {
   if (path === "agent-workflows/tools/radar/vendor" || path.startsWith("agent-workflows/tools/radar/vendor/")) return RADAR_VENDOR_PATHS.has(path);
+  if (path === "agent-workflows/tools/copiloto" || path.startsWith("agent-workflows/tools/copiloto/")) return COPILOTO_PATHS.has(path);
   if (/^(?:product\/tower\/v1\/|agent-workflows\/tools\/radar\/)/.test(path) || SIGNATURE_PATHS.has(path) ||
       path === "agent-workflows/skills/_shared/plan-naming-convention.md") return true;
   return path.startsWith("agent-workflows/skills/") && WORKFLOW_SKILLS.has(path.split("/")[2]) &&

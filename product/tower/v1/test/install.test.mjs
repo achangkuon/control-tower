@@ -59,10 +59,14 @@ test("expanded canonical release extracts every pinned skill, template and signa
     "agent-workflows/skills/_shared/plan-naming-convention.md", "product/tower/v1/instructions/project-agents.md",
     "product/tower/v1/instructions/global-pointer.md", "agent-workflows/chanks/torre-firma.mjs",
     "agent-workflows/tools/hooks/torre-firma.sh", "agent-workflows/tools/hooks/chanks-etapa.sh",
+    "agent-workflows/tools/copiloto/go.mod", "agent-workflows/tools/copiloto/main.go",
+    "agent-workflows/tools/copiloto/foco.go", "agent-workflows/tools/copiloto/tarjeta.go",
     "agent-workflows/tools/radar/vendor/modules.txt", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/LICENSE", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yaml.go"]) {
     expect(deps.pinned.paths).toContain(path);
   }
-  expect(deps.pinned.paths).toHaveLength(93);
+  expect(deps.pinned.paths).toHaveLength(97);
+  for (const path of ["agent-workflows/tools/copiloto/main_test.go", "agent-workflows/tools/copiloto/foco_test.go",
+    "agent-workflows/tools/copiloto/tarjeta_test.go"]) expect(deps.pinned.paths).not.toContain(path);
   expect(deps.pinned.paths).not.toContain("agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");
   // The fixture's install runner checks exact extracted bytes for every member.
   expect(main([], deps)).toBe(0);
@@ -86,6 +90,14 @@ test("new canonical prefixes never admit unpinned siblings or near-matching sign
 
 test("vendor intake rejects unreviewed files even when supplied as an exact test pin", () => {
   for (const path of ["agent-workflows/tools/radar/vendor/extra.go", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yaml_test.go", "agent-workflows/tools/radar/vendor/gopkg.in/other/other.go", "agent-workflows/tools/radar/vendor/modules.txt/extra"]) fixture(({ deps, output }) => {
+    expect(main(["--dry-run"], deps)).toBe(1); expect(output().stderr).toContain("member path");
+  }, envelope => { envelope.members[0].path = path; }, { paths: [path, ...paths.slice(1)] });
+});
+
+test("copiloto intake ships only the four reviewed sources and rejects tests, extras and vendor even when pinned", () => {
+  for (const path of ["agent-workflows/tools/copiloto/main_test.go", "agent-workflows/tools/copiloto/foco_test.go",
+    "agent-workflows/tools/copiloto/tarjeta_test.go", "agent-workflows/tools/copiloto/extra.go",
+    "agent-workflows/tools/copiloto/vendor/modules.txt", "agent-workflows/tools/copiloto/go.sum"]) fixture(({ deps, output }) => {
     expect(main(["--dry-run"], deps)).toBe(1); expect(output().stderr).toContain("member path");
   }, envelope => { envelope.members[0].path = path; }, { paths: [path, ...paths.slice(1)] });
 });

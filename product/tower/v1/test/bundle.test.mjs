@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { BUNDLE_MEMBERS, BUNDLE_SCHEMA, validateBundle, validateDestination } from "../bundle.mjs";
 
 const radar = "agent-workflows/tools/radar/";
+const copiloto = "agent-workflows/tools/copiloto/";
 const skill = "product/tower/v1/skills/control-tower/";
 const go = ["archivar", "avance", "check", "encargo", "etapa", "faltan", "git", "ledger", "main", "partition", "plan", "render", "roadmap", "safety", "sesion", "snapshot", "state"];
 const vendorNames = [
@@ -16,6 +17,8 @@ const vendorNames = [
     .map(name => `vendor/gopkg.in/yaml.v3/${name}`),
 ];
 const radarNames = ["go.mod", "go.sum", ...go.map((name) => `${name}.go`), ...vendorNames];
+// Copiloto has no dependencies and no vendor tree: only plain Go sources ship.
+const copilotoNames = ["go.mod", "main.go", "foco.go", "tarjeta.go"];
 const skillNames = ["SKILL.md", "references/adoption.md", "references/authority-and-questions.md"];
 // Independent reviewed roster: deliberately not derived from production membership.
 const workflowNames = [
@@ -62,6 +65,7 @@ const workflowNames = [
 const workflows = "agent-workflows/skills/";
 const excluded = workflows + "chanks-5-session-doc/assets/project-notion-map.json";
 const expected = [...radarNames.map((name) => [radar + name, "radar/" + name]),
+  ...copilotoNames.map((name) => [copiloto + name, "copiloto/" + name]),
   ...skillNames.map((name) => [skill + name, "skills/control-tower/" + name]),
   ...workflowNames.map((name) => [workflows + name, "skills/" + name]),
   ...["global-pointer.md", "project-agents.md"].map((name) => ["product/tower/v1/instructions/" + name, "instructions/" + name]),
@@ -155,7 +159,7 @@ describe("closed Tower V1 release bundle", () => {
   test("personal Notion map is optional, never bundled, and not an open-ended exclusion", () => fixture(({ sources }) => {
     put(sources, excluded, "not read or shipped");
     const result = validateBundle(sources);
-    expect(result.members).toHaveLength(83);
+    expect(result.members).toHaveLength(87);
     expect(result.members.some(({ source }) => source === excluded)).toBe(false);
     put(sources, workflows + "chanks-5-session-doc/assets/other.json");
     expect(() => validateBundle(sources)).toThrow();
@@ -173,7 +177,7 @@ describe("closed Tower V1 release bundle", () => {
   test("one versioned positive membership source yields exact, immutable, in-memory bytes", () => fixture(({ sources }) => {
     expect(BUNDLE_SCHEMA).toBe("tower.v1.bundle/1");
     expect(BUNDLE_MEMBERS.map(({ source, destination }) => [source, destination])).toEqual(expected);
-    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(83);
+    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(87);
     const result = validateBundle(sources);
     expect(result.schema).toBe(BUNDLE_SCHEMA);
     expect(Object.isFrozen(result)).toBe(true);
@@ -198,6 +202,40 @@ describe("closed Tower V1 release bundle", () => {
     put(sources, radar + "new.go");
     expect(() => validateBundle(sources)).toThrow();
   }));
+
+  test("copiloto Go sources ship without their tests and the source tree is closed to drift", () => {
+    expect(copilotoNames).toEqual(["go.mod", "main.go", "foco.go", "tarjeta.go"]);
+    const result = validateBundle(new URL("../../../..", import.meta.url).pathname);
+    expect(result.members.filter(({ destination }) => destination.startsWith("copiloto/"))
+      .map(({ source, destination }) => [source, destination]))
+      .toEqual(copilotoNames.map((name) => [copiloto + name, "copiloto/" + name]));
+    // The real source tree has tests beside the sources; they are never members.
+    for (const name of ["foco_test.go", "main_test.go", "tarjeta_test.go"]) {
+      expect(result.members.some(({ source }) => source === copiloto + name)).toBe(false);
+    }
+    for (const name of copilotoNames) fixture(({ sources }) => {
+      rmSync(join(sources, copiloto + name));
+      expect(() => validateBundle(sources)).toThrow();
+    });
+    for (const extra of ["extra.go", "vendor/modules.txt", "README.md"]) fixture(({ sources }) => {
+      put(sources, copiloto + extra);
+      expect(() => validateBundle(sources)).toThrow();
+    });
+    // Go tests may exist in the checkout but never enter the bundle.
+    fixture(({ sources }) => {
+      put(sources, copiloto + "foco_test.go");
+      expect(() => validateBundle(sources)).not.toThrow();
+    });
+    fixture(({ sources }) => {
+      const target = join(sources, copiloto + "tarjeta.go");
+      rmSync(target); symlinkSync(join(sources, copiloto + "main.go"), target);
+      expect(() => validateBundle(sources)).toThrow();
+    });
+    fixture(({ sources, destination }) => {
+      put(destination, "copiloto/unlisted.go");
+      expect(() => validateDestination(destination, validateBundle(sources))).toThrow();
+    });
+  });
 
   test("missing production Radar and skill files fail independently", () => {
     for (const path of [radar + "go.sum", radar + "main.go", skill + "references/adoption.md"]) {

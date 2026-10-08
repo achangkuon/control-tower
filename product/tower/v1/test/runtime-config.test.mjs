@@ -160,17 +160,18 @@ test("backs up foreign skill directories, links and Radar and restores them on u
 test("Radar builds with the exact restricted environment and no inherited Go overrides", () => fixture(({ home, calls, install }) => {
   install();
   const builds = calls.filter(([command]) => command === "go");
-  expect(builds).toHaveLength(1);
-  for (const [, , options] of builds) {
-    expect(options.env).toMatchObject({ GOWORK: "off", GOENV: "off", GOPROXY: "off", GOFLAGS: "-mod=vendor", GOTOOLCHAIN: "local" });
-    expect(Object.keys(options.env).sort()).toEqual(["PATH", "HOME", "TMPDIR", "GOCACHE", "GOPATH", "GOMODCACHE", "GOFLAGS", "GOPROXY", "GOSUMDB", "GOWORK", "GOTOOLCHAIN", "GOENV", "GOTELEMETRY", "CGO_ENABLED"].sort());
-    expect(options.env.HOME).not.toBe("/home/emili");
-    expect(options.env.GOMODCACHE).not.toBe(join(home, "ambient-modules"));
-    expect(options.env.GOCACHE).not.toBe(join(home, "ambient-cache"));
-    expect(dirname(options.env.GOMODCACHE)).toBe(dirname(options.env.HOME));
-    expect(dirname(options.env.GOCACHE)).toBe(dirname(options.env.HOME));
-    expect(fs.existsSync(join(options.cwd, "vendor/modules.txt"))).toBe(false); // private build tree was cleaned
-  }
+  expect(builds).toHaveLength(2);
+  const radar = builds.find(([, , options]) => options.cwd.endsWith("/radar"));
+  expect(radar).toBeDefined();
+  const [, , options] = radar;
+  expect(options.env).toMatchObject({ GOWORK: "off", GOENV: "off", GOPROXY: "off", GOFLAGS: "-mod=vendor", GOTOOLCHAIN: "local" });
+  expect(Object.keys(options.env).sort()).toEqual(["PATH", "HOME", "TMPDIR", "GOCACHE", "GOPATH", "GOMODCACHE", "GOFLAGS", "GOPROXY", "GOSUMDB", "GOWORK", "GOTOOLCHAIN", "GOENV", "GOTELEMETRY", "CGO_ENABLED"].sort());
+  expect(options.env.HOME).not.toBe("/home/emili");
+  expect(options.env.GOMODCACHE).not.toBe(join(home, "ambient-modules"));
+  expect(options.env.GOCACHE).not.toBe(join(home, "ambient-cache"));
+  expect(dirname(options.env.GOMODCACHE)).toBe(dirname(options.env.HOME));
+  expect(dirname(options.env.GOCACHE)).toBe(dirname(options.env.HOME));
+  expect(fs.existsSync(join(options.cwd, "vendor/modules.txt"))).toBe(false); // private build tree was cleaned
   expect(fs.statSync(join(home, ".local/bin/radar")).mode & 0o777).toBe(0o755);
 }));
 
@@ -215,29 +216,112 @@ test("signatures merge settings without duplicates; passive Pi imports the insta
   const pi = read(home, ".pi/agent/extensions/chanks-notices.ts");
   expect(pi).toContain("file://" + home + "/.local/share/torre-control/torre-firma.mjs");
   expect(pi).toContain('pi.on("tool_result"');
-  expect(pi).not.toContain("spawn");
   uninstallRuntime({ home });
   expect(JSON.parse(read(home, ".claude/settings.json"))).toEqual(original);
 }));
 
-test("generated Pi module loads passively and notices only successful direct calls and installed roster reads", () => fixture(({ home, install }) => {
+test("copiloto is built offline from shipped sources and installed as an owned 0o755 binary", () => fixture(({ home, calls, install }) => {
   install();
-  // A fresh process binds os.homedir() to this fixture's HOME at startup.
+  const builds = calls.filter(([command]) => command === "go");
+  expect(builds).toHaveLength(2);
+  const copiloto = builds.find(([, , options]) => options.cwd.endsWith("/copiloto"));
+  expect(copiloto).toBeDefined();
+  const [, , options] = copiloto;
+  // No vendor tree and no ambient Go overrides: a plain, sanitized offline build.
+  expect(options.env).toMatchObject({ GOFLAGS: "-mod=readonly", GOPROXY: "off", GOWORK: "off", GOENV: "off", GOTOOLCHAIN: "local" });
+  expect(options.env.GOMODCACHE).not.toBe(join(home, "ambient-modules"));
+  expect(options.env.GOCACHE).not.toBe(join(home, "ambient-cache"));
+  expect(dirname(options.env.GOMODCACHE)).toBe(dirname(options.env.HOME));
+  expect(fs.statSync(join(home, ".local/bin/copiloto")).mode & 0o777).toBe(0o755);
+  const entry = manifest(home).entries.find(e => e.path === ".local/bin/copiloto");
+  expect(entry).toMatchObject({ component: "copiloto", installed: { kind: "file", mode: 0o755 } });
+  expect(doctorRuntime({ home, runner: () => ({ status: 0, stdout: "gentle-ai 4.0.0" }) }).copiloto).toBe("ok");
+  expect(fs.existsSync(options.cwd)).toBe(false); // private build tree was cleaned
+}));
+
+(Bun.which("go") ? test : test.skip)("real runtime copiloto build compiles solely from the shipped Go sources", () => fixture(({ home, options }) => {
+  options.runner = (command, argv, spawnOptions) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    expect(command).toBe("go"); expect(argv[0]).toBe("build");
+    if (!spawnOptions.cwd.endsWith("/copiloto")) { fs.writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 }; }
+    // Only the reviewed, non-test Go sources reach the private build directory.
+    expect(fs.readdirSync(spawnOptions.cwd).sort()).toEqual(["foco.go", "go.mod", "main.go", "tarjeta.go"]);
+    expect(spawnOptions.env.GOFLAGS).toBe("-mod=readonly");
+    const result = spawnSync(command, argv, spawnOptions);
+    expect(String(result.stderr ?? "")).toBe(""); expect(result.status).toBe(0);
+    return result;
+  };
+  const plan = prepareRuntime(options);
+  expect(plan.desired.find(item => item.path === ".local/bin/copiloto").files[""].bytes.length).toBeGreaterThan(0);
+}), 180_000);
+
+test("copiloto build output must be a regular file; a substituted symlink is refused", () => fixture(({ home, options, write }) => {
+  write("sentinel", "unchanged"); fs.chmodSync(join(home, "sentinel"), 0o600);
+  options.runner = (command, argv, spawnOptions) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    if (spawnOptions.cwd.endsWith("/copiloto")) { fs.symlinkSync(join(home, "sentinel"), argv[5]); return { status: 0 }; }
+    fs.writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 };
+  };
+  expect(() => prepareRuntime(options)).toThrow();
+  expect(read(home, "sentinel")).toBe("unchanged");
+  expect(fs.statSync(join(home, "sentinel")).mode & 0o777).toBe(0o600);
+}));
+
+test("generated Pi extension injects the copiloto card per turn, bounded and fail-soft", () => fixture(({ home, install }) => {
+  install();
+  const pi = read(home, ".pi/agent/extensions/chanks-notices.ts");
+  expect(pi).toContain('pi.on("before_agent_start"');
+  expect(pi).toContain('spawnSync');
+  expect(pi).toContain('"copiloto"');
+  expect(pi).toContain('"tarjeta", "-C", cwd');
+  expect(pi).toContain("timeout: 10_000");
+  expect(pi).toContain("maxBuffer: 64 * 1024");
+  expect(pi).toContain('customType: "copiloto-card"');
+  expect(pi).toContain("ctx.ui.notify");
+  expect(pi).toContain("catch { return null }");
+}));
+
+test("generated Pi module loads passively, shows notices, and injects no card without the tool", () => fixture(({ home, install }) => {
+  install();
+  // A fresh process binds os.homedir() to this fixture's HOME at startup. PATH keeps
+  // no reachable copiloto so the fail-soft branch is observed, not simulated.
+  const empty = join(home, "empty-bin"); fs.mkdirSync(empty, { recursive: true, mode: 0o755 });
   const script = `const extension = await import(${JSON.stringify(pathToFileURL(join(home, ".pi/agent/extensions/chanks-notices.ts")).href)});
-    const home = process.env.HOME; let handler; const notices = [];
-    extension.default({ on: (event, callback) => { if (event !== "tool_result") throw new Error("unexpected event"); handler = callback; } });
+    const home = process.env.HOME; const handlers = new Map(); const notices = [];
+    extension.default({ on: (event, callback) => { if (!["tool_result", "before_agent_start"].includes(event)) throw new Error("unexpected event"); handlers.set(event, callback); } });
     const ctx = { hasUI: true, cwd: home, ui: { notify: text => notices.push(text) } };
     const radar = { toolName: "bash", input: { command: "radar sesion S195" } };
-    const passive = handler(radar, ctx) === undefined;
-    handler({ toolName: "read", input: { path: home + "/.agents/skills/control-tower/SKILL.md" } }, ctx);
-    handler({ ...radar, isError: true }, ctx);
-    handler({ toolName: "bash", input: { command: "echo radar sesion S195" } }, ctx);
-    handler({ toolName: "bash", input: { command: "radar sesion S195 && echo later" } }, ctx);
-    handler(radar, { ...ctx, hasUI: false });
-    process.stdout.write(JSON.stringify({ passive, notices }));`;
-  const result = spawnSync(process.execPath, ["--eval", script], { env: { HOME: home, PATH: process.env.PATH }, encoding: "utf8", timeout: 10_000, maxBuffer: 64 * 1024 });
+    const passive = handlers.get("tool_result")(radar, ctx) === undefined;
+    handlers.get("tool_result")({ toolName: "read", input: { path: home + "/.agents/skills/control-tower/SKILL.md" } }, ctx);
+    handlers.get("tool_result")({ ...radar, isError: true }, ctx);
+    handlers.get("tool_result")({ toolName: "bash", input: { command: "echo radar sesion S195" } }, ctx);
+    handlers.get("tool_result")({ toolName: "bash", input: { command: "radar sesion S195 && echo later" } }, ctx);
+    handlers.get("tool_result")(radar, { ...ctx, hasUI: false });
+    const noCard = handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "hola" }, ctx) === undefined;
+    process.stdout.write(JSON.stringify({ passive, noCard, notices }));`;
+  const result = spawnSync(process.execPath, ["--eval", script], { env: { HOME: home, PATH: empty }, encoding: "utf8", timeout: 10_000, maxBuffer: 64 * 1024 });
   expect(result.status).toBe(0); expect(result.stderr).toBe("");
-  expect(JSON.parse(result.stdout)).toEqual({ passive: true, notices: ["🗼 Torre · radar sesion", "💪 Chanks · control-tower · lectura completada"] });
+  expect(JSON.parse(result.stdout)).toEqual({ passive: true, noCard: true, notices: ["🗼 Torre · radar sesion", "💪 Chanks · control-tower · lectura completada"] });
+}));
+
+test("generated Pi extension injects and shows the copiloto card when the tool is installed", () => fixture(({ home, install }) => {
+  install();
+  const bin = join(home, "fake-bin"); fs.mkdirSync(bin, { recursive: true, mode: 0o755 });
+  // The shim proves the exact argv and working directory and prints the card.
+  fs.writeFileSync(join(bin, "copiloto"), "#!/bin/sh\nprintf 'DIR=%s ARGS=%s\\n' \"$(pwd)\" \"$*\"\n", { mode: 0o755 });
+  const script = `const extension = await import(${JSON.stringify(pathToFileURL(join(home, ".pi/agent/extensions/chanks-notices.ts")).href)});
+    const home = process.env.HOME; const handlers = new Map(); const notices = [];
+    extension.default({ on: (event, callback) => handlers.set(event, callback) });
+    const ctx = { hasUI: true, cwd: home, ui: { notify: (text, level) => notices.push([text, level]) } };
+    const result = handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "hola" }, ctx);
+    const hidden = handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "hola" }, { ...ctx, hasUI: false });
+    process.stdout.write(JSON.stringify({ result, hidden, notices }));`;
+  const result = spawnSync(process.execPath, ["--eval", script], { env: { HOME: home, PATH: bin }, encoding: "utf8", timeout: 10_000, maxBuffer: 64 * 1024 });
+  expect(result.status).toBe(0); expect(result.stderr).toBe("");
+  const card = `DIR=${home} ARGS=tarjeta -C ${home}`;
+  expect(JSON.parse(result.stdout)).toEqual({ result: { message: { customType: "copiloto-card", content: card, display: false } },
+    hidden: { message: { customType: "copiloto-card", content: card, display: false } },
+    notices: [[`🧭 Copiloto\n${card}`, "info"]] });
 }));
 
 test("invalid settings JSON refuses before any install write", () => fixture(({ home, write, install }) => {
@@ -337,7 +421,7 @@ test("doctor detects missing new-runtime pointers and accepts subset ownership r
   expect(doctorRuntime({ home, runner: options.runner }).pointers).toBe("missing");
   const record = manifest(home); record.entries.pop();
   fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
-  expect(doctorRuntime({ home, runner: options.runner })).toMatchObject({ skills: "ok", radar: "missing", pointers: "missing" });
+  expect(doctorRuntime({ home, runner: options.runner })).toMatchObject({ skills: "ok", radar: "ok", copiloto: "missing", pointers: "missing" });
 }));
 
 test("a failed runtime write retains bounded ownership recovery evidence and refuses automatic reentry", () => fixture(({ home, options }) => {
