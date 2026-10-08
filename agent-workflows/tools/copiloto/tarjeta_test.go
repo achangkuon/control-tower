@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -314,5 +315,32 @@ func TestTarjetaConConversacionFijaLaActiva(t *testing.T) {
 	}
 	if f, _ := leerFoco(common, "conv-hook"); f.Foco != focoIdea {
 		t.Fatalf("el foco no aterrizó en la conversación activa: %+v", f)
+	}
+}
+
+func TestTarjetaUsaElHechoDeLaCopiaDeTrabajo(t *testing.T) {
+	root := repoGit(t)
+	common := commonDe(t, root)
+	// The stored focus of this conversation says idea, but this checkout is the
+	// work copy of S1: the dispatch marker is a fact and wins without asking.
+	if err := escribirFoco(common, focoGuardado{Schema: esquemaFoco, Conversacion: "fact", Foco: focoIdea, PanoramaVisto: true}); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("COPILOTO_CONVERSACION", "fact")
+	despachos := filepath.Join(common, "chanks", "despachos")
+	writeTestFile(t, filepath.Join(despachos, "S1.json"),
+		`{"schema":"radar.despacho/v1","sesion":"S1","worktree":`+jsonString(root)+`,"branch":"refs/heads/s1","worker":"w"}`, 0o644)
+	fakeRadar(t, map[string]string{
+		"etapa S1":      `{"schema":"radar.etapa/v1","sesion":"S1","etapa":3,"nombre":"Despachar"}`,
+		"status --json": snapshotFixture(false, "S1=LISTO"),
+	})
+	var salida, errores bytes.Buffer
+	if codigo := ejecutar([]string{"tarjeta", "-C", root}, &salida, &errores); codigo != 0 {
+		t.Fatalf("tarjeta salió %d: %s", codigo, errores.String())
+	}
+	out := salida.String()
+	tarjetaValida(t, out)
+	if !strings.Contains(out, "S1 · Etapa 3") || strings.Contains(out, "Etapa 1") {
+		t.Fatalf("el hecho de la copia de trabajo no fijó el foco: %q", out)
 	}
 }
