@@ -160,7 +160,7 @@ test("backs up foreign skill directories, links and Radar and restores them on u
 test("Radar builds with the exact restricted environment and no inherited Go overrides", () => fixture(({ home, calls, install }) => {
   install();
   const builds = calls.filter(([command]) => command === "go");
-  expect(builds).toHaveLength(2);
+  expect(builds).toHaveLength(3);
   const radar = builds.find(([, , options]) => options.cwd.endsWith("/radar"));
   expect(radar).toBeDefined();
   const [, , options] = radar;
@@ -223,7 +223,7 @@ test("signatures merge settings without duplicates; passive Pi imports the insta
 test("copiloto is built offline from shipped sources and installed as an owned 0o755 binary", () => fixture(({ home, calls, install }) => {
   install();
   const builds = calls.filter(([command]) => command === "go");
-  expect(builds).toHaveLength(2);
+  expect(builds).toHaveLength(3);
   const copiloto = builds.find(([, , options]) => options.cwd.endsWith("/copiloto"));
   expect(copiloto).toBeDefined();
   const [, , options] = copiloto;
@@ -266,6 +266,53 @@ test("copiloto build output must be a regular file; a substituted symlink is ref
   expect(read(home, "sentinel")).toBe("unchanged");
   expect(fs.statSync(join(home, "sentinel")).mode & 0o777).toBe(0o600);
 }));
+
+test("piloto build output must be a regular file; a substituted symlink is refused", () => fixture(({ home, options, write }) => {
+  write("sentinel", "unchanged"); fs.chmodSync(join(home, "sentinel"), 0o600);
+  options.runner = (command, argv, spawnOptions) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    if (spawnOptions.cwd.endsWith("/piloto")) { fs.symlinkSync(join(home, "sentinel"), argv[5]); return { status: 0 }; }
+    fs.writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 };
+  };
+  expect(() => prepareRuntime(options)).toThrow();
+  expect(read(home, "sentinel")).toBe("unchanged");
+  expect(fs.statSync(join(home, "sentinel")).mode & 0o777).toBe(0o600);
+}));
+
+test("piloto is built offline from shipped sources and installed as an owned 0o755 binary", () => fixture(({ home, calls, install }) => {
+  install();
+  const builds = calls.filter(([command]) => command === "go");
+  expect(builds).toHaveLength(3);
+  const piloto = builds.find(([, , options]) => options.cwd.endsWith("/piloto"));
+  expect(piloto).toBeDefined();
+  const [, , options] = piloto;
+  // No vendor tree and no ambient Go overrides: a plain, sanitized offline build.
+  expect(options.env).toMatchObject({ GOFLAGS: "-mod=readonly", GOPROXY: "off", GOWORK: "off", GOENV: "off", GOTOOLCHAIN: "local" });
+  expect(options.env.GOMODCACHE).not.toBe(join(home, "ambient-modules"));
+  expect(options.env.GOCACHE).not.toBe(join(home, "ambient-cache"));
+  expect(dirname(options.env.GOMODCACHE)).toBe(dirname(options.env.HOME));
+  expect(fs.statSync(join(home, ".local/bin/piloto")).mode & 0o777).toBe(0o755);
+  const entry = manifest(home).entries.find(e => e.path === ".local/bin/piloto");
+  expect(entry).toMatchObject({ component: "piloto", installed: { kind: "file", mode: 0o755 } });
+  expect(doctorRuntime({ home, runner: () => ({ status: 0, stdout: "gentle-ai 4.0.0" }) }).piloto).toBe("ok");
+  expect(fs.existsSync(options.cwd)).toBe(false); // private build tree was cleaned
+}));
+
+(Bun.which("go") ? test : test.skip)("real runtime piloto build compiles solely from the shipped Go sources", () => fixture(({ home, options }) => {
+  options.runner = (command, argv, spawnOptions) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    expect(command).toBe("go"); expect(argv[0]).toBe("build");
+    if (!spawnOptions.cwd.endsWith("/piloto")) { fs.writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 }; }
+    // Only the reviewed, non-test Go sources reach the private build directory.
+    expect(fs.readdirSync(spawnOptions.cwd).sort()).toEqual(["aterrizaje.go", "go.mod", "main.go", "marca.go", "revision.go", "vuelo.go", "worktree.go"]);
+    expect(spawnOptions.env.GOFLAGS).toBe("-mod=readonly");
+    const result = spawnSync(command, argv, spawnOptions);
+    expect(String(result.stderr ?? "")).toBe(""); expect(result.status).toBe(0);
+    return result;
+  };
+  const plan = prepareRuntime(options);
+  expect(plan.desired.find(item => item.path === ".local/bin/piloto").files[""].bytes.length).toBeGreaterThan(0);
+}), 180_000);
 
 test("generated Pi extension injects the copiloto card per turn, bounded and fail-soft", () => fixture(({ home, install }) => {
   install();
@@ -428,7 +475,7 @@ test("doctor detects missing new-runtime pointers and accepts subset ownership r
   expect(doctorRuntime({ home, runner: options.runner }).pointers).toBe("missing");
   const record = manifest(home); record.entries.pop();
   fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
-  expect(doctorRuntime({ home, runner: options.runner })).toMatchObject({ skills: "ok", radar: "ok", copiloto: "missing", pointers: "missing" });
+  expect(doctorRuntime({ home, runner: options.runner })).toMatchObject({ skills: "ok", radar: "ok", copiloto: "ok", piloto: "missing", pointers: "missing" });
 }));
 
 test("a failed runtime write retains bounded ownership recovery evidence and refuses automatic reentry", () => fixture(({ home, options }) => {

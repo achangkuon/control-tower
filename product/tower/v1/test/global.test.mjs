@@ -273,7 +273,7 @@ test("update from a published 30-member cache configures the new runtime", () =>
   expect(snapshot()).toEqual(before);
   const next = acquisition("published-transition", {}, true);
   expect(updateGlobal({ ...config, acquire: next.acquire })).toMatchObject({ status: "activated", active: next.id, previous: old });
-  expect(calls.filter(([command]) => command === "go")).toHaveLength(2);
+  expect(calls.filter(([command]) => command === "go")).toHaveLength(3);
   expect(doctorGlobal(config).components).toMatchObject({ skills: "ok", radar: "ok", signatures: "ok", pointers: "ok" });
   expect(fs.readFileSync(join(config.home, ".claude/CLAUDE.md"), "utf8")).toContain("v1-published-transition");
 });
@@ -292,11 +292,11 @@ test("rollback to a published 30-member cache keeps every installed runtime byte
 });
 
 test("a mixed-generation store lists, inspects and rolls back a cache whose roster differs from the running CLI", () => {
-  const current = install("mixed-current"); // active, 97-member roster
+  const current = install("mixed-current"); // active, 104-member roster
   const retired = new Set(["agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
     "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md"]);
   const legacyPaths = paths.filter(path => !retired.has(path));
-  expect(legacyPaths).toHaveLength(95); // v1.2.5's roster matches no named generation
+  expect(legacyPaths).toHaveLength(102); // v1.2.5's roster matches no named generation
   const legacy = seedHistoricalCache("v1.2.5", legacyPaths);
   const before = state();
   rewrite(statePath(), { ...before, active: current.id, previous: legacy.id,
@@ -514,8 +514,8 @@ for (const [count, changed] of [[72, null], [74, null], [74, "go.mod"], [74, "go
     const config = { ...options, home, env: { HOME: home, PATH: process.env.PATH }, runner: (command, argv, opts) => {
       if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
       expect(command).toBe("go"); expect(argv[0]).toBe("build");
-      // Scope the Radar-only fixtures to the Radar build; the copiloto build is a
-      // second, dependency-free build that shares the same bounded runner.
+      // Scope the Radar-only fixtures to the Radar build; the copiloto and piloto
+      // builds are two more dependency-free builds sharing the same bounded runner.
       if (!opts.cwd.endsWith("/radar")) { fs.writeFileSync(argv[5], "copiloto", { mode: 0o755 }); return { status: 0 }; }
       expect(opts.env).toMatchObject({ GOFLAGS: "-mod=vendor", GOPROXY: "off", GOWORK: "off", GOENV: "off" });
       for (const key of ["GOMODCACHE", "GOCACHE"]) expect(fs.readdirSync(opts.env[key])).toEqual([]);

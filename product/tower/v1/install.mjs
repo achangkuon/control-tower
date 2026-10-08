@@ -67,9 +67,21 @@ const COPILOTO_PATHS = new Set([
   "agent-workflows/tools/copiloto/foco.go",
   "agent-workflows/tools/copiloto/tarjeta.go",
 ]);
+// Piloto mirrors copiloto: no dependencies, no vendor tree, tests kept out, and the
+// binary is BUILT at install time, so only these seven sources may ever ship.
+const PILOTO_PATHS = new Set([
+  "agent-workflows/tools/piloto/go.mod",
+  "agent-workflows/tools/piloto/main.go",
+  "agent-workflows/tools/piloto/aterrizaje.go",
+  "agent-workflows/tools/piloto/marca.go",
+  "agent-workflows/tools/piloto/revision.go",
+  "agent-workflows/tools/piloto/vuelo.go",
+  "agent-workflows/tools/piloto/worktree.go",
+]);
 function canonicalSource(path) {
   if (path === "agent-workflows/tools/radar/vendor" || path.startsWith("agent-workflows/tools/radar/vendor/")) return RADAR_VENDOR_PATHS.has(path);
   if (path === "agent-workflows/tools/copiloto" || path.startsWith("agent-workflows/tools/copiloto/")) return COPILOTO_PATHS.has(path);
+  if (path === "agent-workflows/tools/piloto" || path.startsWith("agent-workflows/tools/piloto/")) return PILOTO_PATHS.has(path);
   if (/^(?:product\/tower\/v1\/|agent-workflows\/tools\/radar\/)/.test(path) || SIGNATURE_PATHS.has(path) ||
       path === "agent-workflows/skills/_shared/plan-naming-convention.md") return true;
   return path.startsWith("agent-workflows/skills/") && WORKFLOW_SKILLS.has(path.split("/")[2]) &&

@@ -76,10 +76,10 @@ function rejects(value, pattern = /release/i) {
 }
 
 test("intake admits a member count above the running roster and still rejects a runaway count", () => {
-  // The running roster is 97; a 98th canonical member is a newer, larger published roster.
+  // The running roster is 104; a 105th canonical member is a newer, larger published roster.
   // The absolute parse bound must not be derived from the running CLI's own roster.
   const grown = [...paths, "agent-workflows/skills/chanks-9-nueva/SKILL.md"];
-  expect(intake(encode({ schema, members: grown.map((path) => member(path)) })).run().manifest.members).toHaveLength(98);
+  expect(intake(encode({ schema, members: grown.map((path) => member(path)) })).run().manifest.members).toHaveLength(105);
   // At the documented absolute cap the envelope is still parsed and admitted...
   const atCap = [...paths, ...Array.from({ length: ABSOLUTE_MEMBER_LIMIT - paths.length }, (_, index) => `product/tower/v1/gen/${index}.mjs`)];
   expect(atCap).toHaveLength(ABSOLUTE_MEMBER_LIMIT);
@@ -90,21 +90,21 @@ test("intake admits a member count above the running roster and still rejects a 
   rejects({ schema, members: beyond.map((path) => member(path)) });
 });
 
-test("a roster-95 CLI installs a published 97-member envelope (issue #156 bridge)", () => {
+test("a roster-102 CLI installs a published 104-member envelope (issue #156 bridge)", () => {
   const bootstrapPath = resolve(import.meta.dir, "../bootstrap.mjs");
   const bundlePath = resolve(import.meta.dir, "../bundle.mjs");
   // The two chanks-0-comunicacion-agentes members are dropped from the current roster
   // to reconstruct a smaller running CLI than the published envelope.
   const retired = new Set(["agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
     "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md"]);
-  const running91 = BUNDLE_MEMBERS.filter(({ source }) => !retired.has(source));
-  expect(running91).toHaveLength(85); // + ten engine modules = the 95-path running roster
+  const runningShort = BUNDLE_MEMBERS.filter(({ source }) => !retired.has(source));
+  expect(runningShort).toHaveLength(92); // + ten engine modules = the 102-path running roster
   const envelope = encode({ schema, members: paths.map((path) => member(path)) });
   const script = `
     import { mock } from "bun:test";
     import { createHash } from "node:crypto";
     const bundle = await import(${JSON.stringify(bundlePath)});
-    mock.module(${JSON.stringify(bundlePath)}, () => ({ ...bundle, BUNDLE_MEMBERS: ${JSON.stringify(running91)} }));
+    mock.module(${JSON.stringify(bundlePath)}, () => ({ ...bundle, BUNDLE_MEMBERS: ${JSON.stringify(runningShort)} }));
     const { bootstrapVerifiedRelease } = await import(${JSON.stringify(bootstrapPath)});
     const bytes = Buffer.from(${JSON.stringify(envelope.toString("base64"))}, "base64");
     const result = bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1.3.0",
@@ -115,13 +115,13 @@ test("a roster-95 CLI installs a published 97-member envelope (issue #156 bridge
   const run = spawnSync(process.execPath, ["-e", script], { encoding: "utf8" });
   expect(run.stderr).toBe("");
   expect(run.status).toBe(0);
-  expect(run.stdout).toBe("97");
+  expect(run.stdout).toBe("104");
 });
 
 test("cached S194/S195 releases are admitted by pinned digest; intake still requires the running roster", () => {
   const preVendor = fixture().members.filter(m => !m.path.startsWith("agent-workflows/tools/radar/vendor/"));
-  for (const count of [78, 80]) {
-    const old = { schema, members: count === 80 ? preVendor : preVendor.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path)) };
+  for (const count of [85, 87]) {
+    const old = { schema, members: count === 87 ? preVendor : preVendor.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path)) };
     const bytes = encode(old), options = { repository: "example/control-tower", tag: `v1-cache-${count}`, asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) };
     expect(bootstrapCachedRelease(options).manifest.members.length).toBe(count);
     expect(() => bootstrapVerifiedRelease(options)).toThrow(/membership/);
@@ -131,11 +131,11 @@ test("cached S194/S195 releases are admitted by pinned digest; intake still requ
     old.members.pop(); const missing = encode(old);
     expect(bootstrapCachedRelease({ ...options, sha256: digest(missing), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : missing }) }).manifest.members.length).toBe(count - 1);
   }
-  // A 95-member mixed-generation cache (97 minus two engine modules) matches no named
+  // A 102-member mixed-generation cache (104 minus two engine modules) matches no named
   // roster; it must still be admitted by digest instead of failing inspect.
   const hybrid = fixture(); hybrid.members = hybrid.members.filter(m => !["product/tower/v1/runtime-config.mjs", "product/tower/v1/release-build.mjs"].includes(m.path));
   const bytes = encode(hybrid);
-  expect(bootstrapCachedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) }).manifest.members.length).toBe(95);
+  expect(bootstrapCachedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json", sha256: digest(bytes), runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : bytes }) }).manifest.members.length).toBe(102);
 });
 
 test("published 30-member receipts stay cached-only and are admitted by digest and structure", () => {
@@ -169,9 +169,9 @@ test("published 30-member receipts stay cached-only and are admitted by digest a
 });
 
 describe("bounded verified global release intake", () => {
-  test("accepts exactly 97 canonical source-layout files independently of ordering", () => {
-    expect(BUNDLE_MEMBERS.length).toBe(87);
-    expect(new Set(paths).size).toBe(97);
+  test("accepts exactly 104 canonical source-layout files independently of ordering", () => {
+    expect(BUNDLE_MEMBERS.length).toBe(94);
+    expect(new Set(paths).size).toBe(104);
     for (const members of [fixture().members, fixture().members.reverse()]) {
       const bytes = encode({ schema, members });
       const original = Buffer.from(bytes);
@@ -179,7 +179,7 @@ describe("bounded verified global release intake", () => {
       const result = run();
       expect(result.manifest.schema).toBe(schema);
       expect(result.manifest.members.map(({ path }) => path).sort()).toEqual([...paths].sort());
-      expect(result.manifest.members.length).toBe(97);
+      expect(result.manifest.members.length).toBe(104);
       expect(Object.isFrozen(result)).toBe(true);
       expect(Object.isFrozen(result.manifest.members)).toBe(true);
       for (const entry of result.manifest.members) {
@@ -216,7 +216,7 @@ describe("bounded verified global release intake", () => {
     // A new canonical member is a legitimate newer roster and is admitted by digest;
     // the build-side gate ("committed vendor drift ...") still forbids vendor growth.
     const extra = fixture(); extra.members.push(member("agent-workflows/tools/radar/vendor/extra.go"));
-    expect(intake(encode(extra)).run().manifest.members).toHaveLength(98);
+    expect(intake(encode(extra)).run().manifest.members).toHaveLength(105);
   });
 
   test("requires global skills, templates and signature sources but rejects the personal Notion map", () => {

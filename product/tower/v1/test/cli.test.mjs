@@ -556,7 +556,7 @@ test("status live-reconciles installed engine and projects without changing any 
   success(result);
   expect(result.value.engine).toEqual({ installed: true, status: "healthy", active: r.sha, previous: null,
     activeTag: "v1-test", previousTag: null,
-    components: { skills: "ok", radar: "ok", signatures: "ok", copiloto: "ok", pointers: "ok", gentleAi: { status: "missing", version: null } } });
+    components: { skills: "ok", radar: "ok", signatures: "ok", copiloto: "ok", piloto: "ok", pointers: "ok", gentleAi: { status: "missing", version: null } } });
   expect(result.value.projects).toEqual([{ projectRoot: root, status: "invalid" }]);
   expect(snapshot(f)).toEqual(before);
 });
@@ -862,7 +862,7 @@ test("fresh default doctor and list do not prepare HOME", () => {
   const f = fixture(), before = snapshot(f);
   const checked = invoke(f, ["doctor"]);
   success(checked);
-  expect(checked.value).toEqual({ status: "absent", active: null, previous: null, components: { skills: "missing", radar: "missing", signatures: "missing", copiloto: "missing", pointers: "missing", gentleAi: { status: "ok", version: "4.0.0" } } });
+  expect(checked.value).toEqual({ status: "absent", active: null, previous: null, components: { skills: "missing", radar: "missing", signatures: "missing", copiloto: "missing", piloto: "missing", pointers: "missing", gentleAi: { status: "ok", version: "4.0.0" } } });
   success(invoke(f, ["list"]));
   expect(snapshot(f)).toEqual(before);
 });

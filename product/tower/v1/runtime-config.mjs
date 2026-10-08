@@ -97,6 +97,7 @@ function allowedEntries() {
     ...V1_SKILLS.flatMap(name => [[`.agents/skills/${name}`, "skills"], [`.claude/skills/${name}`, "skills"]]),
     [".agents/skills/_shared/plan-naming-convention.md", "skills"], [".local/bin/radar", "radar"],
     [".local/bin/copiloto", "copiloto"],
+    [".local/bin/piloto", "piloto"],
     [`${share}/torre-firma.mjs`, "signatures"], [".pi/agent/extensions/chanks-notices.ts", "signatures"],
     [".claude/hooks/chanks-etapa.sh", "signatures"], [".claude/hooks/torre-firma.sh", "signatures"],
   ]);
@@ -219,6 +220,9 @@ function buildRadar({ env, runner, members }) {
 }
 function buildCopiloto({ env, runner, members }) {
   return buildGoTool({ env, runner, members, destination: "copiloto/", name: "copiloto", label: "copiloto", goflags: "-mod=readonly" });
+}
+function buildPiloto({ env, runner, members }) {
+  return buildGoTool({ env, runner, members, destination: "piloto/", name: "piloto", label: "piloto", goflags: "-mod=readonly" });
 }
 
 // Separate discovery from safe(): admission never relaxes its permission rule.
@@ -360,7 +364,7 @@ export function prepareRuntime({ home, members: releaseMembers, vendorReleases =
   file(".pi/agent/extensions/chanks-notices.ts", notices(home), "signatures");
   for (const name of ["chanks-etapa.sh", "torre-firma.sh"]) file(`.claude/hooks/${name}`, members.get(`agent-workflows/tools/hooks/${name}`), "signatures", 0o755);
   // Destination preflight precedes the build and any installation writes.
-  for (const item of [...desired, { path: ".local/bin/radar" }, { path: ".local/bin/copiloto" }]) {
+  for (const item of [...desired, { path: ".local/bin/radar" }, { path: ".local/bin/copiloto" }, { path: ".local/bin/piloto" }]) {
     item.before = snapshot(home, join(home, item.path), item.path.startsWith(".claude/skills/"));
     const owned = prior?.entries.find(e => e.path === item.path);
     if (owned && item.before && encode(item.before) !== encode(owned.installed)) fail(`modified owned entry: ${item.path}`);
@@ -399,6 +403,9 @@ export function prepareRuntime({ home, members: releaseMembers, vendorReleases =
   const copilotoBefore = snapshot(home, join(home, ".local/bin/copiloto"));
   file(".local/bin/copiloto", buildCopiloto({ env, runner, members }), "copiloto", 0o755);
   desired.at(-1).before = copilotoBefore;
+  const pilotoBefore = snapshot(home, join(home, ".local/bin/piloto"));
+  file(".local/bin/piloto", buildPiloto({ env, runner, members }), "piloto", 0o755);
+  desired.at(-1).before = pilotoBefore;
   return { home, prior, desired, retired, pointers, config, nextSettings, added };
 }
 export function installRuntime(plan) {
@@ -508,11 +515,11 @@ function entryStatus(home, entry) {
 export function doctorRuntime({ home, runner = spawnSync, env = process.env }) {
   home = homeFor(home);
   const gentleAi = gentleAiVersion({ runner, env: { ...env, HOME: home } });
-  let record; try { if (stat(join(home, share, ".runtime-lock"))) fail("runtime recovery evidence"); record = load(home); } catch { return { skills: "modified", radar: "modified", signatures: "modified", copiloto: "modified", pointers: "modified", gentleAi }; }
-  const result = { skills: "missing", radar: "missing", signatures: "missing", copiloto: "missing", pointers: "missing", gentleAi };
+  let record; try { if (stat(join(home, share, ".runtime-lock"))) fail("runtime recovery evidence"); record = load(home); } catch { return { skills: "modified", radar: "modified", signatures: "modified", copiloto: "modified", piloto: "modified", pointers: "modified", gentleAi }; }
+  const result = { skills: "missing", radar: "missing", signatures: "missing", copiloto: "missing", piloto: "missing", pointers: "missing", gentleAi };
   if (!record) return result;
   const aggregate = values => values.includes("modified") ? "modified" : values.includes("missing") || !values.length ? "missing" : "ok";
-  for (const name of ["skills", "radar", "signatures", "copiloto"]) result[name] = aggregate(record.entries.filter(e => e.component === name).map(e => entryStatus(home, e)));
+  for (const name of ["skills", "radar", "signatures", "copiloto", "piloto"]) result[name] = aggregate(record.entries.filter(e => e.component === name).map(e => entryStatus(home, e)));
   const expectedPointers = pointerPaths.filter(path => stat(join(home, dirname(path))));
   result.pointers = aggregate(expectedPointers.map(path => {
     const p = record.pointers.find(p => p.path === path); if (!p) return "missing";

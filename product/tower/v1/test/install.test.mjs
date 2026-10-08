@@ -61,12 +61,19 @@ test("expanded canonical release extracts every pinned skill, template and signa
     "agent-workflows/tools/hooks/torre-firma.sh", "agent-workflows/tools/hooks/chanks-etapa.sh",
     "agent-workflows/tools/copiloto/go.mod", "agent-workflows/tools/copiloto/main.go",
     "agent-workflows/tools/copiloto/foco.go", "agent-workflows/tools/copiloto/tarjeta.go",
+    "agent-workflows/tools/piloto/go.mod", "agent-workflows/tools/piloto/main.go",
+    "agent-workflows/tools/piloto/aterrizaje.go", "agent-workflows/tools/piloto/marca.go",
+    "agent-workflows/tools/piloto/revision.go", "agent-workflows/tools/piloto/vuelo.go",
+    "agent-workflows/tools/piloto/worktree.go",
     "agent-workflows/tools/radar/vendor/modules.txt", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/LICENSE", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yaml.go"]) {
     expect(deps.pinned.paths).toContain(path);
   }
-  expect(deps.pinned.paths).toHaveLength(97);
+  expect(deps.pinned.paths).toHaveLength(104);
   for (const path of ["agent-workflows/tools/copiloto/main_test.go", "agent-workflows/tools/copiloto/foco_test.go",
-    "agent-workflows/tools/copiloto/tarjeta_test.go"]) expect(deps.pinned.paths).not.toContain(path);
+    "agent-workflows/tools/copiloto/tarjeta_test.go", "agent-workflows/tools/piloto/main_test.go",
+    "agent-workflows/tools/piloto/aterrizaje_test.go", "agent-workflows/tools/piloto/marca_test.go",
+    "agent-workflows/tools/piloto/revision_test.go", "agent-workflows/tools/piloto/vuelo_test.go",
+    "agent-workflows/tools/piloto/worktree_test.go"]) expect(deps.pinned.paths).not.toContain(path);
   expect(deps.pinned.paths).not.toContain("agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");
   // The fixture's install runner checks exact extracted bytes for every member.
   expect(main([], deps)).toBe(0);
@@ -98,6 +105,16 @@ test("copiloto intake ships only the four reviewed sources and rejects tests, ex
   for (const path of ["agent-workflows/tools/copiloto/main_test.go", "agent-workflows/tools/copiloto/foco_test.go",
     "agent-workflows/tools/copiloto/tarjeta_test.go", "agent-workflows/tools/copiloto/extra.go",
     "agent-workflows/tools/copiloto/vendor/modules.txt", "agent-workflows/tools/copiloto/go.sum"]) fixture(({ deps, output }) => {
+    expect(main(["--dry-run"], deps)).toBe(1); expect(output().stderr).toContain("member path");
+  }, envelope => { envelope.members[0].path = path; }, { paths: [path, ...paths.slice(1)] });
+});
+
+test("piloto intake ships only the seven reviewed sources and rejects tests, extras and vendor even when pinned", () => {
+  for (const path of ["agent-workflows/tools/piloto/main_test.go", "agent-workflows/tools/piloto/aterrizaje_test.go",
+    "agent-workflows/tools/piloto/marca_test.go", "agent-workflows/tools/piloto/revision_test.go",
+    "agent-workflows/tools/piloto/vuelo_test.go", "agent-workflows/tools/piloto/worktree_test.go",
+    "agent-workflows/tools/piloto/extra.go", "agent-workflows/tools/piloto/vendor/modules.txt",
+    "agent-workflows/tools/piloto/go.sum"]) fixture(({ deps, output }) => {
     expect(main(["--dry-run"], deps)).toBe(1); expect(output().stderr).toContain("member path");
   }, envelope => { envelope.members[0].path = path; }, { paths: [path, ...paths.slice(1)] });
 });
