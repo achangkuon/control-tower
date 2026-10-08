@@ -555,15 +555,16 @@ class RadarInstallerTerritoryTests(unittest.TestCase):
             capture_output=True, text=True, env=env, timeout=60,
         )
 
-    def test_refuses_to_overwrite_a_tower_owned_radar_without_touching_it(self):
+    def test_warns_and_installs_over_a_stale_tower_manifest_claim(self):
+        """torre-control (the guard's update path) was retired in V2 (issue #160): a
+        manifest claim no longer blocks; the installer warns and updates the binary."""
         self.write_manifest([{"path": ".local/bin/radar", "component": "radar", "installed": True}])
-        before = self.radar.read_bytes()
         result = self.run_installer()
-        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         output = result.stdout + result.stderr
-        self.assertIn("propiedad de la Torre", output)
-        self.assertIn("torre-control", output)
-        self.assertEqual(self.radar.read_bytes(), before)
+        self.assertIn("manifiesto de la Torre", output)
+        self.assertNotIn("torre-control (o", output)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
 
     def test_force_overrides_the_tower_ownership_guard(self):
         self.write_manifest([{"path": ".local/bin/radar", "component": "radar", "installed": True}])
@@ -617,42 +618,38 @@ class RadarInstallerTerritoryTests(unittest.TestCase):
     # --- Path comparison (S228 / R4-path-compare-bypass): the same HOME-relative path
     # spelled with a "./" prefix or repeated slashes still claims the destination.
 
-    def test_dot_prefixed_manifest_path_cannot_bypass_the_tower_guard(self):
+    def test_dot_prefixed_manifest_path_still_claims_the_destination(self):
         self.write_manifest([{"path": "./.local/bin/radar", "component": "radar", "installed": True}])
-        before = self.radar.read_bytes()
         result = self.run_installer()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
-        self.assertEqual(self.radar.read_bytes(), before)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("manifiesto de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
 
-    def test_repeated_slashes_in_the_manifest_path_cannot_bypass_the_tower_guard(self):
+    def test_repeated_slashes_in_the_manifest_path_still_claim_the_destination(self):
         self.write_manifest([{"path": ".local//bin/radar", "component": "radar", "installed": True}])
-        before = self.radar.read_bytes()
         result = self.run_installer()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
-        self.assertEqual(self.radar.read_bytes(), before)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("manifiesto de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
 
-    def test_mixed_dot_and_slash_spellings_cannot_bypass_the_tower_guard(self):
+    def test_mixed_dot_and_slash_spellings_still_claim_the_destination(self):
         self.write_manifest([{"path": ".//.local//bin///radar", "component": "radar", "installed": True}])
-        before = self.radar.read_bytes()
         result = self.run_installer()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
-        self.assertEqual(self.radar.read_bytes(), before)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("manifiesto de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
 
-    def test_hand_formatted_manifest_spacing_cannot_bypass_the_tower_guard(self):
-        """JSON spacing is not the guard's business: only the path value is."""
+    def test_hand_formatted_manifest_spacing_still_claims_the_destination(self):
+        """JSON spacing is not the warning's business: only the path value is."""
         manifest = self.home / self.OWNERSHIP_MANIFEST
         manifest.parent.mkdir(parents=True, exist_ok=True)
         manifest.write_text('[ { "path" : "./.local/bin/radar" , "installed" : true } ]', encoding="utf-8")
-        before = self.radar.read_bytes()
         result = self.run_installer()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
-        self.assertEqual(self.radar.read_bytes(), before)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("manifiesto de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
 
-    def test_compact_manifest_with_a_dot_prefixed_path_still_blocks_the_overwrite(self):
+    def test_compact_manifest_with_a_dot_prefixed_path_still_claims_the_destination(self):
         """One line of JSON is still a manifest: extraction must not become line-based."""
         manifest = self.home / self.OWNERSHIP_MANIFEST
         manifest.parent.mkdir(parents=True, exist_ok=True)
@@ -661,21 +658,20 @@ class RadarInstallerTerritoryTests(unittest.TestCase):
             '"component":"radar","installed":true}],"pointers":[],"directories":[]}',
             encoding="utf-8",
         )
-        before = self.radar.read_bytes()
         result = self.run_installer()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
-        self.assertEqual(self.radar.read_bytes(), before)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("manifiesto de la Torre", result.stdout + result.stderr)
+        self.assertEqual(self.radar.read_bytes(), self.FAKE_BUILD)
 
     # --- --check diagnosis (S228 / R3-check-mode-blindspot): check mode never installs,
     # so it must report the Torre-owned destination instead of staying silent about it.
 
-    def test_check_mode_reports_the_tower_owned_destination(self):
+    def test_check_mode_reports_the_stale_manifest_claim(self):
         self.write_manifest([{"path": ".local/bin/radar", "component": "radar", "installed": True}])
         before = self.radar.read_bytes()
         result = self.run_installer("--check")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("propiedad de la Torre", result.stdout + result.stderr)
+        self.assertIn("manifiesto de la Torre", result.stdout + result.stderr)
         self.assertEqual(self.radar.read_bytes(), before)
 
     def test_check_mode_says_nothing_about_ownership_without_a_manifest(self):

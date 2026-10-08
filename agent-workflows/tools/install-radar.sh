@@ -6,15 +6,16 @@
 # installer for that reason — each installer owns only its own box.
 #
 #   ./install-radar.sh            build and install
-#   ./install-radar.sh --check    diagnose only, touch nothing; it also reports a
-#                                 Torre-owned destination instead of planning a build
-#   ./install-radar.sh --force    install even when the Tower owns the destination
+#   ./install-radar.sh --check    diagnose only, touch nothing
+#   ./install-radar.sh --force    accepted for compatibility; a normal install no longer
+#                                 differs from it
 #
-# The Tower owns ~/.local/bin/radar: once its installer has recorded that path in
-# ~/.local/share/torre-control/runtime-ownership.json, this installer refuses to
-# overwrite it so the Tower ownership manifest stays verifiable. --force is an
-# explicit development escape; after using it the Tower preflight reports that
-# entry as modified until the next Torre install reconciles it.
+# The Tower installer once recorded ~/.local/bin/radar in its ownership manifest and
+# this installer refused to overwrite it. That guard pinned updates to `torre-control`,
+# a Tower command the V2 routing retired (issue #160): every radar delivery left the
+# installed binary stale unless --force was used. The manifest claim is now stale, so
+# the installer warns about it and proceeds: this script IS the current update path, and
+# the next Tower install reconciles the manifest entry as it always did.
 #
 # Destination follows the same convention as install.sh: $TORRE_BIN_DIR, else ~/.local/bin.
 set -euo pipefail
@@ -88,20 +89,21 @@ if $check_only; then
         bad "no instalado en $BIN/radar"
     fi
     command -v radar >/dev/null 2>&1 && ok "radar está en PATH" || bad "radar NO está en PATH"
-    # Diagnosis only: this mode never builds nor installs, so it cannot silently plan
-    # the overwrite the guard below refuses. It names the Torre-owned condition instead.
-    if torre_owns_destination && ! $force; then
-        echo "  ~ $torre_radar es propiedad de la Torre; una instalación personal no lo pisa (--force para desarrollo)"
+    # Diagnosis only: this mode never builds nor installs. A stale manifest claim is
+    # reported, but it no longer plans any refusal — nothing here blocks an install.
+    if torre_owns_destination && ! $force;
+    then
+        echo "  ~ el manifiesto de la Torre reclama $torre_radar; la instalación lo actualiza y la entrada queda marcada modificada hasta que la Torre la reconcilie"
     fi
     exit 0
 fi
 
-# Refuse to touch a Torre-owned destination, and fail before spending a build.
+# Warn about a stale manifest claim, then proceed. The old refusal pinned updates to the
+# retired torre-control command and left every delivery with a stale binary (issue #160):
+# a warning keeps the manifest drift visible without blocking the documented update path.
 if torre_owns_destination && ! $force; then
-    bad "radar es propiedad de la Torre; actualizalo vía torre-control (o --force para desarrollo)"
-    echo "    $torre_radar no se tocó: la Torre conserva su manifiesto verificable."
-    echo "    Con --force la Torre va a reportar esa entrada como modificada hasta su próxima instalación."
-    exit 1
+    echo "  ~ el manifiesto de la Torre reclama $torre_radar (torre-control fue retirado; este instalador es la vía de actualización)."
+    echo "    La entrada va a quedar reportada como modificada hasta la próxima instalación de la Torre."
 fi
 
 # Build into a temporary name first: a failed build must never replace a working binary.
