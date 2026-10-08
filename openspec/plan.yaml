@@ -2217,70 +2217,11 @@ sesiones:
 
   - {id: S238, entrega: {commit: 62382edb7ed9d9f6ee633c307e3b4a084e58f06e}, historico: openspec/archive/sesiones/S238.md}
 
-  - id: S239
-    zona: metodo
-    prioridad: v2-copiloto
-    resultado: "Las skills de la Etapa 1 cierran las ambigüedades como paso explícito y hablan el mismo lenguaje que la tarjeta del copiloto."
-    autoridad: "El maintainer definió el 2026-10-07 que la Etapa 1 es donde se cierran las dudas que dejó la Etapa 0 y que probablemente haya que ajustar esas skills (docs/architecture/copiloto.md, Tramo 2 y §7 paso 4)."
-    depende_de: [S238]
-    cimientos: []
-    recurso: []
-    archivos: [agent-workflows/skills/chanks-1-cierre-de-decisiones/SKILL.md, agent-workflows/skills/chanks-1-brain-dump/SKILL.md, agent-workflows/skills/chanks-1-feature/SKILL.md, agent-workflows/skills/chanks-1-descubrimiento/SKILL.md, agent-workflows/tests/test_builder_flow.py]
-    encargo:
-      pedido_contexto: >-
-        Nada debe entrar al plan con preguntas abiertas; hoy la tarjeta de Etapa 1 nombra estas
-        skills pero ninguna trata el cierre de ambigüedades como paso obligatorio previo al plan.
-      resultado_comportamiento: >-
-        Cada skill de Etapa 1 lista las dudas abiertas y las cierra con el humano antes de proponer
-        escribir en plan.yaml; reconoce la tarjeta del copiloto como su disparador.
-      restricciones_decisiones: >-
-        Ajuste mínimo de texto; no crea skills nuevas. Tests de contrato existentes en verde.
-      referencias: >-
-        docs/architecture/copiloto.md (Tramo 2).
+  - {id: S239, entrega: {commit: e4540333003800ce607b2e11fd4c98284906eed9}, historico: openspec/archive/sesiones/S239.md}
 
-  - id: S240
-    zona: producto-torre
-    prioridad: v2-copiloto
-    resultado: "La Torre instala el copiloto y lo engancha en cada mensaje: hook de Claude Code y extensión de Pi que inyectan la tarjeta."
-    autoridad: "Diseño del copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md §7 paso 5)."
-    depende_de: [S238]
-    cimientos: []
-    recurso: []
-    archivos: [product/tower/v1/runtime-config.mjs, product/tower/v1/test/runtime-config.test.mjs, product/tower/v1/bundle.mjs, product/tower/v1/test/bundle.test.mjs, product/tower/v1/install.mjs, product/tower/v1/test/install.test.mjs]
-    encargo:
-      pedido_contexto: >-
-        Sin un enganche que corra solo en cada mensaje, el copiloto vuelve a depender de que el
-        agente se acuerde; Pi hoy no tiene ningún enganche de etapa.
-      resultado_comportamiento: >-
-        El paquete incluye el binario copiloto. Claude: el hook UserPromptSubmit inyecta la tarjeta
-        de `copiloto tarjeta`. Pi: la extensión generada inyecta la misma tarjeta en cada turno y
-        la muestra al humano. Sin copiloto instalado, nada falla: no se inyecta tarjeta.
-      restricciones_decisiones: >-
-        Mismo modelo de confianza del instalador (sin binarios dentro del checkout). TDD con RED
-        observado. Instalar en la máquina es una decisión aparte del maintainer.
-      referencias: >-
-        docs/architecture/copiloto.md; runtime-config.mjs:23,100,351 (hook actual).
+  - {id: S240, entrega: {commit: d382c71f357466410d066b9ffd07ee22d52e8916}, historico: openspec/archive/sesiones/S240.md}
 
-  - id: S241
-    zona: producto-torre
-    prioridad: v2-copiloto
-    resultado: "El bloque de AGENTS.md que instala la Torre queda corto: la tabla de skills por etapa pasa al copiloto y la regla es seguir su tarjeta."
-    autoridad: "Diseño del copiloto aprobado por el maintainer el 2026-10-07 (docs/architecture/copiloto.md §7 paso 6)."
-    depende_de: [S232, S240]
-    cimientos: []
-    recurso: []
-    archivos: [product/tower/v1/instructions/project-agents.md, product/tower/v1/test/instructions.test.mjs]
-    encargo:
-      pedido_contexto: >-
-        El bloque mezcla guía y reglas duras y repite lo que ahora dice el copiloto; la evaluación
-        del 2026-10-07 mostró que un texto largo no se cumple (Engram 13295).
-      resultado_comportamiento: >-
-        El bloque conserva el mapa del flujo, la Etapa 0 libre y las reglas que protegen al humano;
-        la tabla «qué skill en cada etapa» se reemplaza por «seguí la tarjeta 🧭 del copiloto».
-      restricciones_decisiones: >-
-        No toca las reglas que agregó S232. Test RED en instructions.test.mjs.
-      referencias: >-
-        docs/architecture/copiloto.md; Engram 13295.
+  - {id: S241, entrega: {commit: 09c12d58664c6f753648c8d84911274182c1d7b4}, historico: openspec/archive/sesiones/S241.md}
 
   - {id: S204, entrega: {commit: 1fbf0c3d27c880c10336f0ae497c1f9d8dbb2f91}, historico: openspec/archive/sesiones/S204.md}
 
