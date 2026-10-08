@@ -262,7 +262,7 @@ func sesionDeWorktree(common, root string) (string, error) {
 
 // sesionExiste asks Radar, the only source, whether the Session exists.
 func sesionExiste(root, id string) error {
-	_, err := radarSalida(root, "sesion", id)
+	_, err := radarSalida(root, "sesion", id, "-C", root)
 	return err
 }
 

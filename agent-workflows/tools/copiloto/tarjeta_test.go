@@ -274,7 +274,7 @@ func TestTarjetaSesionSinEtapaNombraElMotivo(t *testing.T) {
 	anterior := radarSalida
 	t.Cleanup(func() { radarSalida = anterior })
 	radarSalida = func(root string, args ...string) ([]byte, error) {
-		if strings.Join(args, " ") == "etapa S999" {
+		if len(args) > 0 && args[0] == "etapa" {
 			return nil, errDePrueba(`{"reason":"sesion_desconocida"}`)
 		}
 		return []byte(snapshotFixture(false)), nil

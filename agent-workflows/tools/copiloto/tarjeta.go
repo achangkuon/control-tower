@@ -29,7 +29,7 @@ type sesionSnapshot struct {
 }
 
 func leerSnapshot(root string) (snapshot, error) {
-	out, err := radarSalida(root, "status", "--json")
+	out, err := radarSalida(root, "status", "--json", "-C", root)
 	if err != nil {
 		return snapshot{}, err
 	}
@@ -161,7 +161,7 @@ type etapaOferta struct {
 // leerEtapa asks Radar the one applicable stage. The copiloto derives it, never
 // invents it, and a refusal is guidance naming the reason — never a lock.
 func leerEtapa(root, sesion string) (etapaOferta, error) {
-	out, err := radarSalida(root, "etapa", sesion)
+	out, err := radarSalida(root, "etapa", sesion, "-C", root)
 	if err != nil {
 		return etapaOferta{}, err
 	}

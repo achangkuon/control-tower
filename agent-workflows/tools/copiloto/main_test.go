@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -57,13 +58,17 @@ func commonDe(t *testing.T, root string) string {
 }
 
 // fakeRadar replaces the single Radar read seam with fixed answers. A key is
-// the joined argument list; a missing key is an error.
+// the joined argument list WITHOUT the trailing `-C <raíz>`, which every read
+// must carry so Radar never depends on the caller's working directory.
 func fakeRadar(t *testing.T, respuestas map[string]string) {
 	t.Helper()
 	anterior := radarSalida
 	t.Cleanup(func() { radarSalida = anterior })
 	radarSalida = func(root string, args ...string) ([]byte, error) {
-		clave := strings.Join(args, " ")
+		if len(args) < 2 || args[len(args)-2] != "-C" || args[len(args)-1] != root {
+			return nil, fmt.Errorf("lectura de Radar sin -C %s: %v", root, args)
+		}
+		clave := strings.Join(args[:len(args)-2], " ")
 		respuesta, ok := respuestas[clave]
 		if !ok {
 			return nil, os.ErrNotExist
