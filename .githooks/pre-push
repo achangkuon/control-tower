@@ -244,7 +244,15 @@ if [ -f "$root/openspec/plan.yaml" ]; then
     expired=""
     marker=$(mktemp 2>/dev/null) || marker=""
 
-    (cd "$root" && "$radar" check) &
+    (cd "$root" &&
+      # Git exports its routing variables to hooks. An inherited GIT_DIR makes radar
+      # root itself at a subdirectory (doubled openspec path) and fail every
+      # root-relative check. The suites already unset these; the plan gate needs the
+      # same hygiene. Radar's own git spawns strip them too (radar git.go), so this is
+      # defense in depth, not the only line.
+      unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR \
+            GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_QUARANTINE_PATH &&
+      "$radar" check) &
     radar_pid=$!
 
     watchdog_pid=""

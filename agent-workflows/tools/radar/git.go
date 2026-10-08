@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -10,8 +11,45 @@ import (
 
 var hexadecimal = regexp.MustCompile(`^[0-9a-fA-F]+$`)
 
-// gitCommand is the single place Radar spawns git, so a test can count processes.
-var gitCommand = func(args ...string) *exec.Cmd { return exec.Command("git", args...) }
+// gitHookEnv lists the routing variables Git exports to hooks (pre-push among
+// them). When Radar runs inside one, an inherited GIT_DIR points at a
+// worktree-private gitdir: `rev-parse --show-toplevel` then resolves the current
+// directory as the work tree instead of walking up, root derivation lands on a
+// subdirectory, and every root-relative check fails on a doubled path. Radar
+// always addresses the repository with -C root, so inherited routing context is
+// never wanted: gitCommand strips these variables from every spawn, mirroring
+// the unset list the pre-push hook already applies to its suites.
+var gitHookEnv = []string{
+	"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX",
+	"GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+	"GIT_QUARANTINE_PATH",
+}
+
+// gitCommand is the single place Radar spawns git, so a test can count processes
+// and hook-environment hygiene is applied in one spot.
+var gitCommand = func(args ...string) *exec.Cmd {
+	cmd := exec.Command("git", args...)
+	cmd.Env = sinEntornoDeHook(os.Environ())
+	return cmd
+}
+
+// sinEntornoDeHook returns env without the Git hook routing variables.
+func sinEntornoDeHook(env []string) []string {
+	limpio := make([]string, 0, len(env))
+	for _, kv := range env {
+		bloqueada := false
+		for _, nombre := range gitHookEnv {
+			if strings.HasPrefix(kv, nombre+"=") {
+				bloqueada = true
+				break
+			}
+		}
+		if !bloqueada {
+			limpio = append(limpio, kv)
+		}
+	}
+	return limpio
+}
 
 func gitOutput(root string, args ...string) (string, error) {
 	cmdArgs := append([]string{"-C", root}, args...)
