@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
 	"path"
 	"sort"
 	"strings"
@@ -117,13 +116,16 @@ func trackedFilesAt(root, head string) ([]string, error) {
 	if _, err := gitOID(root, head); err != nil {
 		return nil, fmt.Errorf("HEAD de partición inválido: %w", err)
 	}
-	cmd := exec.Command("git", "-C", root, "ls-tree", "-r", "--name-only", "--full-tree", head)
+	// -z keeps raw, unquoted paths: with the default core.quotepath=true, git
+	// quotes non-ASCII paths in octal and the quoted spelling never matches any
+	// Zona (issue #146).
+	cmd := gitCommand("-C", root, "ls-tree", "-r", "--name-only", "--full-tree", "-z", head)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("no se pudo listar los archivos de %s con git: %w", root, err)
 	}
 	var files []string
-	for _, l := range strings.Split(string(out), "\n") {
+	for _, l := range strings.Split(string(out), "\x00") {
 		if l = strings.TrimSpace(l); l != "" {
 			files = append(files, l)
 		}

@@ -59,3 +59,50 @@ func TestResolverRaizIgnoraGitDirDelHook(t *testing.T) {
 		t.Fatalf("resolverRaiz enraizó en %q en vez de %q bajo GIT_DIR de hook", got, root)
 	}
 }
+
+// TestTrackedFilesAtRutasNoASCII pins the #146 fix: with core.quotepath on (the
+// default), git quotes non-ASCII paths in octal, and the quoted spelling never
+// matches any Zona. ls-tree -z hands back raw paths, so a tracked
+// "Campañas/README.md" must come back unquoted and byte-faithful.
+func TestTrackedFilesAtRutasNoASCII(t *testing.T) {
+	root := t.TempDir()
+	fixtureGit(t, root, "init", "-q")
+	fixtureGit(t, root, "config", "user.email", "radar@example.test")
+	fixtureGit(t, root, "config", "user.name", "Radar Test")
+
+	dir := filepath.Join(root, "Campañas")
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte("hola\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	fixtureGit(t, root, "add", "Campañas/README.md")
+	fixtureGit(t, root, "commit", "-qm", "base")
+
+	// The machine default is quotepath=true; force the quoting behavior on so the
+	// test exercises the failure mode regardless of host config.
+	cmd := exec.Command("git", "-C", root, "config", "core.quotepath", "true")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git config core.quotepath: %v: %s", err, out)
+	}
+
+	head, err := gitHEAD(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files, err := trackedFilesAt(root, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "Campañas/README.md"
+	for _, f := range files {
+		if f == want {
+			return
+		}
+		if strings.Contains(f, "303") || strings.HasPrefix(f, "\"") {
+			t.Fatalf("la ruta no ASCII volvió citada por git: %q (se esperaba %q)", f, want)
+		}
+	}
+	t.Fatalf("la ruta trackeada %q no apareció en la lista de archivos: %#v", want, files)
+}
