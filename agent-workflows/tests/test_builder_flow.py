@@ -237,8 +237,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
         closure = read("skills/chanks-5-session-doc/SKILL.md")
         compact = " ".join(closure.split())
         for rule in (
-            "`entrega.commit`", "ancestor", "`radar archivar <ID>`", "`radar check`",
-            "`radar render`", "Only the responsible parent writes `openspec/plan.yaml`",
+            "`entrega.commit`", "ancestor", "`radar archivar <ID> --commit <oid completo>`", "`radar check`",
+            "`radar render`", "Only the responsible parent writes the plan",
             "nada que registrar",
         ):
             with self.subTest(rule=rule):

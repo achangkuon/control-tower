@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -467,5 +468,167 @@ func TestArchivarRejectsNonIntegratedCommit(t *testing.T) {
 	after, _ := os.ReadFile(plan)
 	if string(before) != string(after) {
 		t.Fatal("plan mutated on failure")
+	}
+}
+
+// cleanCommitFixture builds a repo whose plan holds exactly one native ODD
+// Session with no entrega yet: `--commit` is the only thing that can register
+// the delivery. Archiving it leaves `radar check` clean.
+func cleanCommitFixture(t *testing.T) (string, string, string) {
+	t.Helper()
+	root, head := repoGit(t)
+	plan := filepath.Join(root, "openspec", "plan.yaml")
+	if err := os.MkdirAll(filepath.Dir(plan), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	original := "schema: plan\nschema_version: 3\nproducto: example\n" +
+		"zonas:\n  - id: method\n    rutas: [tracked.txt]\n" +
+		"sesiones:\n" +
+		"  - id: S1\n" +
+		"    zona: method\n" +
+		"    resultado: Finished\n" +
+		"    autoridad: repo evidence\n" +
+		"    archivos: [tracked.txt]\n" +
+		"    encargo:\n" +
+		"      pedido_contexto: context\n" +
+		"      resultado_comportamiento: behavior\n" +
+		"      restricciones_decisiones: constraints\n" +
+		"      referencias: refs\n"
+	if err := os.WriteFile(plan, []byte(original), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return root, plan, head
+}
+
+func TestArchivarParsearCommit(t *testing.T) {
+	commit := strings.Repeat("a", 40)
+	opts, pos, err := parsearArgs("archivar", []string{"S1", "--commit", commit})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opts.commit != commit || len(pos) != 1 || pos[0] != "S1" {
+		t.Fatalf("--commit no se parseó: %+v %v", opts, pos)
+	}
+}
+
+func TestArchivarConCommitCierraEnUnSoloComando(t *testing.T) {
+	root, plan, head := cleanCommitFixture(t)
+	roadmap := filepath.Join(root, "openspec", "ROADMAP.md")
+	if err := archiveSessionCierre(plan, root, "S1", cierreOptions{commit: head, render: roadmap}); err != nil {
+		t.Fatalf("archivar con --commit: %v", err)
+	}
+	archive := filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")
+	body, err := os.ReadFile(archive)
+	if err != nil {
+		t.Fatalf("histórico ausente: %v", err)
+	}
+	if !strings.Contains(string(body), "commit: "+head) {
+		t.Fatalf("el histórico no registra la entrega: %q", body)
+	}
+	updated, err := os.ReadFile(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "  - {id: S1, entrega: {commit: " + head + "}, historico: openspec/archive/sesiones/S1.md}\n"
+	if !strings.Contains(string(updated), want) {
+		t.Fatalf("la referencia compacta no registra la entrega:\n%s", updated)
+	}
+	if strings.Contains(string(updated), "- id: S1") {
+		t.Fatalf("el bloque completo sobrevivió al archivo:\n%s", updated)
+	}
+	rendered, err := os.ReadFile(roadmap)
+	if err != nil {
+		t.Fatalf("render no generó el roadmap: %v", err)
+	}
+	if !strings.HasPrefix(string(rendered), avisoGenerado) {
+		t.Fatalf("el roadmap no fue generado por radar:\n%s", rendered)
+	}
+	p, err := Load(plan)
+	if err != nil {
+		t.Fatalf("plan ilegible tras archivar: %v", err)
+	}
+	if got := hallazgosErrores(p.Check(root)); len(got) != 0 {
+		t.Fatalf("check no quedó limpio: %+v", got)
+	}
+	if p.EstadosAt(root, head)["S1"] != Archivado {
+		t.Fatalf("la Sesión no quedó archivada: %v", p.EstadosAt(root, head))
+	}
+}
+
+func TestArchivarSinCommitNombraElPasoFaltante(t *testing.T) {
+	root, plan, _ := cleanCommitFixture(t)
+	before, _ := os.ReadFile(plan)
+	err := archiveSessionCierre(plan, root, "S1", cierreOptions{})
+	if err == nil || !strings.Contains(err.Error(), "--commit") {
+		t.Fatalf("el rechazo debe nombrar el paso --commit: %v", err)
+	}
+	after, _ := os.ReadFile(plan)
+	if string(after) != string(before) {
+		t.Fatal("el rechazo mutó el plan")
+	}
+}
+
+func TestArchivarConCommitInvalidoNoCambiaNada(t *testing.T) {
+	root, plan, _ := cleanCommitFixture(t)
+	roadmap := filepath.Join(root, "openspec", "ROADMAP.md")
+	before, _ := os.ReadFile(plan)
+	err := archiveSessionCierre(plan, root, "S1", cierreOptions{commit: strings.Repeat("f", 40), render: roadmap})
+	if err == nil || !strings.Contains(err.Error(), "commit") {
+		t.Fatalf("un commit inexistente debe rechazarse nombrando el paso: %v", err)
+	}
+	after, _ := os.ReadFile(plan)
+	if string(after) != string(before) {
+		t.Fatal("el commit inválido mutó el plan")
+	}
+	if _, err := os.Lstat(filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")); !os.IsNotExist(err) {
+		t.Fatal("el commit inválido publicó el histórico")
+	}
+	if _, err := os.Lstat(roadmap); !os.IsNotExist(err) {
+		t.Fatal("el commit inválido generó el roadmap")
+	}
+}
+
+func TestArchivarConCommitRevierteSiCheckFalla(t *testing.T) {
+	root, plan, head := cleanCommitFixture(t)
+	roadmap := filepath.Join(root, "openspec", "ROADMAP.md")
+	replacePlan(t, plan, "sesiones:\n",
+		"sesiones:\n  - id: S9\n    zona: fabricated\n    resultado: Bad\n    criterios: [x]\n")
+	before, _ := os.ReadFile(plan)
+	err := archiveSessionCierre(plan, root, "S1", cierreOptions{commit: head, render: roadmap})
+	if err == nil || !strings.Contains(err.Error(), "check") {
+		t.Fatalf("un check sucio debe rechazar el cierre nombrándolo: %v", err)
+	}
+	after, _ := os.ReadFile(plan)
+	if string(after) != string(before) {
+		t.Fatal("el check fallido no revirtió el plan")
+	}
+	if _, err := os.Lstat(filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")); !os.IsNotExist(err) {
+		t.Fatal("el check fallido dejó el histórico")
+	}
+	if _, err := os.Lstat(roadmap); !os.IsNotExist(err) {
+		t.Fatal("el check fallido generó el roadmap")
+	}
+}
+
+func TestArchivarConCommitRevierteSiRenderFalla(t *testing.T) {
+	root, plan, head := cleanCommitFixture(t)
+	roadmap := filepath.Join(root, "openspec", "ROADMAP.md")
+	original := headBeforePublish
+	defer func() { headBeforePublish = original }()
+	headBeforePublish = func(string) (string, error) { return "", fmt.Errorf("render interrumpido") }
+	before, _ := os.ReadFile(plan)
+	err := archiveSessionCierre(plan, root, "S1", cierreOptions{commit: head, render: roadmap})
+	if err == nil || !strings.Contains(err.Error(), "render") {
+		t.Fatalf("un render imposible debe rechazar el cierre nombrándolo: %v", err)
+	}
+	after, _ := os.ReadFile(plan)
+	if string(after) != string(before) {
+		t.Fatal("el render fallido no revirtió el plan")
+	}
+	if _, err := os.Lstat(filepath.Join(root, "openspec", "archive", "sesiones", "S1.md")); !os.IsNotExist(err) {
+		t.Fatal("el render fallido dejó el histórico")
+	}
+	if _, err := os.Lstat(roadmap); !os.IsNotExist(err) {
+		t.Fatal("el render fallido dejó el roadmap")
 	}
 }
