@@ -789,15 +789,28 @@ CARRIL_SOURCE = Path("tools/carril")
 CARRIL_RELATIVE = Path(".local/bin/carril")
 
 
+def executable_source(root: Path, relative: Path, label: str) -> Path:
+    """Admit a tracked executable source across real checkout modes.
+
+    Fresh Git checkouts under umask 0002 recreate tracked executables as 775, so
+    an exact 755 comparison breaks every fresh worktree install (issue #155's
+    mode class). The contract mirrors the Tower doctor (S222): the file must be
+    regular, owner-executable, and NOT other-writable; the group-writable bit is
+    tolerated. Installed destinations keep the exact 0755 mode.
+    """
+    source = root / relative
+    mode = stat.S_IMODE(source.stat().st_mode) if source.is_file() else 0
+    if not mode & 0o100 or mode & 0o002:
+        raise InstallError(f"{label} source must be a regular owner-executable file without other-write: {relative}")
+    return source
+
+
 def carril_path(home: Path) -> Path:
     return home / CARRIL_RELATIVE
 
 
 def carril_source(root: Path) -> Path:
-    source = root / CARRIL_SOURCE
-    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
-        raise InstallError("Carril launcher source must be a regular executable 755 file")
-    return source
+    return executable_source(root, CARRIL_SOURCE, "Carril launcher")
 
 
 def carril_changes(home: Path, root: Path) -> list[Change]:
@@ -823,10 +836,7 @@ def main_al_dia_path(home: Path) -> Path:
 
 
 def main_al_dia_source(root: Path) -> Path:
-    source = root / MAIN_AL_DIA_SOURCE
-    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
-        raise InstallError("Main freshness launcher source must be a regular executable 755 file")
-    return source
+    return executable_source(root, MAIN_AL_DIA_SOURCE, "Main freshness launcher")
 
 
 def main_al_dia_changes(home: Path, root: Path) -> list[Change]:
@@ -1561,10 +1571,7 @@ def _read_pi_settings(home: Path) -> dict:
 
 
 def _pi_wrapper_source(root: Path) -> Path:
-    source = root / PI_NPM_WRAPPER_SOURCE
-    if not source.is_file() or stat.S_IMODE(source.stat().st_mode) != 0o755:
-        raise InstallError("Pi npm host-peer wrapper source must be a regular executable 755 file")
-    return source
+    return executable_source(root, PI_NPM_WRAPPER_SOURCE, "Pi npm host-peer wrapper")
 
 
 def pi_npm_host_peers_changes(home: Path, root: Path | None = None) -> list[Change]:
@@ -1647,9 +1654,7 @@ def pi_overlay_rebuild_path(home: Path) -> Path:
 
 
 def _pi_overlay_entries(home: Path, root: Path) -> list[tuple[Path, Path, str, int]]:
-    tool = root / PI_OVERLAY_TOOL_SOURCE
-    if not tool.is_file() or stat.S_IMODE(tool.stat().st_mode) != 0o755:
-        raise InstallError("Pi overlay rebuild tool source must be a regular executable 755 file")
+    tool = executable_source(root, PI_OVERLAY_TOOL_SOURCE, "Pi overlay rebuild tool")
     entries = [(tool, pi_overlay_rebuild_path(home), "pi-overlay-tool", 0o755)]
     for name, relative in PI_OVERLAY_DATA_SOURCES.items():
         source = root / relative

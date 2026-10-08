@@ -421,6 +421,36 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("chanks-0-agente-soporte/SKILL.md", result.stdout)
         self.assertIn("APPEND_SYSTEM.md", result.stdout)
 
+    def _copied_source(self, relative_modes):
+        source = Path(tempfile.mkdtemp(prefix="ct-source-")) / "root"
+        self.addCleanup(shutil.rmtree, source.parent, ignore_errors=True)
+        shutil.copytree(ROOT, source)
+        for relative, mode in relative_modes.items():
+            (source / relative).chmod(mode)
+        return source
+
+    def test_group_writable_executable_sources_survive_umask_0002_checkouts(self):
+        """Fresh Git checkouts under umask 0002 recreate tracked executables as 775:
+        the strict 755 source check broke every fresh worktree install (issue #155's
+        mode class, install.py instance). Owner-executable and not other-writable is
+        the contract; the group-writable bit is tolerated like the Tower doctor (S222)."""
+        source = self._copied_source({relative: 0o775 for relative in (
+            "tools/carril", "tools/main-al-dia", "tools/pi/pi-npm-host-peers", "tools/pi/pi-overlay-rebuild")})
+        INSTALLER.apply(self.home, source)
+        self.assertEqual(stat.S_IMODE((self.home / ".local/bin/carril").stat().st_mode), 0o755)
+        self.assertEqual(stat.S_IMODE((self.home / ".local/bin/main-al-dia").stat().st_mode), 0o755)
+
+    def test_non_executable_or_other_writable_launcher_sources_are_refused(self):
+        source = self._copied_source({"tools/carril": 0o644})
+        with self.assertRaises(INSTALLER.InstallError) as ctx:
+            INSTALLER.apply(self.home, source)
+        self.assertIn("Carril launcher source", str(ctx.exception))
+
+        source = self._copied_source({"tools/carril": 0o776})
+        with self.assertRaises(INSTALLER.InstallError) as ctx:
+            INSTALLER.apply(self.home, source)
+        self.assertIn("Carril launcher source", str(ctx.exception))
+
     def test_carril_launcher_is_installed_and_check_detects_drift(self):
         INSTALLER.apply(self.home, ROOT)
         target = self.home / ".local/bin/carril"
