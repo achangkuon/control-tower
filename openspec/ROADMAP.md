@@ -3,15 +3,15 @@
 
 ## 📍 Punto de retoma
 - Cierres registrados: S1.11, S1.12, S1.13, S1.14, S1.15, S1.16, S1.17, S1.18, S1.20, S10.1, S10.2, S10.3, S100, S11.1, S110, S111, S112, S113, S116, S117, S118, S12.1, S12.2, S12.8, S120, S122, S124, S125, S126, S127, S128, S129, S130, S131, S132, S133, S134, S135, S136, S137, S138, S139, S140, S141, S142, S143, S144, S145, S146, S149, S150, S151, S152, S153, S154, S155, S156, S157, S158, S159, S160, S161, S163, S164, S165, S167, S169, S172, S173, S174, S175, S176, S177, S178, S179, S180, S181, S182, S183, S185, S186, S187, S188, S189, S191, S192, S193, S194, S195, S196, S197, S198, S199, S2.8, S200, S201, S202, S203, S204, S205, S206, S207, S208, S209, S210, S211, S212, S213, S214, S215, S216, S217, S218, S219, S220, S221, S222, S223, S224, S225, S226, S227, S228, S229, S230, S231, S232, S233, S234, S235, S236, S237, S238, S239, S240, S241, S3.1, S3.2, S3.3, S3.4, S4.1, S4.10, S4.11, S4.13, S4.14, S4.2, S4.3, S4.5, S4.6, S4.7, S4.9, S5.1, S5.10, S5.11, S5.12, S5.13, S5.14, S5.15, S5.2, S5.3, S5.4, S5.5, S5.6, S5.7, S5.8, S5.9, S8.12, S8.13, S8.14, S9.1, S9.3, S9.4, S9.5, S9.6, S9.9.
-- Prioridad activa: Torre V1 · Distribución para socios (pendiente de prueba en macOS).
-- Próximo trabajo ejecutable: ninguno.
+- Prioridad activa: Resolución de problemas · V2.
+- Próximo trabajo ejecutable: Método #1 → S242 — Una Sesión EN CURSO cuyo worker murió se reactiva con una sola operación humana aprobada que conserva el marcador de despacho, reconcilia Git y Radar frescos y reanuda sin borrar evidencia..
 - Decisión pendiente: S12.2 — ¿Cómo avanza la revisión de un artefacto fijado por digest?.
 
 ## Estado y próximo trabajo
-- No hay Sesiones LISTO.
+- Método #1 → S242 — Una Sesión EN CURSO cuyo worker murió se reactiva con una sola operación humana aprobada que conserva el marcador de despacho, reconcilia Git y Radar frescos y reanuda sin borrar evidencia.
 
 ## Avance
-- **Total:** 97% (175/180 S)
+- **Total:** 96% (175/182 S)
 - **Archivo:** — (sin Sesiones enumeradas)
 - **Asientos:** 100% (1/1 S)
 - **Autoridad:** 100% (2/2 S)
@@ -22,7 +22,7 @@
 - **Hosts:** 57% (4/7 S)
 - **Instalación:** 100% (1/1 S)
 - **Jornada:** — (sin Sesiones enumeradas)
-- **Método:** 100% (65/65 S)
+- **Método:** 97% (65/67 S)
 - **Producto Torre:** 95% (41/43 S)
 
 ## Zonas y colas
@@ -57,7 +57,8 @@
 - Sin Sesiones abiertas.
 
 ### Método (metodo)
-- Sin Sesiones abiertas.
+1. **S242** · 🟢 LISTO · prioridad Resolución de problemas · V2 · Una Sesión EN CURSO cuyo worker murió se reactiva con una sola operación humana aprobada que conserva el marcador de despacho, reconcilia Git y Radar frescos y reanuda sin borrar evidencia.
+2. **S243** · 🟢 LISTO · prioridad Resolución de problemas · V2 · La review RDD nunca arranca sobre una rama con base divergente de master sin rebase previo, y el abandon tiene sus precondiciones documentadas: una causalidad mal atribuida cuesta un rebase, no una re-review completa.
 
 ### Producto Torre (producto-torre)
 - Sin Sesiones abiertas.
@@ -1942,6 +1943,34 @@
   - Resultado y comportamiento: Guardar en product/tower/v1/reviews/s181-v1-residual-review.md un informe sustantivo con identidad publicada congelada, identidades del instalador, benchmark y README, fuentes, método, comprobaciones residuales aisladas, evidencia, hallazgos y limitaciones; no un índice de estado. Contrastar instalación, reversibilidad y documentación contra esas interfaces finales. El OID del informe integrado es evidencia legítima que registra la maquinaria de cierre existente. Los hallazgos nunca autorizan reparaciones: requieren aprobación humana nueva y alcance propio.
   - Restricciones y decisiones: Contrato preparado: adquisición y fijación de identidad, interfaces finales y comprobaciones residuales aisladas definidas. Adquisición al inicio de la revisión: git tag --list 'v1&#42;' más verificación remota (gh release list / git ls-remote --tags); las referencias locales muestran 10 tags v1.0.0-v1.2.5 con v1.2.5 -&gt; 7ad0510 como más nuevo, pero el estado remoto se re-verifica y se congela recién entonces. Fijar: tag, commit del recibo de build (release-build.mjs:285-286), digests del asset y del instalador y de los 4 TUI (stampInstaller release-build.mjs:134-142, sentinel install.mjs:8; builds archivados fuera del repo en Releases/&lt;TAG&gt;/ según agent-workflows/skills-personales/torre-release/references/publicar.md:89,116-133). Comprobaciones aisladas sin HOME real: --dry-run offline del instalador sellado (install.mjs:136-138,159,179; cli.mjs:60-64 resuelve HOME; antecedente test/install.test.mjs:222-234), verificación de digests contra sidecars, y smoke HOME=tmp de install/update/rollback/uninstall. Única escritura futura: el informe bajo product/tower/ de la Zona producto-torre, verificado por scout; no crearlo ahora. Fuentes y entorno sólo lectura: sin instalación global ni escrituras en HOME real, terceros o producción. No duplicar construcción ni smoke rutinario; assets untracked o HEAD sin tag no bastan como identidad publicada. El conflicto B4 es sólo evidencia de revisión: no autoriza quitar firmas ni reparar código. No inferir capacidad paralela.
   - Referencias: Entregas S205-S213 (commits e6def96, d94262d, 3c8a4b2, 145f2df, 54e60e1, df449fd, 8d72459, a20cef6, bc1c8d2); README.md:273-275 frente a product/tower/generic/README.md:29 (contradicción residual update-skills) y product/tower/v1/INSTALL-AGENTS.md:10-18 (afirmación de no escribir en configuración global) frente a runtime-config.mjs:335-337 y product/tower/v1/bundle.mjs:72-75 (B4 de docs/architecture/definiciones-v1-v2-v3.md:43), sólo evidencia de revisión, no reparaciones autorizadas. Reversibilidad: cli.mjs:8,17,20,428 y restauración de bloques en project-files.mjs:285-302. product/tower/v1/reviews/s181-v1-residual-review.md como informe sustantivo cuya integración registra el cierre existente.
+
+### S242 — Una Sesión EN CURSO cuyo worker murió se reactiva con una sola operación humana aprobada que conserva el marcador de despacho, reconcilia Git y Radar frescos y reanuda sin borrar evidencia.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/tools/radar/etapa.go, agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/marcar&#95;test.go, agent-workflows/tools/radar/marcar&#95;guardas&#95;test.go, agent-workflows/skills/chanks-3-paralelo/SKILL.md
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: El despacho correcto de una Sesión la puede dejar trabada para siempre si el worker muere: la admisión ya acepta EN CURSO para continue/resume, pero ninguna operación ejecuta la reanudación — radar marcar exige LISTO con rama nueva y se niega ante un marcador vivo (issue &#35;150, dos Sesiones afectadas el 2026-09-28).
+  - Resultado y comportamiento: radar marcar &lt;ID&gt; --reactivar admite sólo una Sesión EN CURSO con marcador de despacho vivo: preserva exactamente Sesión, worker, rama y worktree del marcador original, corre bajo el lock existente, reconcilia evidencia Git/Radar fresca y se detiene ante evidencia faltante, contradictoria o ajena. La sección Resuming de chanks-3-paralelo nombra la ruta.
+  - Restricciones y decisiones: No borra ni reescribe el marcador original; no agrega un octavo control — la ruta vive dentro del marcar que ya existe (el maintainer aprobó la forma --reactivar sobre un comando nuevo). El guardián que rechaza Cimiento/Recurso sin evidencia de adquisición queda como está: hoy ninguna Sesión viva los declara; habilitarlos es una decisión aparte.
+  - Referencias: issue &#35;150; radar etapa.go:793 (cmdMarcar); chanks/controls.mjs:139 (ESTADOS&#95;PARA&#95;RETOMA).
+
+### S243 — La review RDD nunca arranca sobre una rama con base divergente de master sin rebase previo, y el abandon tiene sus precondiciones documentadas: una causalidad mal atribuida cuesta un rebase, no una re-review completa.
+- Coordinación:
+  - Estado derivado: 🟢 LISTO
+  - Zona/Área: metodo · agent-workflows/, odd/tasks/
+  - Archivos autorizados: agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/skills/chanks-4-puente/references/review-recovery.md, agent-workflows/tests/test&#95;builder&#95;flow.py
+  - Depende de: —
+  - Recursos: —
+  - Ejecución: ODD nativo.
+- Encargo:
+  - Pedido y contexto: Cerrar S238 costó abandonar un lineage de review, mergear master y repetir las 4 lenses porque la review leyó cambios de master como remociones del candidato y no había ruta de disputa (issue &#35;162).
+  - Resultado y comportamiento: Antes de iniciar la review nativa, el puente verifica que la base de la rama es ancestro del master integrado; si master avanzó, la rama se rebasea primero y la review arranca sobre la rama actualizada. El abandon queda documentado con su vocabulario de razones y la construcción de su binding de autorización en review-recovery.md.
+  - Restricciones y decisiones: No cambia la autoridad de review: la regla es guía del puente, no un gate nuevo; la disputa de causalidad queda reportada upstream, no se reimplementa acá.
+  - Referencias: issue &#35;162 (lineage review-ed456cc242ade435, abandon + re-review); radar sesion lista los tests de contrato acoplados desde 928b1b2 (issue &#35;161).
 
 ## Detalle de Módulos y Tareas
 ### S1.11 — Reconciliación independiente legacy P7
@@ -4662,7 +4691,7 @@ Rutas: agent-workflows/skills/chanks-3-coordinador-manual/SKILL.md, agent-workfl
   - [ ] El diff queda en las seis rutas declaradas, no supera 400 líneas y la suite del Método pasa.
 
 ## Capacidad
-Ninguna Zona tiene trabajo LISTO.
+1 Zona(s) con trabajo LISTO pueden trabajar en paralelo sin compartir Zona, Cimientos ni Recurso: metodo.
 Radar no reserva el asiento: no adquiere locks, no autentica al proceso invocante y no recupera claims stale.
 
 ## Non-executable references

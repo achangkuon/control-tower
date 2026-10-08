@@ -102,6 +102,10 @@ prioridades:
   # del piloto para no postergar los arreglos del smoke en curso.
   - id: v2-copiloto
     nombre: V2 · Copiloto
+  # Lane aprobada por el maintainer el 2026-10-08: las fricciones del tracker que
+  # necesitan diseño nuevo (no parche) entran por acá, dentro de V2.
+  - id: resolucion-problemas-v2
+    nombre: Resolución de problemas · V2
   # El maintainer pidió el 2026-10-07 que las Sesiones de distribución para socios (S184, S190),
   # diferidas hasta la prueba en macOS, dejen de retener la prioridad torre-v1 y no posterguen V2.
   - id: torre-v1-distribucion-socios
@@ -2256,6 +2260,64 @@ sesiones:
   - {id: S180, entrega: {commit: 9e04d825b70591dc7f8394622e82fa31a6b9e3b8}, historico: openspec/archive/sesiones/S180.md}
 
   - {id: S181, entrega: {commit: 00605dc43dbe3d2947d8179ce769044e29cdd829}, historico: openspec/archive/sesiones/S181.md}
+
+  # Resolución de problemas V2: reactivación de despachos (#150) y mitigación local de
+  # review con base divergente (#162). Aprobadas por el maintainer el 2026-10-08 al revisar
+  # el lote de fricciones del tracker; las que quedaron resueltas por Sesiones previas se
+  # cerraron como issues verificados.
+  - id: S242
+    zona: metodo
+    prioridad: resolucion-problemas-v2
+    resultado: "Una Sesión EN CURSO cuyo worker murió se reactiva con una sola operación humana aprobada que conserva el marcador de despacho, reconcilia Git y Radar frescos y reanuda sin borrar evidencia."
+    autoridad: "El maintainer decidió el 2026-10-08 que los despachos deben poder retomarse desde EN CURSO o LISTO (issue #150) y aprobó esta Sesión al revisar el lote de fricciones."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos: [agent-workflows/tools/radar/etapa.go, agent-workflows/tools/radar/main.go, agent-workflows/tools/radar/marcar_test.go, agent-workflows/tools/radar/marcar_guardas_test.go, agent-workflows/skills/chanks-3-paralelo/SKILL.md]
+    encargo:
+      pedido_contexto: >-
+        El despacho correcto de una Sesión la puede dejar trabada para siempre si el worker
+        muere: la admisión ya acepta EN CURSO para continue/resume, pero ninguna operación
+        ejecuta la reanudación — radar marcar exige LISTO con rama nueva y se niega ante un
+        marcador vivo (issue #150, dos Sesiones afectadas el 2026-09-28).
+      resultado_comportamiento: >-
+        radar marcar <ID> --reactivar admite sólo una Sesión EN CURSO con marcador de despacho
+        vivo: preserva exactamente Sesión, worker, rama y worktree del marcador original, corre
+        bajo el lock existente, reconcilia evidencia Git/Radar fresca y se detiene ante evidencia
+        faltante, contradictoria o ajena. La sección Resuming de chanks-3-paralelo nombra la ruta.
+      restricciones_decisiones: >-
+        No borra ni reescribe el marcador original; no agrega un octavo control — la ruta vive
+        dentro del marcar que ya existe (el maintainer aprobó la forma --reactivar sobre un
+        comando nuevo). El guardián que rechaza Cimiento/Recurso sin evidencia de adquisición
+        queda como está: hoy ninguna Sesión viva los declara; habilitarlos es una decisión aparte.
+      referencias: >-
+        issue #150; radar etapa.go:793 (cmdMarcar); chanks/controls.mjs:139 (ESTADOS_PARA_RETOMA).
+
+  - id: S243
+    zona: metodo
+    prioridad: resolucion-problemas-v2
+    resultado: "La review RDD nunca arranca sobre una rama con base divergente de master sin rebase previo, y el abandon tiene sus precondiciones documentadas: una causalidad mal atribuida cuesta un rebase, no una re-review completa."
+    autoridad: "El maintainer decidió el 2026-10-08 mitigar el issue #162 localmente mientras la ruta de disputa de causalidad se resuelve upstream (gentle-ai)."
+    depende_de: []
+    cimientos: []
+    recurso: []
+    archivos: [agent-workflows/skills/chanks-4-puente/SKILL.md, agent-workflows/skills/chanks-4-puente/references/review-recovery.md, agent-workflows/tests/test_builder_flow.py]
+    encargo:
+      pedido_contexto: >-
+        Cerrar S238 costó abandonar un lineage de review, mergear master y repetir las 4 lenses
+        porque la review leyó cambios de master como remociones del candidato y no había ruta de
+        disputa (issue #162).
+      resultado_comportamiento: >-
+        Antes de iniciar la review nativa, el puente verifica que la base de la rama es ancestro
+        del master integrado; si master avanzó, la rama se rebasea primero y la review arranca
+        sobre la rama actualizada. El abandon queda documentado con su vocabulario de razones y
+        la construcción de su binding de autorización en review-recovery.md.
+      restricciones_decisiones: >-
+        No cambia la autoridad de review: la regla es guía del puente, no un gate nuevo; la
+        disputa de causalidad queda reportada upstream, no se reimplementa acá.
+      referencias: >-
+        issue #162 (lineage review-ed456cc242ade435, abandon + re-review); radar sesion lista
+        los tests de contrato acoplados desde 928b1b2 (issue #161).
 
 references:
   future_successors:
