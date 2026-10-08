@@ -16,43 +16,46 @@ install anything.
 ## Hard Rules
 
 - Read fresh plan evidence with the installed `radar sesion <ID>` for the delivered Session;
-  never read `openspec/plan.yaml` whole. Only the responsible parent writes `openspec/plan.yaml`:
-  locate the exact Session entry and read/edit only those lines; a delegated helper returns the exact delta.
-  After any plan edit run `radar check`, then `radar render` only after it passes. Never edit
-  `openspec/ROADMAP.md` by hand.
+  never read `openspec/plan.yaml` whole. Closure is one command: `radar archivar <ID> --commit <oid
+  completo>` validates the commit, records `entrega.commit`, archives, runs `check` and `render`,
+  and is atomic — if any step fails it names that step and changes nothing. Never hand-edit
+  `entrega.commit` in `openspec/plan.yaml`, and never edit `openspec/ROADMAP.md` by hand. Only the
+  responsible parent writes the plan, and now it does so through that single command.
 - Closure requires actual delivery evidence: a resolving immutable `entrega.commit` that is an
   ancestor of the primary branch's integrated HEAD, plus observed checks against the Encargo
   outcome and constraints. `entrega.pr` is optional only when it exists. Ordinary delivery policy
   decides how the commit got there.
+- `radar archivar` without `--commit` still archives a delivery already registered by hand; that
+  legacy path skips `check` and `render`. Prefer the single command.
 - Gentle AI's technical record for a native Encargo is subordinate evidence, never closure or
   product status.
 - A failed check or a commit that is absent or not integrated leaves the Session open; report the
   exact failure and keep the pending delta.
 - Load `references/notion-closure.md` only when the project uses Notion and local policy permits it;
   the project must explicitly opt in. Notion is an optional projection. Missing Notion, its configuration or
-  its tools never blocks the core plan closure: `entrega.commit` → `radar archivar` → `check` →
-  `render`. Local prohibitions win; never load optional assets by default.
+  its tools never blocks the core plan closure: `radar archivar <ID> --commit <oid>`. Local
+  prohibitions win; never load optional assets by default.
 
 ## Execution Steps
 
 1. Run `radar sesion <ID>` for the delivered Session. Gather the Encargo outcome and constraint
    evidence, the checks Gentle AI observed, the commit, the integrated HEAD, and the optional PR.
 2. Confirm the commit resolves and is an ancestor of the primary branch
-   (`git merge-base --is-ancestor <commit> <primary>`).
-3. The parent records `entrega.commit` (and `entrega.pr` when it exists) on the Session in
-   `openspec/plan.yaml`, reading/editing only that exact entry, then runs `radar check` and
-   `radar render` after the check passes.
-4. For that completed, integrated Session run `radar archivar <ID>`, then `radar check`, then
-   `radar render`. Never archive an open Session or batch-archive older ones.
-5. Remove the Session's dedicated worktree, when it has one, once the commit is integrated.
-6. When a delivery closed no planned work, say so as a standalone line, `nada que registrar`, instead
+   (`git merge-base --is-ancestor <commit> <primary>`). The command below revalidates both.
+3. Close with one atomic command: `radar archivar <ID> --commit <oid completo>`. It validates the
+   commit, records `entrega.commit` in the compact historical reference, archives the Session, and
+   runs `check` then `render`. If a step fails the error names it and nothing changes; do not
+   repeat `radar check` or `radar render` by hand after a successful closure.
+4. Remove the Session's dedicated worktree, when it has one, once the commit is integrated.
+5. When a delivery closed no planned work, say so as a standalone line, `nada que registrar`, instead
    of inventing a Session or a closure.
 
 ## Output Contract
 
-Return outcome and check evidence, commit/HEAD/PR evidence, the Radar archive/check/render
-results (or the pending parent commands), the closure outcome or failure, and the exact
-evidence the responsible parent must record. State that ordinary delivery policy still applies.
+Return outcome and check evidence, commit/HEAD/PR evidence, the single `radar archivar <ID>
+--commit <oid>` result (or its named failing step and the pending delta), the closure outcome,
+and the exact evidence the responsible parent must record. State that ordinary delivery policy
+still applies.
 
 ## References
 
