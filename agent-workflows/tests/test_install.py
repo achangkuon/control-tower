@@ -2127,7 +2127,14 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
         writer for it — not even unwired plumbing a later edit could re-wire silently."""
         self.assertEqual([name for name in dir(INSTALLER) if name.startswith("etapa_hook")], [])
 
-    def test_hook_uses_external_radar_handles_spaces_and_only_valid_prior_transition(self):
+    def test_hook_calls_copiloto_and_retires_previous_stage_env(self):
+        """chanks-etapa.sh delegates the card to `copiloto tarjeta`. The old
+        CHANKS_PREVIOUS_ETAPA_JSON transition is retired: the source carries no
+        trace of it and setting it changes nothing. A missing or checkout-local
+        copiloto stays silent instead of failing the prompt, and the hook still
+        handles a workspace path with spaces."""
+        hook = ROOT / "tools/hooks/chanks-etapa.sh"
+        self.assertNotIn("CHANKS_PREVIOUS_ETAPA_JSON", hook.read_text(encoding="utf8"))
         with tempfile.TemporaryDirectory() as location:
             directory = Path(location)
             repo = directory / "repo with spaces"
@@ -2135,29 +2142,29 @@ class PiNativeAdmissionContractTests(unittest.TestCase):
             subprocess.run(["git", "init", "--quiet", str(repo)], check=True, capture_output=True)
             bin_dir = directory / "installed tools"
             bin_dir.mkdir()
-            radar = bin_dir / "radar"
-            radar.write_text('#!/bin/sh\ncat "$CHANKS_STAGE_FILE"\n', encoding="utf8")
-            radar.chmod(0o755)
-            stage = directory / "stage.json"
-            stage.write_text(json.dumps({"schema": "radar.etapa/v1", "etapa": 2, "nombre": "Prepare"}), encoding="utf8")
-            env = {**os.environ, "PATH": f"{bin_dir}:/usr/bin:/bin", "CHANKS_STAGE_FILE": str(stage)}
+            copiloto = bin_dir / "copiloto"
+            copiloto.write_text('#!/bin/sh\n[ "$1" = tarjeta ] || { printf "bad-order"; exit 1; }\nprintf "🧭 tarjeta: %s\\n" "$*"\n', encoding="utf8")
+            copiloto.chmod(0o755)
+            env = {**os.environ, "PATH": f"{bin_dir}:/usr/bin:/bin"}
             hook = ROOT / "tools/hooks/chanks-etapa.sh"
             self.assertTrue(hook.is_file())
             run = lambda extra=None: subprocess.run([str(hook)], cwd=repo, env={**env, **(extra or {})},
-                                                      capture_output=True, text=True, timeout=15)
+                                                     capture_output=True, text=True, timeout=15,
+                                                     stdin=subprocess.DEVNULL)
             self.assertEqual(run().returncode, 0)
-            self.assertNotIn("💪 Chanks", run().stdout)
-            previous = json.dumps({"schema": "radar.etapa/v1", "etapa": 2, "nombre": "Prepare", "sesion": "S1"})
-            self.assertNotIn("💪 Chanks", run({"CHANKS_PREVIOUS_ETAPA_JSON": previous}).stdout)
+            self.assertNotIn("bad-order", run().stdout)
+            self.assertIn("🧭 tarjeta:", run().stdout)
+            # The hook passes the resolved repository root explicitly.
+            self.assertIn("-C", run().stdout)
+            # The retired variable must not change the card.
             previous = json.dumps({"schema": "radar.etapa/v1", "etapa": 1, "nombre": "Define"})
-            self.assertIn("💪 Chanks", run({"CHANKS_PREVIOUS_ETAPA_JSON": previous}).stdout)
-            stage.write_text("invalid output", encoding="utf8")
-            invalid = run({"CHANKS_PREVIOUS_ETAPA_JSON": previous})
-            self.assertEqual(invalid.returncode, 0)
-            self.assertNotIn("💪 Chanks", invalid.stdout)
-            stage.write_text("x" * 5000, encoding="utf8")
-            self.assertEqual(run().stdout, "")
-            inside = repo / "radar"
+            self.assertIn("🧭 tarjeta:", run({"CHANKS_PREVIOUS_ETAPA_JSON": previous}).stdout)
+            # No copiloto installed → silence, never a failure.
+            silent = run({"PATH": "/usr/bin:/bin"})
+            self.assertEqual(silent.returncode, 0)
+            self.assertEqual(silent.stdout, "")
+            # A copiloto planted inside the checkout is never executed.
+            inside = repo / "copiloto"
             inside.write_text('#!/bin/sh\nprintf injected\n', encoding="utf8")
             inside.chmod(0o755)
             self.assertEqual(run({"PATH": f"{repo}:/usr/bin:/bin"}).stdout, "")

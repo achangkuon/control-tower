@@ -1,5 +1,9 @@
 #!/bin/sh
-# Optional stage guidance: never infer a Session and never wire Claude settings.
+# Stage guidance: delegate the card to copiloto. This hook never infers a
+# Session and never wires Claude settings. It only locates an installed
+# copiloto, bounds its run, prints the card it returns, and stays silent on any
+# doubt. copiloto itself reads Radar and the conversation focus; the previous
+# stage-transition environment variable is retired and no longer exists here.
 set -u
 command -v python3 >/dev/null 2>&1 || exit 0
 command -v git >/dev/null 2>&1 || exit 0
@@ -7,40 +11,48 @@ command -v timeout >/dev/null 2>&1 || exit 0
 root=$(timeout 5 git rev-parse --show-toplevel 2>/dev/null) || exit 0
 [ -d "$root" ] || exit 0
 root=$(cd "$root" 2>/dev/null && pwd -P) || exit 0
-radar=$(command -v radar 2>/dev/null) || exit 0
-case "$radar" in /*) ;; *) exit 0 ;; esac
-[ -f "$radar" ] && [ ! -L "$radar" ] && [ -x "$radar" ] || exit 0
-radar_dir=$(cd "$(dirname "$radar")" 2>/dev/null && pwd -P) || exit 0
-radar="$radar_dir/$(basename "$radar")"
-case "$radar" in "$root"|"$root"/*) exit 0 ;; esac
-# A binary from another checkout (e.g. Main while in a worker worktree) is not installed Radar.
-probe=$radar_dir
+copiloto=$(command -v copiloto 2>/dev/null) || exit 0
+case "$copiloto" in /*) ;; *) exit 0 ;; esac
+[ -f "$copiloto" ] && [ ! -L "$copiloto" ] && [ -x "$copiloto" ] || exit 0
+copiloto_dir=$(cd "$(dirname "$copiloto")" 2>/dev/null && pwd -P) || exit 0
+copiloto="$copiloto_dir/$(basename "$copiloto")"
+case "$copiloto" in "$root"|"$root"/*) exit 0 ;; esac
+# A binary from another checkout (e.g. Main while in a worker worktree) is not installed copiloto.
+probe=$copiloto_dir
 while :; do
     [ -e "$probe/.git" ] && exit 0
     [ "$probe" = / ] && break
     probe=$(dirname "$probe")
 done
-prior=${CHANKS_PREVIOUS_ETAPA_JSON-}
-[ "${#prior}" -le 4096 ] || exit 0
-CHANKS_RADAR="$radar" CHANKS_ROOT="$root" python3 -c '
-import json, os, selectors, signal, subprocess, time
+# Claude sends the prompt as JSON on stdin; its session_id names the
+# conversation. Bounded and validated, never required: without it copiloto falls
+# back to the last active conversation.
+conversacion=""
+if [ ! -t 0 ]; then
+    conversacion=$(python3 -c '
+import json, sys
+raw = sys.stdin.buffer.read(16385)
+if len(raw) > 16384:
+    raise SystemExit(0)
+try:
+    obj = json.loads(raw.decode("utf8"))
+except (ValueError, TypeError, UnicodeDecodeError):
+    raise SystemExit(0)
+sid = obj.get("session_id") if isinstance(obj, dict) else None
+if isinstance(sid, str) and 0 < len(sid) <= 128 and all(c.isalnum() or c in "._-" for c in sid):
+    sys.stdout.write(sid)
+' 2>/dev/null) || conversacion=""
+fi
+COPILOTO_BIN="$copiloto" COPILOTO_ROOT="$root" COPILOTO_CONV="$conversacion" python3 -c '
+import os, selectors, signal, subprocess, sys, time
 
-def stage(raw):
-    try:
-        obj = json.loads(raw)
-        if obj.get("schema") != "radar.etapa/v1" or type(obj.get("etapa")) is not int or obj["etapa"] < 1:
-            return None
-        name = obj.get("nombre")
-        if not isinstance(name, str) or not name.strip() or len(name) > 120:
-            return None
-        return obj["etapa"], name
-    except (ValueError, TypeError, KeyError, AttributeError, UnicodeDecodeError):
-        return None
-
+args = [os.environ["COPILOTO_BIN"], "tarjeta", "-C", os.environ["COPILOTO_ROOT"]]
+conv = os.environ.get("COPILOTO_CONV", "")
+if conv:
+    args[2:2] = ["--conversacion", conv]
 process = None
 try:
-    process = subprocess.Popen([os.environ["CHANKS_RADAR"], "etapa", "-C", os.environ["CHANKS_ROOT"]],
-                               cwd=os.environ["CHANKS_ROOT"], stdin=subprocess.DEVNULL,
+    process = subprocess.Popen(args, cwd=os.environ["COPILOTO_ROOT"], stdin=subprocess.DEVNULL,
                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
     selector = selectors.DefaultSelector()
     selector.register(process.stdout, selectors.EVENT_READ)
@@ -57,15 +69,9 @@ try:
         chunks.append(chunk)
         size += len(chunk)
         if size > 4096:
-            raise ValueError("Radar output too large")
-    if process.wait(timeout=max(0.001, until - time.monotonic())) != 0:
-        raise ValueError("Radar failed")
-    current = stage(b"".join(chunks).decode("utf8"))
-    prior = stage(os.environ.get("CHANKS_PREVIOUS_ETAPA_JSON", ""))
-    if current:
-        print("Radar etapa: %s · %s" % current)
-        if prior and prior != current:
-            print("💪 Chanks · %s · %s" % current)
+            raise ValueError("copiloto output too large")
+    process.wait(timeout=max(0.001, until - time.monotonic()))
+    sys.stdout.write(b"".join(chunks).decode("utf8"))
 except (OSError, ValueError, TimeoutError, subprocess.SubprocessError):
     pass
 finally:
