@@ -55,6 +55,24 @@ describe("Control Tower V1 instruction templates", () => {
     }
   });
 
+  test("project instructions replace the shipped skill table with the copiloto card rule", () => {
+    const text = readTemplate("project-agents.md");
+    expect(text).toContain("### Which skill to load");
+    expect(text).not.toContain("| Situation | Load |");
+    expect(text).not.toContain("Resume work after a break");
+    expect(text).toContain("Follow the copiloto card (🧭, injected on every turn)");
+  });
+
+  test("project instructions keep the flow, the plan reading and the human-protection sections", () => {
+    const text = readTemplate("project-agents.md");
+    for (const section of [
+      "### The flow", "### Reading the plan", "### When to run Radar", "### Working in parallel",
+      "### Automatic pilot (when the switch is on)", "### Hard rules",
+    ]) {
+      expect(text).toContain(section);
+    }
+  });
+
   test("project instructions gate stage 4 on the automatic pilot and the landing approvals", () => {
     const text = readTemplate("project-agents.md").replace(/\s+/g, " ");
     for (const line of [

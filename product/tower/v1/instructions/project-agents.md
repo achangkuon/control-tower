@@ -59,22 +59,11 @@ Read it only through Radar, and only what the current step needs:
 Radar only reports. It never chooses work and never replaces the human's decision.
 
 ### Which skill to load
-| Situation | Load |
-|---|---|
-| Project has no `openspec/plan.yaml` yet, or the human wants to migrate | `chanks-1-adopcion` (recommend migrating only what is missing) |
-| Brand-new project from zero | `chanks-1-project-kickoff` |
-| New idea or scope change (Stage 1) | `chanks-1-autoridad` — it routes to PRD, feature, discovery and the rest |
-| The end-to-end flow of a feature is unclear or discussions go in circles | `analisis-por-tramos` |
-| Prepare approved scope into Sessions (Stage 2) | `chanks-2-planificador-granular` |
-| Several LISTO Sessions at once (Stage 3) | `chanks-3-paralelo` |
-| Hand one Session to Gentle AI (Stage 4) | `chanks-4-puente` |
-| Deliver and close (Stage 5) | `chanks-5-politica-de-entrega`, then `chanks-5-session-doc` |
-| Resume work after a break | `chanks-0-session-context-loader` |
-| The human asks for a simpler explanation | `chanks-0-explicalo-simple` |
-| The human asks for visible messages for an approved feature | `chanks-0-mensajes-visibles` |
-| The human asks to communicate with another agent, watch what it does, stop it or open a pane for it | `chanks-0-comunicacion-agentes` |
-| Create or reorganize skills | `chanks-0-skill-composer`, or `skill-orchestrator` for skills that coordinate other agents |
-Load a skill only when its stage starts. Never load all of them up front.
+Follow the copiloto card (🧭, injected on every turn) — it names the skill to load for the
+current stage; load each skill only when its stage starts. Shipped entry skills: `chanks-1-adopcion`,
+`chanks-1-project-kickoff`, `chanks-1-autoridad`, `chanks-2-planificador-granular`, `chanks-3-paralelo`,
+`chanks-4-puente`, `chanks-5-politica-de-entrega`, `chanks-5-session-doc`, `chanks-0-session-context-loader`;
+`skill-orchestrator` for skills that coordinate other agents.
 
 ### Working in parallel
 Several LISTO Sessions can be implemented at the same time, using the subagents Gentle AI already
