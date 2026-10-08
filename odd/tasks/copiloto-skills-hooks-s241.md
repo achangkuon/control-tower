@@ -46,8 +46,14 @@ conversación al copiloto (fix 7345822). Inyección real verificada end-to-end: 
 tarjeta. Hallazgo menor: Friction Report issue #163. Copiloto candidato instalado en ~/.local/bin
 con autorización del maintainer.
 
-### T5 — Release
-Solo con autorización humana explícita y separada; skill `torre-release`. Meta V2 completa → salto major.
+### T5 — Release (RC publicada 2026-10-08)
+**v2.0.0-rc.1** prerelease desde 01138c0: URL github.com/achangkuon/control-tower/releases/tag/v2.0.0-rc.1,
+installerSha256 280e372ceadbec4f92c1df27eda70e1675499dd685e5f030e1e8220a6c29724b, 11 assets verificados,
+smoke de socio OK (doctor healthy, proyecto fixture adoptado). Salteado review nativo por autorización del
+maintainer (ban --base-ref vigente) + verificador independiente 6/6 PASS. Mantainer decision adicional:
+piloto viaja en el bundle (7b5dc19, 87→94 miembros). Notas con requisito Go >= 1.26 (#164). Pendiente:
+promoción a v2.0.0 tras validación en uso diario; TUI interactiva sin verificar (requiere máquina del maintainer);
+instalación de la RC en su máquina = decisión separada.
 
 ## Evidencia de entrega
 - T1 (S239): commit e454033 — 4 skills Etapa 1 + test de contrato (RED observado, suite python 532 en verde)
