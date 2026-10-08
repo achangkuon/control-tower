@@ -281,7 +281,7 @@ func archiveSessionCierre(planPath, root, id string, opts cierreOptions) error {
 	}
 	archive := append(append([]byte("```yaml\n"), block...), []byte("```\n")...)
 	line := []byte(fmt.Sprintf("  - {id: %s, entrega: {commit: %s}, historico: %s}\n", id, target.Entrega.Commit, path))
-	updated := make([]byte, 0, len(raw)-len(block)+len(line))
+	updated := make([]byte, 0, len(raw)+len(line))
 	updated = append(updated, raw[:start]...)
 	updated = append(updated, line...)
 	updated = append(updated, raw[end:]...)
