@@ -21,7 +21,8 @@ const uso = `radar — herramienta determinista de planificación
   radar roadmap [-f openspec/plan.yaml] [-C raíz] alternativas LISTO, compatibilidad
                 potencial por archivos e hipotéticos — previsión, no permiso
   radar render  [-f openspec/plan.yaml] [-o openspec/ROADMAP.md] [-C raíz]
-  radar archivar <ID> [-C raíz] archiva una Sesión completa con entrega integrada
+  radar archivar <ID> [--commit <oid completo>] [-C raíz] cierra una Sesión: valida el
+                commit, registra la entrega, archiva, corre check y render en un solo paso
   radar marcar  <ID> --worktree <ruta absoluta> [--worker <nombre>] [-C raíz]
                 marca una Sesión LISTO como EN CURSO (escribe su marcador de despacho)
   radar marcar  <ID> --listo [-C raíz] registra el testigo local de "listo para revisión"
@@ -35,6 +36,7 @@ Sólo marcar y desmarcar escriben bajo el directorio común de Git (el marcador 
 type opciones struct {
 	archivo, salida, raiz string
 	worktree, worker      string
+	commit                string
 	json, all, listo      bool
 }
 
@@ -72,10 +74,10 @@ func main() {
 		os.Exit(cmdCheck(p, root))
 	case "archivar":
 		if len(posicionales) != 1 {
-			fmt.Fprintln(os.Stderr, "uso: radar archivar <ID> [-C raíz]")
+			fmt.Fprintln(os.Stderr, "uso: radar archivar <ID> [--commit <oid completo>] [-C raíz]")
 			os.Exit(2)
 		}
-		if err := archiveSession(opts.archivo, root, posicionales[0]); err != nil {
+		if err := archiveSessionCierre(opts.archivo, root, posicionales[0], cierreOptions{commit: opts.commit, render: opts.salida}); err != nil {
 			fmt.Fprintln(os.Stderr, "✗", err)
 			os.Exit(1)
 		}
@@ -184,6 +186,7 @@ func parsearArgs(comando string, args []string) (opciones, []string, error) {
 	fs.BoolVar(&o.all, "all", false, "incluir Sesiones cerradas y archivadas (sólo status)")
 	fs.StringVar(&o.worktree, "worktree", "", "worktree absoluto de la Sesión (sólo marcar)")
 	fs.StringVar(&o.worker, "worker", "", "nombre del worker; por defecto, el directorio del worktree (sólo marcar)")
+	fs.StringVar(&o.commit, "commit", "", "commit entregado, OID completo (sólo archivar)")
 	fs.BoolVar(&o.listo, "listo", false, "registrar el testigo local de listo para revisión (sólo marcar)")
 	var posicionales []string
 	for {
