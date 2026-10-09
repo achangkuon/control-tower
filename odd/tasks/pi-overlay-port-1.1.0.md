@@ -111,8 +111,8 @@ The maintainer explicitly requested the port.
 ## Commits
 
 - Repo (master): `67098366` feat(pi-overlay): re-pin the tool-call annotation overlay onto v1.1.0.
-- Fork (personal/tool-call-annotations-v1.1.0, local only): `20aa0e80a` reviewed,
-  `5edb83224` evidence. Pushing to `achangkuon/pi` remains a maintainer decision.
+- Fork (personal/tool-call-annotations-v1.1.0): `20aa0e80a` reviewed,
+  `5edb83224` evidence. Pushed to `achangkuon/pi` with maintainer authorization (2026-10-09).
 
 Parent-performed throughout (no delegated writer: git surgery, live runtime, foreign
 clone). All planned checks ran; none failed except the pre-existing environmental
