@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -26,6 +27,8 @@ const uso = `radar — herramienta determinista de planificación
   radar marcar  <ID> --worktree <ruta absoluta> [--worker <nombre>] [-C raíz]
                 marca una Sesión LISTO como EN CURSO (escribe su marcador de despacho)
   radar marcar  <ID> --listo [-C raíz] registra el testigo local de "listo para revisión"
+  radar marcar  <ID> --reactivar [-C raíz] reactiva una Sesión EN CURSO que ya tiene
+                marcador de despacho, sin reescribirlo
   radar desmarcar <ID> [-C raíz] quita el marcador de despacho de esa Sesión
 
 openspec/plan.yaml es la única fuente editable. openspec/ROADMAP.md es una vista
@@ -38,6 +41,7 @@ type opciones struct {
 	worktree, worker      string
 	commit                string
 	json, all, listo      bool
+	reactivar             bool
 }
 
 func main() {
@@ -83,14 +87,17 @@ func main() {
 		}
 		fmt.Printf("✓ %s archivada\n", posicionales[0])
 	case "marcar":
-		if len(posicionales) != 1 || (opts.listo && (opts.worktree != "" || opts.worker != "")) || (!opts.listo && opts.worktree == "") {
-			fmt.Fprintln(os.Stderr, "uso: radar marcar <ID> --worktree <ruta absoluta> [--worker <nombre>] [-C raíz]\n     radar marcar <ID> --listo [-C raíz]")
+		if err := usoMarcar(opts, posicionales); err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(2)
 		}
 		var err error
-		if opts.listo {
+		switch {
+		case opts.reactivar:
+			err = cmdReactivar(os.Stdout, p, root, posicionales[0])
+		case opts.listo:
 			err = cmdMarcarListo(os.Stdout, p, root, posicionales[0])
-		} else {
+		default:
 			err = cmdMarcar(os.Stdout, p, root, posicionales[0], opts.worktree, opts.worker)
 		}
 		if err != nil {
@@ -188,6 +195,7 @@ func parsearArgs(comando string, args []string) (opciones, []string, error) {
 	fs.StringVar(&o.worker, "worker", "", "nombre del worker; por defecto, el directorio del worktree (sólo marcar)")
 	fs.StringVar(&o.commit, "commit", "", "commit entregado, OID completo (sólo archivar)")
 	fs.BoolVar(&o.listo, "listo", false, "registrar el testigo local de listo para revisión (sólo marcar)")
+	fs.BoolVar(&o.reactivar, "reactivar", false, "reactivar una Sesión EN CURSO conservando su marcador (sólo marcar)")
 	var posicionales []string
 	for {
 		if err := fs.Parse(args); err != nil {
@@ -199,6 +207,22 @@ func parsearArgs(comando string, args []string) (opciones, []string, error) {
 		posicionales = append(posicionales, fs.Arg(0))
 		args = fs.Args()[1:]
 	}
+}
+
+// usoMarcar is the one usage gate for the marcar command: main exits 2 with
+// its error. The reactivar route rejects --worktree, --worker and --listo
+// because the identity it preserves already lives in the existing marker.
+func usoMarcar(o opciones, posicionales []string) error {
+	if o.reactivar {
+		if len(posicionales) != 1 || o.listo || o.worktree != "" || o.worker != "" {
+			return errors.New("uso: radar marcar <ID> --reactivar [-C raíz]\n--reactivar conserva la identidad del marcador: no se combina con --worktree, --worker ni --listo")
+		}
+		return nil
+	}
+	if len(posicionales) != 1 || (o.listo && (o.worktree != "" || o.worker != "")) || (!o.listo && o.worktree == "") {
+		return errors.New("uso: radar marcar <ID> --worktree <ruta absoluta> [--worker <nombre>] [-C raíz]\n     radar marcar <ID> --listo [-C raíz]")
+	}
+	return nil
 }
 
 func resolverRutaConRaiz(ruta, raiz string) string {

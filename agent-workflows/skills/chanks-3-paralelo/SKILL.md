@@ -66,6 +66,12 @@ Radar shows nothing in progress. Resume from this conversation's own record: the
 each Session's worktree and its ODD feature document. Reuse the existing worktree; do not create
 a new one.
 
+When `radar status` shows a Session still `EN CURSO` because its worker died, re-admit the
+existing dispatch without erasing evidence: run `radar marcar <ID> --reactivar`, which validates
+the worktree, branch and existing marker and preserves the original marker bytes, then continue
+with the continue/resume admission. A changed worker or branch is a different dispatch: remove
+the stale marker with `radar desmarcar <ID>` and create a fresh one with plain `radar marcar`.
+
 ## Non-goals
 
 Session reservation, dispatch markers and several independent conversations delivering at once arrive with V2 (Pista).

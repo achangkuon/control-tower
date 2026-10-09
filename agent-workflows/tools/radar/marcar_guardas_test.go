@@ -337,3 +337,83 @@ func TestProcesoRadarCodigosDeSalida(t *testing.T) {
 		t.Fatalf("un rechazo sale con 1 sin pánico: %d %s", code, out)
 	}
 }
+
+func TestUsoMarcarReactivarEsExcluyente(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		o    opciones
+		pos  []string
+		want []string
+	}{
+		{"reactivar con worktree", opciones{reactivar: true, worktree: "/x"}, []string{"S1"}, []string{"--reactivar", "--worktree"}},
+		{"reactivar con worker", opciones{reactivar: true, worker: "w"}, []string{"S1"}, []string{"--reactivar", "--worker"}},
+		{"reactivar con listo", opciones{reactivar: true, listo: true}, []string{"S1"}, []string{"--reactivar"}},
+		{"reactivar sin ID", opciones{reactivar: true}, nil, []string{"--reactivar"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := usoMarcar(tc.o, tc.pos)
+			if err == nil {
+				t.Fatal("se esperaba un error de uso")
+			}
+			for _, want := range tc.want {
+				if !strings.Contains(err.Error(), want) {
+					t.Fatalf("el error de uso debe nombrar %q: %v", want, err)
+				}
+			}
+		})
+	}
+	if err := usoMarcar(opciones{reactivar: true}, []string{"S1"}); err != nil {
+		t.Fatalf("--reactivar solo debe ser válido: %v", err)
+	}
+	if err := usoMarcar(opciones{worktree: "/x"}, []string{"S1"}); err != nil {
+		t.Fatalf("marcar normal debe seguir válido: %v", err)
+	}
+	if err := usoMarcar(opciones{listo: true}, []string{"S1"}); err != nil {
+		t.Fatalf("--listo debe seguir válido: %v", err)
+	}
+}
+
+// TestProcesoRadarReactivarUsoExcluyenteYSinMarcador pins main.go's dispatch
+// of the new flag through the real binary: reactivar alone succeeds on a live
+// dispatch, conflicts exit 2 and a missing marker exits 1.
+func TestProcesoRadarReactivarUsoExcluyenteYSinMarcador(t *testing.T) {
+	if testing.Short() {
+		t.Skip("compila el binario")
+	}
+	root, _ := repoColisiones(t)
+	bin := filepath.Join(t.TempDir(), "radar-reactivar")
+	if out, err := exec.Command("go", "build", "-o", bin, ".").CombinedOutput(); err != nil {
+		t.Fatalf("no se pudo compilar: %v: %s", err, out)
+	}
+	run := func(args ...string) (int, string) {
+		cmd := exec.Command(bin, append(args, "-C", root)...)
+		out, err := cmd.CombinedOutput()
+		var exit *exec.ExitError
+		if errors.As(err, &exit) {
+			return exit.ExitCode(), string(out)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		return 0, string(out)
+	}
+	for _, args := range [][]string{
+		{"marcar", "S1", "--reactivar", "--worktree", newWorktree(t, root, "u1")},
+		{"marcar", "S1", "--reactivar", "--worker", "impl-1"},
+		{"marcar", "S1", "--reactivar", "--listo"},
+	} {
+		if code, out := run(args...); code != 2 || !strings.Contains(out, "--reactivar") {
+			t.Fatalf("%v: salida 2 esperada: %d %s", args, code, out)
+		}
+	}
+	enCursoPorPiloto(t, root, "S1")
+	if code, out := run("marcar", "S1", "--reactivar"); code != 1 || !strings.Contains(out, "no hay marcador de despacho") {
+		t.Fatalf("sin marcador: salida 1 esperada: %d %s", code, out)
+	}
+	if code, out := run("marcar", "S3", "--worktree", newWorktree(t, root, "r3")); code != 0 {
+		t.Fatalf("marcar inicial: %d %s", code, out)
+	}
+	if code, out := run("marcar", "S3", "--reactivar"); code != 0 || !strings.Contains(out, "reactivada") {
+		t.Fatalf("reactivar: salida 0 esperada: %d %s", code, out)
+	}
+}

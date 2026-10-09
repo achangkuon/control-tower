@@ -377,3 +377,184 @@ func TestDesmarcarRechazaMarcadorSimbolico(t *testing.T) {
 		t.Fatal("se tocó el destino del enlace")
 	}
 }
+
+// writeDespacho persists a hand-built dispatch marker so tests can exercise
+// identities `radar marcar` would never produce itself (a foreign worktree, an
+// unborn branch) and still validate them through the real reader.
+func writeDespacho(t *testing.T, root string, m despacho) string {
+	t.Helper()
+	dir := despachosDir(t, root)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, m.Sesion+".json")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+// enCursoPorPiloto forces Radar's derived state to EN CURSO through pilot
+// evidence, so reactivation's own marker checks are reachable even when the
+// dispatch marker is absent or has lost its topology.
+func enCursoPorPiloto(t *testing.T, root, id string) {
+	t.Helper()
+	testMarcaPiloto(t, root, id, marcaPiloto{
+		Vuelo: "v1", Rama: "refs/heads/piloto/2026-10-08/vuelo-v1",
+		Estado: pilotoEnCurso, Ronda: 1,
+	})
+}
+
+func TestReactivarConservaElMarcadorYRehabilitaLaSesion(t *testing.T) {
+	root, head := repoGit(t)
+	p := planMarcar(t, head)
+	wt := newWorktree(t, root, "vivo")
+	if err := cmdMarcar(&bytes.Buffer{}, p, root, "S3", wt, "impl-2"); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(despachosDir(t, root), "S3.json")
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	chanksBefore := estadoChanks(t, root)
+	var out bytes.Buffer
+	if err := cmdReactivar(&out, p, root, "S3"); err != nil {
+		t.Fatal(err)
+	}
+	line := strings.TrimSpace(out.String())
+	if strings.Count(line, "\n") != 0 || !strings.Contains(line, "S3") || !strings.Contains(line, "reactivada") {
+		t.Fatalf("una sola línea de confirmación esperada: %q", out.String())
+	}
+	for _, want := range []string{"impl-2", "feat/vivo"} {
+		if !strings.Contains(line, want) {
+			t.Fatalf("la confirmación debe nombrar %q: %q", want, line)
+		}
+	}
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(before, after) {
+		t.Fatalf("la reactivación reescribió el marcador:\n%s\n---\n%s", before, after)
+	}
+	if entries, _ := os.ReadDir(despachosDir(t, root)); len(entries) != 1 {
+		t.Fatalf("la reactivación dejó temporales: %v", entries)
+	}
+	if estadoChanks(t, root) != chanksBefore {
+		t.Fatal("la reactivación tocó la evidencia de despacho")
+	}
+	if got := p.EstadosAt(root, head)["S3"]; got != EnCurso {
+		t.Fatalf("estado = %s, esperado EN CURSO", got)
+	}
+}
+
+func TestReactivarRechazaSesionListoYMarcadorAusente(t *testing.T) {
+	root, head := repoGit(t)
+	p := planMarcar(t, head)
+	before := estadoChanks(t, root)
+	var out bytes.Buffer
+	err := cmdReactivar(&out, p, root, "S3")
+	if err == nil || !strings.Contains(err.Error(), "LISTO") || !strings.Contains(err.Error(), "--reactivar") || out.Len() != 0 {
+		t.Fatalf("una Sesión LISTO sin marcador debe rechazarse nombrando LISTO: out=%q err=%v", out.String(), err)
+	}
+	if estadoChanks(t, root) != before {
+		t.Fatal("un rechazo mutó la evidencia")
+	}
+	// EN CURSO por evidencia de piloto, pero sin marcador de despacho.
+	enCursoPorPiloto(t, root, "S3")
+	if got := p.EstadosAt(root, head)["S3"]; got != EnCurso {
+		t.Fatalf("setup: la Sesión debe estar EN CURSO, está %s", got)
+	}
+	before = estadoChanks(t, root)
+	out.Reset()
+	err = cmdReactivar(&out, p, root, "S3")
+	if err == nil || !strings.Contains(err.Error(), "no hay marcador de despacho para S3") || out.Len() != 0 {
+		t.Fatalf("sin marcador debe nombrar la ausencia: out=%q err=%v", out.String(), err)
+	}
+	if estadoChanks(t, root) != before {
+		t.Fatal("un rechazo mutó la evidencia")
+	}
+}
+
+func TestReactivarRechazaTopologiaRotaConMensajeEspecifico(t *testing.T) {
+	casos := []struct {
+		name  string
+		want  []string
+		setup func(t *testing.T, root string, p *Plan)
+	}{
+		{
+			"worktree ausente",
+			[]string{"worktree", "no existe"},
+			func(t *testing.T, root string, p *Plan) {
+				wt := newWorktree(t, root, "ausente")
+				if err := cmdMarcar(&bytes.Buffer{}, p, root, "S3", wt, ""); err != nil {
+					t.Fatal(err)
+				}
+				fixtureGit(t, root, "worktree", "remove", "--force", wt)
+				enCursoPorPiloto(t, root, "S3")
+			},
+		},
+		{
+			"repositorio ajeno",
+			[]string{"worktree", "no comparte el repositorio"},
+			func(t *testing.T, root string, p *Plan) {
+				foreign, _ := repoGit(t)
+				branch := fixtureGit(t, foreign, "symbolic-ref", "--quiet", "HEAD")
+				writeDespacho(t, root, despacho{Schema: "radar.despacho/v1", Sesion: "S3", Worktree: foreign, Branch: branch, Worker: "ajeno"})
+				enCursoPorPiloto(t, root, "S3")
+			},
+		},
+		{
+			"rama cambiada",
+			[]string{"la rama del worktree cambió"},
+			func(t *testing.T, root string, p *Plan) {
+				wt := newWorktree(t, root, "cambia")
+				if err := cmdMarcar(&bytes.Buffer{}, p, root, "S3", wt, ""); err != nil {
+					t.Fatal(err)
+				}
+				fixtureGit(t, wt, "checkout", "-q", "-b", "otra")
+				enCursoPorPiloto(t, root, "S3")
+			},
+		},
+		{
+			"rama sin commits",
+			[]string{"no existe todavía", "sin commits"},
+			func(t *testing.T, root string, p *Plan) {
+				wt := filepath.Join(t.TempDir(), "sin-commits")
+				fixtureGit(t, root, "worktree", "add", "-q", "--orphan", "-b", "huerfana", wt)
+				branch := fixtureGit(t, wt, "symbolic-ref", "--quiet", "HEAD")
+				writeDespacho(t, root, despacho{Schema: "radar.despacho/v1", Sesion: "S3", Worktree: wt, Branch: branch, Worker: "huerfana"})
+				enCursoPorPiloto(t, root, "S3")
+			},
+		},
+	}
+	for _, tc := range casos {
+		t.Run(tc.name, func(t *testing.T) {
+			root, head := repoGit(t)
+			p := planMarcar(t, head)
+			tc.setup(t, root, p)
+			if got := p.EstadosAt(root, head)["S3"]; got != EnCurso {
+				t.Fatalf("setup: la Sesión debe estar EN CURSO, está %s", got)
+			}
+			before := estadoChanks(t, root)
+			var out bytes.Buffer
+			err := cmdReactivar(&out, p, root, "S3")
+			if err == nil || out.Len() != 0 {
+				t.Fatalf("se esperaba rechazo: out=%q err=%v", out.String(), err)
+			}
+			for _, want := range tc.want {
+				if !strings.Contains(err.Error(), want) {
+					t.Fatalf("el rechazo debe contener %q: %v", want, err)
+				}
+			}
+			if estadoChanks(t, root) != before {
+				t.Fatal("un rechazo mutó la evidencia")
+			}
+		})
+	}
+}

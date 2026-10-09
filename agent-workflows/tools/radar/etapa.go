@@ -790,23 +790,35 @@ func commonDir(dir string) (string, error) {
 	return gitOutput(dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
 }
 
-// cmdMarcar marks a LISTO Session EN CURSO by writing the dispatch marker the
-// readers already accept. Every check runs before the first mutation.
-func cmdMarcar(w io.Writer, p *Plan, root, id, worktree, worker string) error {
+// admisionMarcar runs the admission every marcar route shares before it reads
+// or writes any dispatch evidence: ID shape, known Sesión, pinned HEAD, plan
+// validation and the Git common directory. Keeping one body means the fresh
+// route cannot drift from the one users already trust.
+func admisionMarcar(p *Plan, root, id, comando string) (string, string, error) {
 	if err := idDespachoValido(id); err != nil {
-		return err
+		return "", "", err
 	}
 	if _, ok := p.SesionPorID()[id]; !ok {
-		return fmt.Errorf("la Sesión %s no existe", id)
+		return "", "", fmt.Errorf("la Sesión %s no existe", id)
 	}
 	head, err := gitHEAD(root)
 	if err != nil {
-		return fmt.Errorf("no se pudo fijar HEAD: %w", err)
+		return "", "", fmt.Errorf("no se pudo fijar HEAD: %w", err)
 	}
-	if err := validarAt(p, root, head, "marcar"); err != nil {
-		return err
+	if err := validarAt(p, root, head, comando); err != nil {
+		return "", "", err
 	}
 	common, err := commonDir(root)
+	if err != nil {
+		return "", "", err
+	}
+	return head, common, nil
+}
+
+// cmdMarcar marks a LISTO Session EN CURSO by writing the dispatch marker the
+// readers already accept. Every check runs before the first mutation.
+func cmdMarcar(w io.Writer, p *Plan, root, id, worktree, worker string) error {
+	head, common, err := admisionMarcar(p, root, id, "marcar")
 	if err != nil {
 		return err
 	}
@@ -861,6 +873,80 @@ func cmdMarcar(w io.Writer, p *Plan, root, id, worktree, worker string) error {
 	}
 	_, err = fmt.Fprintf(w, "✓ %s marcada EN CURSO (worker %s, rama %s)\n", id, worker, branch)
 	return err
+}
+
+// cmdReactivar re-admits a Session that is already EN CURSO when its worker
+// died, using the dispatch marker that already exists. It never writes, touches
+// or recreates a marker: the exact original bytes survive, so the reactivation
+// leaves the evidence a later review reads untouched. Every check runs before
+// the first mutation, and this route never mutates.
+func cmdReactivar(w io.Writer, p *Plan, root, id string) error {
+	head, common, err := admisionMarcar(p, root, id, "reactivar")
+	if err != nil {
+		return err
+	}
+	// A LISTO Session has not been dispatched yet: plain marcar creates its
+	// fresh marker, never this route that preserves an existing identity.
+	if state := p.EstadosAt(root, head)[id]; state != EnCurso {
+		return fmt.Errorf("la Sesión %s está %s; --reactivar sólo reactiva una Sesión EN CURSO (una Sesión LISTO se despacha con radar marcar sin --reactivar)", id, state)
+	}
+	path, info, err := marcadorNodo(common, id)
+	if err != nil {
+		return err
+	}
+	if info == nil {
+		return fmt.Errorf("no hay marcador de despacho para %s; radar marcar sin --reactivar crea un despacho nuevo", id)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("%s no es un archivo regular y radar desmarcar no lo quita; quítalo a mano", path)
+	}
+	m, err := leerDespacho(root, id)
+	if err != nil {
+		return fmt.Errorf("el marcador de despacho de %s es contradictorio: %w", id, err)
+	}
+	if m == nil {
+		return fmt.Errorf("no hay marcador de despacho para %s; radar marcar sin --reactivar crea un despacho nuevo", id)
+	}
+	if err := reconciliarDespacho(root, *m); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "✓ %s reactivada (worker %s, rama %s)\n", id, m.Worker, m.Branch)
+	return err
+}
+
+// reconciliarDespacho re-derives the worktree and branch identity an existing
+// marker declares from fresh Git evidence, naming the first broken check. It
+// mirrors despachoVivo's semantics while keeping the failures specific, so a
+// reactive refusal says which fact changed instead of one generic message.
+func reconciliarDespacho(root string, m despacho) error {
+	if info, err := os.Lstat(m.Worktree); err != nil || !info.IsDir() {
+		return fmt.Errorf("el worktree %s del marcador ya no existe o no es un directorio", m.Worktree)
+	}
+	if top, err := gitOutput(m.Worktree, "rev-parse", "--show-toplevel"); err != nil || top != m.Worktree {
+		return fmt.Errorf("el worktree %s del marcador no es la raíz canónica de un worktree Git", m.Worktree)
+	}
+	from, err := commonDir(root)
+	if err != nil {
+		return err
+	}
+	to, err := commonDir(m.Worktree)
+	if err != nil || from != to {
+		return fmt.Errorf("el worktree %s del marcador no comparte el repositorio de %s", m.Worktree, root)
+	}
+	branch, err := gitOutput(m.Worktree, "symbolic-ref", "--quiet", "HEAD")
+	if err != nil {
+		return fmt.Errorf("el worktree %s del marcador tiene HEAD detached; se requiere una rama", m.Worktree)
+	}
+	if branch != m.Branch {
+		return fmt.Errorf("la rama del worktree cambió: el marcador declara %s y el worktree está en %s", m.Branch, branch)
+	}
+	if _, err := gitOutput(root, "show-ref", "--verify", m.Branch); err != nil {
+		return fmt.Errorf("la rama %s del marcador no existe todavía (sin commits)", m.Branch)
+	}
+	if !workerValido(m.Worker) {
+		return fmt.Errorf("worker inválido %q: no admite espacios ni barras", m.Worker)
+	}
+	return nil
 }
 
 // cmdMarcarListo records the local review-ready witness on a live marker so
