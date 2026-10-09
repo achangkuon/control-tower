@@ -274,15 +274,40 @@ class GenericBuilderFlowTests(unittest.TestCase):
                 with self.subTest(gone=gone):
                     self.assertNotIn(gone, source)
 
+    def test_puente_requires_rebasing_a_session_branch_before_native_review(self):
+        bridge = " ".join(read("skills/chanks-4-puente/SKILL.md").split())
+        self.assertIn("merge-base --is-ancestor", bridge)
+        self.assertIn("rebase the Session branch first", bridge)
+
+        recovery = " ".join(read("skills/chanks-4-puente/references/review-recovery.md").split())
+        for anchor in ("operator_disposition", "retired_schema"):
+            with self.subTest(anchor=anchor):
+                self.assertIn(anchor, recovery)
+
     def test_v1_stage_skills_and_live_docs_give_no_marker_or_formal_start_instruction(self):
-        """V1 runs without dispatch markers or a formal start; both wait for V2 (Pista)."""
+        """V1 stage skills run without creating dispatch markers or a formal start.
+
+        Marker creation and formal starts waited for V2 (Pista). Two S242 boundaries
+        (maintainer-approved 2026-10-08, issue #150) live in chanks-3-paralelo only:
+        reactivating a dead worker's existing EN CURSO dispatch and retiring a stale
+        marker are recovery operations, never part of the normal V1 flow, so those
+        two literal routes are allowed there and nowhere else."""
         folders = [INSTALLER.skill_source_root(ROOT, name) for name in INSTALLER.CHANKS_SKILLS]
         sources = [path for folder in folders for path in sorted(folder.rglob("*"))
                    if path.is_file() and path.suffix in {".md", ".json", ".py"}]
         sources.append(ROOT / "templates/session-routing.md")
         self.assertGreater(len(sources), len(folders))
+        reactivation_file = ROOT / "skills/chanks-3-paralelo/SKILL.md"
         for path in sources:
             text = path.read_text(encoding="utf-8")
+            if path == reactivation_file:
+                with self.subTest(file=path.relative_to(ROOT).as_posix(), gone="chanks-3-session-kickoff"):
+                    self.assertNotIn("chanks-3-session-kickoff", text)
+                with self.subTest(file=path.relative_to(ROOT).as_posix(), anchor="reactivation route"):
+                    self.assertIn("radar marcar <ID> --reactivar", text)
+                with self.subTest(file=path.relative_to(ROOT).as_posix(), anchor="stale marker retirement"):
+                    self.assertIn("radar desmarcar <ID>", text)
+                continue
             for gone in ("radar marcar", "radar desmarcar", "chanks-3-session-kickoff"):
                 with self.subTest(file=path.relative_to(ROOT).as_posix(), gone=gone):
                     self.assertNotIn(gone, text)
