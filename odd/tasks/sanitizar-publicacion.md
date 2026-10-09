@@ -22,9 +22,8 @@ reescritura).
 - Ruta local del mantenedor → `/home/<usuario>`.
 
 ## Tasks
-- [ ] T1 — Reemplazo mecánico en archivos rastreados (D3 + D4) según mapping, incluyendo renombrar el directorio `openspec/changes/archive/2026-07-22-proyecto-alpha-autonomous-continuation-provenance` y actualizar `INDEX.md` y referencias.
-  - BLOQUEADO (no iniciado): el mantenedor reportó un agente haciendo release sobre Main. La edición de archivos rastreados ensuciaría el checkout de construcción. Esperar a que termine la release y el mantenedor dé la señal.
-  - Nota de reanudación: delegar a `gentle-ai-worker` con `repository_root: /home/<usuario>/projects/control-tower/Main` (el repo git real, no el directorio padre) y la sección `## Allowed edit surfaces` con globs acotados (agent-workflows/**, product/tower/generic/**, test/fixtures/**, docs/**, openspec/**, odd/tasks/**, bin/torre).
+- [x] T1 — Reemplazo mecánico en archivos rastreados (D3 + D4) según mapping, incluyendo renombrar el directorio `openspec/changes/archive/2026-07-22-proyecto-alpha-autonomous-continuation-provenance` y actualizar `INDEX.md` y referencias.
+  - Ejecutado por `gentle-ai-worker` (task mv07kuhb-1-lkyk) tras finalizar la release v2.0.0-rc.1 (commit 01138c0). 112 M + 6 D + directorio renombrado; `/mnt/c/Users/emili` también cubierto; ROADMAP.md con reemplazo de una sola línea, sin regenerar (drift local del dispatch).
 - [x] T2 — Anonimizar los dos `project-notion-map.json` (agent-workflows/skills/chanks-5-session-doc/assets y product/tower/generic/skills/chanks-7-session-doc/assets) con entradas de ejemplo.
 - [x] T3 — Verificación: suites enfocadas (render.test.mjs, test_builder_flow.py, fixtures de schemas) + re-grep de patrones → cero coincidencias en HEAD.
 - [x] T4 — Commit work-unit con autorización explícita del mantenedor (dada el 2026-10-08, opción 1: commit de sanitización primero, integración de S243 encima).
