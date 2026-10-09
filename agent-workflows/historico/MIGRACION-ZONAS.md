@@ -213,7 +213,7 @@ maintainer bloquean el cierre ya registrado de Fase A.
 ## Plan de trabajo reconciliado
 
 Dos repos participan: **`agent-workflows`** (canon, herramienta y skills) y
-**`control-tower`** (banco de pruebas). `Servi-Task-U` no se toca hasta que Control Tower funcione
+**`control-tower`** (banco de pruebas). `Proyecto-Alpha` no se toca hasta que Control Tower funcione
 con el modelo nuevo.
 
 ### Fase 1 — Canon y contrato del método
@@ -282,8 +282,8 @@ corrección final quedó aprobada en `review-4ec24941df920cc5` y la unificación
 - [ ] **Fase B:** migrar los datos de planificación legacy de Control Tower a
       `openspec/plan.yaml`, generar `openspec/ROADMAP.md` y retirar las vistas de plan legacy
       duplicadas únicamente mediante esa migración.
-- [ ] Migrar `Servi-Task-U` solo después de validar Control Tower.
-- [ ] Revisar las skills locales de ServiTask que lean el canon anterior.
+- [ ] Migrar `Proyecto-Alpha` solo después de validar Control Tower.
+- [ ] Revisar las skills locales de Proyecto-Alpha que lean el canon anterior.
 
 ---
 
@@ -293,7 +293,7 @@ corrección final quedó aprobada en `review-4ec24941df920cc5` y la unificación
 - Fase B: esta edición solo deja registrada su próxima acción; no crea `openspec/plan.yaml`, no genera
   `openspec/ROADMAP.md` y no retira vistas legacy.
 - Fase C: gate de recursos vivos, medidor, conexión del Horizonte a MAIN, freeze terminal y `S9.9`.
-- `Servi-Task-U`.
+- `Proyecto-Alpha`.
 - El subtree integrado no contiene `tools/plan/plan`; cualquier residuo no trackeado que permanezca en el checkout archivado queda fuera de la autoridad y del alcance de esta migración.
 - Los siete estados y las ocho clases que siempre escalan.
 - PRD, RFC y REQUIREMENTS, que responden preguntas distintas.

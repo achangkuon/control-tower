@@ -27,7 +27,7 @@ This PASS verifies the exact remediated implementation snapshot now committed as
 ## Candidate and authority
 
 - Change: `s4-10-host-neutral-runtime`
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Branch: `feat/plan-4/s4-10-host-neutral-runtime`
 - `origin/master` and merge base: `aab48da7ddfb72a6f045aa83063b2c83972e9e58`
 - Committed HEAD: `0a70173c5901138e68e03d64f51522e0c2c2cc76`
@@ -48,8 +48,8 @@ Native status was consumed before verification:
 - `artifactStore: openspec` for the native dispatcher; session artifact policy is hybrid.
 - `taskProgress: 20/20`, `pending: 0`, `allComplete: true`.
 - `actionContext.mode: repo-local`.
-- `actionContext.workspaceRoot: /home/emili/projects/control-tower/Worktrees/implementer-1`.
-- `allowedEditRoots: [/home/emili/projects/control-tower/Worktrees/implementer-1]`.
+- `actionContext.workspaceRoot: /home/<usuario>/projects/control-tower/Worktrees/implementer-1`.
+- `allowedEditRoots: [/home/<usuario>/projects/control-tower/Worktrees/implementer-1]`.
 - Native `nextRecommended: remediate`, `dependencies.verify: blocked`, and the prior failed evidence remained present because the parent-held remediation attempt had not been settled and the failed report was still authoritative at status-read time.
 
 The parent explicitly delegated the complete successor verification inside that already-active remediation attempt and forbade acquiring or settling it. Verification was therefore limited to read-only candidate checks, tests, probes, and replacement of this required report artifact. No terminal or delivery action was taken. Workspace ownership and permitted report persistence are proven inside the authoritative root.

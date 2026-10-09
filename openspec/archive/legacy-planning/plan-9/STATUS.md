@@ -6,7 +6,7 @@
 **Avance:** 40% (4/10 S)
 
 > **Reordenado y recortado el 2026-08-21 por la [decisión 62](../decision-register.md), tras la auditoría exclusiva de P9.**
-> Los IDs son posicionales según el [estándar de planes](/home/emili/.claude/skills/_shared/plan-naming-convention.md), así que
+> Los IDs son posicionales según el [estándar de planes](/home/<usuario>/.claude/skills/_shared/plan-naming-convention.md), así que
 > cambiar el orden cambia el número. La tabla de migración de abajo conserva la trazabilidad de toda referencia histórica.
 
 ## Entrega de sustrato del 2026-08-30 — previa al cierre de S9.1

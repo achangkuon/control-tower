@@ -77,7 +77,7 @@ deletion, plus one documentation nit.
 
 ### F1 — The plan-naming canon (`~/.claude/CLAUDE.md:430`)
 
-Points at `/home/emili/projects/agent-workflows/skills/_shared/plan-naming-convention.md`. Every
+Points at `/home/<usuario>/projects/agent-workflows/skills/_shared/plan-naming-convention.md`. Every
 agent reads this file before planning. The two copies are **byte-identical**, so the repair is the
 path alone.
 

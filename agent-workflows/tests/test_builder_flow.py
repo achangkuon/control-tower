@@ -51,13 +51,13 @@ SNAPSHOT_SHA256 = {
     "skills/chanks-4-unattended-implementation/references/sealing-and-routing.md": "7083202764b4b7a8ff1cda418cbb84c6598bb524237203b8fe284c89eb25e61a",
     "skills/chanks-6-politica-de-entrega/SKILL.md": "92f08daa79656b499e3bee5cb30484a96ec37fe8dae80e1141285fe1a514230d",
     "skills/chanks-7-session-doc/SKILL.md": "16d169d14732352f2ce51bd1e907459ef61478df20e9be74c682a0f11470ac04",
-    "skills/chanks-7-session-doc/assets/project-notion-map.json": "a1a79c51ac57fc02e7b7bb7da3a1910ba78784273287abb9932cb8ed74782d69",
-    "skills/chanks-7-session-doc/assets/session-doc.schema.json": "7000699393a5b2ef8eed70789474cd98b1754b7833cec542994eb6b89472f1ad",
+    "skills/chanks-7-session-doc/assets/project-notion-map.json": "2dbafa4caf8a582861657c0c9045ed12d08b997489f76a6689334a9ecded24a6",
+    "skills/chanks-7-session-doc/assets/session-doc.schema.json": "9c7b7b63e466dac855cc770cd5e036869c743b9cdde40e1011082dbfd2642eac",
     "skills/chanks-7-session-doc/references/links.md": "5a80bbdbd8a9fe7b8f29ff2aa8306349c734ff06fdaeeb3bac0387e1ece35b8c",
-    "skills/_shared/plan-naming-convention.md": "8f4b4efdd4538cb55b92b450d224a6837d6ad309913a4977037b2cb27acab4c5",
+    "skills/_shared/plan-naming-convention.md": "89d464adaa3d9a5a3d73c3070e793e865efdb15be17c46dd39113b83ca18b318",
     "templates/session-routing.md": "f2b23ccc6a2a0b43e3a6104fb2c33e4f9282d1adf1e1b7f4a0fdb7ada3f48b51",
-    "README.md": "98d6298a9ad48057afbc3901777aa50fcedb26da67b45148234fc8a2213db129",
-    "FLUJO-END-TO-END.md": "cf65ddf857ea55354bf7cd93d5d30dd5fce84dc4568283c403e7006765378313",
+    "README.md": "d1a2abb784584bc66b42bc7634768382384f71cca7f6c1d03073b198812bde52",
+    "FLUJO-END-TO-END.md": "daa6cfa0ac772cda383b39f963d21a94b1574eee9de7c4da2e98ea33bda072b4",
 }
 
 
@@ -310,18 +310,18 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("unknown project", reference)
         self.assertFalse((ROOT.parent / ".session-doc.json").exists())
         self.assertEqual([project["notion_page_id"] for project in project_map["projects"]],
-                         ["387e23cc934581f99b44eb519210c801", "38be23cc9345801099ecd67402e32992",
-                          "38be23cc93458067800ce1721df78d50"])
+                         ["0000000000000000000000000000aa01", "0000000000000000000000000000aa02",
+                          "0000000000000000000000000000aa03"])
         self.assertEqual([project["match"] for project in project_map["projects"]],
-                         [["Servi-Task-U", "Servitask", "servi-task", "servitask"],
-                          ["ecom-ecuador", "Ecom-Ecuador", "ECOM-EC"],
-                          ["Finanzas-Personales", "finanzas-personales"]])
+                         [["Proyecto-Alpha", "proyecto-alpha", "proyecto-alpha-task"],
+                          ["proyecto-beta", "Proyecto-Beta"],
+                          ["proyecto-gamma"]])
         self.assertEqual(schema["properties"]["notion"]["properties"]["enabled"]["const"], False)
         self.assertEqual(len(schema["oneOf"]), 2)
         page_pattern = schema["properties"]["notion_page_id"]["pattern"]
         for project in project_map["projects"]:
             self.assertRegex(project["notion_page_id"], page_pattern)
-        self.assertRegex("387e23cc-9345-81f9-9b44-eb519210c801", page_pattern)
+        self.assertRegex("00000000-0000-0000-0000-00000000aa01", page_pattern)
         self.assertIsNone(re.fullmatch(page_pattern, "unknown-page"))
         self.assertIn("chanks-5-session-doc", schema["title"])
 

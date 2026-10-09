@@ -8,7 +8,7 @@
 
 - Change: `s5-8-response-binding`
 - Artifact store: hybrid local (OpenSpec + local Engram)
-- Action context: repository worktree `/home/emili/projects/control-tower/Worktrees/s5-8`; edits restricted to `main-store/store.mjs` and `test/main-store.test.mjs`
+- Action context: repository worktree `/home/<usuario>/projects/control-tower/Worktrees/s5-8`; edits restricted to `main-store/store.mjs` and `test/main-store.test.mjs`
 - Base: `feat/plan-5/s5-8-response-binding` at `3db3c121d48a07d7696afe6a88de044f30ea4695`
 - Native Gentle AI SDD commands were not used.
 - Workload decision: no decision needed; no chained PR; medium 400-line risk.

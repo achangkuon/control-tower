@@ -2,7 +2,7 @@
 
 ## Current State
 
-The Control Tower is a standalone Bun/ESM repository at `/home/emili/.config/opencode/control-tower`, currently on `master` at `71ab571`, with no remote. The Plan A commit is present on top of baseline `f583df7`; `.atl/`, `NEXT-SESSION-off-enforcement.md`, and the newly initialized `openspec/` area are untracked and must remain untouched.
+The Control Tower is a standalone Bun/ESM repository at `/home/<usuario>/.config/opencode/control-tower`, currently on `master` at `71ab571`, with no remote. The Plan A commit is present on top of baseline `f583df7`; `.atl/`, `NEXT-SESSION-off-enforcement.md`, and the newly initialized `openspec/` area are untracked and must remain untouched.
 
 `core.mjs` is the only SQLite boundary. It locates a repository-scoped `.git/control-tower` directory, owns the legacy `agent`, `message`, and `lock` tables, and exposes register/state/send/receive/lock/deactivate/status operations. Guarded writes use an ACTIVE sentinel plus a second check inside `BEGIN IMMEDIATE`; the current fail-closed tests prove OFF rejects writes, preserves legacy rows, leaves pending messages pending, permits safe release, and does not change database mtime. `status` remains readable while OFF.
 
@@ -60,13 +60,13 @@ This covers all 64 Control Tower scenarios. Revision 11 additionally requires th
 
 ## API and Policy Boundary
 
-The later Servi-Task-U policy track may consume only the Control Tower contract: canonical handoff creation/validation/publication, non-consuming `receive`, atomic one-unit `claim`, pre-`ack` revalidation and effect-manifest evidence, Main `attestCompletion`, claimant `complete`, and Main-gated reject/revise/recover/rollback/status results. It may rely on server-derived fingerprints, generation, binding fences, deterministic error codes, immutable decisions, and persisted completion tuple `{request_identity,handoff_id,generation,token_hash,evidence_digest,attestation_id,committed_result}`.
+The later Proyecto-Alpha policy track may consume only the Control Tower contract: canonical handoff creation/validation/publication, non-consuming `receive`, atomic one-unit `claim`, pre-`ack` revalidation and effect-manifest evidence, Main `attestCompletion`, claimant `complete`, and Main-gated reject/revise/recover/rollback/status results. It may rely on server-derived fingerprints, generation, binding fences, deterministic error codes, immutable decisions, and persisted completion tuple `{request_identity,handoff_id,generation,token_hash,evidence_digest,attestation_id,committed_result}`.
 
 Control Tower MUST NOT implement the policy track's discovery precedence, OpenSpec parsing, dependency/reservation decisions, ownership selection, project rollout/runbook, or one-unit policy. Payload paths, URLs, and executable-looking references are inert evidence only. The API boundary must keep caller actor/role/session fields out of authority decisions and must never expose `start`, tokens through status, or anchor secrets.
 
 ## Verification and Rollback Boundaries
 
-Verification is independent of Servi-Task-U and must use only the Control Tower test files plus the existing `test/fail-closed.test.mjs` regression suite. The configured command is `bun test`; the original plan's per-slice `node --test` labels are planning references, not a reason to bypass the repository's configured runner. A final CT-only run should cover migration, identity, lifecycle, recovery, polling, and fail-closed tests together, with stable CT IDs mapped to the 64-scenario matrix above.
+Verification is independent of Proyecto-Alpha and must use only the Control Tower test files plus the existing `test/fail-closed.test.mjs` regression suite. The configured command is `bun test`; the original plan's per-slice `node --test` labels are planning references, not a reason to bypass the repository's configured runner. A final CT-only run should cover migration, identity, lifecycle, recovery, polling, and fail-closed tests together, with stable CT IDs mapped to the 64-scenario matrix above.
 
 Tests must use isolated temporary Git repositories and temporary tower roots. They must assert the real signals—ACTIVE presence/absence, SQLite rows/mtime, transaction atomicity, pending delivery state, binding/lease epochs, and polling order—not only formatted CLI output. The actual Control Tower must remain OFF; no production registration, activation, runtime DB mutation, delivery, PR, push, or remote operation is part of exploration or verification planning.
 
@@ -86,7 +86,7 @@ The global rollback boundary is administrative and proof-bound: ordinary continu
 
 ## Recommendation
 
-Use Approach 1 as the externally visible architecture: additive continuation tables and APIs beside the untouched legacy queue, with every mutation remaining in one SQLite transaction and every slice tested/rolled back as a dependent work unit. Internal helper extraction is acceptable only after GREEN and only if `core.mjs` remains the authoritative transaction boundary. Implement Phase 0, then Control Tower Slices 1–7 in order; stop before any Servi-Task-U policy work or activation. This is the only approach that directly preserves Plan A's fail-closed guarantees while satisfying the approved Revision 11 contracts without introducing a second authority path.
+Use Approach 1 as the externally visible architecture: additive continuation tables and APIs beside the untouched legacy queue, with every mutation remaining in one SQLite transaction and every slice tested/rolled back as a dependent work unit. Internal helper extraction is acceptable only after GREEN and only if `core.mjs` remains the authoritative transaction boundary. Implement Phase 0, then Control Tower Slices 1–7 in order; stop before any Proyecto-Alpha policy work or activation. This is the only approach that directly preserves Plan A's fail-closed guarantees while satisfying the approved Revision 11 contracts without introducing a second authority path.
 
 ## Risks
 
@@ -100,4 +100,4 @@ Use Approach 1 as the externally visible architecture: additive continuation tab
 
 ## Ready for Proposal
 
-Yes. The Control Tower-only scope is sufficiently mapped for `sdd-propose`: Phase 0 plus Slices 1–7, CT-only tests and rollback boundaries, Plan A compatibility, and the API contract consumed later by Servi-Task-U. Keep the track OFF and do not authorize apply, activation, delivery, database mutation, PR, push, or policy-module work.
+Yes. The Control Tower-only scope is sufficiently mapped for `sdd-propose`: Phase 0 plus Slices 1–7, CT-only tests and rollback boundaries, Plan A compatibility, and the API contract consumed later by Proyecto-Alpha. Keep the track OFF and do not authorize apply, activation, delivery, database mutation, PR, push, or policy-module work.

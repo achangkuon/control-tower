@@ -1,11 +1,11 @@
 # Audit A — Pi CLI runtime as the Control Tower execution host
 
-**Subject:** `pi` v0.84.3 (`/home/emili/.npm-global/bin/pi`, pkg `@earendil-works/pi-coding-agent`)
+**Subject:** `pi` v0.84.3 (`/home/<usuario>/.npm-global/bin/pi`, pkg `@earendil-works/pi-coding-agent`)
 **Date:** 2026-08-27 · **Method:** empirical. Every claim below is backed by a command and its real output.
 **Bar:** decisions 38, 40, 59, 66, 76 of `openspec/plans/decision-register.md`.
 **Cost:** 8 model-contacting invocations, **≈ USD 0.0067 total**. Most measurements needed no model call.
 **Isolation:** all process work ran in a scratch dir with an isolated `PI_CODING_AGENT_DIR`. Nothing under
-`/home/emili/projects/control-tower/` was touched by Pi.
+`/home/<usuario>/projects/control-tower/` was touched by Pi.
 
 ---
 
@@ -407,14 +407,14 @@ never as literal text on the command line. Pi supports the file form — use it.
 ```
 $ pi list
 User packages:
-  npm:gentle-pi          /home/emili/.pi/agent/npm/node_modules/gentle-pi
+  npm:gentle-pi          /home/<usuario>/.pi/agent/npm/node_modules/gentle-pi
   npm:gentle-engram      …
-  npm:pi-intercom        /home/emili/.pi/agent/npm/node_modules/pi-intercom
+  npm:pi-intercom        /home/<usuario>/.pi/agent/npm/node_modules/pi-intercom
   …
 ```
 
 Source (TypeScript, shipped unbundled and readable) at
-`/home/emili/.pi/agent/npm/node_modules/pi-intercom/`: `index.ts` (119K), `broker/broker.ts` (65K),
+`/home/<usuario>/.pi/agent/npm/node_modules/pi-intercom/`: `index.ts` (119K), `broker/broker.ts` (65K),
 `broker/client.ts`, `broker/protocol.ts`, `broker/paths.ts`, `broker/framing.ts`, `broker/spawn.ts`,
 `types.ts`, `config.ts`, `project-agent.ts`, `reply-tracker.ts`, `ui/`, `skills/pi-intercom/SKILL.md`.
 Runtime state at `~/.pi/agent/intercom/` (`0700`): `broker.sock`, `broker.pid`, `config.json`,

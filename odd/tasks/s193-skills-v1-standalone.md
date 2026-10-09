@@ -108,7 +108,7 @@ RED: not active — strict TDD was not activated; instrucciones pasivas, sin RED
 GREEN: not active — validation is reported separately.
 TRIANGULATE/REFACTOR: verificación de referencias/frontmatter/marcadores; consultas frescas sin reemplazar elección humana, y Notion ausente no bloquea cierre. No evidencia de ejecución driven en otra máquina: esto es verificación estructural.
 
-Comandos desde `/home/emili/projects/control-tower/Main` salvo el prefijo `cd` indicado. `PYTHONDONTWRITEBYTECODE=1` evita generar caches Python en el repo. Las suites usan fixtures desechables; no se alteraron datos reales del proyecto ni tests.
+Comandos desde `/home/<usuario>/projects/control-tower/Main` salvo el prefijo `cd` indicado. `PYTHONDONTWRITEBYTECODE=1` evita generar caches Python en el repo. Las suites usan fixtures desechables; no se alteraron datos reales del proyecto ni tests.
 
 | Comando exacto | Resultado observado |
 |---|---|

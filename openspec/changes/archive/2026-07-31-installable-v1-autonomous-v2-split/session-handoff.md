@@ -2,7 +2,7 @@
 
 ## Clean Boundary
 
-The planning candidate is at `/home/emili/projects/control-tower/Worktrees/installable-v1-s8-2-planning`, branch `docs/installable-v1-s8-2-planning`, based exactly on clean `master@e4d8ad63437e5c57dbf37edf86aadcc9c9fdab1d`. The candidate itself is not clean: its uncommitted diff is exactly the five approved planning paths listed below. The stale `docs/close-v1-v2-wu1` worktree was cleaned by discarding the four authorized obsolete copies; no content was carried forward.
+The planning candidate is at `/home/<usuario>/projects/control-tower/Worktrees/installable-v1-s8-2-planning`, branch `docs/installable-v1-s8-2-planning`, based exactly on clean `master@e4d8ad63437e5c57dbf37edf86aadcc9c9fdab1d`. The candidate itself is not clean: its uncommitted diff is exactly the five approved planning paths listed below. The stale `docs/close-v1-v2-wu1` worktree was cleaned by discarding the four authorized obsolete copies; no content was carried forward.
 
 - `openspec/plans/master-index.md`
 - `openspec/plans/plan-8/STATUS.md`

@@ -3,7 +3,7 @@
 #
 # Resuelve el repo desde el directorio actual, igual que hace la torre para
 # identificar a cada agente. Fuera de un repo, usa los atajos por proyecto
-# (torrestk / torreecom / torrefp) o pasá --repo <ruta>.
+# (torrealpha / torrebeta / torregamma) o pasá --repo <ruta>.
 #
 #   torre on       arma el repo: habilita coordinacion y entrega
 #   torre off      desarma sin borrar estado; solo permite inspeccion y liberar locks
@@ -79,9 +79,9 @@ if ! common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
 torre: esto no es un repositorio git.
 
 Pará dentro de un repo, o usá un atajo por proyecto:
-  torrestk    Servi-Task-U
-  torreecom   ecom-ecuador
-  torrefp     Finanzas-Personales
+  torrealpha  Proyecto-Alpha
+  torrebeta   proyecto-beta
+  torregamma  Proyecto-Gamma
 EOF
     exit 1
 fi

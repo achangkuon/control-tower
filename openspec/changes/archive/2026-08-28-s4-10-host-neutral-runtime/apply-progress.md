@@ -118,7 +118,7 @@ Parent-owned direct commit 1 review is checked. Parent-owned direct commit 2 and
 
 - Change: `s4-10-host-neutral-runtime`; artifact store: hybrid.
 - Required spec, design, tasks, and previous apply-progress were retrieved from Engram and OpenSpec.
-- Action context: workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; metadata-only checkpoint after parent commit; no source, test, schema, authority-document, Git, test-runner, acquire, settle, or reset action permitted.
+- Action context: workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; metadata-only checkpoint after parent commit; no source, test, schema, authority-document, Git, test-runner, acquire, settle, or reset action permitted.
 - Workload boundary: commit 1 is 238 authored additions + deletions, within the 400-line ceiling.
 - Direct commit 1 state: complete and immutable at `4ba00b3557cdfee6d99bddbb6424eec51a3fce27`.
 - Next implementation checkpoint: direct commit 2 RED.
@@ -185,7 +185,7 @@ No acquisition seam, listener, concurrency/pending state, occupied-port handling
 ### Structured status consumed
 
 - Change: `s4-10-host-neutral-runtime`; artifact store: hybrid; strict TDD active with `bun test`.
-- Action context: authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; edit roots limited to implementation paths plus task/apply metadata.
+- Action context: authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; edit roots limited to implementation paths plus task/apply metadata.
 - Immutable base: `4ba00b3557cdfee6d99bddbb6424eec51a3fce27`; active native token remains parent-held and untouched.
 - Workload path: direct commit 2 only, 193 authored lines; no size exception required.
 - Parent lifecycle boundary: stop now for parent review/commit; do not begin direct commit 3.
@@ -268,7 +268,7 @@ No source, test, schema, Git, test-runner, commit, push, PR, acquire, settle, re
 ### Structured status consumed
 
 - Change: `s4-10-host-neutral-runtime`; artifact store: hybrid; strict TDD active with `bun test`.
-- Action context: authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; metadata-only edits limited to task/apply mirrors.
+- Action context: authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; metadata-only edits limited to task/apply mirrors.
 - Immutable HEAD: `0b4f8802b355e4036c1d3426e0613e6951916824`.
 - Workload boundary: direct commit 2 is 226 authored lines, within the 400-line ceiling.
 - Next implementation checkpoint: direct commit 3 RED.
@@ -313,7 +313,7 @@ Rollback boundary: remove `node-loopback-acquisition.mjs` and `loopback.test.mjs
 ### Structured status consumed
 
 - Change: `s4-10-host-neutral-runtime`; hybrid artifact store; Strict TDD active with `bun test`.
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; implementation edits stayed within `contracts/host-runtime/**` and `test/contracts/host-runtime/**`, plus allowed tasks/apply metadata.
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; implementation edits stayed within `contracts/host-runtime/**` and `test/contracts/host-runtime/**`, plus allowed tasks/apply metadata.
 - Immutable HEAD: `0b4f8802b355e4036c1d3426e0613e6951916824`; parent-held native token `sha256:116c6711773c418143beba8fb00efbcfc3ae242d9b2c35009887acc7c20b43aa` was not acquired, settled, or reset.
 - Remaining exact unchecked implementation row: `- [ ] Before direct commit 3, inspect the allowed-path diff, run the focused behavior review for final-listener/no-gap/cleanup behavior, save test evidence and the reverse-order rollback boundary to Engram \`sdd/s4-10-host-neutral-runtime/apply-progress\`, measure \`git diff --numstat\` as authored additions + deletions (must be \`<=400\`), and commit only this boundary. <!-- sdd-owner: implementation -->`
 - Deferred lifecycle action: parent-owned direct commit 3 focused review remains unchecked. No commit, push, PR, or lifecycle action occurred.
@@ -354,7 +354,7 @@ Rollback boundary remains commit 3 only: remove the additive Node acquisition an
 
 The exact unchecked implementation row `- [ ] Before direct commit 3, inspect the allowed-path diff, run the focused behavior review for final-listener/no-gap/cleanup behavior, save test evidence and the reverse-order rollback boundary to Engram \`sdd/s4-10-host-neutral-runtime/apply-progress\`, measure \`git diff --numstat\` as authored additions + deletions (must be \`<=400\`), and commit only this boundary. <!-- sdd-owner: implementation -->` remains pending targeted recheck and parent checkpoint. The parent-owned direct commit 3 review hold remains byte-preserved and unchecked.
 
-Structured status: hybrid store; Strict TDD active; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; edits stayed within the three assigned implementation paths plus apply-progress metadata. Parent-held token `sha256:116c6711773c418143beba8fb00efbcfc3ae242d9b2c35009887acc7c20b43aa` remained untouched. No acquire, settle, reset, commit, push, PR, receipt, or lifecycle mutation occurred.
+Structured status: hybrid store; Strict TDD active; authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; edits stayed within the three assigned implementation paths plus apply-progress metadata. Parent-held token `sha256:116c6711773c418143beba8fb00efbcfc3ae242d9b2c35009887acc7c20b43aa` remained untouched. No acquire, settle, reset, commit, push, PR, receipt, or lifecycle mutation occurred.
 
 ### Direct commit 3 maintainer-authorized terminal-disposal retake
 
@@ -464,7 +464,7 @@ Status: complete and immutable at `28163d2d332153c342e68f8ed72538c69e99301d` (`f
 ### Final structured status consumed
 
 - Change: `s4-10-host-neutral-runtime`; artifact store: hybrid; Strict TDD evidence was supplied by the immutable implementation boundary.
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; exact HEAD supplied by parent: `28163d2d332153c342e68f8ed72538c69e99301d`.
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; exact HEAD supplied by parent: `28163d2d332153c342e68f8ed72538c69e99301d`.
 - Action context: metadata-only edits limited to `tasks.md`, `apply-progress.md`, and their Engram mirrors. No code, tests, Git, review, receipt, native lifecycle, push, PR, or release action was performed here.
 - Workload / PR boundary: direct commit 3 is 262 authored lines, within its 400-line ceiling; repository delivery remains three sequential immutable direct commits with no PR.
 - Remaining tasks: none.
@@ -527,4 +527,4 @@ Rollback boundary: revert only these three uncommitted path diffs to exact HEAD 
 
 The canonical tasks artifact was re-read: all 17 implementation-owned and 3 parent-owned rows remain visibly `[x]` (20/20). No successor checkbox existed, so no task line was invented or reworded. The failed verify report remains FAIL. Next action is `parent-lifecycle`: parent review followed by integral verify; commit only after PASS.
 
-Structured action context consumed: repo-local authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed edits limited to the three existing implementation/test paths and cumulative apply-progress mirrors. Existing unrelated modifications in `openspec/plans/decision-register.md` and `openspec/plans/plan-4/STATUS.md` were not touched.
+Structured action context consumed: repo-local authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed edits limited to the three existing implementation/test paths and cumulative apply-progress mirrors. Existing unrelated modifications in `openspec/plans/decision-register.md` and `openspec/plans/plan-4/STATUS.md` were not touched.

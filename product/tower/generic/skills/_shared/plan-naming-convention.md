@@ -561,7 +561,7 @@ reworked, because its remaining modules are proof and activation, which cost the
 either policy.
 
 Do not read Control Tower's plan as a worked example of adoption. Its shape is historical.
-Every other repository, starting with Servi-Task-U, adopts the model by the four steps above.
+Every other repository, starting with Proyecto-Alpha, adopts the model by the four steps above.
 
 ## 19. Chanks skill naming inventory
 

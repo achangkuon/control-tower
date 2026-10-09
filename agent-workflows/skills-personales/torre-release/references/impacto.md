@@ -34,7 +34,7 @@ HOME=<SANDBOX>/home bun run test
 # Radar: agent-workflows/tools/radar/README.md:94; vendor en product/tower/v1/bundle.mjs:14-19.
 (cd agent-workflows/tools/radar && HOME=<SANDBOX>/home GOCACHE=<SANDBOX>/cache/radar GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS=-mod=vendor go test ./...)
 # TUI: caché de módulos existente; compilación/cache privados y sin red.
-(cd product/tower/v1/tui && HOME=<SANDBOX>/home GOCACHE=<SANDBOX>/cache/tui GOMODCACHE=/home/emili/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly go test ./...)
+(cd product/tower/v1/tui && HOME=<SANDBOX>/home GOCACHE=<SANDBOX>/cache/tui GOMODCACHE=/home/<usuario>/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly go test ./...)
 # Si cambian install.py o skills: receta de agent-workflows/README.md:187-194.
 (cd agent-workflows && HOME=<SANDBOX>/home PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -q)
 HOME=<SANDBOX>/home bun test agent-workflows

@@ -54,7 +54,7 @@ hubiera aparecido un tag nuevo a mitad de la revisión, esta identidad no se mue
 
 ### 1.3 Digests verificados (coinciden archivo local, recibo local y remoto)
 
-Evidencia local: `/home/emili/projects/control-tower/Releases/v1.2.5/` (fuera del
+Evidencia local: `/home/<usuario>/projects/control-tower/Releases/v1.2.5/` (fuera del
 repo, según `agent-workflows/skills-personales/torre-release/references/publicar.md:89,116-133`).
 
 | Asset | bytes | sha256 local | sidecar `.sha256` | `build.log` | `digest` remoto (gh) |
@@ -87,7 +87,7 @@ El release remoto tiene exactamente **11 assets** (paquete + huella, instalador,
 ### 1.4 Sellado del instalador y coherencia con el manifiesto
 
 Del bloque `const PINNED = {...}` en
-`/home/emili/projects/control-tower/Releases/v1.2.5/torre-install.mjs:8`
+`/home/<usuario>/projects/control-tower/Releases/v1.2.5/torre-install.mjs:8`
 (sentinel definido en `product/tower/v1/install.mjs:8`, estampado por
 `stampInstaller` en `product/tower/v1/release-build.mjs:135-143`):
 
@@ -309,15 +309,15 @@ $ T=$(mktemp -d /tmp/s181-dryrun-XXXXXX); mkdir -p "$T/home/bin" "$T/tmp"   # T=
 $ cat "$T/home/bin/gh"            # gh falso, DENTRO del HOME temporal: sirve el archivo congelado
 #!/bin/sh
 if [ "$1" = "auth" ]; then exit 0; fi
-for a in "$@"; do case "$a" in torre-tui-*) cat "/home/emili/projects/control-tower/Releases/v1.2.5/tui/$a"; exit 0 ;; esac; done
-cat "/home/emili/projects/control-tower/Releases/v1.2.5/tower-v1.json"
+for a in "$@"; do case "$a" in torre-tui-*) cat "/home/<usuario>/projects/control-tower/Releases/v1.2.5/tui/$a"; exit 0 ;; esac; done
+cat "/home/<usuario>/projects/control-tower/Releases/v1.2.5/tower-v1.json"
 $ find "$T/home" | sort          # ANTES
 /tmp/s181-dryrun-6BPWRH/home
 /tmp/s181-dryrun-6BPWRH/home/bin
 /tmp/s181-dryrun-6BPWRH/home/bin/gh
 $ env -i PATH="$T/home/bin:/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin" \
       HOME="$T/home" TMPDIR="$T/tmp" \
-      bun /home/emili/projects/control-tower/Releases/v1.2.5/torre-install.mjs --dry-run ; echo "exit=$?"
+      bun /home/<usuario>/projects/control-tower/Releases/v1.2.5/torre-install.mjs --dry-run ; echo "exit=$?"
 Verified dry-run: no global installation performed.
 exit=0
 $ find "$T/home" | sort          # DESPUÉS (completo)

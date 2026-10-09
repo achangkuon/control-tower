@@ -31,7 +31,7 @@ The S5.5 candidate satisfies its canonical plan criteria and all 14 implementati
 - OpenSpec design, tasks, and corrected apply-progress: present and reviewed.
 - Engram tasks, design, and apply-progress observations: retrieved. The Engram design observation is older than the corrected OpenSpec `design.md` and still describes per-call terminal authority; the validated OpenSpec design and corrected apply-progress are authoritative for this verification.
 - Apply state supplied by the parent: `all_done`; Verify readiness: ready.
-- Action context: `repo-local`, workspace `/home/emili/projects/control-tower/Worktrees/s5-5-zone-pilot`, allowed edit root is that workspace, no warnings.
+- Action context: `repo-local`, workspace `/home/<usuario>/projects/control-tower/Worktrees/s5-5-zone-pilot`, allowed edit root is that workspace, no warnings.
 - Verification write surface: only this report; source, tests, planning, and implementation artifacts remained read-only.
 - No commit, staging, push, configuration change, dependency installation, or peer contact occurred.
 

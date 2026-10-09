@@ -13,7 +13,7 @@ The verified hybrid SDD change was archived after successful canonical synchroni
 | Change | `s4-11-host-neutral-operations` |
 | Artifact store | Hybrid (`both`): OpenSpec plus Engram |
 | Selection | Explicit and unambiguous |
-| Workspace | `/home/emili/projects/control-tower/Main` |
+| Workspace | `/home/<usuario>/projects/control-tower/Main` |
 | Action context | `repo-local`; archive paths remain under the authoritative workspace |
 | Delivery identity | `master == origin/master == 6ddf6bc77d236dffad5b8ec625379117a91ce0b3` |
 | Tasks | 6/6 checked; no unchecked implementation task markers |

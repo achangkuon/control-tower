@@ -26,7 +26,7 @@ Se reutilizó la validación S199 de tags y se compartió el descubrimiento de m
 ### RED
 
 - `HOME=$(mktemp -d) bun test product/tower/v1`: las dos pruebas CLI nuevas fallaron (exit 1 en vez de 0); release tests no pudieron importar el nuevo export todavía ausente. El comando se interrumpió por timeout a los 120 s antes de terminar el resto de la suite.
-- `cd product/tower/v1/tui && HOME=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOWORK=off GOPROXY=off go test ./...`: fallaron los casos nuevos de startup asíncrono, aviso/hint, vida del aviso y admisión del runner. Los tests existentes pasaron en esa ejecución.
+- `cd product/tower/v1/tui && HOME=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOWORK=off GOPROXY=off go test ./...`: fallaron los casos nuevos de startup asíncrono, aviso/hint, vida del aviso y admisión del runner. Los tests existentes pasaron en esa ejecución.
 
 ### GREEN parcial y triangulación
 
@@ -41,10 +41,10 @@ Se reutilizó la validación S199 de tags y se compartió el descubrimiento de m
 HOME=$(mktemp -d) bun test product/tower/v1
 # 531 pass, 1 skip, 6 fail
 
-cd product/tower/v1/tui && HOME=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOWORK=off GOPROXY=off go test ./...
+cd product/tower/v1/tui && HOME=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOWORK=off GOPROXY=off go test ./...
 # build failed: no space left on device
 
-df -h /tmp /home/emili/projects/control-tower/Main
+df -h /tmp /home/<usuario>/projects/control-tower/Main
 # /tmp: 7.8G, 7.7G usados, 69M disponibles, 100%
 # filesystem del repo: 892G disponibles
 ```

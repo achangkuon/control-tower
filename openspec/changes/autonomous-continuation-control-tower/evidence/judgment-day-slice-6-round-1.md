@@ -148,5 +148,5 @@ No correction round ran. The dual-review rule permits fixes only for severe find
 
 Both judges received the same skill paths:
 
-- `/home/emili/.agents/skills/cognitive-doc-design/SKILL.md`
-- `/home/emili/.agents/skills/work-unit-commits/SKILL.md`
+- `/home/<usuario>/.agents/skills/cognitive-doc-design/SKILL.md`
+- `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`

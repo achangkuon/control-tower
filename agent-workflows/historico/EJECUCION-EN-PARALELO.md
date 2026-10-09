@@ -219,6 +219,6 @@ no se infiere desde el bloqueo histórico.
 - No migra el plan de `control-tower` — eso es Fase B.
 - No toca `S9.9` ni ninguna Sesión de la cola de la Torre — eso es Fase C.
 - No construye el medidor, el Horizonte lado MAIN ni el freeze terminal — Fase C.
-- No toca `Servi-Task-U`.
+- No toca `Proyecto-Alpha`.
 - No reabre ninguna de las ocho correcciones: están decididas y su autoridad está en
   [FLUJO-END-TO-END.md](../FLUJO-END-TO-END.md) §3.3.

@@ -34,7 +34,7 @@ cosas falsas —`M9.1.1` declarado completo sin estar en `master`, y un hallazgo
 se detectaron por auditoría manual y no por una alarma. Las cifras del informe ya no
 las escribe nadie: salen medidas de `master-index.md` y del repositorio.
 
-**Aplicado a los cinco proyectos** por la decisión 56: Control Tower por commit directo, y ecom-ecuador, Servi-Task-U y Finanzas-Personales por PR, que es su política real. La skill `session-doc` **no se tocó**: sigue apuntando a Notion hasta que el maintainer decida migrarla.
+**Aplicado a los cinco proyectos** por la decisión 56: Control Tower por commit directo, y proyecto-beta, Proyecto-Alpha y Proyecto-Gamma por PR, que es su política real. La skill `session-doc` **no se tocó**: sigue apuntando a Notion hasta que el maintainer decida migrarla.
 
 **Cierre verificado el 2026-08-20.** Última medición sobre `39483cc`, árbol limpio, suite
 **888 pass / 0 fail**, y el informe se regenera **sin una sola advertencia**: juicio al día,

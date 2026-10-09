@@ -6,7 +6,7 @@ The stale linked worktrees were retired only after their tracked state was verif
 
 | Check | Result |
 |---|---|
-| Canonical checkout | `/home/emili/projects/control-tower/Main` |
+| Canonical checkout | `/home/<usuario>/projects/control-tower/Main` |
 | Retirement base | `55efaf45720ead271d84434ccdd9194c19e0a5e0` |
 | Safety backup | Preserved outside the repository |
 | Recycled worktrees | `agent-tower`, `multi-agentic-dashboard`, `tower-implementation` |
@@ -27,7 +27,7 @@ The `agent-tower` binary patch was compared byte-for-byte with the safety backup
 
 | Backup evidence | Value |
 |---|---|
-| Directory | `/home/emili/projects/control-tower/Backups/worktree-recycle-2026-07-27-123457` |
+| Directory | `/home/<usuario>/projects/control-tower/Backups/worktree-recycle-2026-07-27-123457` |
 | Patch | `agent-tower-uncommitted.patch` |
 | Patch SHA-256 | `ff08b5cb6073421e2e732318cd615d830bd0a9a6db5824a837e6168172be9b88` |
 | Full document copy | `sdd-tower-implementation.md` |
@@ -59,9 +59,9 @@ No local or remote branch was deleted. The retired worktrees' local branch refs 
 The requested operational endpoint was not a Main-only topology. The three worktree homes were therefore recreated from canonical `master`:
 
 ```text
-/home/emili/projects/control-tower/Worktrees/agent-tower
-/home/emili/projects/control-tower/Worktrees/multi-agentic-dashboard
-/home/emili/projects/control-tower/Worktrees/tower-implementation
+/home/<usuario>/projects/control-tower/Worktrees/agent-tower
+/home/<usuario>/projects/control-tower/Worktrees/multi-agentic-dashboard
+/home/<usuario>/projects/control-tower/Worktrees/tower-implementation
 ```
 
 Each was created with detached `HEAD` from `master`. This avoids silently reviving stale task branches or rewriting preserved branch refs. Before an agent writes, its assignment must create a fresh task-scoped branch from the current canonical base.

@@ -46,7 +46,7 @@ export XDG_DATA_HOME=<SANDBOX>/data XDG_STATE_HOME=<SANDBOX>/state
 HOME=<SANDBOX>/home bun test product/tower/v1
 HOME=<SANDBOX>/home bun run test
 (cd agent-workflows/tools/radar && HOME=<SANDBOX>/home GOCACHE=<SANDBOX>/cache/radar GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS=-mod=vendor go test ./...)
-(cd product/tower/v1/tui && HOME=<SANDBOX>/home GOCACHE=<SANDBOX>/cache/tui GOMODCACHE=/home/emili/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly go test ./...)
+(cd product/tower/v1/tui && HOME=<SANDBOX>/home GOCACHE=<SANDBOX>/cache/tui GOMODCACHE=/home/<usuario>/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly go test ./...)
 # Añade ambos controles si cambiaron skills o install.py:
 (cd agent-workflows && HOME=<SANDBOX>/home PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -q)
 HOME=<SANDBOX>/home bun test agent-workflows
@@ -86,11 +86,11 @@ git ls-remote origin refs/heads/master
 
 Sólo cuando el checkout de construcción esté coordinado, limpio, confirmado y subido, revisa capacidad y destinos. El constructor rechaza suciedad, salidas dentro del worktree y sobrescrituras (`product/tower/v1/release-build.mjs:120-132`, `product/tower/v1/release-build.mjs:210-217`). Sus padres deben existir (`product/tower/v1/release-build.mjs:195-198`).
 
-`<DIR>` es siempre `/home/emili/projects/control-tower/Releases/<TAG>`: fuera de `Main`, junto a `Backups/` y `Worktrees/`, nunca en el HOME. Ahí quedan las salidas de v1.2.0 a v1.2.5 (decisión del mantenedor, 2026-10-03). Si `<DIR>` ya existe, esa etiqueta ya se armó: detente.
+`<DIR>` es siempre `/home/<usuario>/projects/control-tower/Releases/<TAG>`: fuera de `Main`, junto a `Backups/` y `Worktrees/`, nunca en el HOME. Ahí quedan las salidas de v1.2.0 a v1.2.5 (decisión del mantenedor, 2026-10-03). Si `<DIR>` ya existe, esa etiqueta ya se armó: detente.
 
 ```bash
-test ! -e /home/emili/projects/control-tower/Releases/<TAG>
-mkdir -p /home/emili/projects/control-tower/Releases/<TAG>
+test ! -e /home/<usuario>/projects/control-tower/Releases/<TAG>
+mkdir -p /home/<usuario>/projects/control-tower/Releases/<TAG>
 df -h /tmp <DIR>
 test -d <DIR>
 test ! -e <DIR>/tower-v1.json
@@ -98,10 +98,10 @@ test ! -e <DIR>/tower-v1.json.sha256
 test ! -e <DIR>/torre-install.mjs
 test ! -e <DIR>/tui
 test ! -e <DIR>/release-build-receipt.json
-bun product/tower/v1/release-build.mjs --repo /home/emili/projects/control-tower/Main --commit <COMMIT> --tag <TAG> --out <DIR>/tower-v1.json --installer-out <DIR>/torre-install.mjs --tui-out-dir <DIR>/tui > <DIR>/release-build-receipt.json
+bun product/tower/v1/release-build.mjs --repo /home/<usuario>/projects/control-tower/Main --commit <COMMIT> --tag <TAG> --out <DIR>/tower-v1.json --installer-out <DIR>/torre-install.mjs --tui-out-dir <DIR>/tui > <DIR>/release-build-receipt.json
 ```
 
-La ruta `Main` es el checkout de construcción previsto, no permiso para tocarlo. Si otro agente lo usa o está sucio, detente y coordina un checkout limpio; no limpies ni reemplaces trabajo ajeno. Usa HOME/TMPDIR/GOCACHE privados y `GOMODCACHE=/home/emili/go/pkg/mod` si necesitas la caché de módulos existente. El build TUI es offline y sus fallos bloquean builds publicados (`product/tower/v1/release-build.mjs:163-172`, `product/tower/v1/release-build.mjs:266-272`).
+La ruta `Main` es el checkout de construcción previsto, no permiso para tocarlo. Si otro agente lo usa o está sucio, detente y coordina un checkout limpio; no limpies ni reemplaces trabajo ajeno. Usa HOME/TMPDIR/GOCACHE privados y `GOMODCACHE=/home/<usuario>/go/pkg/mod` si necesitas la caché de módulos existente. El build TUI es offline y sus fallos bloquean builds publicados (`product/tower/v1/release-build.mjs:163-172`, `product/tower/v1/release-build.mjs:266-272`).
 
 ```bash
 (cd <DIR> && sha256sum -c tower-v1.json.sha256)

@@ -16,7 +16,7 @@
 - `activeSession`: `S5.11`
 - `dependencies`: `S5.8` integrated
 - `actionContext.mode`: workspace implementation
-- `actionContext.workspace`: `/home/emili/projects/control-tower/Worktrees/s5-11`
+- `actionContext.workspace`: `/home/<usuario>/projects/control-tower/Worktrees/s5-11`
 - `actionContext.allowedEditRoots`: the exact eleven implementation/test paths plus this change's `tasks.md`, `design.md`, and `apply-progress.md` planning evidence
 - `actionContext.warning`: do not edit Plan STATUS/master-index; do not commit, push, or open a PR
 - `nativeLifecycle`: suspended by the active global temporary rule; not invoked
@@ -181,7 +181,7 @@ This section supersedes the prior aggregate hard-stop disposition while retainin
 - `artifactStore`: `hybrid`
 - `applyState`: continuation authorized directly by the parent-provided immutable integration authority; native Gentle lifecycle remained suspended and was not invoked
 - `actionContext.mode`: disposable integration checking
-- `actionContext.sourceWorkspace`: `/home/emili/projects/control-tower/Worktrees/s5-11`
+- `actionContext.sourceWorkspace`: `/home/<usuario>/projects/control-tower/Worktrees/s5-11`
 - `actionContext.allowedSourceEdit`: only this cumulative `apply-progress.md` evidence after testing
 - `actionContext.warning`: source product, test, planning, branch, index, and history bytes must remain untouched during test execution; no commit, push, PR, rebase, merge, cherry-pick, stash, Main docs, or Notion
 - strict TDD remains satisfied by the retained prior RED/GREEN/TRIANGULATE/REFACTOR evidence; this continuation wrote no production or test code and opened no new TDD cycle
@@ -274,7 +274,7 @@ This section is the latest status and supersedes only the prior latest-status co
 - `applyState`: **blocked** by the one authorized local-clone full-suite test failure
 - `continuationAuthority`: explicit one-time parent authorization for final procedural-tooling validation
 - `actionContext.mode`: detached disposable local Git clone checking
-- `actionContext.sourceWorkspace`: `/home/emili/projects/control-tower/Worktrees/s5-11`
+- `actionContext.sourceWorkspace`: `/home/<usuario>/projects/control-tower/Worktrees/s5-11`
 - `actionContext.allowedSourceEdit`: only this cumulative `apply-progress.md` after the test hard stop
 - `actionContext.warning`: no source product/test/task/design/proposal/spec bytes; no subagents; no verify phase; no native lifecycle, review lens, commit, push, PR, Main docs, Notion, fetch, Main update, worktree, explicit branch creation, rebase, merge, cherry-pick, or stash
 - `strictTdd`: retained prior RED/GREEN/TRIANGULATE/REFACTOR evidence; this read-only continuation opened no TDD cycle and wrote no production/test code
@@ -284,9 +284,9 @@ This section is the latest status and supersedes only the prior latest-status co
 
 ### Disposable local clone and immutable base proof
 
-- Disposable path: `/home/emili/s5-11-final-clone.vg7Z9F`.
-- Construction: one local `git clone --no-hardlinks /home/emili/projects/control-tower/Main /home/emili/s5-11-final-clone.vg7Z9F`, followed by `git checkout --detach 428b3ed012c9217c72342041a28c5622d945fe1e`.
-- `/home/emili` was proved outside a Git worktree before clone creation.
+- Disposable path: `/home/<usuario>/s5-11-final-clone.vg7Z9F`.
+- Construction: one local `git clone --no-hardlinks /home/<usuario>/projects/control-tower/Main /home/<usuario>/s5-11-final-clone.vg7Z9F`, followed by `git checkout --detach 428b3ed012c9217c72342041a28c5622d945fe1e`.
+- `/home/<usuario>` was proved outside a Git worktree before clone creation.
 - No fetch, Main update, worktree, explicit branch creation, commit, rebase, merge, cherry-pick, or stash occurred.
 - Detached `HEAD`: `428b3ed012c9217c72342041a28c5622d945fe1e`.
 - Detached tree: `388b4ca8a6fd27ff7c4c81a706959b07764eb465`.
@@ -371,7 +371,7 @@ No planning artifact belongs to candidate identity or rollback.
 
 ### Cleanup and next action
 
-- Disposable clone `/home/emili/s5-11-final-clone.vg7Z9F` was deleted and proved absent.
+- Disposable clone `/home/<usuario>/s5-11-final-clone.vg7Z9F` was deleted and proved absent.
 - Temporary source-preflight evidence sidecar was deleted and proved absent.
 - No source file other than this cumulative `apply-progress.md` was changed by this continuation.
 - **Historical next recommendation:** parent decision. This was superseded by the maintainer terminal disposition below.

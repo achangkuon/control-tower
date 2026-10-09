@@ -138,7 +138,7 @@ The parent of this commit has no canonical plan or generated ROADMAP and still u
 - Any Radar code, schema, checking, rendering, status, lineage, verifier, or runtime change beyond the approved provenance-gated legacy compatibility and typed-reference contracts.
 - Adding, renaming, translating, or combining any of the existing seven statuses; changing decision classes or the Zone/Cimiento model.
 - Implementing Tower runtime resource acquisition, stale-claim recovery, planning-seat dispatch, Horizon integration, terminal freeze machinery, or `S9.9`; those remain later work.
-- Migrating ServiTask or any other product.
+- Migrating Proyecto-Alpha or any other product.
 - Renumbering legacy Session, Module, or Task IDs to match a newer visual convention.
 - Reopening the approved 24-Session assignments or the `S100`–`S108` replacement decisions.
 - Treating the old Plan grouping as Zone ownership.

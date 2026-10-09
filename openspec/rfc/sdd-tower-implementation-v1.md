@@ -182,12 +182,12 @@ Reconciliation y producción del Binding Delta son fases de Implementation. Deli
 Hermes mantiene un registro path-neutral. Una entrada lógica contiene:
 
 ```yaml
-project_id: servitask
+project_id: proyecto-alpha
 canonical_root: /absolute/path/to/project/Main
 git_common_dir: /absolute/path/to/git/common-dir
 expected_remote: git@github.com:owner/repository.git
 main_branch: main
-main_session: servitask-main
+main_session: proyecto-alpha-main
 manifest_path: openspec/plans/master-index.md
 registry_revision: 3
 ```
@@ -212,7 +212,7 @@ Una discrepancia produce `BLOCKED`.
 
 ### 5.3 Aliases
 
-Los aliases son UX. Hermes puede sugerir `servitask` al leer “ServiTask”, pero debe mostrar la selección. Una orden operativa queda vinculada al `project_id` y `registry_revision`, nunca al alias.
+Los aliases son UX. Hermes puede sugerir `proyecto-alpha` al leer “Proyecto-Alpha”, pero debe mostrar la selección. Una orden operativa queda vinculada al `project_id` y `registry_revision`, nunca al alias.
 
 ## 6. Persistencia y artefactos
 
@@ -236,13 +236,13 @@ Un artefacto versionado contiene identidad intrínseca:
 schema: binding-delta
 schema_version: 1
 artifact_id: delta-tasker-notifications-001
-project_id: servitask
+project_id: proyecto-alpha
 plan_id: tasker-app
 artifact_revision: 1
 created_at: 2026-07-27T12:00:00Z
 producer:
   role: implementation
-  identity: servitask-tasker-app-notifications-implementation-a1
+  identity: proyecto-alpha-tasker-app-notifications-implementation-a1
   direction: implementation-to-policy
 ```
 
@@ -253,7 +253,7 @@ schema: artifact-ref
 schema_version: 1
 artifact_id: delta-tasker-notifications-001
 artifact_revision: 1
-repository_id: servitask
+repository_id: proyecto-alpha
 repo_relative_path: openspec/changes/.../binding-delta.yaml
 media_type: application/yaml
 digest_mode: rfc8785-jcs
@@ -322,8 +322,8 @@ Todo artefacto pasa cuatro capas:
 Una jornada fija:
 
 ```yaml
-jornada_id: jornada-servitask-tasker-20260727
-project_id: servitask
+jornada_id: jornada-proyecto-alpha-tasker-20260727
+project_id: proyecto-alpha
 plan_id: tasker-app
 preset_name: standard
 preset_revision: 1
@@ -548,7 +548,7 @@ Main persiste un objeto server-side similar a:
 ```yaml
 authorization_id: auth-...
 action: MERGE_PR
-project_id: servitask
+project_id: proyecto-alpha
 registry_revision: 3
 plan_id: tasker-app
 jornada_id: jornada-...

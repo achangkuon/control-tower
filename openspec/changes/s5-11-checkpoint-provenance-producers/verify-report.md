@@ -11,7 +11,7 @@ All twelve frozen S5.11 criteria pass against the exact source candidate. Full-s
 - Change: `s5-11-checkpoint-provenance-producers`
 - Session: `S5.11`
 - Artifact store: `hybrid`
-- Source workspace: `/home/emili/projects/control-tower/Worktrees/s5-11`
+- Source workspace: `/home/<usuario>/projects/control-tower/Worktrees/s5-11`
 - Source base: `5892bd17491b21e86e1e82ab6cbaaf03637a790b`
 - Integration base/tree: `428b3ed012c9217c72342041a28c5622d945fe1e` / `388b4ca8a6fd27ff7c4c81a706959b07764eb465`
 - Authority: `openspec/plans/plan-5/STATUS.md:627-669` and decision 21 at `openspec/plans/decision-register.md:43`.

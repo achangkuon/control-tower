@@ -66,4 +66,4 @@
 
 ## Skill resolution
 
-- `paths-injected`: `/home/emili/.agents/skills/judgment-day/SKILL.md` loaded by both judges. The referenced shared ledger file was unavailable at its declared path, so the existing Slice 4 repository ledger format and the installed Judgment Day result contract were used without inventing lifecycle authority.
+- `paths-injected`: `/home/<usuario>/.agents/skills/judgment-day/SKILL.md` loaded by both judges. The referenced shared ledger file was unavailable at its declared path, so the existing Slice 4 repository ledger format and the installed Judgment Day result contract were used without inventing lifecycle authority.

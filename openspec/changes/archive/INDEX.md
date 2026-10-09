@@ -11,7 +11,7 @@ Ver la [regla de ejecución V1](../../plans/v1-execution-rule.md).
 | 2026-07-31 | `sdd-tower-legacy-import-preflight` | tasks 12/12; `verify-report.md`: pass |
 | 2026-07-31 | `sdd-tower-project-registry` | tasks 14/14; `verify-report.md`: pass |
 | 2026-07-24 | `vps-observation-dashboard-skeleton` | `archive-report.md`, `sync-report.md` |
-| 2026-07-22 | `servi-task-u-autonomous-continuation-provenance` | `judgment-day-round2-result.md`, `SHA256SUMS` |
+| 2026-07-22 | `proyecto-alpha-autonomous-continuation-provenance` | `judgment-day-round2-result.md`, `SHA256SUMS` |
 
 ## Limpieza del 2026-07-31
 

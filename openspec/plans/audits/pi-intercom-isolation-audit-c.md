@@ -1,12 +1,12 @@
 # Audit C — What grade of fence can the Control Tower obtain from `pi-intercom`?
 
 **Subject:** `pi-intercom@0.12.0` (third-party npm, MIT), source at
-`/home/emili/.pi/agent/npm/node_modules/pi-intercom/`
+`/home/<usuario>/.pi/agent/npm/node_modules/pi-intercom/`
 **Date:** 2026-08-27 · **Method:** empirical. Every claim is backed by a command and its real output.
 **Cost:** **0 model-contacting invocations.** Everything below was measured by driving the broker socket
 directly with a ~60-line Python client that has no Pi dependency, plus source reading.
 **Isolation:** all brokers ran under scratch `PI_CODING_AGENT_DIR`s (`/tmp/pic-*`). Nothing under
-`/home/emili/projects/control-tower/` was touched, read as a working dir by a broker, or written to.
+`/home/<usuario>/projects/control-tower/` was touched, read as a working dir by a broker, or written to.
 **Frame:** Audit A treated the single shared broker as a potential disqualifier. The maintainer's
 correction is the brief here: Intercom is a **substrate the Tower leverages**, so the question is what
 **grade** of fence the Tower can obtain, and whether that fence is enforced by the runtime or merely
@@ -50,7 +50,7 @@ and a `bash`-capable agent can `connect()` to a sibling worktree's `0600` socket
 works. **True Grade 1 requires either a capability fence (`--tools` allowlist denying `bash`/`write`/
 `edit`, which Audit A proved is a standing runtime predicate) composed with per-worktree brokers, or a
 Tower-owned `SO_PEERCRED` proxy in front of the broker.** The socket-path scare from Audit A does **not**
-apply at the real worktree paths: `/home/emili/projects/control-tower/Worktrees/implementer-1/.pi/agent/intercom/broker.sock`
+apply at the real worktree paths: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/.pi/agent/intercom/broker.sock`
 is **89 bytes** against a measured kernel limit of **107**, with 18 bytes of headroom.
 
 ---
@@ -297,10 +297,10 @@ agent dir + **28 bytes**. The real seats:
 
 | Layout | Example resulting socket path | Bytes | Fits ≤107? | Headroom |
 |---|---|---|---|---|
-| **A — `PI_CODING_AGENT_DIR=<worktree>/.pi/agent`** | `/home/emili/projects/control-tower/Worktrees/implementer-1/.pi/agent/intercom/broker.sock` | **89** | **YES** | 18 |
-| B — `<worktree>/.pi` | `/home/emili/projects/control-tower/Worktrees/implementer-1/.pi/intercom/broker.sock` | 83 | YES | 24 |
-| C — `~/.pi/agent-<seat>` | `/home/emili/.pi/agent-implementer-1/intercom/broker.sock` | 56 | YES | 51 |
-| D — `~/.control-tower/pi/<seat>` | `/home/emili/.control-tower/pi/implementer-1/intercom/broker.sock` | 64 | YES | 43 |
+| **A — `PI_CODING_AGENT_DIR=<worktree>/.pi/agent`** | `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/.pi/agent/intercom/broker.sock` | **89** | **YES** | 18 |
+| B — `<worktree>/.pi` | `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/.pi/intercom/broker.sock` | 83 | YES | 24 |
+| C — `~/.pi/agent-<seat>` | `/home/<usuario>/.pi/agent-implementer-1/intercom/broker.sock` | 56 | YES | 51 |
+| D — `~/.control-tower/pi/<seat>` | `/home/<usuario>/.control-tower/pi/implementer-1/intercom/broker.sock` | 64 | YES | 43 |
 | **E — `/run/user/1000/ct/<seat>`** | `/run/user/1000/ct/implementer-1/intercom/broker.sock` | **52** | **YES** | 55 |
 | G — `/tmp/ct-<seat>` | `/tmp/ct-implementer-1/intercom/broker.sock` | 42 | YES | 65 |
 
@@ -514,15 +514,15 @@ All scripts and captured output live in the scratchpad and were run from `/tmp`:
 with outputs `out_*.txt`. Brokers were launched as:
 
 ```
-node /home/emili/.pi/agent/npm/node_modules/tsx/dist/cli.mjs \
-     /home/emili/.pi/agent/npm/node_modules/pi-intercom/broker/broker.ts
+node /home/<usuario>/.pi/agent/npm/node_modules/tsx/dist/cli.mjs \
+     /home/<usuario>/.pi/agent/npm/node_modules/pi-intercom/broker/broker.ts
    with PI_CODING_AGENT_DIR=/tmp/pic-{a,b,h,m,w1,w2}, cwd=/tmp, start_new_session=True
 ```
 
 ### Package identity
 
 ```
-$ bat /home/emili/.pi/agent/npm/node_modules/pi-intercom/package.json
+$ bat /home/<usuario>/.pi/agent/npm/node_modules/pi-intercom/package.json
 {"name":"pi-intercom","version":"0.12.0","license":"MIT","type":"module","main":"index.ts", …
  "dependencies":{"tsx":"^4.20.0"}}
 ```
@@ -613,7 +613,7 @@ Real seats verified present: `Worktrees/{implementer-1,implementer-2,implementer
 ### `SO_PEERCRED` feasibility (§5)
 
 ```
-$ rg 'PEERCRED|getsockopt|peercred|ucred' /home/emili/.pi/agent/npm/node_modules/pi-intercom/
+$ rg 'PEERCRED|getsockopt|peercred|ucred' /home/<usuario>/.pi/agent/npm/node_modules/pi-intercom/
 (no matches)
 $ node -e "…"
 net.Socket getsockopt: undefined

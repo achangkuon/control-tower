@@ -44,7 +44,7 @@ This boundary cannot safely satisfy CT-R5 or serve as the shared lifecycle model
 - Pi or Claude adapters and their conformance runs.
 - Runtime publication, installation, host configuration, release cutover, or deployment owned by P10.
 - Actual Control Tower activation, delivery, runtime database mutation, or production-state changes.
-- Dashboard, Telegram, Servi-Task-U policy, work discovery, ownership, launching, or single-Sesión policy.
+- Dashboard, Telegram, Proyecto-Alpha policy, work discovery, ownership, launching, or single-Sesión policy.
 - Broad refactoring of legacy fail-closed behavior or invention of a second public continuation API.
 - Changes in the parallel P6 worktree or rewrites of the parent change artifacts.
 
@@ -81,7 +81,7 @@ Implementation should remain reviewable as S1.13–S1.16: controller/state-machi
 | `test/host-adapters.test.mjs` | OpenCode conformance mapping with a fixture shape reusable by later hosts. |
 | Existing fail-closed tests | Regression evidence only; no P7-led redesign. |
 | `core.mjs`, `mcp.mjs`, migration tests | Reconciliation inputs, not baseline P7 edit targets. Any required change needs separate approval after P6 merges. |
-| Parallel P6 worktree | Read-only dependency. P7 must not edit `/home/emili/projects/control-tower/Worktrees/tower-implementation`. |
+| Parallel P6 worktree | Read-only dependency. P7 must not edit `/home/<usuario>/projects/control-tower/Worktrees/tower-implementation`. |
 
 ## Dependencies and apply gate
 

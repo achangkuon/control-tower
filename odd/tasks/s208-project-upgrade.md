@@ -42,7 +42,7 @@ La siguiente instalación/actualización con esta implementación comprobará lo
 Validación completa final, ejecutada en serie:
 
 - `HOME=$(mktemp -d) bun test product/tower/v1`: **527 pasan, 1 omitido, 0 fallan**, 528 tests en 14 archivos; 8443 assertions. El omitido es el cross-build Go opcional existente.
-- `cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...`: **1 paquete pasa, 0 fallan**. Los overrides aíslan las escrituras fuera de HOME real manteniendo la ejecución offline solicitada.
+- `cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...`: **1 paquete pasa, 0 fallan**. Los overrides aíslan las escrituras fuera de HOME real manteniendo la ejecución offline solicitada.
 - `git diff --check`: sin errores.
 
 Commit y revisión pertenecen al responsable de la transacción; esta implementación no los ejecuta.

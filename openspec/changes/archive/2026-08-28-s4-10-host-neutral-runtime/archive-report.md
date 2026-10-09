@@ -6,7 +6,7 @@ Status: PASS
 
 - Change: `s4-10-host-neutral-runtime`
 - Artifact store: hybrid
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Action context: `repo-local`; allowed edit root is the workspace root; archive explicitly authorized by parent; no delivery authorized.
 - Native dispatcher/readback: PASS — `artifactStore: openspec`, `dependencies.verify: all_done`, `dependencies.archive: ready`, `nextRecommended: archive`, `blockedReasons: []`.
 - Tasks: 20/20 checked; no unchecked implementation task boxes.

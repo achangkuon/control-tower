@@ -98,7 +98,7 @@ Direct commit to `master` per `AGENTS.md`. Every task closes with a work-unit co
   - Option 1 work unit: the no-key room re-binds the working directory read-only after the tmpfs mounts, and the stated guarantee is aligned with objective A in `install.py`, the kickoff skill and AC3. RED: a worktree under /tmp was invisible (`cat marker.txt: No such file`). GREEN: `python3 -m unittest discover -s agent-workflows/tests` gives 155 pass, 0 fail, 1 skipped, and `bun test agent-workflows/tests/chanks` gives 230 pass.
   - Advisory follow-ups (not blocking): R4-new-file-blocks-whole-admission, R4-planning-key-self-invalidates, R3-status-digest-fragility, R3-subdirectory-cwd-disables-gate, R4-switch-read-once, R1-resource-confirmation-fabricated, R2-resource-confirmation-waived, R2-candidate-digest-misnamed, R3-drift-coverage-regressed, and six suggestions.
 - [x] T5 — Real isolated Pi journey. Requires the human's exclusive-resource confirmation. Route: delegated verifier.
-  - Done. Real Pi 0.87.1 (`/home/emili/.npm-global/bin/pi`), loaded through its own SDK
+  - Done. Real Pi 0.87.1 (`/home/<usuario>/.npm-global/bin/pi`), loaded through its own SDK
     (`@earendil-works/pi-coding-agent`: `createAgentSession`, `DefaultResourceLoader`,
     `ModelRuntime`, `SessionManager`) — same pattern as S151-T5. The extension was generated into
     an isolated temp HOME via `install.py`'s own `install_pi_extension()` (unmodified production

@@ -24,7 +24,7 @@ Continue approved work across fresh sessions while Tower stays dumb, determinist
 |---|---|
 | Administration | Anchor-authorized OFF bootstrap, Main lifecycle, mode, rollback, status. |
 | Continuation | Deterministic persistence, delivery, fencing, attestation, evidence. |
-| Servi-Task-U | Discovery, Main decisions, revalidation, one-unit policy. |
+| Proyecto-Alpha | Discovery, Main decisions, revalidation, one-unit policy. |
 
 ## Capabilities
 
@@ -35,10 +35,10 @@ Continue approved work across fresh sessions while Tower stays dumb, determinist
 - `control-tower-completion-attestation`: lifecycle, Main attestation, single-use completion, and pre-ack effect manifest proof.
 - `control-tower-recovery-rollback`: proof-bound dispositions, suspension, and ON-only redelivery.
 - `control-tower-migration-polling`: out-of-band anchor, additive migration, root-only polling, cooperative trust boundary.
-- `servi-task-discovery-ownership`: deterministic discovery precedence, stop rules, snapshots, and ownership integrity.
-- `servi-task-fresh-session-policy`: Main gates and revision authority plus the fresh-session one-unit path.
-- `servi-task-recovery-rollout`: manual identity-bound recovery evidence and rollback safety.
-- `servi-task-rollout-activation`: manual activation thresholds, global rollback, suspended redelivery, legacy continuity.
+- `proyecto-alpha-discovery-ownership`: deterministic discovery precedence, stop rules, snapshots, and ownership integrity.
+- `proyecto-alpha-fresh-session-policy`: Main gates and revision authority plus the fresh-session one-unit path.
+- `proyecto-alpha-recovery-rollout`: manual identity-bound recovery evidence and rollback safety.
+- `proyecto-alpha-rollout-activation`: manual activation thresholds, global rollback, suspended redelivery, legacy continuity.
 
 ### Modified Capabilities
 - None.

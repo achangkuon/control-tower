@@ -4,7 +4,7 @@
 
 `radar sesion S195` supplied the contract and confirmed the expanded authorization. Global CLI install/update now configures the verified active release: V1 skills and canon, relative Claude links, compiled Radar, passive Claude/Pi signatures, and marked runtime pointers. Gentle AI is required; doctor reports components and its version. Ownership-backed uninstall restores foreign entries. Clean committed checkouts can install without publishing.
 
-The pre-existing `openspec/plan.yaml` authorization change was preserved. No installer ran against `/home/emili`; no repository commit, push, publish, dependency mutation, or project-adoption policy redesign was performed. Execution fixtures use disposable HOME directories.
+The pre-existing `openspec/plan.yaml` authorization change was preserved. No installer ran against `/home/<usuario>`; no repository commit, push, publish, dependency mutation, or project-adoption policy redesign was performed. Execution fixtures use disposable HOME directories.
 
 ## Decisions and boundaries
 
@@ -49,7 +49,7 @@ Further triangulation loads the generated Pi extension in a fresh isolated-HOME 
 
 ## Original delivery validation (fabb2eb)
 
-Run from `/home/emili/projects/control-tower/Main`:
+Run from `/home/<usuario>/projects/control-tower/Main`:
 
 ```sh
 bun test product/tower/v1/test/runtime-config.test.mjs product/tower/v1/test/cli.test.mjs
@@ -80,7 +80,7 @@ Runtime staging creates nested vendor directories and builds with the restricted
 
 ### Final follow-up validation
 
-Run from `/home/emili/projects/control-tower/Main`:
+Run from `/home/<usuario>/projects/control-tower/Main`:
 
 ```sh
 HOME="$(mktemp -d /tmp/tower-s195-vendor-suite.XXXXXX)" bun test product/tower/v1

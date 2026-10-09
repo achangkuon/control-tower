@@ -192,8 +192,8 @@ checks; legacy resume retains first-pending-Módulo behavior.
 
 `radiografia/` generates a self-contained HTML product report from each project's
 `radiografia.json` and `.githooks/pre-push`. It never blocks a push. See
-`radiografia/README.md`; current adopters include control-tower, ecom-ecuador,
-Servi-Task-U and Finanzas-Personales.
+`radiografia/README.md`; current adopters include control-tower, proyecto-beta,
+Proyecto-Alpha and Proyecto-Gamma.
 
 ## Validation
 

@@ -63,10 +63,10 @@ Una pareja ruta/comando por ruta propia insegura, con escape shell de comillas s
 Con el runtime que incluya S211:
 
 ```sh
-torre-control project init --project /home/emili/projects/ecom-ecuador/Main --trust trusted --fix-permissions
+torre-control project init --project /home/<usuario>/projects/proyecto-beta/Main --trust trusted --fix-permissions
 ```
 
-No se ejecutó sobre ecom-ecuador. No se tocó HOME real ni el exclude del checkout de control-tower.
+No se ejecutó sobre proyecto-beta. No se tocó HOME real ni el exclude del checkout de control-tower.
 
 ## Validación final y entrega
 

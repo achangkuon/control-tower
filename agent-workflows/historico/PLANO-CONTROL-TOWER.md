@@ -1,7 +1,7 @@
 # Plano de zonas — control-tower
 
 > **Prueba del modelo contra la realidad.** Fase 2 de [MIGRACION-ZONAS.md](MIGRACION-ZONAS.md).
-> Dibujado a mano sobre `/home/emili/projects/control-tower/Main` el 2026-09-01.
+> Dibujado a mano sobre `/home/<usuario>/projects/control-tower/Main` el 2026-09-01.
 > **Es un borrador.** Nada de control-tower fue modificado.
 
 ---

@@ -24,7 +24,7 @@ Implement the approved native Encargo on `master` from fresh Radar admission at 
 ## Delivery (2026-09-25)
 
 - Strict TDD: focused marker/stage/observation tests failed before implementation and passed after the bounded corrections.
-- Verification: `go test ./... -count=1` passed; both documented Darwin cross-builds passed; source `go run . check -C /home/emili/projects/control-tower/Main` returned 0 errors and 32 existing authority warnings; `git diff --check` passed.
+- Verification: `go test ./... -count=1` passed; both documented Darwin cross-builds passed; source `go run . check -C /home/<usuario>/projects/control-tower/Main` returned 0 errors and 32 existing authority warnings; `git diff --check` passed.
 - Independent verification: final PASS over the complete 1,315-line implementation/test diff, within the maintainer-expanded 1,250–1,350 line exception.
 - Native review: intended-untracked selection returned `schema-incompatible` before creating a lineage or mutating authority, so review was unavailable and the high-risk fallback evidence was the independent verifier PASS.
 - Delivery: Radar was reinstalled, the repository pre-push suite passed 1,488 tests, and commit `282cfceca77375c253ad6feee85559aef56d2387` was pushed directly to `master`.

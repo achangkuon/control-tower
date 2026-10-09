@@ -12,7 +12,7 @@ The active S4.11 Host Runtime delta was merged into the canonical OpenSpec witho
 |---|---|
 | Explicit change selection | PASS — `s4-11-host-neutral-operations` |
 | Artifact store | PASS — hybrid: OpenSpec plus Engram |
-| Workspace / action context | PASS — `repo-local` at `/home/emili/projects/control-tower/Main`; allowed edit root includes the workspace |
+| Workspace / action context | PASS — `repo-local` at `/home/<usuario>/projects/control-tower/Main`; allowed edit root includes the workspace |
 | Native file-backed status | PASS — all dependencies `all_done`, archive `ready`, no blocked reasons; native status reports `openspec` because it cannot observe Engram |
 | Delivery identity | PASS — `master == origin/master == 6ddf6bc77d236dffad5b8ec625379117a91ce0b3` |
 | Verify report | PASS — OpenSpec SHA-256 `835094e90ed689118d7d1b21a3460bbdbbf1733cd9feee6aef2014b960f0fafe`; Engram observation `9697`; verdict PASS, 0 blockers, 0 CRITICAL |
@@ -68,7 +68,7 @@ The expected provenance hash for the file-backed change spec (`38129e51e3d3d878c
 
 ## Validation performed
 
-- `gentle-ai sdd-status s4-11-host-neutral-operations --cwd /home/emili/projects/control-tower/Main --json --instructions`
+- `gentle-ai sdd-status s4-11-host-neutral-operations --cwd /home/<usuario>/projects/control-tower/Main --json --instructions`
 - `git rev-parse HEAD` and `git rev-parse origin/master`
 - SHA-256 readback of all active change artifacts, the canonical spec, and `verify-report.md`
 - Requirement-block equivalence validation: all 7 ADDED and the 1 MODIFIED block exactly match the canonical result

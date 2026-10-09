@@ -37,7 +37,7 @@ Rollback unit: latest acquisition/dispatch, checksum output, associated TUI rout
 ## Final validation
 
 ```sh
-cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...
+cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...
 ```
 
 Result: **30 top-level tests / 0 fail**, one package passed. HOME/build cache are disposable; existing module dependencies are read offline. No real-HOME configuration change.

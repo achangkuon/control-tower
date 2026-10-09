@@ -166,7 +166,7 @@ test("Radar builds with the exact restricted environment and no inherited Go ove
   const [, , options] = radar;
   expect(options.env).toMatchObject({ GOWORK: "off", GOENV: "off", GOPROXY: "off", GOFLAGS: "-mod=vendor", GOTOOLCHAIN: "local" });
   expect(Object.keys(options.env).sort()).toEqual(["PATH", "HOME", "TMPDIR", "GOCACHE", "GOPATH", "GOMODCACHE", "GOFLAGS", "GOPROXY", "GOSUMDB", "GOWORK", "GOTOOLCHAIN", "GOENV", "GOTELEMETRY", "CGO_ENABLED"].sort());
-  expect(options.env.HOME).not.toBe("/home/emili");
+  expect(options.env.HOME).not.toBe("/home/<usuario>");
   expect(options.env.GOMODCACHE).not.toBe(join(home, "ambient-modules"));
   expect(options.env.GOCACHE).not.toBe(join(home, "ambient-cache"));
   expect(dirname(options.env.GOMODCACHE)).toBe(dirname(options.env.HOME));

@@ -172,16 +172,16 @@ schema: project-registry
 schema_version: 1
 registry_revision: 3
 projects:
-  - project_id: servitask
-    aliases: [servitask, servi-task]
-    canonical_root: /home/user/projects/Servi-Task-U/Main
-    git_common_dir: /home/user/projects/Servi-Task-U/Main/.git
-    expected_remote: git@github.com:owner/servi-task-u.git
+  - project_id: proyecto-alpha
+    aliases: [proyecto-alpha, proyecto-alpha-task]
+    canonical_root: /home/user/projects/Proyecto-Alpha/Main
+    git_common_dir: /home/user/projects/Proyecto-Alpha/Main/.git
+    expected_remote: git@github.com:owner/proyecto-alpha.git
     main_branch: main
-    main_session: servitask-main
+    main_session: proyecto-alpha-main
     manifest_path: openspec/plans/manifest.yaml
     roadmap_path: openspec/plans/master-index.md
-    main_store_path: /home/user/.local/state/control-tower/projects/servitask
+    main_store_path: /home/user/.local/state/control-tower/projects/proyecto-alpha
     allowed_hosts: [pi, opencode]
     registry_entry_revision: 2
 ```
@@ -212,7 +212,7 @@ Si Main rederiva un valor distinto, MUST devolver `CT_PROJECT_IDENTITY_MISMATCH`
 ```yaml
 schema: plan-catalog
 schema_version: 1
-project_id: servitask
+project_id: proyecto-alpha
 catalog_revision: 1
 plans:
   - plan_id: tasker-app
@@ -228,13 +228,13 @@ El catálogo MUST contener IDs únicos y referencias resolubles. No contiene run
 schema: plan-manifest
 schema_version: 1
 artifact_id: plan-tasker-app
-project_id: servitask
+project_id: proyecto-alpha
 plan_id: tasker-app
 artifact_revision: 4
 created_at: 2026-07-27T12:00:00Z
 producer:
   role: main
-  identity: servitask-main
+  identity: proyecto-alpha-main
   direction: product-intent-to-policy
 objective: <non-empty-string>
 artifact_refs:
@@ -281,13 +281,13 @@ campaign_refs: []
 schema: binding-delta
 schema_version: 1
 artifact_id: delta-tasker-notifications
-project_id: servitask
+project_id: proyecto-alpha
 plan_id: tasker-app
 artifact_revision: 1
 created_at: 2026-07-27T15:00:00Z
 producer:
   role: implementation
-  identity: servitask-tasker-app-notifications-implementation-a1
+  identity: proyecto-alpha-tasker-app-notifications-implementation-a1
   direction: implementation-to-policy
 slice_id: notifications
 assignment_id: assignment-notifications-7
@@ -358,16 +358,16 @@ CANDIDATE → VERIFIED → CLASSIFIED → ACCEPTED → PUBLISHED
   "schema": "policy-report",
   "schema_version": 1,
   "report_id": "policy-tasker-00042",
-  "project_id": "servitask",
+  "project_id": "proyecto-alpha",
   "plan_id": "tasker-app",
-  "policy_identity": "servitask-tasker-app-policy",
+  "policy_identity": "proyecto-alpha-tasker-app-policy",
   "created_at": "2026-07-27T15:05:00Z",
   "expires_at": "2026-07-27T15:35:00Z",
   "inputs": {
     "manifest_ref": {},
     "binding_delta_refs": [],
     "runtime_projection_revision": 42,
-    "jornada_id": "jornada-servitask-tasker-001",
+    "jornada_id": "jornada-proyecto-alpha-tasker-001",
     "jornada_revision": 1
   },
   "decision": "READY_FOR_APPLY",
@@ -517,18 +517,18 @@ schema: assignment
 schema_version: 1
 assignment_id: assignment-notifications-7
 assignment_revision: 7
-project_id: servitask
+project_id: proyecto-alpha
 registry_revision: 3
 plan_id: tasker-app
 slice_id: notifications
 role: implementation
 lane: apply
-jornada_id: jornada-servitask-tasker-001
+jornada_id: jornada-proyecto-alpha-tasker-001
 jornada_revision: 1
 host: opencode
 host_epoch: 1
 attempt: 1
-session_name: servitask-tasker-app-notifications-implementation-a1
+session_name: proyecto-alpha-tasker-app-notifications-implementation-a1
 workspace:
   path: /.../Worktrees/tasker-app/apply/notifications
   branch: feat/tasker-app/notifications
@@ -741,10 +741,10 @@ schema: authorization
 schema_version: 1
 authorization_id: auth-merge-420-001
 action: MERGE_PR
-project_id: servitask
+project_id: proyecto-alpha
 registry_revision: 3
 plan_id: tasker-app
-jornada_id: jornada-servitask-tasker-001
+jornada_id: jornada-proyecto-alpha-tasker-001
 jornada_revision: 1
 pr:
   repository: owner/repository
@@ -838,7 +838,7 @@ Input lógico:
 ```json
 {
   "schema_version": 1,
-  "project_id": "servitask",
+  "project_id": "proyecto-alpha",
   "plan_id": "tasker-app",
   "slice_id": "notifications",
   "assignment_revision": 7,

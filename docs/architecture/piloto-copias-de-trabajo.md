@@ -47,7 +47,7 @@ Consecuencia para el piloto: crear cada copia con `umask 022` es obligatorio; no
 
 ## 4. Dónde puede vivir la copia (restricción descubierta)
 
-`agent-workflows/tests/test_personal_pi_composition.py:16` busca el checkout hermano `pi-v2` recorriendo `ROOT.parents[1]` y `ROOT.parents[2]`. En `/tmp/s220-fresh-wt` eso es `IndexError` (el módulo no carga → el único error del post-fix). En la ubicación actual de copias del proyecto (`/home/emili/projects/control-tower/Worktrees/<id>`, profundidad equivalente a `Main`), el test encuentra `pi-v2` y pasa.
+`agent-workflows/tests/test_personal_pi_composition.py:16` busca el checkout hermano `pi-v2` recorriendo `ROOT.parents[1]` y `ROOT.parents[2]`. En `/tmp/s220-fresh-wt` eso es `IndexError` (el módulo no carga → el único error del post-fix). En la ubicación actual de copias del proyecto (`/home/<usuario>/projects/control-tower/Worktrees/<id>`, profundidad equivalente a `Main`), el test encuentra `pi-v2` y pasa.
 
 Conclusión: las copias del piloto deben vivir **al mismo nivel que el checkout principal** (el convenio `Worktrees/<id>` vigente lo cumple); una copia en `/tmp` rompe la suite sin razón de fondo.
 

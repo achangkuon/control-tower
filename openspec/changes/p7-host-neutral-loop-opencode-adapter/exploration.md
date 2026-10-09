@@ -163,7 +163,7 @@ Every Sesión needs a focused test result, runtime-harness result or explicit `N
 - Pi or Claude adapters and their conformance runs.
 - P10 versioned runtime publication, `current` cutover, host configuration changes, or deployment.
 - Actual Control Tower activation, delivery, database mutation, or runtime-state changes.
-- Dashboard, Telegram, Servi-Task-U policy, work discovery, ownership selection, launching, or single-Sesión policy.
+- Dashboard, Telegram, Proyecto-Alpha policy, work discovery, ownership selection, launching, or single-Sesión policy.
 - Rewriting Migration 005, weakening its witness CHECK, or creating a caller-controlled polling proof.
 - Adding `start`, moving SQLite/domain authority into adapters, or exposing claimant tokens/anchor secrets.
 - PRs, commits, pushes, Gentle AI reviews, 4R lenses, or Judgment Day.

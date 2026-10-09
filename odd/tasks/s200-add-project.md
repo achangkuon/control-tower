@@ -10,7 +10,7 @@ Backend read-only reconciliation adds `towerState`: healthy adoption plus a regu
 
 ## Test-first evidence
 
-- RED Go: `cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...` — 3 failing top-level tests: Home prompt missing (including clipboard entry); three project states and plan prompt missing. Assertions failed against actual behavior, not compilation.
+- RED Go: `cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...` — 3 failing top-level tests: Home prompt missing (including clipboard entry); three project states and plan prompt missing. Assertions failed against actual behavior, not compilation.
 - RED JS: `HOME=$(mktemp -d) bun test product/tower/v1` — 460 pass / 1 skip / 4 fail, 465 tests across 14 files. Missing `towerState` and symlinked plan/openspec or directory plan incorrectly reported healthy. Existing optional tiny cross-build skipped.
 - GREEN Go: the same isolated command passed one package, covering 36 top-level tests / 0 fail (6 new top-level tests). The real Bubble Tea program test captures the exact OSC 52 payload through configured output with the alternate screen enabled, both wide and narrow; an ignoring terminal supplies no response and the interface still exits normally with `Copiado`.
 - GREEN JS: final sequential `HOME=$(mktemp -d) bun test product/tower/v1` — 464 pass / 1 skip / 0 fail, 465 tests across 14 files, 7633 assertions. Four new backend tests cover the three states and linked/type refusal; existing strict output assertions now include the additive field.
@@ -30,7 +30,7 @@ Rollback boundary: these prompt/menu/routing/state/test changes and this record,
 ## Final validation
 
 ```sh
-cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...
+cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...
 ```
 
 One package passed, 36 top-level tests / 0 fail. Isolation prefixes preserve the requested offline `GOWORK=off GOPROXY=off go test ./...` behavior while keeping real HOME unchanged.

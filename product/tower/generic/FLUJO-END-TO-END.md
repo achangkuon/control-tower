@@ -247,7 +247,7 @@ regenera la radiografía, no formatea nada y nunca bloquea el push.)
 
 ### ⑥ Entrega — *«¿cómo sale?»*
 
-**La política de entrega ya es un dato**, y se adapta a la cultura del proyecto. ServiTask tiene
+**La política de entrega ya es un dato**, y se adapta a la cultura del proyecto. Proyecto-Alpha tiene
 PR antes del merge porque tiene 2+ devs; Control Tower va directo a `master` porque es personal
 y no sale a producción.
 
@@ -591,7 +591,7 @@ Está gobernado por dependencias reales, no por el número de tramo.
 ### Paso 6 — Aplicar
 
 18. Migrar **control-tower** (banco de pruebas): reasignar sus 24 Sesiones abiertas a sus Zonas.
-19. Migrar **ServiTask**, y revisar sus skills locales por si leen el canon viejo.
+19. Migrar **Proyecto-Alpha**, y revisar sus skills locales por si leen el canon viejo.
 
 ---
 

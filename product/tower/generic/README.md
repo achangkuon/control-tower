@@ -110,8 +110,8 @@ committed `radiografia.json` in each project and fires from `.githooks/pre-push`
 runs identically for Claude Code, OpenCode, Codex, Pi and a human — the trigger is git,
 not an assistant. It never blocks a push.
 
-See `radiografia/README.md`. Adopted today by control-tower, ecom-ecuador,
-Servi-Task-U and Finanzas-Personales.
+See `radiografia/README.md`. Adopted today by control-tower, proyecto-beta,
+Proyecto-Alpha and Proyecto-Gamma.
 
 ## Routes
 

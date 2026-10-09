@@ -232,7 +232,7 @@ The source worktree remained unchanged throughout the investigation:
 | Tracked status | Only the pre-existing unstaged `.gitignore` change |
 | Preserved `.gitignore` addition | `# Local Pi runtime state` and `.atl/` |
 | `stash@{0}` | `691f417e91cab06716203f26f3282673ecb3dbb1` / `m5-1-3-support-candidate-before-da68163-rebase` |
-| Shared Tower marker | Absent at `/home/emili/projects/control-tower/Main/.git/control-tower/ACTIVE` |
+| Shared Tower marker | Absent at `/home/<usuario>/projects/control-tower/Main/.git/control-tower/ACTIVE` |
 
 No source edit, stage, commit, push, fetch, merge, rebase, stash, reset, clean, OpenSpec write, or `main-store/authority.mjs` write occurred during the read-only investigation.
 

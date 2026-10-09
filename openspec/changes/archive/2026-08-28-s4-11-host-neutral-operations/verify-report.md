@@ -35,7 +35,7 @@ This report consumes the previously settled integral verification for the exact 
 | Change | `s4-11-host-neutral-operations` |
 | Artifact store | Hybrid (`both` in the status contract): OpenSpec plus Engram |
 | Selection | Explicit and unambiguous from the delegated task and `state.yaml` |
-| Workspace | `/home/emili/projects/control-tower/Worktrees/implementer-1` |
+| Workspace | `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` |
 | Action context | `repo-local`; authoritative Git worktree proven by `git rev-parse --show-toplevel` |
 | Allowed write | Exactly `openspec/changes/s4-11-host-neutral-operations/verify-report.md` |
 | Proposal/spec/design/tasks/apply-progress | Present and read |

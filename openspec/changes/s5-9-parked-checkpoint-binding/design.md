@@ -8,8 +8,8 @@
 
 This design reconciles the prior failed falsifier in Engram observation 8604 against the current worktree rather than copying its obsolete verdict.
 
-- Worktree: `/home/emili/projects/control-tower/Worktrees/s5-9`
-- `.git` resolves to `/home/emili/projects/control-tower/Main/.git/worktrees/s5-9`.
+- Worktree: `/home/<usuario>/projects/control-tower/Worktrees/s5-9`
+- `.git` resolves to `/home/<usuario>/projects/control-tower/Main/.git/worktrees/s5-9`.
 - Worktree `HEAD` is `refs/heads/work/s5-9-checkpoint-binding`.
 - That branch ref resolves to `a4a39fabccc52971941f7f4d5e1c415f19d5e766`.
 - Therefore current branch/base/HEAD matches the immutable expected value `a4a39fabccc52971941f7f4d5e1c415f19d5e766`.

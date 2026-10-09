@@ -1840,7 +1840,7 @@
   - Recursos: —
   - Ejecución: ODD nativo.
 - Encargo:
-  - Pedido y contexto: ecom-ecuador tiene .claude/skills como enlace a ../.agents/skills (para que todos los agentes compartan una carpeta) y carpetas con permiso de grupo (umask 002); project init lo rechaza con Unsafe project file snapshot. Además, al adoptar control-tower hubo que excluir a mano las carpetas internas de la adopción para que el control de push aceptara el repo.
+  - Pedido y contexto: proyecto-beta tiene .claude/skills como enlace a ../.agents/skills (para que todos los agentes compartan una carpeta) y carpetas con permiso de grupo (umask 002); project init lo rechaza con Unsafe project file snapshot. Además, al adoptar control-tower hubo que excluir a mano las carpetas internas de la adopción para que el control de push aceptara el repo.
   - Resultado y comportamiento: project init y project update aceptan .claude/skills como enlace relativo a .agents/skills dentro del mismo proyecto: instalan la skill una sola vez y lo registran para desinstalar sin romper el enlace. Rutas propias con escritura de grupo se informan con el comando exacto y se corrigen con --fix-permissions, igual que en la instalación global. La adopción agrega sus rutas internas (.control-tower/, .control-tower-adoption-v1/ y las copias de la skill) a .git/info/exclude en un bloque marcado, y desinstalar lo quita; AGENTS.md y CLAUDE.md quedan visibles para commitearse.
   - Restricciones y decisiones: Se siguen rechazando enlaces que salen del proyecto, absolutos o hacia otros destinos. Sin commits en los proyectos. Sin tocar .gitignore del proyecto.
   - Referencias: Engram tower-v1/adopt-control-tower-main; S205 --fix-permissions.

@@ -51,8 +51,8 @@
   ],
   "examples": [
     {
-      "notion_page_id": "387e23cc934581f99b44eb519210c801",
-      "notion_url": "https://app.notion.com/p/example-387e23cc934581f99b44eb519210c801",
+      "notion_page_id": "0000000000000000000000000000aa01",
+      "notion_url": "https://notion.example/p/proyecto-alpha-index-0000000000000000000000000000aa01",
       "openspec_dir": "openspec"
     },
     {

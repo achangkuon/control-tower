@@ -135,7 +135,7 @@ Parent lifecycle actions remain unchanged and deferred. The next parent action i
 - Mode: automatic
 - Apply readiness: ready; parent supplied the resolved sequential local-commit delivery path for the high workload risk and assigned only M0.4.2 / C02.
 - Assigned boundary: M0.4.2 / C02 only
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Allowed edit roots: the two C02 candidate files plus `tasks.md` and `apply-progress.md` bookkeeping
 - Action context warning: planning artifacts remain untracked/unstaged; only the exact C02 candidate is staged.
 
@@ -204,7 +204,7 @@ Continuation cursor: **Plan 2, `S2.8`, immutable source line 101**. Plans 3 and 
 - Mode: automatic
 - Apply readiness: ready; C01 `a39a63c29dbda123d26c4f61e789db06a4a04eb5` and C02 `a867bf978c0268208a6cf423b7a01bbff89a4f01` were parent-approved native-review commits
 - Assigned boundary: first reviewable C03.* batch within M0.4.3 only
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Allowed edit roots: Plan 0–4 mapping files plus `tasks.md` and `apply-progress.md`; no path violation
 - Action context warning: planning artifacts remain untracked; only the exact three-file C03.1 candidate is staged
 
@@ -273,7 +273,7 @@ Continuation cursor: **Plan 4, `S4.8`, immutable source line 668**. Seven Plan 4
 - Mode: automatic
 - Apply readiness: ready; C01 `a39a63c29dbda123d26c4f61e789db06a4a04eb5`, C02 `a867bf978c0268208a6cf423b7a01bbff89a4f01`, and C03.1 `024e445962a29af3025df26fa1de6ea6cac8f07f` were parent-approved native-review commits
 - Assigned boundary: next reviewable C03.* batch within M0.4.3 only
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Allowed edit roots: Plan 2–4 mapping files plus `tasks.md` and `apply-progress.md`; no path violation
 - Action context warning: planning artifacts remain untracked; only the exact three-file C03.2 mapping candidate is staged
 
@@ -333,7 +333,7 @@ Parent lifecycle action: bounded review of the exact staged C03.3 candidate befo
 - Mode: automatic
 - Apply readiness: ready; parent confirmed C03.2 passed strict Bun reconciliation/native review and was committed as `33829ca6310d8169f3a12cb5f89c06855e7e59cc`; inventory YAML fix committed as `e54995f`
 - Assigned boundary: final C03.* mapping batch, Plan 4 S4.8–S4.14 only
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Allowed edit roots: `plan-4.yaml`, `tasks.md`, and `apply-progress.md`; no path violation
 - Action context warning: bookkeeping remains unstaged; only the exact C03.3 candidate is staged
 
@@ -363,7 +363,7 @@ C04.1 maps all 15 Plan 5 rows in immutable order and is 143 authored lines, belo
 ### Structured status consumed
 - Change: `migrate-control-tower-plan-zones`
 - Artifact store: OpenSpec, authoritative
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Allowed surfaces honored; bookkeeping remains unstaged
 - CodeGraph MCP returned `MCP not initialized`; targeted immutable Git reads were used after confirming the worktree-local `.codegraph/`
 
@@ -409,7 +409,7 @@ Parent lifecycle action: bounded review of the exact staged C04.2 candidate befo
 ### Structured status consumed
 - Change: `migrate-control-tower-plan-zones`
 - Artifact store: OpenSpec, authoritative
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Base: `1210b0ab72f83cce2bf2fd1d2758964db677f8e7`
 - Workload path: resolved sequential local direct-commit batches; this assigned batch is below the 400-line cap
 - Allowed surfaces honored; bookkeeping remains unstaged and only the seven mapping files are staged
@@ -534,7 +534,7 @@ Evidence revision: `sha256:c920c285e1ee6abe9532babf93e90958202e565db09b6e2342e35
 - Artifact store: OpenSpec, authoritative
 - Native state: `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`
 - Native attempt: parent-provided C04L attempt already returned `proceed`; no acquire/reset was performed
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`
 - Allowed surfaces honored: candidate `lineage.yaml`; bookkeeping only `tasks.md` and `apply-progress.md`
 - Tower: OFF; no canonical activation, commit, or push
 - Workload boundary: C04L only, 115 authored lines
@@ -570,7 +570,7 @@ Strict TDD executable RED/GREEN cycle: N/A — C05.1 is operational YAML ownersh
 - Rollback boundary: discard/revert only `migration/partition.yaml`; bookkeeping remains unstaged.
 - Native OpenSpec status consumed: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; OpenSpec authoritative with optional Engram mirror.
 - Native attempt: parent supplied `proceed`; this executor did not acquire, settle, reset, or persist its opaque token.
-- Action context: authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; only partition candidate plus tasks/apply-progress bookkeeping allowed. Boundary honored.
+- Action context: authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; only partition candidate plus tasks/apply-progress bookkeeping allowed. Boundary honored.
 - Tower OFF; no Herdr, re-seat, commit, push, activation, or background job.
 
 ### Remaining work
@@ -693,7 +693,7 @@ Evidence revision over the final staged binary diff: `sha256:248c5fbc2e80555ee59
 - Native OpenSpec authority: `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`.
 - Artifact store: OpenSpec authoritative with Engram mirror.
 - Workload path: resolved sequential local direct-commit batches; C05.2A batch 1 is 199 authored lines and independently revertible.
-- Workspace/action context: `/home/emili/projects/control-tower/Worktrees/implementer-1`; exact candidate and bookkeeping allowlist honored.
+- Workspace/action context: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; exact candidate and bookkeeping allowlist honored.
 - Native attempt acquire returned `proceed` for `C05.2A-dormant-candidate-batch-1` using the parent-retained token. The token was not persisted, settled, reset, or rescoped by this executor.
 - Tower OFF; no Herdr/recycle/re-seat, commit, push, activation, canonical plan, or ROADMAP action occurred.
 
@@ -864,7 +864,7 @@ Evidence revision over the final validated staged binary diff: `sha256:bd5a835d7
 
 Rollback boundary: discard/revert only the S1.17 append in `migration/candidate/plan.yaml`; committed S1.11–S1.16 bytes remain untouched. No commit, push, activation, canonical plan, ROADMAP, runtime/public API, Tower/Herdr, or background-process action occurred.
 
-Structured status consumed: native apply ready, T0.4.5.2 unchecked, authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, allowed candidate/planning surfaces honored, and parent-provided proceed for `C05.2D-dormant-candidate-batch-4` with token `sha256:bb27a6e04e1d1c5284d65b30cfcbb097b5bc3432c02f510a672fdbd99d99ab42`. This executor did not acquire, settle, reset, rescope, or persist the attempt. Parent owns inspection and settlement.
+Structured status consumed: native apply ready, T0.4.5.2 unchecked, authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, allowed candidate/planning surfaces honored, and parent-provided proceed for `C05.2D-dormant-candidate-batch-4` with token `sha256:bb27a6e04e1d1c5284d65b30cfcbb097b5bc3432c02f510a672fdbd99d99ab42`. This executor did not acquire, settle, reset, rescope, or persist the attempt. Parent owns inspection and settlement.
 
 Exact remaining implementation row remains unchecked in `tasks.md`: `- [ ] **T0.4.5.2 — Assemble dormant plan facts:** create migration/candidate/plan.yaml from the equivalence and lineage records ... <!-- sdd-owner: implementation -->`. Parent lifecycle rows remain deferred and unchanged.
 
@@ -929,7 +929,7 @@ Corrected only the S1.19 equivalence row in `migration/sessions/plan-1.yaml`. It
 - Rollback: restore only the S1.19 row in `migration/sessions/plan-1.yaml`; remove the C05.2M decision/progress sections independently if the authority is withdrawn.
 - No commit, push, activation, Tower/Herdr action, candidate edit, or background process occurred.
 
-Structured status consumed: authoritative OpenSpec change `migrate-control-tower-plan-zones`, apply ready with no parent-reported blocker; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `79feeb24cf075c30099f757a334a35b4c94eaf9c`; exact mapping/planning allowlist honored. Parent supplied proceed for `C05.2M-S1.19-territory-correction` with token `sha256:55c3628b2e2fe1591f85bf12c19f8279c2ba6119051834145e80094ad26ef27c`; this executor did not acquire, settle, reset, rescope, or persist it. Parent owns settlement. Parent lifecycle rows remain deferred unchanged.
+Structured status consumed: authoritative OpenSpec change `migrate-control-tower-plan-zones`, apply ready with no parent-reported blocker; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `79feeb24cf075c30099f757a334a35b4c94eaf9c`; exact mapping/planning allowlist honored. Parent supplied proceed for `C05.2M-S1.19-territory-correction` with token `sha256:55c3628b2e2fe1591f85bf12c19f8279c2ba6119051834145e80094ad26ef27c`; this executor did not acquire, settle, reset, rescope, or persist it. Parent owns settlement. Parent lifecycle rows remain deferred unchanged.
 
 ## M0.4.5 / C05.2F — dormant candidate batch 6 staged for parent settlement
 
@@ -959,7 +959,7 @@ Evidence revision over the final staged binary candidate diff: `sha256:8c5409a76
 
 Rollback boundary: discard/revert only the S1.19 append in `migration/candidate/plan.yaml`; committed S1.11–S1.18 bytes remain untouched. Bookkeeping remains unstaged. No commit, push, activation, canonical plan, ROADMAP, runtime/public API, Tower/Herdr, or background-process action occurred.
 
-Structured status consumed: authoritative native OpenSpec apply ready; T0.4.5.2 unchecked; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD/base `d6180676a4d07a11a619c2140cc3b40ad89f7958`; resolved sequential bounded direct-commit path; exact candidate/bookkeeping allowlist honored. Parent supplied the proceeded attempt for `C05.2F-dormant-candidate-batch-6` with token `sha256:c8726cf0cd29410358bc48a5c8796fa521c893177c4d4ac0720a1e3c4dbede37`; this executor did not acquire, settle, reset, rescope, or persist it. Parent owns settlement.
+Structured status consumed: authoritative native OpenSpec apply ready; T0.4.5.2 unchecked; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD/base `d6180676a4d07a11a619c2140cc3b40ad89f7958`; resolved sequential bounded direct-commit path; exact candidate/bookkeeping allowlist honored. Parent supplied the proceeded attempt for `C05.2F-dormant-candidate-batch-6` with token `sha256:c8726cf0cd29410358bc48a5c8796fa521c893177c4d4ac0720a1e3c4dbede37`; this executor did not acquire, settle, reset, rescope, or persist it. Parent owns settlement.
 
 Exact remaining implementation row remains unchecked:
 
@@ -1032,7 +1032,7 @@ Strict TDD RED/GREEN and repository `bun test`: **N/A under the authorized opera
 
 Rollback boundary: remove only the S2.9 append from `migration/candidate/plan.yaml`; committed S1.11–S1.19 and staged S1.20 remain byte-for-byte. Planning evidence in `design.md` and this progress section is independently removable and remains unstaged. No commit, push, activation, canonical plan, ROADMAP, runtime/public API, Tower/Herdr, or background-process action occurred.
 
-Structured status consumed: authoritative OpenSpec apply ready; `nextRecommended: apply`; no blocked reasons; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD/base `44809b816d5837d8c8512756a53b4b7961c59dae`; resolved sequential bounded direct-commit path and exact allowlist honored. Parent supplied proceed for `C05.2H-dormant-candidate-batch-8` with token `sha256:69adb3f052f31e2d57727affbcdec9d3548c28c929360e12770f0137db62e137`. This executor did not acquire, settle, reset, rescope, or persist the attempt. Parent owns settlement.
+Structured status consumed: authoritative OpenSpec apply ready; `nextRecommended: apply`; no blocked reasons; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD/base `44809b816d5837d8c8512756a53b4b7961c59dae`; resolved sequential bounded direct-commit path and exact allowlist honored. Parent supplied proceed for `C05.2H-dormant-candidate-batch-8` with token `sha256:69adb3f052f31e2d57727affbcdec9d3548c28c929360e12770f0137db62e137`. This executor did not acquire, settle, reset, rescope, or persist the attempt. Parent owns settlement.
 
 Exact remaining implementation row remains unchecked:
 
@@ -1063,7 +1063,7 @@ The first attempted exact blocking record also showed that Radar accepts only on
 
 ### Structured status consumed
 
-Authoritative OpenSpec apply status and parent action context authorized only candidate/tasks/progress surfaces in `/home/emili/projects/control-tower/Worktrees/implementer-1`, with HEAD/base `44809b816d5837d8c8512756a53b4b7961c59dae`, Tower OFF, a cumulative 400-line staged cap, and proceeded parent attempt `C05.2I-dormant-candidate-batch-9`. The executor did not acquire, settle, reset, rescope, or persist the opaque attempt token. Parent settlement remains deferred.
+Authoritative OpenSpec apply status and parent action context authorized only candidate/tasks/progress surfaces in `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, with HEAD/base `44809b816d5837d8c8512756a53b4b7961c59dae`, Tower OFF, a cumulative 400-line staged cap, and proceeded parent attempt `C05.2I-dormant-candidate-batch-9`. The executor did not acquire, settle, reset, rescope, or persist the opaque attempt token. Parent settlement remains deferred.
 
 Exact decision needed before apply can continue: authorize one schema-compatible representation for the immutable `M2.10.1`-with-no-Tasks contract (or amend the mapping/validator authority). Until then the cursor remains **S2.10** and later rows must not be appended.
 
@@ -1095,7 +1095,7 @@ Runtime harness: N/A — Radar is exercised through its Go checker and package-t
 
 Only `agent-workflows/tools/radar/check.go` and `agent-workflows/tools/radar/legacy_compat_test.go` are staged. OpenSpec spec/design/tasks/apply-progress corrections remain unstaged. No canonical, candidate, partition, mapping, lineage, commit, push, activation, Tower/Herdr, or background-process action occurred. Rollback boundary: discard the two staged Radar files and independently revert this C05.2J OpenSpec clarification.
 
-Structured status consumed: authoritative OpenSpec apply-ready context; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD/base `6e213a73c4ec90c2055400a6820b0c9bbd1455d6`; parent-provided proceeded attempt `C05.2J-zero-task-pending-compat`; exact executable and bookkeeping allowlist honored. Parent retains settlement and commit authority.
+Structured status consumed: authoritative OpenSpec apply-ready context; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD/base `6e213a73c4ec90c2055400a6820b0c9bbd1455d6`; parent-provided proceeded attempt `C05.2J-zero-task-pending-compat`; exact executable and bookkeeping allowlist honored. Parent retains settlement and commit authority.
 
 ## M0.4.5 / C05.2J — verifier correction: exact zero-Task assertions
 
@@ -1123,7 +1123,7 @@ The fresh verifier's only blocking finding is corrected without changing product
 ### Structured status consumed
 
 - Change: `migrate-control-tower-plan-zones`; active corrective work unit C05.2J.
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD `6e213a73c4ec90c2055400a6820b0c9bbd1455d6`.
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD `6e213a73c4ec90c2055400a6820b0c9bbd1455d6`.
 - Parent supplied the active attempt and remediate identities and retained all lifecycle authority.
 - Allowed edit surfaces were honored; workload boundary remains the bounded corrective candidate.
 - T0.4.5.1a remains visibly checked in `tasks.md`; later implementation tasks remain unchecked. Parent lifecycle remains deferred.
@@ -1160,7 +1160,7 @@ The fresh verifier's only blocking finding is corrected without changing product
 ### Structured status consumed
 
 - Change: `migrate-control-tower-plan-zones`; work unit: `C05.2J-post-reset`.
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `6e213a7`.
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `6e213a7`.
 - Parent supplied a proceed token and explicit single-correction authorization; executor did not operate the token.
 - Allowed edit surfaces honored: test file plus append-only apply progress. No action-context path warning.
 - Workload boundary: exact post-reset correction, 1 newly authored test line; no delivery.
@@ -1195,7 +1195,7 @@ Fresh evidence revision over the staged candidate binary diff: `sha256:0eb8b2bd2
 
 Rollback boundary: remove only the S2.10, S2.8, and S3.1 append from `migration/candidate/plan.yaml`; the committed 11-Session prefix remains byte-for-byte. Bookkeeping remains unstaged. No commit, push, activation, canonical plan, ROADMAP, Tower/Herdr action, or background process occurred.
 
-Structured status consumed: authoritative OpenSpec `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`; repo-local workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD/base `3fa0ba4a7d310be71bc240b15360a282b36543e4`; exact candidate/tasks/progress allowlist honored; resolved bounded direct-commit path. Native acquire returned `proceed` for `C05.2K-dormant-candidate-batch-10` with parent token `sha256:81e16a9af7fc1be5bfb793db6cb9f763cb3be770845460fa040b0c3c18d00ba6`. This executor did not settle, reset, rescope, or persist the attempt. Parent owns settlement.
+Structured status consumed: authoritative OpenSpec `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`; repo-local workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD/base `3fa0ba4a7d310be71bc240b15360a282b36543e4`; exact candidate/tasks/progress allowlist honored; resolved bounded direct-commit path. Native acquire returned `proceed` for `C05.2K-dormant-candidate-batch-10` with parent token `sha256:81e16a9af7fc1be5bfb793db6cb9f763cb3be770845460fa040b0c3c18d00ba6`. This executor did not settle, reset, rescope, or persist the attempt. Parent owns settlement.
 
 Exact remaining implementation row stays unchecked: `- [ ] **T0.4.5.2 — Assemble dormant plan facts:** ... <!-- sdd-owner: implementation -->`. Parent-owned lifecycle rows remain deferred and unchanged.
 
@@ -1227,7 +1227,7 @@ Exact remaining implementation row stays unchecked: `- [ ] **T0.4.5.2 — Assemb
 - Staged numstat: check `16/3`, tests `69/0`, render `5/1`; **94 authored lines**. Bookkeeping for this unit adds 12 specification/design/task lines plus this 32-line section: **138 total authored lines**, below 400.
 - Staged binary-diff SHA-256: `8341616c31295e8c72094b20aa19d3d4e3c9e7e4673f8a00edfee80ebfdcd810`.
 - Rollback boundary: discard/revert only the three staged Radar paths and remove the C05.2Z additions from spec/design/tasks/apply-progress. No candidate data depends on it yet.
-- OpenSpec status consumed: authoritative `applyState: ready`, `nextRecommended: apply`, no blocked reasons, workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, allowed repo-local root. Parent supplied the active attempt token; this executor performed no acquire, settle, reset, delivery, lifecycle, Tower, Herdr, candidate, canonical, commit, or push operation.
+- OpenSpec status consumed: authoritative `applyState: ready`, `nextRecommended: apply`, no blocked reasons, workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, allowed repo-local root. Parent supplied the active attempt token; this executor performed no acquire, settle, reset, delivery, lifecycle, Tower, Herdr, candidate, canonical, commit, or push operation.
 - Cleanup: no temporary repository artifact or background process remains.
 
 Next checkpoint: **S4.9 candidate RED**, after parent lifecycle inspection/settlement of this exact staged prerequisite. T0.4.5.2 and T0.4.5.3 remain unchecked; parent-owned rows remain deferred unchanged.
@@ -1240,7 +1240,7 @@ Next checkpoint: **S4.9 candidate RED**, after parent lifecycle inspection/settl
 
 ### Structured status consumed
 
-Authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; assigned work unit `C05.2L-dormant-candidate-batch-11`; base `9e2a111`; exact candidate/design/tasks/progress allowlist; resolved sequential direct-commit workload path; Tower OFF. Parent reported native proceed with token `sha256:49640cda0ce9a3626fa12952897baf4dc6d12a86f483080827074d6be3862779`. This executor did not acquire, settle, reset, rescope, or persist the attempt. Parent retains settlement authority.
+Authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; assigned work unit `C05.2L-dormant-candidate-batch-11`; base `9e2a111`; exact candidate/design/tasks/progress allowlist; resolved sequential direct-commit workload path; Tower OFF. Parent reported native proceed with token `sha256:49640cda0ce9a3626fa12952897baf4dc6d12a86f483080827074d6be3862779`. This executor did not acquire, settle, reset, rescope, or persist the attempt. Parent retains settlement authority.
 
 ## M0.4.5 / C05.2N — terminal historical-territory compatibility resumed and completed
 
@@ -1279,7 +1279,7 @@ Staged production/test paths only: `check.go`, `legacy_compat_test.go`, `render.
 
 ### Structured status consumed
 
-OpenSpec is authoritative. Parent supplied `apply ready`, 15/32 complete, authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, exact allowed surfaces, and continued C05.2N attempt token ending `5df3c845`; this executor did not persist or mutate it. Workload path is the bounded correction under the 400-line cap. Parent lifecycle settlement and delivery remain deferred.
+OpenSpec is authoritative. Parent supplied `apply ready`, 15/32 complete, authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, exact allowed surfaces, and continued C05.2N attempt token ending `5df3c845`; this executor did not persist or mutate it. Workload path is the bounded correction under the 400-line cap. Parent lifecycle settlement and delivery remain deferred.
 
 ## M0.4.5 / C05.2O — dormant candidate batch 11 staged for parent settlement
 
@@ -1310,7 +1310,7 @@ T0.4.5.2 and T0.4.5.3 remain visibly unchecked. The batch stops before S4.1: onl
 
 ### Structured status consumed
 
-OpenSpec is authoritative: apply ready, `nextRecommended: apply`, 15/32 tasks complete, no blocked reasons, workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, and exact candidate/bookkeeping allowlist. Parent supplied proceeded work unit `C05.2O-dormant-candidate-batch-11`; the opaque token was not operated or persisted. Parent lifecycle must inspect and settle this staged batch before continuation at S4.1.
+OpenSpec is authoritative: apply ready, `nextRecommended: apply`, 15/32 tasks complete, no blocked reasons, workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, and exact candidate/bookkeeping allowlist. Parent supplied proceeded work unit `C05.2O-dormant-candidate-batch-11`; the opaque token was not operated or persisted. Parent lifecycle must inspect and settle this staged batch before continuation at S4.1.
 
 ## C05.2O — single immutable-fidelity correction
 
@@ -1347,7 +1347,7 @@ Rollback boundary: remove only the S4.1 append; the committed prefix through S3.
 
 ### Structured status consumed
 
-OpenSpec is authoritative and apply-ready with no blockers. Parent supplied proceeded work unit `C05.2P-dormant-candidate-batch-12`, workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD `5b0be4e`, exact edit surfaces, sequential direct-commit delivery, and the 400-line cap. The opaque token was not operated or persisted. Parent lifecycle owns inspection and settlement.
+OpenSpec is authoritative and apply-ready with no blockers. Parent supplied proceeded work unit `C05.2P-dormant-candidate-batch-12`, workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD `5b0be4e`, exact edit surfaces, sequential direct-commit delivery, and the 400-line cap. The opaque token was not operated or persisted. Parent lifecycle owns inspection and settlement.
 
 ## C05.2Q — S4.2 maintainer-authority checkpoint recorded before RED
 
@@ -1444,7 +1444,7 @@ Rollback boundary: remove only the S4.2 append; the committed prefix through S4.
 
 ### Structured status consumed
 
-OpenSpec was authoritative and apply-ready with no blocker. Parent supplied workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD `1a561f7`, work unit `C05.2S-dormant-candidate-batch-13`, exact allowed edit roots, sequential direct-commit delivery, hard 400-line cap, and native `proceed`. The opaque token was neither operated nor persisted.
+OpenSpec was authoritative and apply-ready with no blocker. Parent supplied workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD `1a561f7`, work unit `C05.2S-dormant-candidate-batch-13`, exact allowed edit roots, sequential direct-commit delivery, hard 400-line cap, and native `proceed`. The opaque token was neither operated nor persisted.
 ## M0.4.5 / C05.2T — dormant candidate batch 14 staged for parent settlement
 
 ### Outcome and exact filtering proof
@@ -1505,7 +1505,7 @@ Rollback boundary: remove only the S4.3 append; the committed prefix through S4.
 
 ### Structured status consumed
 
-OpenSpec/hybrid is authoritative and apply-ready. Parent supplied work unit `C05.2U-dormant-candidate-batch-15`, workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `0012547`, proceeded token `sha256:c4ff3401ff7d59bc730add0d3c105bd4d606aabbf9abe963d0f2df5dd4897c05`, exact edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted.
+OpenSpec/hybrid is authoritative and apply-ready. Parent supplied work unit `C05.2U-dormant-candidate-batch-15`, workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `0012547`, proceeded token `sha256:c4ff3401ff7d59bc730add0d3c105bd4d606aabbf9abe963d0f2df5dd4897c05`, exact edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted.
 
 ## M0.4.5 / C05.2V — dormant candidate batch 16 staged for parent settlement
 
@@ -1537,7 +1537,7 @@ T0.4.5.2 and T0.4.5.3 remain visibly unchecked. This bounded run stops between c
 
 ### Structured status consumed
 
-OpenSpec/hybrid is authoritative and apply-ready. Parent supplied workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `241bcf3`, work unit `C05.2V-dormant-candidate-batch-16`, proceeded token `sha256:8acdd531d4deb527f28f48cc0352da1673c2e10254aba0ff7b061de32994abf5`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
+OpenSpec/hybrid is authoritative and apply-ready. Parent supplied workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `241bcf3`, work unit `C05.2V-dormant-candidate-batch-16`, proceeded token `sha256:8acdd531d4deb527f28f48cc0352da1673c2e10254aba0ff7b061de32994abf5`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
 
 ## M0.4.5 / C05.2W — dormant candidate batch 17 staged for parent settlement
 
@@ -1570,7 +1570,7 @@ T0.4.5.2 and T0.4.5.3 remain visibly unchecked. The batch stops between complete
 
 ### Structured status consumed
 
-OpenSpec/hybrid is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `e6cc7fa`, work unit `C05.2W-dormant-candidate-batch-17`, proceeded token ending `5b5d1`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
+OpenSpec/hybrid is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `e6cc7fa`, work unit `C05.2W-dormant-candidate-batch-17`, proceeded token ending `5b5d1`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
 ## M0.4.5 / C05.2X — dormant candidate batch 18 staged for parent settlement
 
 ### Outcome
@@ -1602,7 +1602,7 @@ The row preserves all three Modules, nine Tasks, seven criteria, dependency `S4.
 
 ### Structured status consumed
 
-OpenSpec is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `12742e6`, work unit `C05.2X-dormant-candidate-batch-18`, proceeded token `sha256:d23859786db92b07666ac06c44b8bf32bcca3d0fa1790707c6d87324c19764c7`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
+OpenSpec is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `12742e6`, work unit `C05.2X-dormant-candidate-batch-18`, proceeded token `sha256:d23859786db92b07666ac06c44b8bf32bcca3d0fa1790707c6d87324c19764c7`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
 
 
 ## M0.4.5 / C05.1Q — exact S4.8 future host paths staged
@@ -1673,7 +1673,7 @@ The batch stops between complete Sessions before S4.9. That later row is archive
 
 ### Structured status consumed
 
-OpenSpec/hybrid is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `378d6aa`, work unit `C05.2Y-dormant-candidate-batch-19`, proceeded token `sha256:0f4fec8b4a9d5c98eaaf3b16fa3f07dd9604b80e4707e89f3b00f8fea11c1496`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
+OpenSpec/hybrid is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `378d6aa`, work unit `C05.2Y-dormant-candidate-batch-19`, proceeded token `sha256:0f4fec8b4a9d5c98eaaf3b16fa3f07dd9604b80e4707e89f3b00f8fea11c1496`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The opaque token was not operated or persisted; parent retains inspection, settlement, lifecycle, and delivery authority.
 
 Exact remaining implementation row stays unchecked: `- [ ] **T0.4.5.2 — Assemble dormant plan facts:** ... <!-- sdd-owner: implementation -->`. Parent-owned lifecycle rows remain deferred and unchanged.
 
@@ -1707,7 +1707,7 @@ The row preserves dependencies `[S4.6, S4.7]`, resource history, three unexercis
 
 ### Structured status consumed
 
-OpenSpec is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD `053b3c9`, work unit `C05.2AA-dormant-candidate-batch-20`, proceeded token `sha256:fa15afdbb97677d25c5198f7390cc155f9dc1b468a336fccb411a60619fa153b`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The token was not operated or persisted.
+OpenSpec is authoritative and apply-ready with no blockers. Parent supplied workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD `053b3c9`, work unit `C05.2AA-dormant-candidate-batch-20`, proceeded token `sha256:fa15afdbb97677d25c5198f7390cc155f9dc1b468a336fccb411a60619fa153b`, exact candidate/bookkeeping edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The token was not operated or persisted.
 
 Exact remaining implementation row stays unchecked: `- [ ] **T0.4.5.2 — Assemble dormant plan facts:** ... <!-- sdd-owner: implementation -->`. Parent-owned lifecycle rows remain deferred and unchanged.
 
@@ -1770,7 +1770,7 @@ The batch stops at the complete S4.11 boundary. Parent supplied exact readiness 
 
 - Immutable source: commit `43130ad40af06f3ed05671000719217bee74f0a5`; `openspec/plans/plan-4/STATUS.md` blob `eec8b401c2f55b05cec419c101ecb462b4e4afe3`, lines 762–779; committed mapping lines 267–284; archived verify PASS 8/8 requirements and 15/15 scenarios, with no blockers or findings.
 - Implementation commits `356c9eac76e862d2fde47720ee97af84b0ae23d6`, `beaa597eac05cb466832452deac2b6ce7ad86e87`, and candidate `f00c53ae477de1f8dd3b9c4dab8b2c159375f962`, plus delivered closure `6ddf6bc77d236dffad5b8ec625379117a91ce0b3`, all resolve and are ancestors of HEAD `10fe7e863074a31f19f5cceb584c5764c812a0ea`.
-- Radar ran from absolute module cwd `/home/emili/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar` against absolute candidate/workspace paths. `check` reports exactly dangling `S1.9`, `S1.10`, `S9.4`, `S2.4`, and `S5.1`: 5 errors, **0 warnings**, no S4.11 finding. `zonas` passes with **547 tracked files partitioned**.
+- Radar ran from absolute module cwd `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar` against absolute candidate/workspace paths. `check` reports exactly dangling `S1.9`, `S1.10`, `S9.4`, `S2.4`, and `S5.1`: 5 errors, **0 warnings**, no S4.11 finding. `zonas` passes with **547 tracked files partitioned**.
 - Only `openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml` is staged; this cumulative progress remains unstaged and tasks remain unchanged. Candidate numstat is **99 additions, 0 deletions**. This section is **31 bookkeeping lines**; total observable workload is **130/400**.
 - Staged binary-diff SHA-256: `de092137b0f2d2e5280120f6373c51ef4f9e7dce57fe078b6306907b361234be`.
 - Canonical `openspec/plan.yaml` and `openspec/ROADMAP.md` remain absent; `git diff --cached --check` passes.
@@ -1803,7 +1803,7 @@ The row preserves decisions 81 and 87, dependency order `[S9.4, S1.18]`, the Tow
 - Immutable source commit `43130ad40af06f3ed05671000719217bee74f0a5`; Plan 4 STATUS blob `eec8b401c2f55b05cec419c101ecb462b4e4afe3`, exact lines 781–788, span SHA-256 `e18fc7d5be3fadd44048c3e6b25b0410bb0ea794bb6907743011b39940dbc512`; mapping row starts at line 284 and matches source line/heading/provenance and stable IDs.
 - Decisions 81 and 87 were re-read verbatim from immutable `openspec/plans/decision-register.md` lines 418–434: minimum Pi recovery requires proven death, full-tree quiescence, unpredictable successor ID, `--fork`, explicit lineage, volatile mailbox, and idempotent replay from durable state. Their falsifiers, discarded alternatives, classes, and contamination are preserved without inference or compression.
 - Committed candidate prefix through S4.11 is byte-identical: **183204 bytes**, SHA-256 `b24fa129916c5f5a5ccd05ebbc0aa0ffc8fa5b9bb7d76f4d2b633a911267aef0`.
-- Radar ran from absolute module cwd `/home/emili/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar` against absolute candidate/workspace paths. `check`: exactly six dependency errors (`S1.9`, `S1.10`, `S9.4` from S1.17, `S2.4`, `S5.1`, and expected `S9.4` from S4.12), **0 warnings**. `zonas`: **547 tracked files partitioned**.
+- Radar ran from absolute module cwd `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar` against absolute candidate/workspace paths. `check`: exactly six dependency errors (`S1.9`, `S1.10`, `S9.4` from S1.17, `S2.4`, `S5.1`, and expected `S9.4` from S4.12), **0 warnings**. `zonas`: **547 tracked files partitioned**.
 - Only `openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml` is staged; tasks remain unchanged/unchecked and this cumulative progress remains unstaged. Candidate numstat is **68 additions, 0 deletions**; the full bounded unit remains below **400 lines**.
 - Staged binary-diff SHA-256: `9d6d418e669bc093c5aa22145527ea38931c447352890d409e20c17faef38d51`.
 - Canonical `openspec/plan.yaml` and `openspec/ROADMAP.md` remain absent; `git diff --cached --check` passes.
@@ -1813,7 +1813,7 @@ The row preserves decisions 81 and 87, dependency order `[S9.4, S1.18]`, the Tow
 
 ### Structured status consumed
 
-OpenSpec/hybrid is authoritative and apply-ready for this explicitly assigned dormant-candidate continuation. Parent supplied workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `d12543b`, work unit `C05.2AD`, candidate prefix 28/72 through S4.11, token `sha256:9cd46ab088ebb853fcc2c49284d28847e33f13df5fe0001ac09810a003eb7936`, exact candidate/apply-progress/tasks edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The token was not operated or persisted; no gentle-ai/lifecycle command was run.
+OpenSpec/hybrid is authoritative and apply-ready for this explicitly assigned dormant-candidate continuation. Parent supplied workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, branch `feat/s0.4-plan-zones-migration`, HEAD `d12543b`, work unit `C05.2AD`, candidate prefix 28/72 through S4.11, token `sha256:9cd46ab088ebb853fcc2c49284d28847e33f13df5fe0001ac09810a003eb7936`, exact candidate/apply-progress/tasks edit roots, strict TDD, sequential direct-commit boundary, and hard 400-line cap. The token was not operated or persisted; no gentle-ai/lifecycle command was run.
 
 Exact remaining implementation row stays unchecked: `- [ ] **T0.4.5.2 — Assemble dormant plan facts:** ... <!-- sdd-owner: implementation -->`. Parent-owned lifecycle rows remain deferred and unchanged.
 
@@ -1839,13 +1839,13 @@ Decision 97 is preserved with the complete ordering, ownership boundary, exact-c
 - Immutable source: commit `43130ad40af06f3ed05671000719217bee74f0a5`; `openspec/plans/plan-4/STATUS.md` blob `eec8b401c2f55b05cec419c101ecb462b4e4afe3`, exact S4.13 contract lines 790–859; committed mapping lines 301–317; immutable decision-register decision 97 lines 472–504.
 - Exact closure: commit `af607a93cb7f303e48bfc0e4ad761cadc3d1025e`, tree `2fb68dfcd871538b76082633d869b8c812c89abc`, is an ancestor of HEAD `ba78e91b19718a69b7854a285709e95de2fe4877`; its four-path diff is 228 additions + 6 deletions = 234 authored lines, matching the immutable closure.
 - Committed candidate prefix through S4.12 is byte-identical: **188051 bytes**, SHA-256 `9bb228e0f0d369cf7917045ad01a7b7b4df0c31928b04bc00481c9bb060e9087`.
-- Radar ran from absolute module cwd `/home/emili/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar` against absolute candidate/workspace paths. `check` reports exactly six dependency errors (`S1.9`, `S1.10`, `S9.4` from S1.17, `S2.4`, `S5.1`, and `S9.4` from S4.12), **0 warnings**, no S4.13 finding. `zonas`: **547 tracked files partitioned**.
+- Radar ran from absolute module cwd `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar` against absolute candidate/workspace paths. `check` reports exactly six dependency errors (`S1.9`, `S1.10`, `S9.4` from S1.17, `S2.4`, `S5.1`, and `S9.4` from S4.12), **0 warnings**, no S4.13 finding. `zonas`: **547 tracked files partitioned**.
 - Only `openspec/changes/migrate-control-tower-plan-zones/migration/candidate/plan.yaml` is staged; tasks remain unchanged/unchecked and this cumulative progress remains unstaged. Candidate numstat is **63 additions, 0 deletions**; candidate plus bookkeeping remains below **400 total lines**.
 - Staged binary-diff SHA-256: `da4453470b2c3bdf9c027195670d2210f7ee75ab192de6ecf0e82994794a1f80`.
 - Canonical `openspec/plan.yaml` and `openspec/ROADMAP.md` remain absent; `git diff --cached --check` passes.
 - Rollback boundary: remove only the S4.13 append; the committed prefix through S4.12 remains byte-for-byte.
 - Next readiness hints: S4.14 starts at immutable STATUS line 861 and mapping line 318, depends on S4.13, cites decision 98, has one Module and four Tasks, and uses route `direct`; its authority/closure must be independently re-read before authorship.
-- Structured status consumed/produced: OpenSpec/hybrid authoritative; active change unambiguous; proposal/spec/design/tasks/apply-progress present; `applyState: ready`, `nextRecommended: apply`, no authoritative blockers; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed edits limited to candidate/apply-progress/tasks and honored; strict TDD active; resolved sequential direct-commit delivery path; hard cap 400.
+- Structured status consumed/produced: OpenSpec/hybrid authoritative; active change unambiguous; proposal/spec/design/tasks/apply-progress present; `applyState: ready`, `nextRecommended: apply`, no authoritative blockers; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed edits limited to candidate/apply-progress/tasks and honored; strict TDD active; resolved sequential direct-commit delivery path; hard cap 400.
 - Parent token `sha256:c61352c3f3fa716b9a4a75a570c44ddb732c09970016cfc007a34049f1cf1300` was not operated, persisted, acquired, settled, reset, or rescoped. No commit, push, PR, activation, canonical output, runtime, Tower, Herdr, review, archive, settlement, lifecycle, or delivery action occurred.
 - `lifecycle_commands_run: none`
 
@@ -1877,7 +1877,7 @@ Runtime harness: N/A — this dormant operational YAML batch is exercised throug
 - Committed candidate prefix through S4.13: **194278 bytes**, SHA-256 `c416f7b5c2dd6295ad5ce6aef5945b9a8f31c37687ae5d9999a4a3424abc4638`.
 - Resulting candidate: **200799 bytes**, SHA-256 `3c90ee7ed47616bb446880c8c8e7de52e602595862c53b7a3aa138131784cf2b`; S4.14 occupies candidate lines 2554–2620, with Module at 2601 and Tasks at 2605–2617.
 - Only `migration/candidate/plan.yaml` is staged; numstat is **68 additions, 0 deletions**. Staged binary-diff SHA-256: `3dc00b15831e658f143d4d7e6d7d5d7b93b4c75e227f22b687a2dfdb8a7b9142`. `git diff --cached --check` passes.
-- Radar module cwd was absolute: `/home/emili/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar`; candidate and workspace arguments were absolute. Current result remains six dependency errors, 0 warnings, 547 tracked files.
+- Radar module cwd was absolute: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar`; candidate and workspace arguments were absolute. Current result remains six dependency errors, 0 warnings, 547 tracked files.
 - Rollback boundary: remove only the S4.14 append; the committed prefix through S4.13 remains byte-for-byte.
 - Structured status consumed/produced: OpenSpec/hybrid authoritative; active change unambiguous; required artifacts present; `applyState: ready`, `nextRecommended: apply`, no authoritative blockers; repo-local workspace and exact candidate/apply-progress/tasks allowlist honored; strict TDD active; sequential direct-commit path resolved; hard cap 400.
 - Tasks remain unchanged and unchecked because T0.4.5.2 covers the complete 72-row candidate and T0.4.5.3 covers the complete structural gate. Parent-owned lifecycle rows remain byte-for-byte deferred.
@@ -1909,7 +1909,7 @@ Runtime harness: N/A — dormant operational YAML is exercised through strict Bu
 
 - Immutable provenance: source commit `43130ad40af06f3ed05671000719217bee74f0a5`; `openspec/plans/plan-5/STATUS.md` blob `91fbffbb0a661cee400a9ea16bd5aa1b1dfb138d`; exact Session span lines 233–379; committed mapping starts at line 8.
 - Delivery evidence: Module commits `938f9327619f073904d79c23b200e7132e5eb4ee`, `a5f43e2e740451b54b6880ab484105f95dc58588`, `3f7f81fb17f69e0c49ebde969579b923ffa27f59`, correction `14f3681228d09d3aa77958a790d42b2b66022593`, and terminal closure `c7c247227f6bc888f9ff7ed48094a7aa92f9cc4c`; final tree `17f24c6d3738973ccbf6dedecebf4ec455f74184`.
-- Radar module cwd was absolute: `/home/emili/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar`; candidate and workspace arguments were absolute. `check` reports exactly five dependency errors (`S1.9`, `S1.10`, `S9.4`, `S2.4`, and the second `S9.4` reference), 0 warnings. `zonas` reports 547 tracked files.
+- Radar module cwd was absolute: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1/agent-workflows/tools/radar`; candidate and workspace arguments were absolute. `check` reports exactly five dependency errors (`S1.9`, `S1.10`, `S9.4`, `S2.4`, and the second `S9.4` reference), 0 warnings. `zonas` reports 547 tracked files.
 - Only `migration/candidate/plan.yaml` is staged; candidate numstat is **205 additions, 0 deletions**. Candidate plus this bookkeeping section remains below the hard **400-line** limit.
 - Staged binary-diff SHA-256: `8277ce39f28098c35eb3ab52205561df3fcd6e2c56ebe852592c773a0af88c1c`.
 - Canonical `openspec/plan.yaml` and `openspec/ROADMAP.md` remain absent; `git diff --cached --check` passes.
@@ -1944,7 +1944,7 @@ Human authority is Engram observation 10293: preserve all 16 immutable S5.2 outc
 
 ### Structured status consumed
 
-OpenSpec is authoritative: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; workspace is `/home/emili/projects/control-tower/Worktrees/implementer-1`. Parent authorized only the mapping plus optional design/spec/tasks/apply-progress bookkeeping and supplied active token `sha256:4810956c9aefe427ecff90f1ac77a29ec1f1b248d384a6499de055751a8cf1aa`. Mapping alone is staged; bookkeeping remains unstaged. Next cursor: S5.2 candidate RED. Parent owns settlement; lifecycle: none.
+OpenSpec is authoritative: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; workspace is `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`. Parent authorized only the mapping plus optional design/spec/tasks/apply-progress bookkeeping and supplied active token `sha256:4810956c9aefe427ecff90f1ac77a29ec1f1b248d384a6499de055751a8cf1aa`. Mapping alone is staged; bookkeeping remains unstaged. Next cursor: S5.2 candidate RED. Parent owns settlement; lifecycle: none.
 
 ## M0.4.5 / C05.2AI — S5.2 terminal historical candidate staged
 
@@ -2017,7 +2017,7 @@ Exact next authority: **Plan 5, S5.4**, immutable source line **506**; its mappi
 
 - Change: `migrate-control-tower-plan-zones`; artifact store: hybrid; OpenSpec authoritative and Engram mirrored.
 - Apply state: ready; assigned boundary C05.3 / S5.3 only; no outstanding readiness blocker.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD `f684bdb`; allowed candidate/apply-progress/tasks surfaces honored.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD `f684bdb`; allowed candidate/apply-progress/tasks surfaces honored.
 - Review workload: approved sequential local candidate grouping; this complete group is 111 authored lines and stops before the next authority.
 - Bookkeeping remains unstaged; implementation tasks remain unchecked; parent lifecycle deferred.
 
@@ -2116,7 +2116,7 @@ Runtime harness: N/A — this is dormant operational YAML; strict parsing, focus
 - Staged binary-diff digest: `sha256:ce5ac4e8df07c7785ea5ab5772192e350fa53ab6d61cd41e93ca4736d37c1bbd`.
 - `git diff --cached --check` passes; canonical `openspec/plan.yaml` and `openspec/ROADMAP.md` remain absent.
 - Rollback boundary: remove only the S5.5 append; committed candidate prefix through S5.4 remains byte-for-byte.
-- Structured status consumed/produced: change `migrate-control-tower-plan-zones`; OpenSpec/hybrid authoritative; `applyState: ready`; `nextRecommended: apply`; no blocked reasons; automatic bounded sequential-direct-commit path; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed candidate/apply-progress/tasks surfaces honored; strict TDD active.
+- Structured status consumed/produced: change `migrate-control-tower-plan-zones`; OpenSpec/hybrid authoritative; `applyState: ready`; `nextRecommended: apply`; no blocked reasons; automatic bounded sequential-direct-commit path; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed candidate/apply-progress/tasks surfaces honored; strict TDD active.
 - Parent token `sha256:c7ed760824e167d1f21760cb8f1593e3297254fdb5ce4192d5cb0e2748dd82dd` was not acquired, settled, reset, rescoped, or persisted by this executor.
 - No commit, push, PR, review, activation, archive, delivery, Tower, Herdr, or lifecycle command occurred. `lifecycle_commands_run: none`.
 
@@ -2186,7 +2186,7 @@ Already-normalized terminal rows: `S3.2`, `S3.3`, `S3.4`, `S4.2`, `S4.3`, `S4.5`
 - Documentation remains unstaged: this cumulative progress plus narrow spec/design/task amendments. Unit total remains below 400 authored lines; no candidate, partition, or mapping byte changed.
 - Rollback: restore the prior two-current-Zone threshold in `check.go`, remove the new owner-combination test, and revert only the C05.2AP spec/design/task/progress additions.
 - Next checkpoint: normalize exactly the 15 audited terminal rows before appending S5.6; preserve paths/decisions/provenance/delivery, remove only execution `zona`, `ruta`, and Session `cimientos`, then rerun Radar check/zonas and confirm open rows remain unchanged.
-- Structured status consumed: change `migrate-control-tower-plan-zones`; OpenSpec/hybrid authoritative; `applyState: ready`; no blocked reasons; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed Radar code/tests and SDD docs honored; strict TDD active; resolved bounded direct-commit path; HEAD `b5d7bfe`; candidate 36/72.
+- Structured status consumed: change `migrate-control-tower-plan-zones`; OpenSpec/hybrid authoritative; `applyState: ready`; no blocked reasons; authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed Radar code/tests and SDD docs honored; strict TDD active; resolved bounded direct-commit path; HEAD `b5d7bfe`; candidate 36/72.
 - Parent token `sha256:d36caf503b37725e2ee89b68b35d6b52e3813cafae26eec8f7d4219dd6deff29` was not operated. No commit, push, PR, candidate normalization, review, delivery, or lifecycle command occurred. `lifecycle_commands_run: none`.
 - Remaining exact implementation rows: T0.4.5.2 and T0.4.5.3 stay unchecked. Parent-owned lifecycle rows remain byte-for-byte deferred.
 
@@ -2215,7 +2215,7 @@ Normalized exactly 15 delivered imports under committed C05.2AP policy by deleti
 ### Structured status consumed
 
 - Fingerprint: `apply|C05.2AQ|normalize-15|1fc7d81`.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `1fc7d81`.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `1fc7d81`.
 - Parent supplied candidate 36/72 and token digest `sha256:95a94f0946bd361e6afeb56ad27e798289be8b5724b168cfb0c081c489a0e9e8`; no lifecycle action authorized.
 - Allowed surface honored: candidate staged; documentation/bookkeeping remains unstaged.
 
@@ -2255,7 +2255,7 @@ Runtime harness: N/A — dormant migration YAML is exercised by strict parsing, 
 ### Structured status consumed and next readiness
 
 - Change `migrate-control-tower-plan-zones`; OpenSpec authoritative/hybrid; required tasks/spec/design/apply-progress artifacts read directly.
-- Apply state ready, no blockers; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD/branch matched the parent; candidate/tasks/apply-progress boundary honored.
+- Apply state ready, no blockers; authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD/branch matched the parent; candidate/tasks/apply-progress boundary honored.
 - Strict TDD active; sequential bounded direct-commit path resolved; work unit C05.2AR remained below 400.
 - Tasks remain unchanged and unchecked for T0.4.5.2/.3; parent-owned lifecycle rows remain deferred byte-for-byte.
 - Next readiness: parent may inspect/settle the exact staged C05.2AR candidate. The next candidate cursor is S5.7 at immutable source line 752; it requires its own exact authority/delivery read before RED.
@@ -2290,7 +2290,7 @@ Runtime harness: N/A — dormant migration YAML is exercised by strict parsing, 
 ### Task and status continuity
 
 - T0.4.5.2 and T0.4.5.3 remain unchecked: this correction repairs mapping authority only and does not append S5.7 to the candidate.
-- Structured status consumed: change `migrate-control-tower-plan-zones`; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `4af1896`; candidate cursor S5.7; action context restricted to the Plan 5 mapping plus unstaged progress documentation; no path violation.
+- Structured status consumed: change `migrate-control-tower-plan-zones`; authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `4af1896`; candidate cursor S5.7; action context restricted to the Plan 5 mapping plus unstaged progress documentation; no path violation.
 - Parent lifecycle remains deferred. Next action is parent handling of the exact staged mapping correction; candidate count remains 37/72.
 
 ## M0.4.5 / C05.2AT — S5.7 dormant terminal-history candidate staged
@@ -2329,7 +2329,7 @@ Runtime harness: N/A — dormant migration YAML is exercised by strict parsing, 
 ### Structured status consumed and next readiness
 
 - Change `migrate-control-tower-plan-zones`; OpenSpec authoritative/hybrid; required tasks/spec/design/apply-progress artifacts read directly.
-- Apply state ready, no blockers; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1` and HEAD `7a7824c` matched the parent; candidate/tasks/apply-progress boundary honored.
+- Apply state ready, no blockers; authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` and HEAD `7a7824c` matched the parent; candidate/tasks/apply-progress boundary honored.
 - Strict TDD active; sequential bounded direct-commit path resolved; work unit fingerprint `apply|C05.2AT|S5.7|7a7824c` remained below 400.
 - Tasks remain unchanged and unchecked for T0.4.5.2/.3; parent-owned lifecycle rows remain deferred byte-for-byte.
 - Next readiness: parent may inspect/settle the exact staged C05.2AT candidate. The next candidate cursor is S5.8 at immutable source line 811; it requires its own exact authority/delivery read before RED.
@@ -2357,7 +2357,7 @@ Runtime harness: N/A — dormant migration YAML is exercised by strict parsing, 
 - Staged only `openspec/changes/migrate-control-tower-plan-zones/migration/sessions/plan-5.yaml`; progress documentation remains unstaged.
 - Authored mapping diff is 1 addition + 1 deletion, within the assigned `<=100` boundary.
 - T0.4.5.2 and T0.4.5.3 remain unchecked because this mapping-only correction does not complete candidate assembly or its final structural gate.
-- Structured status consumed: active change `migrate-control-tower-plan-zones`; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `7411a14`; assigned fingerprint `apply|C05.2AU|S5.8-full-sdd|10304`; exact mapping-only edit root and no lifecycle/candidate action honored.
+- Structured status consumed: active change `migrate-control-tower-plan-zones`; authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `7411a14`; assigned fingerprint `apply|C05.2AU|S5.8-full-sdd|10304`; exact mapping-only edit root and no lifecycle/candidate action honored.
 - Rollback boundary: revert only the S5.8 route token. No commit, push, PR, review, candidate mutation, or lifecycle action occurred.
 
 ## M0.4.5 / C05.2AV — S5.8 dormant terminal-history candidate staged
@@ -2396,7 +2396,7 @@ Runtime harness: N/A — dormant migration YAML is exercised by strict parsing, 
 ### Structured status consumed and next readiness
 
 - Change `migrate-control-tower-plan-zones`; OpenSpec authoritative/hybrid; required tasks/spec/design/apply-progress artifacts read directly.
-- Apply state produced as ready: active change unambiguous, no authoritative blocker, workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD `ae401e9`, exact candidate/apply-progress/tasks boundary honored.
+- Apply state produced as ready: active change unambiguous, no authoritative blocker, workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD `ae401e9`, exact candidate/apply-progress/tasks boundary honored.
 - Strict TDD active; resolved sequential bounded direct-commit path; fingerprint `apply|C05.2AV|S5.8|ae401e9`; candidate is below 400 authored lines.
 - T0.4.5.2 and T0.4.5.3 remain unchecked; parent-owned lifecycle rows remain byte-for-byte deferred.
 - Next readiness: parent may inspect/settle the exact staged C05.2AV candidate. Next candidate cursor is S5.11 at immutable source line 873.
@@ -2438,7 +2438,7 @@ Runtime harness: N/A — dormant operational YAML is exercised through strict pa
 
 ### Structured status consumed and next readiness
 
-- Change `migrate-control-tower-plan-zones`; OpenSpec apply-ready and authoritative; no blockers; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; branch `feat/s0.4-plan-zones-migration`; HEAD `ac258c115bed87eb8096169a701a9d91f01014a0`; work unit C05.2AW; allowed candidate/apply-progress/tasks surfaces honored.
+- Change `migrate-control-tower-plan-zones`; OpenSpec apply-ready and authoritative; no blockers; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; branch `feat/s0.4-plan-zones-migration`; HEAD `ac258c115bed87eb8096169a701a9d91f01014a0`; work unit C05.2AW; allowed candidate/apply-progress/tasks surfaces honored.
 - Strict TDD active. Resolved sequential direct-commit delivery boundary remains in force; this executor performed no delivery or lifecycle action.
 - Exact next readiness: **S5.9 at immutable source line 969**. Re-read its mapping, amended decision 41 authority, three delivery commits, territory, hierarchy, criteria, and current ancestry before RED. No blocker is asserted for S5.9 by this unit; readiness must be independently proven at that cursor.
 - Exact unchecked implementation rows remain T0.4.5.2 and T0.4.5.3 in `tasks.md`; no checkbox changed because neither full task is complete. Parent-owned lifecycle rows remain byte-for-byte deferred.
@@ -2507,7 +2507,7 @@ Runtime harness: N/A — mapping-only authority correction; strict source/YAML/G
 - Staged numstat: Plan 5 `1/1`; Plan 8 `1/1`; Plan 9 `1/1`; mapping authored total **6**.
 - Staged binary-diff SHA-256: `e5d0a3cd2b38b452f3304a8b344a48d9c5e0f6bc46c751ffa6304f46f2e48219`.
 - Rollback: restore only the three corrected `source_contract.route` scalars (S5.11, S8.13, and S9.3) to `design-tasks`; candidate and all non-route mapping fields remain untouched.
-- Structured status consumed: OpenSpec apply-ready, no blockers; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `ac258c115bed87eb8096169a701a9d91f01014a0`; exact allowed mapping/bookkeeping surfaces honored; strict TDD active; 400-line path resolved by this 4-line correction unit.
+- Structured status consumed: OpenSpec apply-ready, no blockers; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `ac258c115bed87eb8096169a701a9d91f01014a0`; exact allowed mapping/bookkeeping surfaces honored; strict TDD active; 400-line path resolved by this 4-line correction unit.
 - Next implementation cursor remains S5.11 RED for candidate assembly after parent handling of this mapping correction.
 - Parent-owned lifecycle rows remain unchanged and deferred. No gentle-ai/lifecycle/settlement/review/commit/push/PR/activation/archive command ran; `lifecycle_commands_run: none`.
 
@@ -2539,7 +2539,7 @@ Re-appended only terminal historical Sessions `S5.11` and `S5.12` to the committ
 
 ### Structured status consumed
 
-OpenSpec is authoritative. Native status reported `applyState: ready`, `nextRecommended: apply`, no blocked reasons, and repo-local edits allowed under `/home/emili/projects/control-tower/Worktrees/implementer-1`. Parent supplied resolved sequential direct-commit delivery, work unit `C05.2AY`, HEAD `5170dc0`, and continuation token `sha256:1fc58e2313951932a1fc5d2a7641c7570bfd7c419bcc854731a44a8234d4bc0b`; continuation acquire returned `proceed`. The high workload is bounded to this 184-line candidate. Parent retains settlement and lifecycle authority.
+OpenSpec is authoritative. Native status reported `applyState: ready`, `nextRecommended: apply`, no blocked reasons, and repo-local edits allowed under `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`. Parent supplied resolved sequential direct-commit delivery, work unit `C05.2AY`, HEAD `5170dc0`, and continuation token `sha256:1fc58e2313951932a1fc5d2a7641c7570bfd7c419bcc854731a44a8234d4bc0b`; continuation acquire returned `proceed`. The high workload is bounded to this 184-line candidate. Parent retains settlement and lifecycle authority.
 
 ## M0.4.5 / C05.2AZ — S5.9 dormant terminal-history candidate staged
 
@@ -2578,7 +2578,7 @@ Runtime harness: N/A — dormant operational YAML is exercised by strict parsing
 
 ### Structured status consumed and next readiness
 
-- Change `migrate-control-tower-plan-zones`; OpenSpec authoritative with Engram mirror requested; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `3057f4b29d394535784951c8ee5d7faa28104cda`; work unit C05.2AZ; fingerprint `apply|C05.2AZ|S5.9|3057f4b`.
+- Change `migrate-control-tower-plan-zones`; OpenSpec authoritative with Engram mirror requested; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `3057f4b29d394535784951c8ee5d7faa28104cda`; work unit C05.2AZ; fingerprint `apply|C05.2AZ|S5.9|3057f4b`.
 - Apply-ready status was supplied by the parent: active change and immutable cursor unambiguous, dependency/readiness proof supplied, resolved sequential direct-commit delivery boundary, and exact candidate/apply-progress/tasks edit surfaces. The 64-line candidate remains below 400.
 - Exact next cursor: **S5.10 at immutable source line 1037**. Its committed mapping records dependency `[S5.9]`, one Module/four Tasks, route `design-tasks`, delivery in four commits, and accepted residuals; all source decisions, criteria, paths, provenance, delivery, and outstanding-work facts must be re-read before its RED.
 - T0.4.5.2 and T0.4.5.3 remain unchecked. Parent-owned lifecycle rows remain byte-for-byte deferred.
@@ -2621,7 +2621,7 @@ Runtime harness: N/A — dormant operational YAML is exercised by strict parsing
 
 ### Structured status consumed and next readiness
 
-- Change `migrate-control-tower-plan-zones`; OpenSpec authoritative; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; exact HEAD `d42161a581c8c0509a22a91b25e82ec82b72dab1`; work unit C05.2BA; fingerprint `apply|C05.2BA|S5.10|d42161a`.
+- Change `migrate-control-tower-plan-zones`; OpenSpec authoritative; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; exact HEAD `d42161a581c8c0509a22a91b25e82ec82b72dab1`; work unit C05.2BA; fingerprint `apply|C05.2BA|S5.10|d42161a`.
 - Native status reports `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`, and repo-local allowed edit root equal to this worktree. The parent supplied the resolved sequential direct-commit path and exact <=400 boundary.
 - Next readiness: S7.1 is the next inventory row after Plan 5; re-read its immutable mapping/source/authority before any append.
 - T0.4.5.2 and T0.4.5.3 remain unchecked. Parent-owned lifecycle rows remain byte-for-byte deferred.
@@ -2660,7 +2660,7 @@ Runtime harness: N/A — mapping-only correction; immutable Git-source and stric
 ### Structured status consumed
 
 - Change: `migrate-control-tower-plan-zones`; OpenSpec authoritative with Engram mirror.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `e336d04f32fcae4cb7026804024fec735f276526`.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `e336d04f32fcae4cb7026804024fec735f276526`.
 - Assigned work unit: `C05.2BB`; parent token retained by parent; no attempt or lifecycle action performed.
 - Allowed surfaces honored after immediate removal of an empty transient bookkeeping temp file; final worktree contains no unauthorized path.
 - Workload boundary: 61 authored lines, below 400; only Plan 7 staged.
@@ -2741,7 +2741,7 @@ Runtime harness: Radar read-only acceptance, `check`, and `zonas` are the applic
 
 ### Structured status consumed
 
-- Change `migrate-control-tower-plan-zones`; OpenSpec authoritative; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; exact HEAD `9dc0851`; work unit C05.2BD; fingerprint `apply|C05.2BD|S7.1-pi-first|9dc0851`.
+- Change `migrate-control-tower-plan-zones`; OpenSpec authoritative; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; exact HEAD `9dc0851`; work unit C05.2BD; fingerprint `apply|C05.2BD|S7.1-pi-first|9dc0851`.
 - Parent authorized only the S7.1 candidate append and supplied the resolved <=400 direct-commit boundary; candidate surface honored.
 - Status is partial/blocked only on the contradictory requested `zonas 547` expectation: authoritative HEAD contains 548 tracked files and Radar reports 548 with 0 warnings.
 - Parent-owned lifecycle and task rows remain byte-for-byte deferred.
@@ -2781,7 +2781,7 @@ Runtime harness: N/A — this bounded unit corrects operational mapping data and
 - Change: `migrate-control-tower-plan-zones`; OpenSpec authoritative with Engram mirror.
 - Base/HEAD: `0dd64c5`; candidate 44/72 through S7.1.
 - Assigned boundary: C05.2BE / maintainer decision 10315 only; high workload resolved by the parent-assigned <=400 local unit.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`.
 - Allowed edits honored: Plan 8 mapping plus apply-progress bookkeeping; only Plan 8 mapping is staged.
 - Action context: Tower OFF; no lifecycle, attempt settlement, commit, or push authority.
 - Next implementation checkpoint: **S8.12 RED** in dormant candidate construction.
@@ -2801,7 +2801,7 @@ Independent verification found that unquoted YAML `source_lines: 998-1031` parse
 
 Final staged binary-diff SHA-256: `a0a18d1401b225e7d0ff60799f5724d1cef59fbf9ebe5564a8f797765621423a`. Rollback boundary remains only the staged S8.12 row replacement in `migration/sessions/plan-8.yaml`. Apply-progress bookkeeping remains unstaged. No task completed: T0.4.5.2 and T0.4.5.3 remain unchecked. No lifecycle, commit, push, PR, activation, or candidate mutation occurred.
 
-Structured status consumed: change `migrate-control-tower-plan-zones`; OpenSpec authoritative; workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `0dd64c5`; assigned correction C05.2BE only; parent token `a241...`; staged Plan 8 mapping boundary; <=400 direct work-unit resolution; no lifecycle authority. Action context allowed Plan 8 mapping plus unstaged apply-progress bookkeeping and was honored.
+Structured status consumed: change `migrate-control-tower-plan-zones`; OpenSpec authoritative; workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `0dd64c5`; assigned correction C05.2BE only; parent token `a241...`; staged Plan 8 mapping boundary; <=400 direct work-unit resolution; no lifecycle authority. Action context allowed Plan 8 mapping plus unstaged apply-progress bookkeeping and was honored.
 
 ## M0.4.5 / C05.2BF — candidate row S8.12 staged
 
@@ -2837,7 +2837,7 @@ Runtime harness: N/A — this batch adds dormant declarative migration data and 
 ### Structured status consumed
 
 - Change: `migrate-control-tower-plan-zones`; artifact store: OpenSpec.
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `5f5f98b`.
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `5f5f98b`.
 - Assigned boundary: C05.2BF / S8.12 only; allowed edit surface was candidate plan plus unstaged apply-progress bookkeeping.
 - Workload boundary: 82 authored lines, candidate-only staging, no PR or commit.
 
@@ -2867,7 +2867,7 @@ Appended only `S8.13` after committed cursor `S8.12`; candidate now contains 46/
 - Structural: `git diff --cached --check` PASS; staged numstat `64 0`; staged diff SHA-256 `7cf6ad8cda350aa6a2aeb4ddc0dc0d3695eedfcf364cb3487e27c3e186b03ff6`.
 - Rollback boundary: discard only the appended S8.13 candidate row. No commit, push, review lifecycle, canonical path, or delivery action occurred.
 - Next cursor: S8.14. Authority/readiness inspection passed: immutable mapping targets S8.14; current source records it COMPLETE at full commit `54b5cda733025b0bd50c2a21dc67d1d4192ac66d`, which is an ancestor of HEAD. Its terminal-history candidate representation must follow the provenance-gated non-authorizing policy.
-- Structured context: workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, base `af89b42b1bbb20482fb0de02f34d3acf3e50728a`, assigned boundary C05.2BG/S8.13 only, sequential <=400 direct-commit path, parent retains lifecycle/token settlement.
+- Structured context: workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, base `af89b42b1bbb20482fb0de02f34d3acf3e50728a`, assigned boundary C05.2BG/S8.13 only, sequential <=400 direct-commit path, parent retains lifecycle/token settlement.
 
 ## M0.4.5 / C05.2BH — S8.14 blocked by terminal-history path contract
 
@@ -2902,7 +2902,7 @@ Radar rejected the honest representation with `0 aviso(s)` because historical pa
 
 - Change: `migrate-control-tower-plan-zones`; OpenSpec authoritative/hybrid mirror.
 - Native-equivalent state: apply ready, parent-assigned C05.2BH only, exact candidate/bookkeeping allowlist, no lifecycle.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD and allowed paths verified.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD and allowed paths verified.
 - Workload path: resolved bounded direct work unit, attempted 69 authored lines.
 - Skill resolution: `fallback-registry`; loaded planificador-granular, chanks-4-puente, and work-unit-commits from exact registry paths.
 
@@ -2936,7 +2936,7 @@ No mapping/source row, `S8.12`, task checkbox, lifecycle state, or commit was mo
 ### Structured status consumed
 
 - Change: `migrate-control-tower-plan-zones`; artifact store: hybrid/OpenSpec authoritative.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `096090d97d5b7555cd74df64ddc427cdb993c152`.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `096090d97d5b7555cd74df64ddc427cdb993c152`.
 - Assigned boundary: C05.2BI incident correction only; explicit sequential direct-commit exception path resolves the high workload forecast.
 - Allowed edits: candidate plus apply-progress bookkeeping. Candidate alone is staged; documentation artifacts remain unstaged/untracked.
 - Parent retains lifecycle, review, token settlement, and commit authority.
@@ -2957,7 +2957,7 @@ Recorded maintainer decision 10321 only in the committed S8.14 mapping row. `fie
 
 ### Boundary and evidence
 
-- Workspace/base: `/home/emili/projects/control-tower/Worktrees/implementer-1` at `7096114`.
+- Workspace/base: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` at `7096114`.
 - Staged path: only `migration/sessions/plan-8.yaml`; apply-progress remains unstaged bookkeeping.
 - Staged numstat: **1 addition / 1 deletion**; authored total **2**, below 400.
 - Staged binary-diff digest: `sha256:2cc3d9833c01cb8a330e51f50714c0e6da2a1b8a2741b9f1784b3d27650c8c0e`.
@@ -3006,7 +3006,7 @@ Runtime harness: N/A — dormant declarative migration data is exercised through
 
 - Change: `migrate-control-tower-plan-zones`; OpenSpec authoritative with Engram mirror.
 - Native/manual state: apply-ready; no authoritative blockers; parent supplied resolved sequential direct-work boundary and exact C05.2BK scope under the 400-line cap.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `ba7e6f3f0ae61d4e67d5b1cd9e5c2acd3a5a4ce5`.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `ba7e6f3f0ae61d4e67d5b1cd9e5c2acd3a5a4ce5`.
 - Allowed edits honored: candidate plan plus unstaged tasks/apply-progress bookkeeping; no task checkbox became complete.
 - Action context: Tower OFF; parent retains lifecycle, attempt settlement, and commit authority.
 
@@ -3048,7 +3048,7 @@ Runtime harness: N/A — dormant declarative migration data is exercised through
 - Staged boundary: only `migration/sessions/plan-9.yaml`, 30 additions / 3 deletions, 33 changed lines (within 400-line budget). File SHA-256 `6e208339c17235c05a684c6f71d2cbdb1a20f91c7042ef1c5ce44d26c0840bdb`; staged diff SHA-256 `6d60d6ee08157125fff60a4f711faef5248bb54ad28fde60cf437ef71ae2f454`.
 - Persisted task checkbox updates: none. `T0.4.5.2` remains unchecked because candidate assembly is incomplete.
 - Next checkpoint: S9.2 candidate RED against this complete pending-territory authority package.
-- Structured status consumed: active OpenSpec change `migrate-control-tower-plan-zones`; apply-ready parent boundary C05.2BN; allowed edits limited to Plan 9 mapping plus cumulative apply-progress. Workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, HEAD `335ef0c`; parent retains lifecycle and commit authority.
+- Structured status consumed: active OpenSpec change `migrate-control-tower-plan-zones`; apply-ready parent boundary C05.2BN; allowed edits limited to Plan 9 mapping plus cumulative apply-progress. Workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, HEAD `335ef0c`; parent retains lifecycle and commit authority.
 - Rollback boundary: revert only the S9.2 mapping block. No candidate/code, lifecycle, review, receipt, commit, push, PR, activation, archive, Tower, Herdr, or background-process action occurred.
 
 ## C05.2BO — S9.2 blocked pending-territory candidate row 49
@@ -3092,7 +3092,7 @@ Runtime harness: N/A — dormant operational YAML is exercised through strict Bu
 ### Structured status consumed
 
 - Active change: `migrate-control-tower-plan-zones`; OpenSpec authoritative; native `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `32b5a98`; parent-provided active attempt token retained by parent and not acquired, settled, reset, or persisted here.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `32b5a98`; parent-provided active attempt token retained by parent and not acquired, settled, reset, or persisted here.
 - Assigned boundary: C05.2BO / S9.2 only; candidate plus mandatory cumulative apply-progress bookkeeping. Candidate only is staged; documentation/planning artifacts remain unstaged.
 - No lifecycle, review, receipt, commit, push, PR, activation, archive, Tower, Herdr, seat, capacity, or implementation-route action occurred.
 
@@ -3137,7 +3137,7 @@ Runtime harness: N/A — the Radar Go command boundary is the applicable runtime
 ### Structured status and remaining authority
 
 - Change: `migrate-control-tower-plan-zones`; assigned boundary C05.2BP only.
-- Authoritative workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed Radar, candidate, and change-artifact surfaces honored.
+- Authoritative workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed Radar, candidate, and change-artifact surfaces honored.
 - Base HEAD: `32b5a980c15ec6e568f01af208f2ebffbab9f101`; no lifecycle, commit, push, or activation action.
 - Workload path: resolved narrow direct-commit unit; cumulative candidate remains 104/400.
 - Parent lifecycle review remains deferred. Review risk: low-to-medium behavioral validation risk, bounded to one criteria exception and covered by one positive plus six negative cases.
@@ -3171,7 +3171,7 @@ Next candidate correction starts at the tail after `S5.10`: roll back the out-of
 - Change: `migrate-control-tower-plan-zones`; artifact store: hybrid/OpenSpec authoritative.
 - Apply state produced from confirmed artifacts: ready for the bounded lineage-only correction; no authoritative blocker.
 - Workload path: parent-resolved C05.2BQ unit, 81 authored lines, below 400.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed lineage plus planning artifacts honored.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed lineage plus planning artifacts honored.
 - Candidate/code explicitly excluded; no lifecycle, commit, push, or candidate mutation.
 
 ## M0.4.5 / C05.2BR correction unit 1 — first reverse-tail rollback
@@ -3204,7 +3204,7 @@ Runtime harness: N/A — this correction removes dormant declarative rows and is
 
 ### Structured status consumed
 
-Authoritative OpenSpec status reported `applyState: ready`, `nextRecommended: apply`, and no blockers. Repo-local action context authorized `/home/emili/projects/control-tower/Worktrees/implementer-1`; the assigned candidate and unstaged progress surfaces were honored. Parent supplied the resolved C05.2BR unit-1 boundary under 400 lines and token `sha256:6dc169ac9be281dea05b75a158c6f95e36889170870ca06206515208e062dc9e`; no lifecycle, settlement, commit, push, PR, activation, archive, mapping, or code action occurred.
+Authoritative OpenSpec status reported `applyState: ready`, `nextRecommended: apply`, and no blockers. Repo-local action context authorized `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; the assigned candidate and unstaged progress surfaces were honored. Parent supplied the resolved C05.2BR unit-1 boundary under 400 lines and token `sha256:6dc169ac9be281dea05b75a158c6f95e36889170870ca06206515208e062dc9e`; no lifecycle, settlement, commit, push, PR, activation, archive, mapping, or code action occurred.
 
 ## M0.4.5 / C05.2BS correction unit 2 — remaining reverse-tail rollback complete
 
@@ -3235,7 +3235,7 @@ Runtime harness: N/A — this correction only removes dormant declarative rows a
 
 ### Structured status consumed
 
-Authoritative OpenSpec status reported `applyState: ready`, `nextRecommended: apply`, and no blockers. Repo-local action context authorized `/home/emili/projects/control-tower/Worktrees/implementer-1`; the assigned candidate and unstaged progress surfaces were honored. Parent supplied the resolved C05.2BS correction boundary under 400 lines and active token `sha256:c0d99611317aa69915cbd07669764c54d50b11e4b4ca061e3d02ce9bc55f1b86`; no acquire, settlement, lifecycle, commit, push, PR, activation, archive, mapping, code, Tower, Herdr, or background-process action occurred.
+Authoritative OpenSpec status reported `applyState: ready`, `nextRecommended: apply`, and no blockers. Repo-local action context authorized `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; the assigned candidate and unstaged progress surfaces were honored. Parent supplied the resolved C05.2BS correction boundary under 400 lines and active token `sha256:c0d99611317aa69915cbd07669764c54d50b11e4b4ca061e3d02ce9bc55f1b86`; no acquire, settlement, lifecycle, commit, push, PR, activation, archive, mapping, code, Tower, Herdr, or background-process action occurred.
 
 ## M0.4.5 / C05.2BT — canonical S5.13 terminal-history row staged
 
@@ -3272,7 +3272,7 @@ Runtime harness: N/A — dormant declarative migration data is exercised through
 
 - Change: `migrate-control-tower-plan-zones`; OpenSpec authoritative with optional Engram mirror.
 - Apply state resolved ready from present spec/design/tasks and parent-provided exact C05.2BT boundary; no authoritative blocker.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `f734c73`; allowed candidate plus unstaged bookkeeping surfaces honored.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `f734c73`; allowed candidate plus unstaged bookkeeping surfaces honored.
 - Review workload path: parent-resolved sequential direct unit, 96 authored lines, no PR/chained-PR action.
 - Parent retains token settlement, lifecycle, review, commit, push, activation, and archive authority. No such action occurred.
 
@@ -3317,7 +3317,7 @@ The immutable S5.15 mapping remains archive-original authority with source depen
 
 - Change: `migrate-control-tower-plan-zones`; OpenSpec authoritative with optional Engram mirror.
 - Native status: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; repo-local action context authorizes this worktree.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `aac21264b69156828cdf4831680e7ae6164a51fc`.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `aac21264b69156828cdf4831680e7ae6164a51fc`.
 - Parent-resolved boundary: `apply|C05.2BU|S5.14-archived|aac2126`, candidate-only staging, no lifecycle/acquire/settle/commit/push/PR.
 - Review workload: 84 authored lines, below 400; direct local work-unit policy preserved.
 
@@ -3352,7 +3352,7 @@ Radar partial-candidate check reports the five pre-existing forward/missing depe
 
 ### Task and status continuity
 
-T0.4.5.2 remains visibly unchecked because candidate assembly is incomplete; no persisted checkbox is claimed complete in this batch. Native OpenSpec status was authoritative: `applyState: ready`, `nextRecommended: apply`, no blocked reasons, repo-local workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`. The high workload path remains resolved as sequential direct units; this exact C05.2BV unit is below 400 authored lines. Bookkeeping remains unstaged.
+T0.4.5.2 remains visibly unchecked because candidate assembly is incomplete; no persisted checkbox is claimed complete in this batch. Native OpenSpec status was authoritative: `applyState: ready`, `nextRecommended: apply`, no blocked reasons, repo-local workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`. The high workload path remains resolved as sequential direct units; this exact C05.2BV unit is below 400 authored lines. Bookkeeping remains unstaged.
 
 Exact next cursor: **S7.1**. Parent boundary: inspect and settle the exact staged C05.2BV candidate before continuing.
 
@@ -3382,7 +3382,7 @@ Reappended only approved imported `S7.1` after the committed canonical prefix th
 
 ### Structured status consumed
 
-OpenSpec is authoritative. Native readiness supplied by the parent: HEAD `47178e0fc4c9fc27af2e8988dd931418d6f16d6e`, candidate canonical through S5.15, work unit `C05.2BW`, parent token retained, no lifecycle authority. Workspace is `/home/emili/projects/control-tower/Worktrees/implementer-1`; candidate-only staging and unstaged bookkeeping boundary honored. The resolved workload path is sequential direct units below 400 authored lines.
+OpenSpec is authoritative. Native readiness supplied by the parent: HEAD `47178e0fc4c9fc27af2e8988dd931418d6f16d6e`, candidate canonical through S5.15, work unit `C05.2BW`, parent token retained, no lifecycle authority. Workspace is `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; candidate-only staging and unstaged bookkeeping boundary honored. The resolved workload path is sequential direct units below 400 authored lines.
 
 Exact next cursor: **S8.12**, whose committed mapping records current maintainer-approved `design-tasks` packaging readiness and three open RED/GREEN/REFACTOR Tasks.
 
@@ -3397,7 +3397,7 @@ Exact next cursor: **S8.12**, whose committed mapping records current maintainer
 - Verification: `git diff --cached --check` PASS; Radar `zonas` reports 548 tracked files and 0 warnings. Radar `check` computes 10 missing-dependency errors for the intentionally partial candidate, including `S8.10`, `S8.14`, and forward `S9.8`; `status` is unavailable until those rows arrive.
 - Readiness inspection: `S8.14` is absent from the current partial candidate and is not an archived original in `migration/lineage.yaml`; `S105`/`S106` replace archived `S9.3`, not `S8.14`. No relation was inferred or rewritten.
 - Workload / boundary: bounded C05.2BX documentation unit, 81 authored lines, below 400; no delivery, commit, push, lifecycle, runtime, canonical-plan, or ROADMAP action.
-- Structured status consumed/produced: active change `migrate-control-tower-plan-zones`; authoritative OpenSpec inputs present; action context limited to `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed edit remained inside the assigned candidate/progress roots; parent token `b96c` retained and no lifecycle action taken.
+- Structured status consumed/produced: active change `migrate-control-tower-plan-zones`; authoritative OpenSpec inputs present; action context limited to `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed edit remained inside the assigned candidate/progress roots; parent token `b96c` retained and no lifecycle action taken.
 
 ## M0.4.5 / C05.2BY — terminal S8.14 reappend
 
@@ -3421,7 +3421,7 @@ Exact next cursor: **S8.12**, whose committed mapping records current maintainer
 - Rollback boundary: remove only terminal S8.14; preserve the committed 48-row prefix through S8.12.
 - Persisted task checkbox updates: none. Exact remaining row: `- [ ] **T0.4.5.2 — Assemble dormant plan facts:** create migration/candidate/plan.yaml from the equivalence and lineage records ... <!-- sdd-owner: implementation -->`
 - Next `S8.13` is representation-ready from the prior corrected row: it follows S8.14 in immutable order, remains open with unresolved dependencies/work, and grants no current execution authority from this terminal append.
-- Structured status consumed: OpenSpec authoritative; `applyState: ready`, `nextRecommended: apply`, no blockers; repo-local workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `4b799db`; assigned boundary `C05.2BY/S8.14-reappend`; parent token/lifecycle retained by parent; sequential direct-doc batch under 400 lines. No commit, push, PR, activation, archive, review, receipt, Tower, Herdr, or background action occurred.
+- Structured status consumed: OpenSpec authoritative; `applyState: ready`, `nextRecommended: apply`, no blockers; repo-local workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `4b799db`; assigned boundary `C05.2BY/S8.14-reappend`; parent token/lifecycle retained by parent; sequential direct-doc batch under 400 lines. No commit, push, PR, activation, archive, review, receipt, Tower, Herdr, or background action occurred.
 
 ## M0.4.5 / C05.2BZ — S8.13 bookkeeping correction
 
@@ -3464,7 +3464,7 @@ T0.4.5.2 remains visibly unchecked because the complete 72-row candidate is unfi
 ### Structured status consumed
 
 - Change: `migrate-control-tower-plan-zones`; OpenSpec authoritative with Engram mirror configured.
-- Workspace: `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `a18656cd8e197637f6d5baba1c751d6833090278`.
+- Workspace: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `a18656cd8e197637f6d5baba1c751d6833090278`.
 - Assigned work unit/fingerprint: `C05.2CA` / `apply|C05.2CA|S9.1-reappend|a18656c`; parent token `bd03`; no lifecycle authority.
 - Workload path: resolved sequential direct-commit unit; exact staged candidate only and 51 authored lines.
 - Action context: candidate file plus unstaged bookkeeping only; no path violation. Parent owns settlement/review/commit.
@@ -3492,7 +3492,7 @@ T0.4.5.2 remains visibly unchecked because the complete 72-row candidate is unfi
 - `S9.2` begins at candidate line **4660**. Rollback boundary: remove only this 38-line append.
 - Persisted task checkbox updates: none. `T0.4.5.2` remains visibly unchecked because candidate assembly is incomplete.
 - Next `S9.3` is an archived original, with successors `S105` and `S106`; lineage records S105 ready without dependencies and S106 depending on `[S9.1, S105]`. Its historical mapping route is `full-sdd` only and grants no live execution route.
-- Structured status consumed: OpenSpec authoritative; `applyState: ready`, `nextRecommended: apply`, no blockers; repo-local allowed root `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `4cad8d8`; assigned fingerprint `apply|C05.2CB|S9.2-reappend|4cad8d8`; parent token `b357` reused for acquire and no lifecycle/settlement action performed.
+- Structured status consumed: OpenSpec authoritative; `applyState: ready`, `nextRecommended: apply`, no blockers; repo-local allowed root `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `4cad8d8`; assigned fingerprint `apply|C05.2CB|S9.2-reappend|4cad8d8`; parent token `b357` reused for acquire and no lifecycle/settlement action performed.
 - Parent-owned review, commit, push, delivery, archive, replacement, and receipt actions remain deferred and unchanged.
 
 ## M0.4.5 / C05.2CC — corrected S9.3 retry blocked by Radar contract contradiction
@@ -3522,7 +3522,7 @@ The current Radar terminal-history validator requires at least one `modulos[].ru
 
 ### Structured status consumed
 
-Hybrid store; authoritative worktree `/home/emili/projects/control-tower/Worktrees/implementer-1`; HEAD `618daac`; `applyState: ready`; `nextRecommended: apply`; no initial blockers; assigned work unit `C05.2CC`; exact candidate/bookkeeping boundary observed. The discovered contract contradiction blocks this corrected retry before staging.
+Hybrid store; authoritative worktree `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; HEAD `618daac`; `applyState: ready`; `nextRecommended: apply`; no initial blockers; assigned work unit `C05.2CC`; exact candidate/bookkeeping boundary observed. The discovered contract contradiction blocks this corrected retry before staging.
 
 ## M0.4.5 / C05.2CD — archived zero-ID historical-route carrier staged
 
@@ -3563,7 +3563,7 @@ The next S9.3 candidate row may now retain its previously proven archived shape 
 
 - Active change: `migrate-control-tower-plan-zones`; authoritative native status `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`.
 - Artifact store: hybrid; OpenSpec authoritative and Engram mirror required. Required spec/design/tasks/apply-progress were read; decision observation 10336 and prior failed-evidence observation 10229 were consumed.
-- Workspace/action context: `/home/emili/projects/control-tower/Worktrees/implementer-1`; parent allowlist restricted edits to Radar Go files and unstaged apply-progress, and was honored.
+- Workspace/action context: `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; parent allowlist restricted edits to Radar Go files and unstaged apply-progress, and was honored.
 - Workload: parent-resolved C05.2CD correction boundary; cumulative 95/400. No task completion is claimed.
 - Parent retained active attempt token `sha256:2d1e19da0a3176e687fc0c8c7000714dd380fa69df2d05510f72a9b9d59d067a`; no acquire, settle, review, commit, push, activation, archive, or other lifecycle command was run.
 - CodeGraph MCP was unavailable (`MCP not initialized`); the worktree-local upstream `codegraph explore` fallback ran before targeted filesystem inspection but returned unrelated matches, so targeted Radar reads followed.
@@ -3700,7 +3700,7 @@ No executable source or test file was authorized. The data-only source-equivalen
 ### Task and structured status continuity
 
 - Persisted task checkbox updates: none. `T0.4.5.2` and `T0.4.5.3` remain visibly unchecked; this partial candidate does not complete either task.
-- Authoritative OpenSpec status consumed from the parent: `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`, `taskProgress: 18/35`, repo-local workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, with only candidate plan plus unstaged progress authorized. Workload boundary: sequential local candidate-data unit, **51** authored lines, within 400; no PR.
+- Authoritative OpenSpec status consumed from the parent: `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`, `taskProgress: 18/35`, repo-local workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, with only candidate plan plus unstaged progress authorized. Workload boundary: sequential local candidate-data unit, **51** authored lines, within 400; no PR.
 - Action-context warning preserved: pre-existing untracked OpenSpec artifacts remain excluded and untouched; only `migration/candidate/plan.yaml` is staged. Parent retains native attempt settlement and all lifecycle authority.
 - Exact next cursor: **S9.7**. Do not append a later row in this unit.
 
@@ -4075,7 +4075,7 @@ Runtime harness: N/A — this data-only recovery is exercised through the Bun ve
 
 ### Structured status consumed
 
-- Authoritative OpenSpec status: `applyState: ready`, `dependencies.apply: ready`, `nextRecommended: apply`, `blockedReasons: []`; action context is repo-local at `/home/emili/projects/control-tower/Worktrees/implementer-1`.
+- Authoritative OpenSpec status: `applyState: ready`, `dependencies.apply: ready`, `nextRecommended: apply`, `blockedReasons: []`; action context is repo-local at `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`.
 - Parent retained native token/settlement and all review, commit, push, activation, runtime, DB, cleanup, reset, stash, and discard authority. None was invoked.
 - CodeGraph MCP was unavailable (`MCP not initialized`) despite worktree-local `.codegraph/`; targeted reads were used.
 - Final exact authored accounting: staged candidate `107+113`, mapping `2+2`, and this 34-line append-only recovery record = **258/400** additions plus deletions.
@@ -4243,7 +4243,7 @@ Parent lifecycle actions remain unchanged and deferred. Independent verification
 ### Structured status consumed
 
 - Native OpenSpec status: `applyState: ready`, `dependencies.apply: ready`, `nextRecommended: apply`, `blockedReasons: []`; artifact store is hybrid with OpenSpec authoritative.
-- Action context: repo-local authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; allowed edit surfaces honored. Parent retained token `sha256:8a1dc2d9a196b507155f94d0d4d1f8f59a3d7aeef8ab634e388423450bded99b`; no acquire, settle, reset, rescope, advance, or persistence action was performed.
+- Action context: repo-local authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; allowed edit surfaces honored. Parent retained token `sha256:8a1dc2d9a196b507155f94d0d4d1f8f59a3d7aeef8ab634e388423450bded99b`; no acquire, settle, reset, rescope, advance, or persistence action was performed.
 
 ### Final C05-S12.5-S12.6 evidence
 
@@ -4347,7 +4347,7 @@ Parent lifecycle actions remain unchanged and deferred. Independent verification
 ### Structured status consumed
 
 - OpenSpec status was authoritative: `applyState: ready`, `nextRecommended: apply`, `blockedReasons: []`; hybrid artifacts are mirrored when Engram is available.
-- Action context was repo-local at `/home/emili/projects/control-tower/Worktrees/implementer-1`; the candidate and append-only progress surfaces were the only edits. Parent retains `sha256:33571ba30b2364b228b1828d14252d16159c1d23bb32a0fff89cdb26c5d88726` and all settlement/lifecycle authority.
+- Action context was repo-local at `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; the candidate and append-only progress surfaces were the only edits. Parent retains `sha256:33571ba30b2364b228b1828d14252d16159c1d23bb32a0fff89cdb26c5d88726` and all settlement/lifecycle authority.
 
 ## Key Learnings
 
@@ -4387,7 +4387,7 @@ Parent lifecycle actions remain unchanged and deferred. Independent verification
 ### Structured status consumed
 
 - Native runtime attempt token `sha256:dd0e0dd86bead56b4c2b790ef7d9a821b8378d55a7c844e7db4d305a6567ba26` (work unit `R1 reference contract (T0.4.5A.1-.3)`, budget `--max-attempts 3 --max-changed-lines 380`) was already acquired by the parent orchestrator before this apply ran; this apply performed no `sdd-attempt acquire`/`settle`/`reset` call — the parent settles this attempt from the evidence recorded above.
-- Action context was repo-local at `/home/emili/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`; only the three R1 paths and this append-only progress/tasks record were edited.
+- Action context was repo-local at `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`; only the three R1 paths and this append-only progress/tasks record were edited.
 
 ## M0.4.5A R2 — non-executable reference listing in status and render
 
@@ -4423,7 +4423,7 @@ Parent lifecycle actions remain unchanged and deferred. Independent verification
 ### Structured status consumed
 
 - Native runtime attempt token `sha256:eb89006ee4f6bfaaceeb04e758272444984ace18790789d741e818022abe6300` (work unit `R2 reference projections (T0.4.5A.4-.6)`, budget `--max-attempts 3 --max-changed-lines 330`) was already acquired by the parent orchestrator before this apply ran; this apply performed no `sdd-attempt acquire`/`settle`/`reset` call — the parent settles this attempt from the evidence recorded above.
-- Action context was repo-local at `/home/emili/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`, HEAD `8501458` at start; only the three R2 paths and this append-only progress/tasks record were edited.
+- Action context was repo-local at `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`, HEAD `8501458` at start; only the three R2 paths and this append-only progress/tasks record were edited.
 
 ## M0.4.5A P1 — final lineage-aware activation-partition verifier (RED complete, GREEN blocked on budget)
 
@@ -4463,7 +4463,7 @@ Parent lifecycle actions remain unchanged and deferred. Independent verification
 ### Structured status consumed
 
 - Native runtime attempt token `sha256:4831683b6e25830a50a018a914487906a92202fd1f9c8ee445e87d7b56fa363b` (work unit `P1 final activation partition proof (T0.4.5A.7-.8)`, budget `--max-attempts 3 --max-changed-lines 470`) was already acquired by the parent orchestrator before this apply ran; this apply performed no `sdd-attempt acquire`/`settle`/`reset` call. The parent settles this attempt from the evidence above — note the runtime budget (470, covering code+bookkeeping) is not exceeded by the measured total, only the separate 390 **code-only** cap named in this task's instructions is.
-- Action context was repo-local at `/home/emili/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`, HEAD `699a0ea` at start; only the two staged (uncommitted) P1 paths and this append-only progress/tasks record were edited. `tasks.md` `T0.4.5A.7` is now `[x]`; `T0.4.5A.8` remains `[ ]` because its own binary completion criterion ("stage `<=390` authored lines") was not met.
+- Action context was repo-local at `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`, HEAD `699a0ea` at start; only the two staged (uncommitted) P1 paths and this append-only progress/tasks record were edited. `tasks.md` `T0.4.5A.7` is now `[x]`; `T0.4.5A.8` remains `[ ]` because its own binary completion criterion ("stage `<=390` authored lines") was not met.
 
 ### P1 size:exception — maintainer decision
 
@@ -4523,7 +4523,7 @@ None of these 14 errors is unexpected, invented, or a sign of malformed data: al
 ### Structured status consumed
 
 - Native runtime attempt token `sha256:37114ec72b5f9517c8830a2ef5783d75c8279c1bfdb884ba36a42d3b18554a26` (work unit `D1 reference ledger and candidate references (T0.4.5A.9)`, budget `--max-attempts 3 --max-changed-lines 500`) was already acquired by the parent orchestrator before this apply ran; this apply performed no `sdd-attempt acquire`/`settle`/`reset` call — the parent settles this attempt from the evidence recorded above. The measured 169-line total is well inside both the 320-line design forecast and the 500-line runtime budget.
-- Action context was repo-local at `/home/emili/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`, HEAD `3bfe304` at start; only the two D1 paths and this append-only progress/tasks record were edited.
+- Action context was repo-local at `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` on branch `feat/s0.4-plan-zones-migration`, HEAD `3bfe304` at start; only the two D1 paths and this append-only progress/tasks record were edited.
 
 ## M0.4.5A R1 correction — historical-leaf and reference edge resolution (maintainer-authorized)
 
@@ -4804,7 +4804,7 @@ Deferred parent lifecycle actions remain byte-for-byte unchanged: bounded review
 
 ### Structured status consumed
 
-- Native OpenSpec status: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`, action context `repo-local` with that workspace as the allowed edit root.
+- Native OpenSpec status: `applyState: ready`, `nextRecommended: apply`, no blocked reasons; authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`, action context `repo-local` with that workspace as the allowed edit root.
 - Action-context warning: the parent supplied a narrower C06 allowlist; only `archive-inventory.yaml`, `candidate-inputs.yaml`, `tasks.md`, and `apply-progress.md` were edited. High workload risk is resolved by the maintainer-authorized bounded C06 correction; staged authored total is exactly 203, below 400.
 
 ## M0.4.7 / C07 — blocked before proof-tree materialization
@@ -4823,7 +4823,7 @@ The declared precursor is preserved, not rewritten: `candidate-inputs.yaml` decl
 | `git status --porcelain=v1` before this progress append | PASS: clean. |
 | Canonical/archive absence checks | PASS: `openspec/plan.yaml`, `openspec/ROADMAP.md`, and `openspec/archive/legacy-planning/` absent. |
 | Candidate identity | PASS: SHA-256 `a3249af3d9b8652bfd59943a72c82a5767db21f997025cb244c1b414f5790c58`; blob `5d85cebfff9623f0468713f5c562e121cb5257a5`. |
-| `$PROOF_ROOT` existence check | PASS: `/home/emili/.cache/control-tower/migrate-control-tower-plan-zones-c07-proof` is absent; it was not created. |
+| `$PROOF_ROOT` existence check | PASS: `/home/<usuario>/.cache/control-tower/migrate-control-tower-plan-zones-c07-proof` is absent; it was not created. |
 | Ownership marker validation | PASS: every existing marker is terminal and either `implementation` or `parent`. |
 | `git diff --name-status 2c247242bdf1474de6ce392c37268a314909ddb5 2c931e4a73b0c84e11d3991dfe4816cc8a1ef63e` | C06 adds `archive-inventory.yaml` and `candidate-inputs.yaml` plus bookkeeping; `assembly_head` is an ancestor. |
 
@@ -5534,7 +5534,7 @@ The four parent-owned rows remain byte-for-byte unchanged and unchecked. No post
 
 ### Structured status consumed
 
-- `gentle-ai.sdd-status@2`; OpenSpec; repo-local `/home/emili/projects/control-tower/Main`; allowed root honored; no action-context warnings.
+- `gentle-ai.sdd-status@2`; OpenSpec; repo-local `/home/<usuario>/projects/control-tower/Main`; allowed root honored; no action-context warnings.
 - Runtime attempt authority remains exclusively in the native provider ledger; no attempt state is recorded here.
 
 ## Parent actions moved to a disposition ledger (2026-09-12)

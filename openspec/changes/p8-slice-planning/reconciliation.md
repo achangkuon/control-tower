@@ -22,8 +22,8 @@ The completed S1.12 evidence reconciles the catalog, revision-2 Plan Manifest, 2
   "integrated_base_commit": "3db3c121d48a07d7696afe6a88de044f30ea4695",
   "p6_closing_merge_commit": "e16d94b79111a1cd9521046e88f7cb51af9441da",
   "p7_record_integration_commit": "a1dce220dae594006bda0722d0bdb640cf4b9be7",
-  "project_container": "/home/emili/projects/control-tower",
-  "worktree": "/home/emili/projects/control-tower/Worktrees/s1-12",
+  "project_container": "/home/<usuario>/projects/control-tower",
+  "worktree": "/home/<usuario>/projects/control-tower/Worktrees/s1-12",
   "branch": "feat/plan-1/s1-12-p8-reconciliation",
   "authorized_base_sha": "3db3c121d48a07d7696afe6a88de044f30ea4695",
   "identities": {
@@ -147,7 +147,7 @@ The nine identity domains in the machine record are intentionally distinct. The 
 | `host_epoch` | Main issues/fences; Change E enforces | Exclusive host execution/failover generation | Product host authority; P8 may only consume proven evidence. |
 | `generation` | P7 controller/process-shared coordinator | Invalidates stale timers, callbacks, leases, and wake ownership inside one plugin process | Process-local and non-authoritative; never substituted for either durable epoch. |
 
-The documentation worktree is pinned to `/home/emili/projects/control-tower/Worktrees/s1-12`, branch `feat/plan-1/s1-12-p8-reconciliation`, and base `3db3c121d48a07d7696afe6a88de044f30ea4695`. It is inside the registered project container, but it is not a future P8 runtime assignment worktree and grants no lifecycle authority. Any later authorized implementation must independently bind its assignment and session to an in-container `Worktrees/<plan>/<lane>/<slice>` path, authorized base SHA, and allowed `plan/<plan>/<slice>` or `feat/<plan>/<slice>` branch. Missing or contradictory evidence fails closed.
+The documentation worktree is pinned to `/home/<usuario>/projects/control-tower/Worktrees/s1-12`, branch `feat/plan-1/s1-12-p8-reconciliation`, and base `3db3c121d48a07d7696afe6a88de044f30ea4695`. It is inside the registered project container, but it is not a future P8 runtime assignment worktree and grants no lifecycle authority. Any later authorized implementation must independently bind its assignment and session to an in-container `Worktrees/<plan>/<lane>/<slice>` path, authorized base SHA, and allowed `plan/<plan>/<slice>` or `feat/<plan>/<slice>` branch. Missing or contradictory evidence fails closed.
 
 ## P8 seam contract
 

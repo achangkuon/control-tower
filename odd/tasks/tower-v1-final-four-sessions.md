@@ -29,8 +29,8 @@ No product implementation, installer execution, HOME/global-state mutation, comm
 
 ## Verification
 
-- `$HOME/.local/bin/radar check -C /home/emili/projects/control-tower/Main`
-- `$HOME/.local/bin/radar render -C /home/emili/projects/control-tower/Main`
+- `$HOME/.local/bin/radar check -C /home/<usuario>/projects/control-tower/Main`
+- `$HOME/.local/bin/radar render -C /home/<usuario>/projects/control-tower/Main`
 - Fresh `radar status`, `radar faltan`, and per-Session inspection for S172, S174, S173, and S150.
 - Review the final diff and confirm no files outside the authorized edit surface changed.
 
@@ -38,7 +38,7 @@ No product implementation, installer execution, HOME/global-state mutation, comm
 
 Baseline at `c837aa3121bec2a4dac9ad8ff206499a3e55d086`: clean tracked `master`, `radar check` reported 0 errors and 63 warnings, Tower V1 reported 8/11, S172/S173/S150 were incomplete, and S174 did not exist. This task document was already untracked before integration.
 
-Observed after integration (all commands exit 0): `$HOME/.local/bin/radar check -C /home/emili/projects/control-tower/Main` → 0 errors/63 pre-existing warnings; `$HOME/.local/bin/radar render -C /home/emili/projects/control-tower/Main` → ROADMAP regenerated; the same check → 0 errors/63 warnings. `radar status --json` and `radar faltan` → Tower V1 8/12 (66%), S172 LISTO, S174/S173/S150 PLANIFICADO; `radar sesion` for each confirmed S172→S174→S173→S150 via dependencies `[S8.13]`, `[S172]`, `[S174]`, `[S173]`. `git diff --check` → clean; status showed only plan.yaml, generated ROADMAP.md and the pre-existing untracked task document.
+Observed after integration (all commands exit 0): `$HOME/.local/bin/radar check -C /home/<usuario>/projects/control-tower/Main` → 0 errors/63 pre-existing warnings; `$HOME/.local/bin/radar render -C /home/<usuario>/projects/control-tower/Main` → ROADMAP regenerated; the same check → 0 errors/63 warnings. `radar status --json` and `radar faltan` → Tower V1 8/12 (66%), S172 LISTO, S174/S173/S150 PLANIFICADO; `radar sesion` for each confirmed S172→S174→S173→S150 via dependencies `[S8.13]`, `[S172]`, `[S174]`, `[S173]`. `git diff --check` → clean; status showed only plan.yaml, generated ROADMAP.md and the pre-existing untracked task document.
 
 ## Sequential execution
 
@@ -80,7 +80,7 @@ This is technical execution continuity, not another product backlog. The Session
 - SHA-256 source: `d7410c1ce18a76c694fe3e81fd1881cea8b3db983fe4a41d6ffd527126db5d08`.
 - SHA-256 test: `7cefe0a0f3a16d1b073ddc25f0aed230b25d47ddd0e29ffe05845e08df077e61`.
 - Both hashes match the prior session's preservation record exactly.
-- Installed `/home/emili/.local/bin/radar` freshly reports admission LISTO, 0 errors / 63 warnings. No warning-equivalence assertion was independently tested.
+- Installed `/home/<usuario>/.local/bin/radar` freshly reports admission LISTO, 0 errors / 63 warnings. No warning-equivalence assertion was independently tested.
 - `core.hooksPath` is `.githooks`; RDD globally on; no peers currently advertised.
 - Fresh independent GREEN: focused 5 pass / 0 fail (93 assertions); V1 57 pass / 0 fail (1,218 assertions). Both commands exit 0. Original RED output remains unavailable; no new TDD-history assertion is made.
 - Tracked and no-index whitespace checks produced no diagnostics; no-index exit 1 means ordinary differences from `/dev/null`. Hashes and Git status remained unchanged through tests.
@@ -149,7 +149,7 @@ Installed Radar freshly admits S174 (Torre V1 › Adopción project-local revers
 
 - Only product surfaces: `product/tower/v1/global.mjs` and `product/tower/v1/test/global.test.mjs`; source references and delivered units are read-only. Route: delegated mapper (4+ files), one bounded writer (two non-trivial files), foreground checks. TDD enabled by current `openspec/config.yaml`, `strict_tdd: true`; exact runner `bun test`, framework `bun:test`. RDD globally on.
 - Cover global version storage, atomic command-visible activation/rollback and exact generated-launcher migration with retained bytes/mode and restoration. No project adoption, index, CLI/menu implementation, arbitrary-root discovery or legacy-state import. Use a separate V1 namespace; the older engine's active.json and version store grant no V1 trust.
-- Known legacy launcher template is the complete generated file in `agent-workflows/tools/setup.sh:281–285`, including final LF and independently established repository expansion. Its current Main expansion targets `/home/emili/projects/control-tower/Main/agent-workflows/tools/setup.sh`. Actual installed launcher was not observed; migration must compare complete expected bytes, not trust a comment, parse an arbitrary target or execute legacy code. Unknown launchers remain unchanged and block.
+- Known legacy launcher template is the complete generated file in `agent-workflows/tools/setup.sh:281–285`, including final LF and independently established repository expansion. Its current Main expansion targets `/home/<usuario>/projects/control-tower/Main/agent-workflows/tools/setup.sh`. Actual installed launcher was not observed; migration must compare complete expected bytes, not trust a comment, parse an arbitrary target or execute legacy code. Unknown launchers remain unchanged and block.
 - Bootstrap's receipt has mutable isolated Buffers and no repository/tag/asset provenance. Revalidate/copy through the delivered verification boundary before mutation; never treat frozen metadata alone as byte authority. Only canonical positive members become version files; validate referenced versions/state/launcher and retain compensation evidence. No two-renames-as-one-atomic-operation or unproven power-loss claim.
 - Tests use disposable roots and injected acquisition/failure doubles, isolated HOME/XDG; no real GitHub downloads, global installation, downloaded-code execution or real HOME/product-state writes. Ordinary test/compiler caches remain permitted. Preserve current Radar and Chanks/Tower emojis.
 - Checks: `bun test product/tower/v1/test/global.test.mjs` with observed RED/GREEN/triangulation/refactor; `bun test product/tower/v1/test`; `bun run test`; whitespace including new files; independent focused spot check and native candidate review. No bypass or premature continuation on failed checks.

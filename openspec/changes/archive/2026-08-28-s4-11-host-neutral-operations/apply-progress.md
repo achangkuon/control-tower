@@ -5,7 +5,7 @@
 - Change: `s4-11-host-neutral-operations`
 - Artifact store: hybrid
 - Apply state: in progress; direct commit boundary 1 implementation complete
-- Action context: authoritative workspace `/home/emili/projects/control-tower/Worktrees/implementer-1`; edits restricted to boundary product paths plus SDD artifacts
+- Action context: authoritative workspace `/home/<usuario>/projects/control-tower/Worktrees/implementer-1`; edits restricted to boundary product paths plus SDD artifacts
 - Resolved authority: Decisions 84, 92, and 93; no new always-escalate decision encountered
 - Delivery: sequential direct commits, partial chain non-deliverable
 - Parent-held attempt token: `sha256:78d61b4ae09339d41cc4f2b07bd80f025e183b028dd6e0b77086ec2edcfb1bdc` (not acquired, settled, or reset)

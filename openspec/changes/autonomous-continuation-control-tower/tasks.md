@@ -168,7 +168,7 @@ Execute six active sequential chained units; budgets are independent and cannot 
   - Disposition: pending.
 - Parent responsibility: 11.3 Verify candidate release and rollback evidence; update host configs only after all probes pass; preserve legacy source until cutover is proven.
   - Disposition: pending.
-- Parent responsibility: 11.4 Servi-Task-U gate: CT passes plus API/error/fence/evidence and OFF/quiescent/rollback evidence.
+- Parent responsibility: 11.4 Proyecto-Alpha gate: CT passes plus API/error/fence/evidence and OFF/quiescent/rollback evidence.
   - Disposition: pending.
 
 ### Inverse traceability

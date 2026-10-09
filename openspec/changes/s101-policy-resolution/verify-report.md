@@ -48,7 +48,7 @@ The OpenSpec and Engram artifact contents match for proposal, specification, des
 | Native route supplied by parent | `nextRecommended: verify` |
 | Native blockers | `blockedReasons: []` |
 | Task/apply readiness | Tasks and apply-progress are present and non-empty in both stores |
-| Workspace | `/home/emili/projects/control-tower/Worktrees/implementer-1` |
+| Workspace | `/home/<usuario>/projects/control-tower/Worktrees/implementer-1` |
 | Allowed write root | Exact report path only: `openspec/changes/s101-policy-resolution/verify-report.md` |
 | Ownership | Proven: verification owns only the report; the candidate and all implementation/authority surfaces remained read-only |
 | Runtime attempt | Not acquired; this is migration-planning data verification only |
@@ -162,7 +162,7 @@ Tasks forecast low budget risk, no chained PR, and no apply decision. The implem
 
 ## `.gentle-ai-instance`
 
-`openspec/changes/migrate-control-tower-plan-zones/.gentle-ai-instance` is present, regular, untracked, and ignored by `/home/emili/projects/control-tower/Main/.git/info/exclude:14`. Its SHA-256 is `5693e49193873ef67217dc042716769a873704f1c7f4b12c3e8d5e3824ccf0ca`; inode/size/mtime/mode remained `581951:37:1788488493:81a4` through verification. It was not touched.
+`openspec/changes/migrate-control-tower-plan-zones/.gentle-ai-instance` is present, regular, untracked, and ignored by `/home/<usuario>/projects/control-tower/Main/.git/info/exclude:14`. Its SHA-256 is `5693e49193873ef67217dc042716769a873704f1c7f4b12c3e8d5e3824ccf0ca`; inode/size/mtime/mode remained `581951:37:1788488493:81a4` through verification. It was not touched.
 
 ## Findings
 

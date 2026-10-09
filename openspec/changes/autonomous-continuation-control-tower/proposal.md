@@ -15,7 +15,7 @@ Add the approved Revision 11 continuation substrate to the standalone Control To
 - Preserve legacy `agent`, `message`, and `lock` tables, queue behavior, tools, readable OFF status, and OFF fail-closed/no-mutation guarantees.
 
 ### Out of Scope
-- Servi-Task-U discovery, OpenSpec interpretation, ownership, one-unit policy, project rollout, runbooks, or policy scripts.
+- Proyecto-Alpha discovery, OpenSpec interpretation, ownership, one-unit policy, project rollout, runbooks, or policy scripts.
 - Runtime mutation of the actual Tower during planning/tests; activation, delivery, or hostile same-UID protection.
 - Replacing or deleting `~/.config/opencode/control-tower` before a verified cutover.
 - Host-specific policy inside the SQLite authority or host-neutral controller.
@@ -36,7 +36,7 @@ Add the approved Revision 11 continuation substrate to the standalone Control To
 
 ## Approach
 
-Extend the existing `core.mjs` SQLite authority with an additive continuation plane beside the unchanged legacy queue. Keep every mutation transactional and fenced. Put polling, stop-before-receive ordering, wake throttling, and delivery orchestration in a host-neutral controller; keep OpenCode events/client calls, Pi extension events/message injection, and Claude hooks/rewake mechanics in separate adapters. The later Servi-Task-U track is a dependent consumer of this exact CT API, identity, fence, evidence, and deterministic-error contract—not a Tower responsibility.
+Extend the existing `core.mjs` SQLite authority with an additive continuation plane beside the unchanged legacy queue. Keep every mutation transactional and fenced. Put polling, stop-before-receive ordering, wake throttling, and delivery orchestration in a host-neutral controller; keep OpenCode events/client calls, Pi extension events/message injection, and Claude hooks/rewake mechanics in separate adapters. The later Proyecto-Alpha track is a dependent consumer of this exact CT API, identity, fence, evidence, and deterministic-error contract—not a Tower responsibility.
 
 ## Affected Areas
 
@@ -72,4 +72,4 @@ Keep continuation OFF, quiesce and disposition live continuation records, retain
 - [ ] Host-neutral core/controller code imports no OpenCode, Pi, or Claude SDK surface.
 - [ ] Actual Tower remains OFF and its runtime database is unchanged during planning/tests.
 - [ ] A candidate release is verified under `~/.local/share/opencode/control-tower/releases/<git-sha>` before `current` or any host config changes.
-- [ ] Exact API/identity/fence/evidence/error contracts are consumable by the later Servi-Task-U track without Tower policy logic.
+- [ ] Exact API/identity/fence/evidence/error contracts are consumable by the later Proyecto-Alpha track without Tower policy logic.

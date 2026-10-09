@@ -18,7 +18,7 @@ contact Notion to repair that intentional absence. Any project's equivalent proh
    An invalid pointer is a configuration failure, never permission to substitute the bootstrap map.
 2. Only if local policy permits Notion and the pointer is missing, load
    `../assets/project-notion-map.json`. Match the exact Git-root basename against its existing
-   aliases for Servitask, ECOM, or Finanzas. This is a bootstrap seed, not live project status.
+   aliases for Proyecto-Alpha, Proyecto-Beta, or Proyecto-Gamma. This is a bootstrap seed, not live project status.
 3. Return the known mapping as a proposed pointer for the responsible parent to confirm before
    creating it. For an unknown project, report the missing mapping and ask for its authoritative
    target; never invent a page ID, infer it from memory, or search Notion to guess.

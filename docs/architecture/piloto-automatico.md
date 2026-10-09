@@ -192,7 +192,7 @@ Cuántas Sesiones afecta es un dato del informe («Medio, afecta a 4 Sesiones»)
 | Pista | Hace entrar los vuelos revisados al repositorio de a uno |
 
 - POR REVISAR se parece a la cola de Pista que espera autorización humana (`docs/architecture/pista-entrega-ordenada.md`, sección 4).
-- La revisión en paralelo con un orquestador por vuelo produce subidas que compiten por la rama principal: es el caso de `ecom-ecuador` que motivó Pista. **El piloto necesita a Pista para aterrizar varios vuelos.**
+- La revisión en paralelo con un orquestador por vuelo produce subidas que compiten por la rama principal: es el caso de `proyecto-beta` que motivó Pista. **El piloto necesita a Pista para aterrizar varios vuelos.**
 - Un orquestador por vuelo, aun con el piloto apagado, coincide con la promesa de Pista: conversaciones independientes que entregan por una sola puerta.
 - NOVEDAD y la regla de cuándo frenar no existen en Pista: son piezas nuevas.
 

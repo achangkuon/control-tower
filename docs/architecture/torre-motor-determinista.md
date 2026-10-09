@@ -926,7 +926,7 @@ La retoma recomendada es:
 2. Revalidar de forma read-only contra `HEAD` actual los contratos Radar afectados, primero con:
 
 ```sh
-$HOME/.local/bin/radar status --json -C /home/emili/projects/control-tower/Main
+$HOME/.local/bin/radar status --json -C /home/<usuario>/projects/control-tower/Main
 ```
 
 3. Reconsultar con `radar sesion <ID>` sólo las Sesiones que el delta potencial afecte; contrastar el `HEAD` nuevo con la investigación original `ebc2ffb840030f7266a207536134c057a82bec70` y este checkpoint `1658444ff52cddba3516f7e4e39bd314ccd21cdc`.

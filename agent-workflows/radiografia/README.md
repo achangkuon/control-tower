@@ -47,8 +47,8 @@ git config core.hooksPath .githooks
 
 ```json
 {
-  "project": "Servi Task U",
-  "title": "Radiografía de Servi Task",
+  "project": "Proyecto Alpha U",
+  "title": "Radiografía de Proyecto Alpha",
   "plan": "openspec/plan.yaml",
   "radar": { "command": ["radar"], "cwd": "." },
   "code": {

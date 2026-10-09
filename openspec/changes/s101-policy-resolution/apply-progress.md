@@ -4,7 +4,7 @@
 
 - Consumed authoritative native status: `ready`, `nextRecommended: apply`, `blockedReasons: []`, hybrid store, no prior apply-progress.
 - Worktree/branch/HEAD: `implementer-1` / `feat/s0.4-plan-zones-migration` / `e93ee87e0705bd8e2d0d64b98956e986a633972d`.
-- Allowed roots honored. No structured `actionContext` object was supplied; the delegated migration-only boundary was used. `openspec/changes/migrate-control-tower-plan-zones/.gentle-ai-instance` is present, untracked, ignored by `/home/emili/projects/control-tower/Main/.git/info/exclude:14`, and preserved untouched.
+- Allowed roots honored. No structured `actionContext` object was supplied; the delegated migration-only boundary was used. `openspec/changes/migrate-control-tower-plan-zones/.gentle-ai-instance` is present, untracked, ignored by `/home/<usuario>/projects/control-tower/Main/.git/info/exclude:14`, and preserved untouched.
 
 ## Completed tasks
 

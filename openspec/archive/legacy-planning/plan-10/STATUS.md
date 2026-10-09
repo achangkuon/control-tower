@@ -49,7 +49,7 @@ abajo. Para `S10.2`, la decisión 26 y la elaboración técnica fijaron el `Áre
 **Ruta:** `direct` — artefacto pasivo, sin runtime ni tests; sólo copia y readback estructural.
 
 **Decisiones:**
-- `escala` — **RESUELTA por el maintainer:** copia byte a byte desde `/home/emili/.agents/skills/unattended-implementation/assets/execution-contract.schema.json`; destino exacto de 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`. La excepción autoriza sólo este contrato activo indivisible, no otras líneas ni overflow de `S10.1`. **Clase:** expansión de alcance; contrato visible del producto. **Contaminaba:** `S10.3`, `S10.1`, `S10.2`, `S7.1`.
+- `escala` — **RESUELTA por el maintainer:** copia byte a byte desde `/home/<usuario>/.agents/skills/unattended-implementation/assets/execution-contract.schema.json`; destino exacto de 17.297 bytes, 407 líneas y SHA-256 `2f4838aa244b30e280c5c558286b0e4d9fbb503a0ef1808ffc27501c1540fddc`. La excepción autoriza sólo este contrato activo indivisible, no otras líneas ni overflow de `S10.1`. **Clase:** expansión de alcance; contrato visible del producto. **Contaminaba:** `S10.3`, `S10.1`, `S10.2`, `S7.1`.
 
 **Criterios de aceptación** — todos deben pasar para cerrar:
 - [x] El destino es byte-idéntico al origen y coincide en bytes, líneas y SHA-256

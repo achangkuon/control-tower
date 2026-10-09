@@ -182,10 +182,10 @@ describe("renderReport — proyectos sin payload", () => {
   })
 
   test("names the project and title from the measurement, not from a hardcoded string", () => {
-    const other = { ...noShip, source: { project: "Servi Task", title: "Radiografía de Servi Task", plan: "openspec/plan.yaml", producto: "servi-task" } }
+    const other = { ...noShip, source: { project: "Proyecto Alpha", title: "Radiografía de Proyecto Alpha", plan: "openspec/plan.yaml", producto: "proyecto-alpha" } }
     const html = renderReport(parseAuthored(AUTHORED), other)
-    expect(html).toContain("<title>Radiografía de Servi Task</title>")
-    expect(html).toContain("Servi Task ·")
+    expect(html).toContain("<title>Radiografía de Proyecto Alpha</title>")
+    expect(html).toContain("Proyecto Alpha ·")
     expect(html).not.toContain("Radiografía de la Torre")
   })
 

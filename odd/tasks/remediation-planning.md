@@ -33,9 +33,9 @@ The maintainer clarified that `planning.horizon_ceiling: 2` belongs only to the 
 
 This is planning/configuration documentation. No runtime implementation RED/GREEN cycle is claimed; future implementation retains its configured TDD requirements.
 
-- Installed `radar check -C /home/emili/projects/control-tower/Main`: 0 errors, 63 warnings. No baseline warning-equivalence assertion is made.
-- Installed `radar render -C /home/emili/projects/control-tower/Main`: succeeded; generated view regenerated after the parent corrected a prose reference.
-- Installed `radar status --json -C /home/emili/projects/control-tower/Main`: construction V1 remains the active priority; new records received no premature execution admission.
+- Installed `radar check -C /home/<usuario>/projects/control-tower/Main`: 0 errors, 63 warnings. No baseline warning-equivalence assertion is made.
+- Installed `radar render -C /home/<usuario>/projects/control-tower/Main`: succeeded; generated view regenerated after the parent corrected a prose reference.
+- Installed `radar status --json -C /home/<usuario>/projects/control-tower/Main`: construction V1 remains the active priority; new records received no premature execution admission.
 - `git diff --check`: passed, including parent readback.
 - Deterministic Bun/YAML assertions: seven unique new native records; all prior plan data and priority order unchanged; read-only entries have no authorized files or reserved Cimientos; the policy YAML is byte-identical to the starting commit.
 - Independent verifier repeated the checks and read the generated view. Initial/final Git status matched, and concurrent release files were neither read as audit evidence nor modified.

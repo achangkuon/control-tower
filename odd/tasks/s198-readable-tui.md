@@ -36,7 +36,7 @@ Rollback boundary: these additive doctor fields, their TUI display helpers, asso
 Go commands isolate HOME and build cache, read existing module-cache dependencies offline, and disable Go environment-file loading:
 
 ```sh
-cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOPROXY=off GOENV=off GOWORK=off go test ./...
+cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOPROXY=off GOENV=off GOWORK=off go test ./...
 ```
 
 Result: **29 top-level tests pass / 0 fail**. An additional `go test -v ./...` with the same environment passed and emitted the fixture below.

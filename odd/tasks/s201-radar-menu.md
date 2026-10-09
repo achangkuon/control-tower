@@ -18,7 +18,7 @@ Contract source: `radar sesion S201`, executed on initially clean `master`. The 
 The offline Go command below was run with disposable HOME/build cache and the existing module cache; no real HOME was mutated.
 
 ```sh
-cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/emili/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...
+cd product/tower/v1/tui && HOME=$(mktemp -d) GOCACHE=$(mktemp -d) GOMODCACHE=/home/<usuario>/go/pkg/mod GOENV=off GOTELEMETRY=off GOWORK=off GOPROXY=off go test ./...
 ```
 
 - **RED:** one top-level failure, `TestRadarActionOnlyForActiveProjects/healthy-active`: the actual project menu lacked **Comandos de Radar**. The other project-state cases and existing tests remained green. The runner/screen tests were authored before their implementation.

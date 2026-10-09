@@ -16,7 +16,7 @@ The approved `design-tasks` route intentionally has no `proposal.md` and no chan
 | Current native dispatcher status | `proposal` and `specs` missing; apply, verify, and archive `blocked`; `nextRecommended=propose` |
 | Status reconciliation | The historical handoff records completed implementation/verification evidence, while the authoritative native dispatcher remains blocked because file-backed proposal/spec artifacts are absent. The approved route explains the absence but does not override the dispatcher. |
 | Action context | `repo-local` |
-| Authoritative workspace / allowed edit root | `/home/emili/projects/control-tower/Main` |
+| Authoritative workspace / allowed edit root | `/home/<usuario>/projects/control-tower/Main` |
 | Route | `design-tasks` |
 | Change-local proposal/specs | Intentionally absent by the approved route |
 | Sync rule in `openspec/config.yaml` | None declared |
@@ -53,7 +53,7 @@ The approved `design-tasks` route intentionally has no `proposal.md` and no chan
 - Read verify-report.md and config.yaml; config has no rules.sync entry.
 - Confirmed the implementation commit is an ancestor of the delivered/current HEAD.
 - Confirmed the working tree was clean before this report was written.
-- Recorded the gatekeeper's native `gentle-ai sdd-status s5-5-parking-resume-loop --cwd /home/emili/projects/control-tower/Main --json` result: `proposal`/`specs` missing, apply/verify/archive blocked, and `nextRecommended=propose`.
+- Recorded the gatekeeper's native `gentle-ai sdd-status s5-5-parking-resume-loop --cwd /home/<usuario>/projects/control-tower/Main --json` result: `proposal`/`specs` missing, apply/verify/archive blocked, and `nextRecommended=propose`.
 ```
 
 ## Next recommendation

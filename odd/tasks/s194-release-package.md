@@ -55,7 +55,7 @@ Todos bajo `product/tower/v1/`, salvo el registro ODD:
 
 ## TDD y validación
 
-Todos los comandos de tests se ejecutaron desde `/home/emili/projects/control-tower/Main`.
+Todos los comandos de tests se ejecutaron desde `/home/<usuario>/projects/control-tower/Main`.
 
 ### RED observado
 

@@ -115,7 +115,7 @@ Each generation has at most one live claim and delivery. `WORK_SUSPENDED` and `A
 | `~/.config/opencode/control-tower/{core.mjs,mcp.mjs}` | Modify | Versioned schema, exact APIs, transactions, mode, authority, recovery. |
 | `~/.config/opencode/control-tower/plugin/tower-spike.js` | Modify | Root-bound non-consuming polling and disposal ordering. |
 | `~/.config/opencode/control-tower/test/{migration,identity,lifecycle,recovery,polling}.test.mjs` | Create | Contract/race/proof tests. |
-| `scripts/{continuation-policy,continuation-e2e}.test.mjs` | Create | Servi-Task-U policy and pilot. |
+| `scripts/{continuation-policy,continuation-e2e}.test.mjs` | Create | Proyecto-Alpha policy and pilot. |
 | `openspec/maintenance/torre-control-runbook.md` | Modify | Installation, activation, rollback, legacy fallback. |
 
 ## Strict TDD Contract for Tasks

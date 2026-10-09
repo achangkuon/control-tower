@@ -6,7 +6,7 @@
 
 11305/11310 approved S147/S148 designs; later authorization recorded them.11316 approves sequential deliveries, S147 before S148, publication and conversation closure. It does NOT select implementation, approve concrete technical slices/refined forecasts or a size exception, permit live migration/activation, or alter priorities. Future implementation needs refined technical decomposition, fresh human selection/Radar admission and shared-file compatibility; S148 requires S147 actually delivered.
 
-11317 authorized clean temporary worktree `/home/emili/projects/control-tower/Worktrees/documentation-close-1658444`, own frozen-lockfile dependencies, normal hooks and safe retirement.11323 subsequently authorizes retaining that checkout and closing: process-readback is unavailable, so cleanup is deferred, never forced or retried autonomously.
+11317 authorized clean temporary worktree `/home/<usuario>/projects/control-tower/Worktrees/documentation-close-1658444`, own frozen-lockfile dependencies, normal hooks and safe retirement.11323 subsequently authorizes retaining that checkout and closing: process-readback is unavailable, so cleanup is deferred, never forced or retried autonomously.
 
 ## Tasks
 

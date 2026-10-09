@@ -2,19 +2,19 @@
   "_comment": "Bootstrap seed for chanks-7-session-doc. Maps known repos to their Notion page. Match by repo folder name (basename of git toplevel). Used ONLY to create a missing .session-doc.json; the committed pointer is the source of truth thereafter.",
   "projects": [
     {
-      "match": ["Servi-Task-U", "Servitask", "servi-task", "servitask"],
-      "notion_page_id": "387e23cc934581f99b44eb519210c801",
-      "notion_url": "https://app.notion.com/p/Pendientes-de-implementaci-n-Usuario-App-y-Tasker-App-387e23cc934581f99b44eb519210c801"
+      "match": ["Proyecto-Alpha", "proyecto-alpha", "proyecto-alpha-task"],
+      "notion_page_id": "0000000000000000000000000000aa01",
+      "notion_url": "https://notion.example/p/proyecto-alpha-index-0000000000000000000000000000aa01"
     },
     {
-      "match": ["ecom-ecuador", "Ecom-Ecuador", "ECOM-EC"],
-      "notion_page_id": "38be23cc9345801099ecd67402e32992",
-      "notion_url": "https://app.notion.com/p/ECOM-EC-Index-38be23cc9345801099ecd67402e32992"
+      "match": ["proyecto-beta", "Proyecto-Beta"],
+      "notion_page_id": "0000000000000000000000000000aa02",
+      "notion_url": "https://notion.example/p/proyecto-beta-index-0000000000000000000000000000aa02"
     },
     {
-      "match": ["Finanzas-Personales", "finanzas-personales"],
-      "notion_page_id": "38be23cc93458067800ce1721df78d50",
-      "notion_url": "https://app.notion.com/p/Finanzas-Personales-Index-38be23cc93458067800ce1721df78d50"
+      "match": ["proyecto-gamma"],
+      "notion_page_id": "0000000000000000000000000000aa03",
+      "notion_url": "https://notion.example/p/proyecto-gamma-index-0000000000000000000000000000aa03"
     }
   ]
 }

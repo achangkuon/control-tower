@@ -42,8 +42,8 @@ The four code slices remained at or below 400 changed lines. The OpenSpec docume
 
 Delivery paths:
 
-- Source worktree: `/home/emili/projects/control-tower/Worktrees/dashboard-skeleton`
-- Delivery worktree: `/home/emili/projects/control-tower/Worktrees/dashboard-delivery`
+- Source worktree: `/home/<usuario>/projects/control-tower/Worktrees/dashboard-skeleton`
+- Delivery worktree: `/home/<usuario>/projects/control-tower/Worktrees/dashboard-delivery`
 
 ## Locked scope and hard boundaries
 

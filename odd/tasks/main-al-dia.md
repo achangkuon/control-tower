@@ -1,6 +1,6 @@
 # main-al-dia — personal session-start freshness check
 
-Owner request (2026-10-05, conversation from ecom-ecuador): every agent, on entering a
+Owner request (2026-10-05, conversation from proyecto-beta): every agent, on entering a
 session in a Git project, checks whether the project's default branch is up to date with
 its remote. Up to date: continue silently. Behind: ask the user once whether to update
 first or continue as is. Never update without consent. Approved design: a read-only

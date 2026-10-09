@@ -22,7 +22,7 @@ Descartado: un agente Main coordinador (depende de una conversación abierta y d
 
 ## 2. El problema, con un caso real
 
-El 2026-10-01, en el repo `ecom-ecuador`, dos conversaciones trabajaron en paralelo y aparecieron en una tarde los tres problemas que Pista resuelve:
+El 2026-10-01, en el repo `proyecto-beta`, dos conversaciones trabajaron en paralelo y aparecieron en una tarde los tres problemas que Pista resuelve:
 
 | Qué pasó | Qué lo habría evitado |
 |---|---|
@@ -152,7 +152,7 @@ Si los agentes pueden publicar por fuera de Pista, no hay garantía completa: es
 
 - La puerta se cierra en el repositorio remoto (rama protegida con comprobación obligatoria), no en la herramienta.
 - Protección de rama, comprobaciones obligatorias y cola nativa de integración son capacidades distintas. Dependen del plan contratado y la cola nativa no está disponible automáticamente para una cuenta personal. No se verificó la cuenta del mantenedor.
-- `control-tower` entrega con commit directo a `master`, sin PR (`AGENTS.md:70-83`). `ecom-ecuador` entrega con PR. Pista tiene que soportar las dos formas desde el inicio. Cambiar la política de un repo es una decisión del mantenedor, no viene escondida en la herramienta.
+- `control-tower` entrega con commit directo a `master`, sin PR (`AGENTS.md:70-83`). `proyecto-beta` entrega con PR. Pista tiene que soportar las dos formas desde el inicio. Cambiar la política de un repo es una decisión del mantenedor, no viene escondida en la herramienta.
 
 ## 9. Orden de construcción
 
@@ -213,11 +213,11 @@ Prioridad baja: copias viejas y documentos.
 
 | # | Qué | Evidencia |
 |---|---|---|
-| N12 | Skills viejas en Windows y Gemini (26 directorios, incluidas `chanks-6` y `chanks-7`) | `/mnt/c/Users/emili/*/skills`, `~/.gemini/config/skills` |
+| N12 | Skills viejas en Windows y Gemini (26 directorios, incluidas `chanks-6` y `chanks-7`) | `/mnt/c/Users/<usuario>/*/skills`, `~/.gemini/config/skills` |
 | N15 | Documentos fuente sin aviso de históricos | `agent-workflows/historico/EJECUCION-EN-PARALELO.md:17`, `docs/flujo/chanks-guia-de-etapas.html:30,33,69,72`, `agent-workflows/README.md:132-133` |
 | N16 | Codex y Hermes no tienen los bloques de cierre documental, nombres de plan ni explicación simple | Inventario de bloques por runtime. No se sabe si es intencional |
 | N17 | `chanks-3-paralelo` no dice si cada Sesión del lote pasa por la admisión del arranque | `chanks-3-paralelo/SKILL.md:39-52` contra `chanks-3-session-kickoff/SKILL.md:12-29` |
-| N18 | Registros de skills que apuntan a rutas archivadas | `~/.atl/skill-registry.md`, `~/projects/.atl/skill-registry.md`, `ecom-ecuador/Main/.atl/skill-registry.md:59-60` |
+| N18 | Registros de skills que apuntan a rutas archivadas | `~/.atl/skill-registry.md`, `~/projects/.atl/skill-registry.md`, `proyecto-beta/Main/.atl/skill-registry.md:59-60` |
 
 ### Lo que no se pudo comprobar
 
@@ -229,7 +229,7 @@ Prioridad baja: copias viejas y documentos.
 
 ## 12. Procedencia
 
-- Definido en una conversación con el mantenedor el 2026-10-01, trabajando desde `ecom-ecuador`.
+- Definido en una conversación con el mantenedor el 2026-10-01, trabajando desde `proyecto-beta`.
 - Dos mapeos de solo lectura sobre `control-tower@d8d12d0`: verificación de las piezas de entrega y auditoría de configuración.
 - Diagrama de la etapa 5 actualizado en el documento «Chanks como guía de etapas — análisis por tramos», marcado ahí como propuesta.
 - Una propuesta paralela de otro agente coincide en el motor por proyecto, las seis tareas y la separación entre Radar y la herramienta de salida.

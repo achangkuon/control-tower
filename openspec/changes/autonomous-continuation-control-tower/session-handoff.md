@@ -4,7 +4,7 @@
 
 | Item | State |
 |---|---|
-| Repository | `/home/emili/projects/control-tower/Worktrees/autonomous-continuation` (linked worktree; git-common-dir is `../../Main/.git`) |
+| Repository | `/home/<usuario>/projects/control-tower/Worktrees/autonomous-continuation` (linked worktree; git-common-dir is `../../Main/.git`) |
 | Branch | `feat/control-tower/autonomous-continuation` |
 | Local HEAD | `86b662c` — `feat(tower): add P4-B delivery peek and atomic claim with session budget` |
 | Test baseline | `bun test` → **107 pass, 0 fail, 814 assertions** across 3 files |

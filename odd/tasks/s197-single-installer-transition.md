@@ -100,7 +100,7 @@ WOULD_REMOVE /tmp/tmp5xhj47qj/.pi/agent/APPEND_SYSTEM.md: PLAN-NAMING:GLOBAL
 
 ## Delivery gate and next steps
 
-Parent review and terminal Git actions remain outside this writer's authority. Live migration requires separate maintainer authorization. From `/home/emili/projects/control-tower/Main`, the maintainer's future commands are:
+Parent review and terminal Git actions remain outside this writer's authority. Live migration requires separate maintainer authorization. From `/home/<usuario>/projects/control-tower/Main`, the maintainer's future commands are:
 
 ```bash
 python3 agent-workflows/tools/install.py --migrate-to-tower
@@ -136,9 +136,9 @@ Read-only inspection of the cached `release.json` files proves that **v1.0.0, v1
 
 ### Copied real-cache smoke (not a live installation)
 
-With umask 022, `cp -a /home/emili/.local/share/torre-control` preserved cache modes under temporary HOME `/tmp/tmp.OfodKoewOg/.local/share/`. The stable launcher was rendered from the current local `global.mjs` template into that HOME's `.local/bin/torre-control`, changing only its embedded state-root to the copied location; the real launcher was not read or modified. HOME and XDG locations were isolated; `GH_CONFIG_DIR=/home/emili/.config/gh` was supplied only to the requested commands, without inspecting credentials. Installed Gentle AI was available on PATH (version 4.0.0).
+With umask 022, `cp -a /home/<usuario>/.local/share/torre-control` preserved cache modes under temporary HOME `/tmp/tmp.OfodKoewOg/.local/share/`. The stable launcher was rendered from the current local `global.mjs` template into that HOME's `.local/bin/torre-control`, changing only its embedded state-root to the copied location; the real launcher was not read or modified. HOME and XDG locations were isolated; `GH_CONFIG_DIR=/home/<usuario>/.config/gh` was supplied only to the requested commands, without inspecting credentials. Installed Gentle AI was available on PATH (version 4.0.0).
 
-- `HOME=/tmp/tmp.OfodKoewOg GH_CONFIG_DIR=/home/emili/.config/gh bun product/tower/v1/cli.mjs doctor` (with isolated XDG variables) — **exit 0, healthy**, active `v1.1.0` (`2e2dfcf9…`), previous `v1.0.2` (`4f7eb498…`). This validated all four real retained releases and their materialized trees. Runtime components correctly report missing because only the cache, not personal runtime directories, was copied.
-- `HOME=/tmp/tmp.OfodKoewOg GH_CONFIG_DIR=/home/emili/.config/gh bun product/tower/v1/cli.mjs update --from-checkout /home/emili/projects/control-tower/Main` (same isolated XDG variables) — **exit 1**, `Invalid Tower CLI: a clean worktree is required (tracked or untracked changes found)`. The fixes must remain uncommitted, so the real release builder's deliberate dirty-checkout gate prevents this smoke from reaching activation/build. No successful copied-cache update or live deployment is claimed. Rerun this smoke after the parent supplies a clean committed candidate; the fixture suite proves the update behavior separately.
+- `HOME=/tmp/tmp.OfodKoewOg GH_CONFIG_DIR=/home/<usuario>/.config/gh bun product/tower/v1/cli.mjs doctor` (with isolated XDG variables) — **exit 0, healthy**, active `v1.1.0` (`2e2dfcf9…`), previous `v1.0.2` (`4f7eb498…`). This validated all four real retained releases and their materialized trees. Runtime components correctly report missing because only the cache, not personal runtime directories, was copied.
+- `HOME=/tmp/tmp.OfodKoewOg GH_CONFIG_DIR=/home/<usuario>/.config/gh bun product/tower/v1/cli.mjs update --from-checkout /home/<usuario>/projects/control-tower/Main` (same isolated XDG variables) — **exit 1**, `Invalid Tower CLI: a clean worktree is required (tracked or untracked changes found)`. The fixes must remain uncommitted, so the real release builder's deliberate dirty-checkout gate prevents this smoke from reaching activation/build. No successful copied-cache update or live deployment is claimed. Rerun this smoke after the parent supplies a clean committed candidate; the fixture suite proves the update behavior separately.
 
 Only the authorized product files/tests and this appended task section changed. No commit or push was performed and no real HOME writes were performed. The temporary smoke copy remains available for parent inspection.

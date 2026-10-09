@@ -26,12 +26,12 @@ performed.
 - Change: `s5-9-parked-checkpoint-binding`
 - Session: `S5.9`
 - Artifact store: `hybrid` (OpenSpec files + Engram)
-- Source workspace: `/home/emili/projects/control-tower/Worktrees/s5-9`
+- Source workspace: `/home/<usuario>/projects/control-tower/Worktrees/s5-9`
 - Branch: `work/s5-9-checkpoint-binding`
 - Base: `a8d7dde89b7683813ef910d0140ddafda4262001` (`master`)
 - HEAD: `754c69888fb9e322c53299af4988e307e72c5e06`
 - Implementation commits: `3c3040d` (candidate A) and `754c698` (candidate B)
-- Authority: `/home/emili/projects/control-tower/Main/openspec/plans/plan-5/STATUS.md`,
+- Authority: `/home/<usuario>/projects/control-tower/Main/openspec/plans/plan-5/STATUS.md`,
   section "Sesión 5.9 — Binding autoritativo del checkpoint estacionado", including the
   eight "Criterios de aceptación de S5.9", `Área`, and `Prohibido`.
 - Verification mode: read-only audit plus real test execution. No implementation file,

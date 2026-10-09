@@ -22,7 +22,7 @@
 
 ## Granularidad
 
-Plan → Sesión → Módulo → Tarea. **Sesión = alcance coherente de revisión que cabe en un PR.** La entrega actual puede usar commits directos secuenciales, pero cada resultado planificado aquí queda independientemente revisable, verificable y revertible con forecast ≤400 líneas authored. El tiempo es estimación, no límite. Ver `/home/emili/.claude/skills/_shared/plan-naming-convention.md`.
+Plan → Sesión → Módulo → Tarea. **Sesión = alcance coherente de revisión que cabe en un PR.** La entrega actual puede usar commits directos secuenciales, pero cada resultado planificado aquí queda independientemente revisable, verificable y revertible con forecast ≤400 líneas authored. El tiempo es estimación, no límite. Ver `/home/<usuario>/.claude/skills/_shared/plan-naming-convention.md`.
 
 ## 📊 Estado de un vistazo
 

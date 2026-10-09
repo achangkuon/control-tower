@@ -286,7 +286,7 @@ parent-owned `1.4` and P2+ were not started.
 - Change: `autonomous-continuation-control-tower`
 - Authoritative apply state: `ready`; artifact store: `both`
 - Action context: `repo-local`, workspace and allowed edit root both
-  `/home/emili/projects/control-tower`; warnings: none
+  `/home/<usuario>/projects/control-tower`; warnings: none
 - Delivery: `auto-chain`, `feature-branch-chain`, Unit 1 only
 - Strict TDD: active; Bun `1.3.14` (`d1632b29`)
 
@@ -372,7 +372,7 @@ parent-owned `1.4` and P2+ were not started.
 ### P1 OFF and preservation evidence
 
 - Actual canonical `ACTIVE`: absent.
-- Legacy `/home/emili/.config/opencode/control-tower/ACTIVE`: absent.
+- Legacy `/home/<usuario>/.config/opencode/control-tower/ACTIVE`: absent.
 - Actual canonical `.git/control-tower/tower.db`: absent.
 - `NEXT-SESSION-off-enforcement.md` preserved with SHA-256
   `73bbb0e58573eef187dbf22b026cb1594df614e7749c516908bdadc9b553f7e0`.
@@ -450,7 +450,7 @@ Bounded correction scope: only the confirmed severe concurrency finding
 | Correction changed lines | 119 implementation/test (`110` additions + `9` deletions): `core.mjs` 9/9, `test/migration.test.mjs` 101/0; plus 53 evidence lines, for 172 total (`163` additions + `9` deletions) |
 | Runtime | N/A — all mutating anchor/SQLite concurrency uses isolated temporary Git roots; actual canonical runtime and legacy ACTIVE remained absent |
 | Rollback boundary | Revert only the CT-JD-S1-001 transaction-boundary hunk in `core.mjs`, the two concurrency tests/helper in `test/migration.test.mjs`, and this appended correction section; preserve all P0/P1 history, frozen Judgment Day ledger, task checkboxes, exact Migration 001, and real databases |
-| Skill resolution | `paths-injected` — `/home/emili/.agents/skills/judgment-day/SKILL.md` |
+| Skill resolution | `paths-injected` — `/home/<usuario>/.agents/skills/judgment-day/SKILL.md` |
 
 ## Slice 1 Judgment Day terminal evidence
 
@@ -475,7 +475,7 @@ Bounded correction scope: only the confirmed severe concurrency finding
 - Artifact store: OpenSpec + Engram; this actor has no memory tools, so only this
   cumulative OpenSpec artifact was updated and the parent must mirror Engram
 - Action context: `repo-local`; workspace and sole allowed edit root are
-  `/home/emili/projects/control-tower`; warnings: none
+  `/home/<usuario>/projects/control-tower`; warnings: none
 - Delivery: `auto-chain`, `feature-branch-chain`, Unit 2 only, 800-line ceiling
 - Strict TDD: active with `bun test`
 
@@ -530,7 +530,7 @@ namespace or dispatch contract. Then rerun P2 from RED.
 - Rollback boundary: remove only this `P2 Slice 2 apply attempt` section; preserve
   all P0/P1/Judgment Day evidence and every task checkbox.
 - Skill resolution: `fallback-path` — parent-injected project/user skill paths
-  were absent; loaded `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+  were absent; loaded `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 
 ---
 
@@ -559,7 +559,7 @@ parent-owned `1F.4` and P2+ were not started.
 schemaName: spec-driven
 changeName: autonomous-continuation-control-tower
 artifactStore: openspec
-planningHome: /home/emili/projects/control-tower/openspec
+planningHome: /home/<usuario>/projects/control-tower/openspec
 changeRoot: openspec/changes/autonomous-continuation-control-tower
 artifacts:
   proposal: done
@@ -586,9 +586,9 @@ dependencies:
   archive: blocked
 actionContext:
   mode: repo-local
-  workspaceRoot: /home/emili/projects/control-tower
+  workspaceRoot: /home/<usuario>/projects/control-tower
   allowedEditRoots:
-    - /home/emili/projects/control-tower
+    - /home/<usuario>/projects/control-tower
   warnings: []
 nextRecommended: parent-lifecycle
 isNonAuthoritative: false
@@ -725,14 +725,14 @@ CLI, installer, plugin, adapter, runtime, or delivery file was edited by P1-FC.
 - [ ] 11.1 Run `bun test`; audit all 64 stable CT IDs bidirectionally and the three-host CT-R5 conformance matrix. <!-- sdd-owner: parent -->
 - [ ] 11.2 Verify Tower OFF, unchanged ACTIVE/DB/mtime, legacy continuity, host-neutral import boundaries, and no `start`, token, or anchor-secret exposure. <!-- sdd-owner: parent -->
 - [ ] 11.3 Verify candidate release and rollback evidence; update host configs only after all probes pass; preserve legacy source until cutover is proven. <!-- sdd-owner: parent -->
-- [ ] 11.4 Servi-Task-U gate: CT passes plus API/error/fence/evidence and OFF/quiescent/rollback evidence. <!-- sdd-owner: parent -->
+- [ ] 11.4 Proyecto-Alpha gate: CT passes plus API/error/fence/evidence and OFF/quiescent/rollback evidence. <!-- sdd-owner: parent -->
 
 ### P1-FC next boundary
 
 Return to parent lifecycle for bounded task `1F.4`. P2 remains blocked until that
 re-judgment is complete. Skill resolution: `fallback-path` — no parent-injected
 project/user skill paths were present; loaded
-`/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+`/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 
 ## P1-FC Judgment Day terminal evidence
 
@@ -975,7 +975,7 @@ The one allowed design rerun corrected only the three gate findings: `CT-R6-S3` 
 - **Workload:** Correction implementation/tests are **207 additions + 72 deletions = 279 authored lines**. Corrected A1c implementation/tests are **501 additions + 87 deletions = 588 lines**; this 15-line evidence append makes A1c **620 total authored lines**, below 800.
 - **Runtime/rollback:** Runtime harness **N/A** because only isolated temporary SQLite fixtures were exercised. Revert only this correction's `core.mjs`, `test/identity.test.mjs`, and evidence hunks; preserve A1a/A1b and never clean or down-migrate schema 4.
 - **Preservation/next:** Exact migrations, A1b replay/rollback/busy/fences, P3 behavior, OFF/non-mutating validation, unrelated/runtime state, and absent lifecycle routes remain intact. Tasks stay unchecked; next action is `rerun-p4a1c-gate`.
-- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/work-unit-commits/SKILL.md` loaded before work.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md` loaded before work.
 
 ---
 
@@ -1067,7 +1067,7 @@ The one allowed design rerun corrected only the three gate findings: `CT-R6-S3` 
 - **Workload:** R1 implementation/tests are **125 additions + 54 deletions = 179 authored lines** (`core.mjs` 85/39; `test/identity.test.mjs` 40/15). The cumulative header/evidence merge is **17 additions + 2 deletions = 19 lines**, making R1 **142 additions + 56 deletions = 198 total authored changed lines**, below 800.
 - **Runtime/rollback:** Runtime harness **N/A** — R1 is a read-only validator and all SQLite changes occurred only in isolated temporary fixtures. Rollback removes only the R1 validator/envelope/reverse-link hunks in `core.mjs`, the R1 fixture/tests in `test/identity.test.mjs`, the two header replacements, and this section; it preserves A1a/A1b and every schema-4 row without cleanup or down-migration.
 - **Preservation/next:** Exact migrations, A1b replay/precedence/rollback/busy behavior, P3 schema-3/schema-4 behavior, existing A1c payload/history checks, legacy rows/eight tools, no-`start`, unrelated dirty files, and absent actual/legacy runtime remain preserved. A1c remains unapproved, tasks `4.1`–`4.4` remain unchecked, and `validate-p4a1c-r1` is next; R2 alone follows a passing R1 gate.
-- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/work-unit-commits/SKILL.md` and `/home/emili/.agents/skills/chained-pr/SKILL.md` were loaded before work.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md` and `/home/<usuario>/.agents/skills/chained-pr/SKILL.md` were loaded before work.
 
 ---
 
@@ -1247,7 +1247,7 @@ flagged as pending dedicated capture.
 - **Rollback boundary:** Revert only `validCommittedResult`, `validCompensationReceipt`, `rollbackProofDigest`, `validRollbackProof`; schema-4 COMPLETED/COMPLETE and closed-row progression; ACK/ATTEST_COMPLETION later-state relaxations; the COMPLETE reverse-link block (restoring COMPLETE to the dormant set); `assertCompleteRequest`/`continuationComplete` and complete dispatcher lines in `core.mjs`; the complete tool in `mcp.mjs`; P5-C helpers/tests in `test/lifecycle.test.mjs`; and the P5-C capability-list update in `test/identity.test.mjs`. Preserve all P5-A/B code, tests, row shapes, and evidence. No schema/down-migration action exists.
 - **Preservation/next:** Final implementation hashes are `core.mjs` `a77d7ca814becc8b0e9807da1c238f6309343f610576d360f06213101bf0b1cb`, `mcp.mjs` `c1fc96d3fdd30c11bd24cdd2bb862cc827fc363c0fb01c3052e137cb2fed453b`, `test/lifecycle.test.mjs` `e2ba93c057e290551065a9e24d1dd77779f065b0dc8aeba8f890b907768294a0`, and `test/identity.test.mjs` `fc6720bee699089056f08190cf4fa4fe9ade7dd9f43a4b689401ec922a0fe58d`. Native `5.1`–`5.4` stay unchecked until P5-D and parent terminal work finish. Next is **P5-D Rejection & Revision**; it was not started.
 - **Runtime harness:** N/A for a live host/Tower runtime. The MCP round trip and two-process SQLite writer race are P5-C's closest integration boundaries and passed in isolated fixtures.
-- **Skill resolution:** `paths-injected` — `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 
 ## P5-D Rejection & Revision — superseded gate-failed boundary
 
@@ -1264,7 +1264,7 @@ flagged as pending dedicated capture.
 - **Preservation/final hashes:** `core.mjs` `147ff9afb60a1c140e6abe43467f64641d578e5cd409fd91d8c0efe131485472`, `mcp.mjs` `93a13e199922db8429fba75c00fa6b7a029ad52ab1e041b8a8658a0ea286f74f`, `test/lifecycle.test.mjs` `1df046b22a9e16ffda07e33314880b0704e952c15c09a7da0afd529055412a76`, `test/identity.test.mjs` `80f792afc6abc7b06ad46b475b5fd0a7bd72e852be4355af407fc7f14ae6e57a`. Native tasks `5.1`–`5.4` remain unchecked. No lifecycle/4R/Judgment Day, commit, push, PR, or delivery ran.
 - **Runtime harness:** N/A for a live host/Tower runtime. The capability-scoped MCP `reject→revise→status` round trip is P5-D's closest integration boundary and passed over an isolated temporary Git/SQLite fixture.
 - **Next:** Parent-owned Slice 5 terminal verification/action; do not begin P6 from this unit result.
-- **Skill resolution:** `paths-injected` — `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 
 ## P5-D bounded protocol correction — final green boundary
 
@@ -1279,7 +1279,7 @@ flagged as pending dedicated capture.
 - **Rollback boundary:** Same P5-D unit boundary, corrected to the normative protocol: revert only P5-D REJECTED/REJECT/REVISE allowances, revised Main-producer/origin validation, dedicated reverse validators, reject/revise handlers/routes/tools/tests/capability update, and this supersession evidence; restore REJECT dormant and REVISE future-history rejection. Preserve every P5-A/B/C byte/row/envelope/digest/race proof and Migration 004 byte. No down-migration exists.
 - **Runtime harness:** N/A for a live host/Tower runtime. The isolated capability-scoped MCP `reject→revise→status` test is the owned integration boundary and passed with exact persisted protocol assertions read directly from SQLite.
 - **Next:** Parent-owned Slice 5 terminal verification/action; do not begin P6 from this corrected apply result.
-- **Skill resolution:** `paths-injected` — `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 
 ## Judgment Day Slice 5 round-one bounded correction — actor evidence
 
@@ -1294,7 +1294,7 @@ flagged as pending dedicated capture.
 - **Final implementation/test hashes:** `core.mjs` **`ddf6dc37e124e55f20779ad8858a8f6e5721d7a019bd55e45a1879095ccc90e7`**; `mcp.mjs` **`93a13e199922db8429fba75c00fa6b7a029ad52ab1e041b8a8658a0ea286f74f`**; `test/lifecycle.test.mjs` **`0565c149724c3daacd18368367c7b25d49d7e153e3fe2c6676efae560902f796`**; `test/identity.test.mjs` **`80f792afc6abc7b06ad46b475b5fd0a7bd72e852be4355af407fc7f14ae6e57a`**.
 - **Rollback boundary:** Revert only the three claimant-ownership comparisons in fresh `ack`/`complete`, the corresponding ACK/COMPLETE historical claim-tuple checks, the independent rollback-proof equality/aggregate derivation, the six `CT-JD-S5-*` tests/helpers and exact-boundary corrections, and this actor-evidence section. Preserve every other P5-A/B/C/D byte, frozen warning, judge artifact, migration byte, and task state.
 - **Next:** Parent scoped re-judgment over the frozen ledger plus immutable correction delta. This actor makes no terminal Judgment decision and does not start P6.
-- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/judgment-day/SKILL.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`, `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.agents/skills/judgment-day/SKILL.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`, `/home/<usuario>/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`.
 
 ## Slice 5 Judgment Day closure
 
@@ -1321,7 +1321,7 @@ flagged as pending dedicated capture.
 - **Rollback boundary:** Revert only `MIGRATION_005_SQL`, `MIGRATION_005_CHECKSUM`, `V5_OBJECTS`, and `SCHEMA_005_MANIFEST` in `core.mjs`; the `describe("P6-A Migration 005 definitions", ...)` block plus its `expectedMigration005Checksum`/`expectedMigration005Sql`/`expectedMigration005ObjectNames`/`expectedMigration005ObjectTypes` constants in `test/migration.test.mjs`; and this P6-A evidence section. Schema and runtime stay at P5 (schema-4 cap): no `SCHEMA_MANIFESTS` entry, `bootstrapAdmin` target-array member, or execution branch was ever added for schema 5, so reverting removes only inert constants/manifest definitions/tests/evidence with zero behavioral change to any prior P0-P5 route. Every P4/P5 row, envelope, and byte remains untouched and preserved.
 - **Preservation:** All prior P0-P5 behavior, tests, and evidence are unchanged. The eight legacy `tower_*` tools and default no-capability MCP handler remain exactly as before (mcp.mjs untouched). `start` and every P6-B..F name (`recordTerminationReceipt|recover|beginRollback|rebindMain|finishRollback`) remain absent and continue to fail `CT_PAYLOAD_INVALID` before database access — this unit added no dispatcher, MCP, or capability change. Production/tests outside `core.mjs`/`test/migration.test.mjs`/this file are untouched; no commit, push, PR, or review/Judgment Day ran; Tower stayed OFF throughout (every test uses an isolated temporary git root, never the real DB/anchor/`ACTIVE`).
 - **Next:** P6-B (Fresh 4→5 migration, schema-5 validator, compatibility): atomic fresh `4→5` execution, exact schema-5 replay, DDL rollback, bounded busy, and `RECOVER` history acceptance at schema 5 only — depends on this green P6-A boundary. RED scenario ownership for P6-B is also "none — migration/validator only, no CT scenario completion claim."
-- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 - **Terminal decision:** **JUDGMENT: APPROVED ✅**. Slice 5 tasks `5.1`–`5.4` are complete; P6 remains a separate blocked design/apply boundary.
 
 ## P6-B Fresh 4→5 migration, schema-5 validator, compatibility — green boundary
@@ -1348,7 +1348,7 @@ flagged as pending dedicated capture.
 - **Rollback boundary:** Revert only: in `core.mjs` — the `target === 5` fresh/retry branch and its `requestValue`/gate widening in `bootstrapAdmin`; `validateSchema5BootstrapEnvelope`/`validateSchema5CommitEvidence`; the `SCHEMA_MANIFESTS` `5` entry; the `mainCommitSchema5Boundary` function and `mainCommitSchemaVersion`'s three-way extension (reverting its signature to the two-argument `(boundary, target)` form callers used before); the version-array/schema5-branch widening in `gateContinuation`/`continuationActivate`/`continuationStatus`/`continuationBootstrapMain`; the nine P4/P5 routes' `![4, 5].includes(version)` gates (reverting to `version !== 4`) and their `writerFence.schema_version` (reverting the `version` variable back to the literal `4`); `validHistoricalWriterFence`'s `{4,5}` widening (reverting to `=== 4`); `activationPrecondition`'s `{4,5}` widening (reverting to `=== 4` and dropping the `"SCHEMA_5_EMPTY"` marker); `continuationReceive`'s peek gate (reverting to `!== 4`); the two frozen-digest fixes in `validateSchema4BootstrapEnvelope`/`validateSchema5BootstrapEnvelope`; the `recoverDispositionPairs`/`recoverCancelPoisonSources`/`recoverDisposition`/`recoverGenerationIncrementDispositions` map and its wiring into `schema4Transition`/the shared transition loop's `generationIncrement`; the schema-5-aware `futureHistoryPresent` branch (reverting to the single unconditional original query); and the real RECOVER validator block (reverting to the original `dormantOperations` block, or simply deleting it — either reversion restores the exact prior fail-closed behavior at both schema versions). In `test/migration.test.mjs` — revert only the `describe("P6-B fresh 4->5 migration, schema-5 validator, compatibility", ...)` block and the `randomBytes` import addition. Revert this P6-B evidence section. **Never down-migrate a real schema-5 database**: reverting this unit's code makes schema-5 databases simply unreachable again (the request-shape gate reverts to rejecting `target_schema_version:5`) and RECOVER history unreadable again (fail-closed, matching pre-P6-B behavior) — never deleted or downgraded; any already-migrated schema-5 database or already-persisted `ct_recovery_disposition` row stays exactly as it is, and older code correctly refuses to operate on it. Every P0–P5 and P6-A row, envelope, and byte remains untouched and preserved; the P4/P5 route widening is additive.
 - **Preservation:** All prior P0–P5 and P6-A behavior, tests, and evidence are unchanged; the full `bun test` suite (228/0/1848) includes every pre-existing test unmodified. The eight legacy `tower_*` tools and default no-capability MCP handler remain exactly as before (`mcp.mjs` byte-identical). `start` and every P6-C..F name (`recordTerminationReceipt|recover|beginRollback|rebindMain|finishRollback`) remain absent. `futureHistoryPresent` stays byte-for-byte unchanged **at schema 4**; the real RECOVER validator (formerly `dormantOperations`) is reachable only at schema 5. Production/tests outside `core.mjs`/`test/migration.test.mjs`/this file are untouched; no commit, push, PR, or review/Judgment Day ran; Tower stayed OFF throughout (every test uses an isolated temporary git root via `mkdtempSync`, never the real DB/anchor/`ACTIVE`).
 - **Next:** P6-C (Proof plane): `recordTerminationReceipt` with server-only observation, pairing, freshness, PID-reuse rejection; `quiescence_v1`/`frozen_inventory_v1` derivation; `CT_RECOVERY_REQUIRED` — depends on this green P6-B boundary. RED scenario ownership for P6-C is `CT-R7-S1`, `CT-R7-S5`. The RECOVER validator this unit corrected covers only the `NOT_STARTED`/`ROLLED_BACK`/`REDELIVER_WORK`/`REDELIVER_ATTESTATION`/`CANCELLED`/`POISONED` structural shape under `ON`; P6-E owns wiring `SUSPEND_PENDING`/`SUSPEND_ATTESTATION` (`ROLLING_BACK`-only) into `validHistoricalWriterFence`'s `{mode:"ROLLING_BACK", observed_lease_status:"ACTIVE"}` allowance, and P6-F owns the `schema4Transition` `CLAIM` `COMPLETION_ATTESTED→COMPLETION_ATTESTED` pair — both explicitly out of this correction's scope per the gatekeeper's own instruction.
-- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/sdd-apply/SKILL.md`, `/home/emili/.agents/skills/sdd-apply/strict-tdd.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.agents/skills/sdd-apply/SKILL.md`, `/home/<usuario>/.agents/skills/sdd-apply/strict-tdd.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 - **Terminal decision:** Not yet reviewed — no Judgment Day run for P6-B; per unit contract, review/Judgment Day for Slice 6 runs only after A, B, C, D, E, and F are all green (task `6.4`). The automatic-mode gatekeeper's drift-correction gate for this unit is now satisfied by the corrective work recorded above; no 4R review lens or `gentle-ai review` command was run (per the unit's out-of-scope list).
 
 ## P6-C Proof plane — green boundary
@@ -1369,7 +1369,7 @@ flagged as pending dedicated capture.
 - **Rollback boundary:** Revert only: in `core.mjs` — `TERMINATION_RECEIPT_FRESHNESS_MS`, `recordTerminationReceiptKeys`/`assertRecordTerminationReceiptRequest`, `recoveryMainAuthority`, `resolveTerminationSubject`, `terminationReceiptValue`/`terminationPairingValue`, `continuationRecordTerminationReceipt`, `validTerminationPairing`, `nonTerminalHandoffStates`/`deriveFrozenInventory`/`deriveQuiescenceSnapshot`, and the `recordTerminationReceipt` addition to `createContinuationDispatcher`'s allow-list/dispatch chain and its new `processObserver` parameter (reverting the destructured parameter list to the pre-P6-C three-capability form). In `mcp.mjs` — the `RECOVERY_TOOL_DEFINITIONS` map and the `processObserver` parameter/merge logic in `createMcpHandler` (reverting to the pre-P6-C `CONTINUATION_TOOL_DEFINITIONS`-only listing). Delete `test/recovery.test.mjs` in full, and revert this P6-C evidence section. **Preserve schema-5 rows byte-for-byte**: reverting this unit's code makes `recordTerminationReceipt` calls fail closed again with `CT_PAYLOAD_INVALID` at the dispatcher's operation allow-list (identical to pre-P6-C behavior) and makes any already-persisted `ct_termination_receipt` row simply unreadable by the reverted code (no delete, no downgrade, no schema change) — the five Migration 005 tables and every already-committed P6-A/B row/manifest/checksum stay exactly as they are. Every P0–P6-B row, envelope, and byte remains untouched and preserved.
 - **Preservation:** All prior P0–P6-B behavior, tests, and evidence are unchanged; the full `bun test` suite (243/0/1900) includes every pre-existing test unmodified (the P6-B `test/migration.test.mjs` count is byte-identical at 55/0/315). The eight legacy `tower_*` tools and default no-capability MCP handler remain exactly as before. `start` and every P6-D/E/F name (`recover|beginRollback|rebindMain|finishRollback`) remain absent. `futureHistoryPresent`/the real RECOVER validator from P6-B are untouched (no schema-4 or schema-5 byte in that path was edited). Production/tests outside `core.mjs`/`mcp.mjs`/`test/recovery.test.mjs`/this file are untouched; no commit, push, PR, or review/Judgment Day ran; Tower stayed OFF throughout (every test uses an isolated temporary git root via `mkdtempSync`, never the real DB/anchor/`ACTIVE`).
 - **Next:** P6-D (ON-mode dispositions): `recover` with `NOT_STARTED`, `ROLLED_BACK`, `CANCELLED`, `POISONED`; atomic republish/fence; `RECOVER` transition + disposition rows — depends on this green P6-C boundary. RED scenario ownership for P6-D is `CT-R7-S2`, `CT-R7-S3`, `CT-R7-S4`, `CT-R7-S6`, `CT-R7-S12`. P6-D can now call the real `recordTerminationReceipt`/`validTerminationPairing` this unit added (rather than hand-constructing termination-receipt rows) when it needs a termination pairing precondition for `NOT_STARTED`/`ROLLED_BACK`; `CANCELLED`/`POISONED` additionally require it only when a LIVE claim exists (`design.md:1794-1795`). The `ROLLING_BACK`-mode authority branch this unit wrote structurally into `recoveryMainAuthority` remains untested until P6-E's `beginRollback` exists — P6-D's own scope (`ON`-mode dispositions only) does not require it either.
-- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/sdd-apply/SKILL.md`, `/home/emili/.agents/skills/sdd-apply/strict-tdd.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.agents/skills/sdd-apply/SKILL.md`, `/home/<usuario>/.agents/skills/sdd-apply/strict-tdd.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 - **Terminal decision:** Not yet reviewed — no Judgment Day run for P6-C; per unit contract, review/Judgment Day for Slice 6 runs only after A, B, C, D, E, and F are all green (task `6.4`).
 ## P6-D ON-mode dispositions — initial apply plus single corrective rerun GREEN
 
@@ -1385,7 +1385,7 @@ flagged as pending dedicated capture.
 - **Work-unit/runtime evidence:** Focused commands/results are the final recovery **25/0/98** and migration **60/0/325** suites. Runtime harness uses real dispatcher/MCP calls and real SQLite persistence inside isolated `mkdtempSync` Git roots; no live Tower runtime exists or is needed. Rollback boundary: revert only P6-D `recover` request/handler/history-validation/freshness changes, the MCP `recover` definition, P6-D tests plus the corrected P6-B RECOVER fixture/tamper matrix, and this amended evidence. Preserve every P6-C proof row and every Migration 004/005 byte/checksum/58-object manifest.
 - **Deviations/risks:** No design deviation remains after the corrective rerun. P6-E/F remain deliberately absent: no `beginRollback`, `rebindMain`, `finishRollback`, suspension, redelivery, attestation carry-forward, or exact ROLLING_BACK disposition semantics. The interim non-ON guard remains generic fail-closed (`CT_ROLLBACK_IN_PROGRESS`) until the owning later units add their exact disposition ladder. Historical RECOVER validation intentionally does not re-apply 30-second freshness forever; it verifies the immutable pairing digest/proof references, while freshness is enforced in the consuming recovery transaction.
 - **Next:** P6-E rollback plane: `beginRollback`, `rebindMain`, `finishRollback`, `SUSPEND_PENDING`, and `SUSPEND_ATTESTATION`, starting only from this corrected green P6-D boundary. P6-F remains after P6-E.
-- **Skill resolution:** `paths-injected` — `/home/emili/.agents/skills/sdd-apply/SKILL.md`, `/home/emili/.agents/skills/sdd-apply/strict-tdd.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`, `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.agents/skills/sdd-apply/SKILL.md`, `/home/<usuario>/.agents/skills/sdd-apply/strict-tdd.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`, `/home/<usuario>/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`.
 
 ### Maintainer-authorized post-budget source-link correction — GREEN
 
@@ -1421,7 +1421,7 @@ flagged as pending dedicated capture.
   3. **`ROLLBACK_LEASE_DURATION_MS` (600,000 ms / 10 minutes) is a new constant not pinned anywhere in `design.md`.** Chosen the same way `TERMINATION_RECEIPT_FRESHNESS_MS` was introduced in P6-C: a reasonable, self-contained, documented default for a mechanism (`lease_expires_at`) the design names but does not assign a duration to. No test asserts the exact numeric value; tests that need an expired lease set `lease_expires_at` directly via raw SQL (mirroring the P6-C freshness-test pattern), independent of this constant's value.
   4. No other design deviation. P6-F remains deliberately absent: no `REDELIVER_WORK`, `REDELIVER_ATTESTATION`, attestation carry-forward in `complete`, or redelivery `CLAIM` acceptance.
 - **Next (superseded by the corrective subsection below):** ~~P6-F redelivery and forbidden-mode closure ... including, if in scope for P6-F, a decision on the `CANCELLED`/`POISONED`-under-`ROLLING_BACK` gap flagged above~~ — that gap is now closed in this unit; see the corrective subsection's own **Next** line for the current, accurate handoff to P6-F.
-- **Skill resolution:** `paths-injected` — `/home/emili/.claude/skills/sdd-apply/SKILL.md`, `/home/emili/.claude/skills/_shared/sdd-phase-common.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.claude/skills/sdd-apply/SKILL.md`, `/home/<usuario>/.claude/skills/_shared/sdd-phase-common.md`.
 
 ### Corrective rerun — CANCELLED/POISONED legal under ROLLING_BACK (automatic gate FAIL, one authorized retry) — GREEN
 
@@ -1436,7 +1436,7 @@ flagged as pending dedicated capture.
 - **Cumulative workload:** `git diff --numstat -- core.mjs mcp.mjs test/recovery.test.mjs test/identity.test.mjs` = `core.mjs` **403 additions/27 deletions**, `mcp.mjs` **44 additions/2 deletions** (unchanged this round), `test/recovery.test.mjs` **244 additions/1 deletion**, `test/identity.test.mjs` **5 additions/3 deletions** (unchanged this round). Cumulative total **696 additions + 33 deletions = 729 authored implementation/test lines** for all of P6-E (initial GREEN + this corrective rerun) — 71 lines below the independent 800 ceiling.
 - **Deviations/risks:** No design deviation remains for `CANCELLED`/`POISONED` after this correction. Deviations 1 (`CT-R7-S8` structurally unreachable) and 3 (`ROLLBACK_LEASE_DURATION_MS` not pinned by design) from the initial pass are unchanged and explicitly out of this corrective scope per the gate's own instruction; they remain surfaced to the maintainer separately.
 - **Next:** P6-F redelivery and forbidden-mode closure — `REDELIVER_WORK`, `REDELIVER_ATTESTATION`, attestation carry-forward in `complete`, redelivery `CLAIM` acceptance, and the complete `CT-R11-S2` ladder — starting only from this corrected green P6-E boundary. The `CANCELLED`/`POISONED`-under-`ROLLING_BACK` gap is closed; P6-F owns only its own four scenarios (`CT-R7-S9`, `CT-R7-S10`, `CT-R7-S11`, `CT-R11-S2`) with no remaining open question from P6-E. Slice 6 Judgment Day (task `6.4`) runs only after P6-F is also green.
-- **Skill resolution:** `paths-injected` — `/home/emili/.claude/skills/sdd-apply/SKILL.md`, `/home/emili/.claude/skills/_shared/sdd-phase-common.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.claude/skills/sdd-apply/SKILL.md`, `/home/<usuario>/.claude/skills/_shared/sdd-phase-common.md`.
 ---
 
 ## P6-F Redelivery and forbidden-mode closure — detailed triangulation/evidence correction
@@ -1444,7 +1444,7 @@ flagged as pending dedicated capture.
 ### Boundary, dependency, and implemented end state
 
 - **Corrective authorization:** This is the single bounded corrective rerun for the apply-boundary failure that found task `6.3` checked without a detailed P6-F section. It changes no production behavior or test permanently and does not address the separate missing-history warning.
-- **Structured status consumed:** authoritative OpenSpec `applyState: ready`; change `autonomous-continuation-control-tower`; action context `repo-local`; workspace/allowed edit root `/home/emili/projects/control-tower/Worktrees/tower-implementation`; warnings none. Delivery remains `auto-chain` / `feature-branch-chain`; this work is confined to P6-F.
+- **Structured status consumed:** authoritative OpenSpec `applyState: ready`; change `autonomous-continuation-control-tower`; action context `repo-local`; workspace/allowed edit root `/home/<usuario>/projects/control-tower/Worktrees/tower-implementation`; warnings none. Delivery remains `auto-chain` / `feature-branch-chain`; this work is confined to P6-F.
 - **Base/start/dependency:** branch `p6-f-redelivery-closure`; committed start/base `4351b0b07492fd451094258e1639563b934d6c43`, the accepted green P6-E boundary. Dependencies P6-A→B→C→D→E were already green. The P6-F candidate remains uncommitted.
 - **Owned scenarios/end state:** `CT-R7-S9` implements ON-only `REDELIVER_WORK`, generation+1, one fresh PENDING WORK delivery, exact replay, and duplicate-scope conflict. `CT-R7-S10` implements real `SUSPEND_ATTESTATION→REDELIVER_ATTESTATION`, preserved-attestation carry-forward, generation+1, and one fresh PENDING `ATTESTATION_REDELIVERY`. `CT-R7-S11` proves the redelivery claimant cannot `ack` while attestation-bound `complete` succeeds. `CT-R11-S2` proves the complete ROLLING_BACK forbidden-disposition/stale-epoch ladder without mutation. The schema-5 historical validator accepts the redelivery CLAIM pair and reverse links while schema 4 remains unchanged.
 - **Permanent P6-F changed paths:** `core.mjs`, `mcp.mjs`, `test/recovery.test.mjs`. This correction permanently changes only this appended `apply-progress.md` section.
@@ -1502,7 +1502,7 @@ Immediately after reverting the mutation and before running the final suites, `s
 
 P6-F executable behavior and task `6.3` evidence are now reconciled. The apply phase must stop here and return to `parent-lifecycle`; it must not start P7, verification, review, Judgment Day, commit, push, PR, or publication from this corrective rerun.
 
-- **Skill resolution:** `paths-injected` — `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`.
 ---
 
 ## P6 closure correction — CT-R7-S8 structural-invalidity characterization
@@ -1513,7 +1513,7 @@ This section supersedes the historical P6-E/P6-F CT-R7-S8 gap statements above w
 
 - Change: `autonomous-continuation-control-tower`; authoritative store: OpenSpec with Engram mirror.
 - Apply state / next recommendation consumed: `ready` / `apply`.
-- Action context: `repo-local`; workspace and sole edit root `/home/emili/projects/control-tower/Worktrees/tower-implementation`; warnings: none.
+- Action context: `repo-local`; workspace and sole edit root `/home/<usuario>/projects/control-tower/Worktrees/tower-implementation`; warnings: none.
 - Delivery: `auto-chain` / `feature-branch-chain`; bounded P6 closure only; base `90f49e8f8382f8847e9bf15285b0b7c566185a07`; implementation/test ceiling 800 authored lines.
 - Strict TDD: active with `bun test`; no P7+, parent task 6.4, review, Judgment Day, commit, push, PR, publication, or real Tower mutation.
 
@@ -1584,7 +1584,7 @@ Remaining implementation-owned lines, none started:
 - Strict-TDD deviation avoided: no fabricated initial RED. The corrected characterization was already GREEN; the exact restored mutation proved it discriminates structural-validation precedence.
 - No design deviation or protocol/schema expansion. The pre-existing unpinned `ROLLBACK_LEASE_DURATION_MS=600000` note remains unchanged and outside this correction.
 - Stop after this bounded P6 closure. `sdd-apply` returns `parent-lifecycle`; it does not run parent-owned task 6.4 or start P7.
-- **Skill resolution:** `paths-injected` — `/home/emili/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/emili/.agents/skills/cognitive-doc-design/SKILL.md`, `/home/emili/.agents/skills/work-unit-commits/SKILL.md`.
+- **Skill resolution:** `paths-injected` — `/home/<usuario>/.pi/agent/npm/node_modules/gentle-pi/skills/gentle-ai/SKILL.md`, `/home/<usuario>/.agents/skills/cognitive-doc-design/SKILL.md`, `/home/<usuario>/.agents/skills/work-unit-commits/SKILL.md`.
 
 ## Slice 6 parent lifecycle closure — explicit Judgment Day
 

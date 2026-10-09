@@ -3,7 +3,7 @@
 ## Status consumed
 
 - Change: `s5-9-parked-checkpoint-binding`; store: `both`; apply state: `ready`.
-- Action context: `implementation-worktree`; root `/home/emili/projects/control-tower/Worktrees/s5-9`; all edits remained inside the supplied allowed roots.
+- Action context: `implementation-worktree`; root `/home/<usuario>/projects/control-tower/Worktrees/s5-9`; all edits remained inside the supplied allowed roots.
 - Native SDD/review lifecycle was suspended and not invoked.
 - Delivery: two sequential direct-push candidates, chain strategy N/A; no commit, push, staging, or PR.
 
