@@ -36,6 +36,11 @@ implements nothing, prescribes nothing about how the work is done, and never wri
 - Only a delivered commit that resolves in Git is delivery evidence for stage 5. Accept it only
   with verified commit and completed-task evidence for the same Session; use
   `references/session-readiness.md`, never a promise or a second review.
+- Before native review starts on a Session branch, verify its base is an ancestor of the integrated
+  branch (`git merge-base --is-ancestor <base> master`). If the integrated branch advanced past the
+  base, rebase the Session branch first so the review diff holds only the candidate's own changes.
+  Never review over a diverged base: integrated-side changes get misattributed to the candidate as
+  removals (issue #162). This is guidance, not a gate; see `references/review-recovery.md`.
 
 ## Decision Gates
 
@@ -72,3 +77,4 @@ or treat Gentle AI's technical record as product progress.
 - `../_shared/plan-naming-convention.md`
 - `../chanks-5-session-doc/SKILL.md`
 - `references/session-readiness.md`
+- `references/review-recovery.md`
