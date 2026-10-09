@@ -52,11 +52,11 @@ The maintainer explicitly requested the port.
   (RED on new identities first); refresh the installed `~/.pi/agent/bin/pi-overlay/`
   data. Route: parent inline (mechanical identity updates; delegated writer refused
   scope: live runtime + foreign clone).
-- [ ] T3 — Rebuild. Run `pi-overlay-rebuild --allow-running` against the live global Pi
+- [x] T3 — Rebuild. Run `pi-overlay-rebuild --allow-running` against the live global Pi
   1.1.0: clone, strict apply (base now pinned to 1.1.0), result-tree check, build,
   overlay tests, backup, swap, smoke test. Route: parent inline (maintainer-authorized
   live installation).
-- [ ] T4 — Verify and close. `python3 -m unittest` from `agent-workflows/` (known
+- [x] T4 — Verify and close. `python3 -m unittest` from `agent-workflows/` (known
   environmental failure exempt); `pi --version` still 1.1.0 and patched marker present;
   record commits and identities here. Pushing the fork branch stays a maintainer
   decision.
@@ -99,4 +99,21 @@ The maintainer explicitly requested the port.
 
 ## Verification after the writer
 
-- (pending)
+- T3 done. `pi-overlay-rebuild --allow-running` exit 0: strict mode (base pinned to
+  v1.1.0), result-tree verified, Node v24.21.0 from cache, `npm ci` + build OK, overlay
+  tests tui 4/4 + coding-agent 111/111, backup `~/.pi/agent/backups/pi-1.1.0-public-dist-20261009T223912Z`,
+  swap + smoke test OK.
+- T4 done. `pi --version` 1.1.0; `registerToolCallAnnotation` present in the installed
+  `dist` (types, loader). Repo suite: 535 tests, 1 pre-existing environmental failure
+  (`test_paralelo`, reads the installed `~/.agents/skills` copy; unrelated), 2 skipped.
+  Installed overlay data matches the repository copies byte-for-byte.
+
+## Commits
+
+- Repo (master): `67098366` feat(pi-overlay): re-pin the tool-call annotation overlay onto v1.1.0.
+- Fork (personal/tool-call-annotations-v1.1.0, local only): `20aa0e80a` reviewed,
+  `5edb83224` evidence. Pushing to `achangkuon/pi` remains a maintainer decision.
+
+Parent-performed throughout (no delegated writer: git surgery, live runtime, foreign
+clone). All planned checks ran; none failed except the pre-existing environmental
+`test_paralelo` failure documented above.
