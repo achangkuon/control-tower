@@ -1,6 +1,6 @@
 # Private Pi tool-call annotation overlay
 
-Issue #151 repairs the conflict between Chanks request labels and gentle-pi's ownership of `read`/`bash`. This is a **private, reproducible source overlay**, not a Pi release, public fork update, or installer. The 13-path mail patch is a port onto upstream tag `v1.0.0`: reviewed commit `db4a3858` on base `a13d35a7`; evidence commit `73792559` follows it. Both commits live on the fork branch `achangkuon/pi` `personal/tool-call-annotations-v1.0.0`. The port was a mechanical `git apply --3way` of the earlier overlay. `.gitignore` and the source repository's ODD task are deliberately excluded.
+Issue #151 repairs the conflict between Chanks request labels and gentle-pi's ownership of `read`/`bash`. This is a **private, reproducible source overlay**, not a Pi release, public fork update, or installer. The 13-path mail patch is a port onto upstream tag `v1.1.0`: reviewed commit `20aa0e80` on base `abe508e1`; evidence commit `5edb8322` follows it. Both commits live on the fork branch `achangkuon/pi` `personal/tool-call-annotations-v1.1.0` (local: `/home/emili/projects/pi-v1.1.0`). The port was a mechanical `git cherry-pick` of the v1.0.0 reviewed commit `db4a3858`; four conflict sites in two files were resolved by keeping both sides (`outputPad` from upstream next to `getCallAnnotations` from the overlay). `.gitignore` and the source repository's ODD task are deliberately excluded. The previous pin remains as fork branch `personal/tool-call-annotations-v1.0.0`.
 
 ## Materialize and verify
 

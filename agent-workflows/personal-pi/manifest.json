@@ -1,11 +1,11 @@
 {
   "upstream": "https://github.com/earendil-works/pi.git",
-  "base_commit": "a13d35a742c6ef8462812a28fbe1d8c8b7431c32",
-  "base_tree": "b4fa5608757317f4aaeff8665d8a08d23fedbf97",
-  "reviewed_commit": "db4a38585f6e23e2dca54fc2a5b8c7b5173b8cdc",
-  "evidence_commit": "7379255952df7ffe8eefbfe8f48f78d54e726b02",
-  "patch_sha256": "366518739d3fb07c9706042c26d9a1086957c08c1947b0a274c4ee601deadf96",
-  "result_tree": "936c4a5c941b2e3d94439896d31b8a62bb0c2dd4",
+  "base_commit": "abe508e1b89912adde45528136c3221eb69acdd7",
+  "base_tree": "77d78fae728879c16550b1f874785aed7851233c",
+  "reviewed_commit": "20aa0e80a0c00c90f1979313b979a15523466582",
+  "evidence_commit": "5edb832249c978a5be16801a492606738893c9a1",
+  "patch_sha256": "485abcd9ca67014d4ea9a2b192077d047750d8dd21c48931083523e5953061f7",
+  "result_tree": "c26c18520205e54d00e1032c0c86f231a83c813e",
   "selected_paths": [
     "packages/coding-agent/docs/extensions.md",
     "packages/coding-agent/src/core/extensions/index.ts",

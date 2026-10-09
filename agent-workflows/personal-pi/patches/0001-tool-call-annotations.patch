@@ -1,4 +1,4 @@
-From db4a38585f6e23e2dca54fc2a5b8c7b5173b8cdc Mon Sep 17 00:00:00 2001
+From 20aa0e80a0c00c90f1979313b979a15523466582 Mon Sep 17 00:00:00 2001
 From: Tower Test <tower@example.invalid>
 Date: Thu, 1 Oct 2026 17:23:50 -0500
 Subject: [PATCH] feat(coding-agent,tui): add tool call annotations
@@ -24,7 +24,7 @@ packages/coding-agent/docs/extensions.md resolved by keeping both sides.
  create mode 100644 packages/tui/test/text-inline-suffix.test.ts
 
 diff --git a/packages/coding-agent/docs/extensions.md b/packages/coding-agent/docs/extensions.md
-index 9ecc4d995..1f4c8376c 100644
+index c350e6626..112465e8d 100644
 --- a/packages/coding-agent/docs/extensions.md
 +++ b/packages/coding-agent/docs/extensions.md
 @@ -83,6 +83,7 @@ Automatic retries, recovery, compaction, or queued work can continue afterward.
@@ -37,7 +37,7 @@ index 9ecc4d995..1f4c8376c 100644
  Use the exported declarations in [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) for exact event, context, tool, and result types.
 @@ -179,6 +180,20 @@ pi.on("tool_call", async (event, ctx) => {
  
- A tool that orchestrates other tools can adjust what the model sees while it is active with `prepareLoadout(loadout)`. It runs whenever the active tools change and receives the declared tools, the callable tools, and every registered tool with its exposure and namespace. It returns replacement `descriptions` for declared tools (including its own) and `hiddenDeclarations`: active tools whose declarations requests leave out while they stay active and callable. `codemode` uses only this hook, `exposure`, and `ctx.executeTool()`, so another tool can implement the same behavior under a different name.
+ A tool that orchestrates other tools can adjust what the model sees while it is active with `prepareLoadout(loadout)`. It runs whenever the active tools change and receives the declared tools, the callable tools, and every registered tool with its exposure, namespace, and prompt guidelines. It returns replacement `descriptions` for declared tools (including its own) and `hiddenDeclarations`: active tools whose declarations requests leave out while they stay active and callable. The default system prompt leaves hidden tools out of its tool list and rules, and names no tool in the skills hint when the file reader is hidden, so the orchestrating tool should present their guidelines itself. `codemode` uses only this hook, `exposure`, and `ctx.executeTool()`, so another tool can implement the same behavior under a different name.
  
 +### Annotate a tool call without replacing it
 +
@@ -57,7 +57,7 @@ index 9ecc4d995..1f4c8376c 100644
  
  Register every tool first, keep optional tools inactive, and use `pi.setActiveTools()` from a loader tool to select the desired active tools. Names must already be registered; unknown names are ignored.
 diff --git a/packages/coding-agent/src/core/extensions/index.ts b/packages/coding-agent/src/core/extensions/index.ts
-index 4172d0186..8ef174f0d 100644
+index aebd5c60d..26a4acfd3 100644
 --- a/packages/coding-agent/src/core/extensions/index.ts
 +++ b/packages/coding-agent/src/core/extensions/index.ts
 @@ -172,6 +172,7 @@ export type {
@@ -69,10 +69,10 @@ index 4172d0186..8ef174f0d 100644
  	ToolCallEventResult,
  	// Tools
 diff --git a/packages/coding-agent/src/core/extensions/loader.ts b/packages/coding-agent/src/core/extensions/loader.ts
-index a35adbb86..fe7f18aed 100644
+index bee134d35..93f5cc714 100644
 --- a/packages/coding-agent/src/core/extensions/loader.ts
 +++ b/packages/coding-agent/src/core/extensions/loader.ts
-@@ -285,6 +285,12 @@ function createExtensionAPI(
+@@ -286,6 +286,12 @@ function createExtensionAPI(
  			};
  		},
  
@@ -85,7 +85,7 @@ index a35adbb86..fe7f18aed 100644
  		registerTool(tool: ToolDefinition): void {
  			assertActive();
  			if (typeof tool.parameters !== "object" || tool.parameters === null || Array.isArray(tool.parameters)) {
-@@ -595,6 +601,7 @@ function createExtension(extensionPath: string, resolvedPath: string): Extension
+@@ -602,6 +608,7 @@ function createExtension(extensionPath: string, resolvedPath: string): Extension
  		sourceInfo: createSyntheticSourceInfo(extensionPath, { source, baseDir }),
  		handlers: new Map(),
  		tools: new Map(),
@@ -94,10 +94,10 @@ index a35adbb86..fe7f18aed 100644
  		entryRenderers: new Map(),
  		commands: new Map(),
 diff --git a/packages/coding-agent/src/core/extensions/runner.ts b/packages/coding-agent/src/core/extensions/runner.ts
-index 59e1eb62e..5deff1659 100644
+index 11ffaca7e..07d59a994 100644
 --- a/packages/coding-agent/src/core/extensions/runner.ts
 +++ b/packages/coding-agent/src/core/extensions/runner.ts
-@@ -269,6 +269,13 @@ function snapshotEventHandlers(extensions: Extension[], event: ExtensionEvent["t
+@@ -270,6 +270,13 @@ function snapshotEventHandlers(extensions: Extension[], event: ExtensionEvent["t
  	return extensions.map((ext) => ({ ext, handlers: ext.handlers.get(event)?.slice() ?? [] }));
  }
  
@@ -111,7 +111,7 @@ index 59e1eb62e..5deff1659 100644
  function sameMessages(left: AgentMessage[], right: AgentMessage[]): boolean {
  	return left.length === right.length && left.every((message, index) => message === right[index]);
  }
-@@ -625,6 +632,29 @@ export class ExtensionRunner {
+@@ -626,6 +633,29 @@ export class ExtensionRunner {
  		return this.extensions.map((e) => e.path);
  	}
  
@@ -142,10 +142,10 @@ index 59e1eb62e..5deff1659 100644
  	getAllRegisteredTools(): RegisteredTool[] {
  		const toolsByName = new Map<string, RegisteredTool>();
 diff --git a/packages/coding-agent/src/core/extensions/types.ts b/packages/coding-agent/src/core/extensions/types.ts
-index 3e0ea47ba..5e2068a78 100644
+index 5d65cce98..c58f2d0c9 100644
 --- a/packages/coding-agent/src/core/extensions/types.ts
 +++ b/packages/coding-agent/src/core/extensions/types.ts
-@@ -1494,6 +1494,9 @@ export interface MarkdownTransformContext {
+@@ -1518,6 +1518,9 @@ export interface MarkdownTransformContext {
  
  export type MarkdownTransformer = (markdown: string, context: MarkdownTransformContext) => string;
  
@@ -155,7 +155,7 @@ index 3e0ea47ba..5e2068a78 100644
  export interface EntryRenderOptions {
  	expanded: boolean;
  }
-@@ -1615,6 +1618,9 @@ export interface ExtensionAPI {
+@@ -1639,6 +1642,9 @@ export interface ExtensionAPI {
  	// Tool Registration
  	// =========================================================================
  
@@ -165,16 +165,16 @@ index 3e0ea47ba..5e2068a78 100644
  	/** Register a tool that the LLM can call. */
  	registerTool<TParams extends TSchema = TSchema, TDetails = unknown, TState = any>(
  		tool: ToolDefinition<TParams, TDetails, TState>,
-@@ -2216,6 +2222,7 @@ export interface Extension {
+@@ -2243,6 +2249,7 @@ export interface Extension {
  	sourceInfo: SourceInfo;
  	handlers: Map<string, HandlerFn[]>;
  	tools: Map<string, RegisteredTool>;
 +	toolCallAnnotations?: Array<{ toolName: string; callback: ToolCallAnnotation }>;
  	messageRenderers: Map<string, MessageRenderer>;
+ 	toolRenderers?: ToolRendererResolver[];
  	markdownTransformer?: MarkdownTransformer;
- 	entryRenderers?: Map<string, EntryRenderer>;
 diff --git a/packages/coding-agent/src/index.ts b/packages/coding-agent/src/index.ts
-index 9e2d993e7..1bdc9f76b 100644
+index 3a25f85c6..21dd9a54c 100644
 --- a/packages/coding-agent/src/index.ts
 +++ b/packages/coding-agent/src/index.ts
 @@ -167,6 +167,7 @@ export type {
@@ -186,10 +186,10 @@ index 9e2d993e7..1bdc9f76b 100644
  	ToolCallEventResult,
  	ToolDefinition,
 diff --git a/packages/coding-agent/src/modes/interactive/components/tool-execution.ts b/packages/coding-agent/src/modes/interactive/components/tool-execution.ts
-index aa03a40be..bdf4e7aa7 100644
+index bf1cd27f9..04328fb08 100644
 --- a/packages/coding-agent/src/modes/interactive/components/tool-execution.ts
 +++ b/packages/coding-agent/src/modes/interactive/components/tool-execution.ts
-@@ -5,6 +5,7 @@ import {
+@@ -4,6 +4,7 @@ import {
  	Container,
  	getCapabilities,
  	Image,
@@ -197,32 +197,32 @@ index aa03a40be..bdf4e7aa7 100644
  	MouseRegion,
  	Spacer,
  	Text,
-@@ -42,6 +43,8 @@ const FALLBACK_PREVIEW_LINES = 10;
- export interface ToolExecutionOptions {
+@@ -26,6 +27,8 @@ export interface ToolExecutionOptions {
  	showImages?: boolean;
  	imageWidthCells?: number;
+ 	outputPad?: number;
 +	/** TUI-only presentation callback supplied by the active extension runtime. */
 +	getCallAnnotations?: (toolName: string, args: unknown) => string[];
  }
  
  export class ToolExecutionComponent extends Container {
-@@ -63,6 +66,7 @@ export class ToolExecutionComponent extends Container {
- 	private imageWidthCells: number;
+@@ -50,6 +53,7 @@ export class ToolExecutionComponent extends Container {
+ 	private outputPad: number;
  	private isPartial = true;
  	private toolDefinition?: ToolRenderers;
 +	private getCallAnnotations?: ToolExecutionOptions["getCallAnnotations"];
  	private ui: TUI;
  	private cwd: string;
  	private executionStarted = false;
-@@ -92,6 +96,7 @@ export class ToolExecutionComponent extends Container {
+@@ -76,6 +80,7 @@ export class ToolExecutionComponent extends Container {
  		this.toolCallId = toolCallId;
  		this.args = args;
  		this.toolDefinition = toolDefinition;
 +		this.getCallAnnotations = options.getCallAnnotations;
  		this.showImages = options.showImages ?? true;
  		this.imageWidthCells = options.imageWidthCells ?? 60;
- 		this.ui = ui;
-@@ -152,6 +157,21 @@ export class ToolExecutionComponent extends Container {
+ 		this.outputPad = options.outputPad ?? 1;
+@@ -139,6 +144,21 @@ export class ToolExecutionComponent extends Container {
  		};
  	}
  
@@ -244,7 +244,7 @@ index aa03a40be..bdf4e7aa7 100644
  	private createCallFallback(): Component {
  		return new Text(formatToolCallWithArgs(this.toolName, this.args, theme, this.expanded), 0, 0);
  	}
-@@ -322,17 +342,17 @@ export class ToolExecutionComponent extends Container {
+@@ -286,17 +306,17 @@ export class ToolExecutionComponent extends Container {
  
  			const callRenderer = this.getCallRenderer();
  			if (!callRenderer) {
@@ -266,38 +266,38 @@ index aa03a40be..bdf4e7aa7 100644
  				}
  			}
 diff --git a/packages/coding-agent/src/modes/interactive/interactive-mode.ts b/packages/coding-agent/src/modes/interactive/interactive-mode.ts
-index 158f59e5f..c4f2774b2 100644
+index 55ea40409..19124eb69 100644
 --- a/packages/coding-agent/src/modes/interactive/interactive-mode.ts
 +++ b/packages/coding-agent/src/modes/interactive/interactive-mode.ts
-@@ -3476,6 +3476,8 @@ export class InteractiveMode {
- 									{
+@@ -3537,6 +3537,8 @@ export class InteractiveMode {
  										showImages: this.settingsManager.getShowImages(),
  										imageWidthCells: this.settingsManager.getImageWidthCells(),
+ 										outputPad: this.outputPad,
 +										getCallAnnotations: (name, args) =>
 +											this.session.extensionRunner.getToolCallAnnotations(name, args),
  									},
  									this.getRegisteredToolDefinition(content.name),
  									this.ui,
-@@ -3554,6 +3556,8 @@ export class InteractiveMode {
- 						{
+@@ -3616,6 +3618,8 @@ export class InteractiveMode {
  							showImages: this.settingsManager.getShowImages(),
  							imageWidthCells: this.settingsManager.getImageWidthCells(),
+ 							outputPad: this.outputPad,
 +							getCallAnnotations: (name, args) =>
 +								this.session.extensionRunner.getToolCallAnnotations(name, args),
  						},
  						this.getRegisteredToolDefinition(event.toolName),
  						this.ui,
-@@ -3956,6 +3960,8 @@ export class InteractiveMode {
- 							{
+@@ -4034,6 +4038,8 @@ export class InteractiveMode {
  								showImages: this.settingsManager.getShowImages(),
  								imageWidthCells: this.settingsManager.getImageWidthCells(),
+ 								outputPad: this.outputPad,
 +								getCallAnnotations: (name, args) =>
 +									this.session.extensionRunner.getToolCallAnnotations(name, args),
  							},
  							this.getRegisteredToolDefinition(content.name),
  							this.ui,
 diff --git a/packages/coding-agent/test/extensions-runner.test.ts b/packages/coding-agent/test/extensions-runner.test.ts
-index 55a8066c2..c3dec30b8 100644
+index 51d535adc..66527f18e 100644
 --- a/packages/coding-agent/test/extensions-runner.test.ts
 +++ b/packages/coding-agent/test/extensions-runner.test.ts
 @@ -374,6 +374,109 @@ describe("ExtensionRunner", () => {
@@ -411,11 +411,11 @@ index 55a8066c2..c3dec30b8 100644
  		it("collects tools from multiple extensions", async () => {
  			const toolCode = (name: string) => `
 diff --git a/packages/coding-agent/test/tool-execution-component.test.ts b/packages/coding-agent/test/tool-execution-component.test.ts
-index 429345a74..e61c1fee8 100644
+index f334f7d6b..d2da4c119 100644
 --- a/packages/coding-agent/test/tool-execution-component.test.ts
 +++ b/packages/coding-agent/test/tool-execution-component.test.ts
-@@ -82,6 +82,120 @@ describe("ToolExecutionComponent parity", () => {
- 		expect(rendered).not.toContain("converted-partial");
+@@ -65,6 +65,120 @@ describe("ToolExecutionComponent parity", () => {
+ 		expect(component.render(120).join("\n")).toBe(rendered);
  	});
  
 +	test("actual read and custom Text calls annotate at wide widths without changing results or narrow rows", () => {
@@ -536,7 +536,7 @@ index 429345a74..e61c1fee8 100644
  		const toolDefinition: ToolDefinition = {
  			...createBaseToolDefinition(),
 diff --git a/packages/tui/src/components/text.ts b/packages/tui/src/components/text.ts
-index 2ce82e742..1706c656e 100644
+index 024748912..d20b508b8 100644
 --- a/packages/tui/src/components/text.ts
 +++ b/packages/tui/src/components/text.ts
 @@ -1,14 +1,21 @@
@@ -562,7 +562,7 @@ index 2ce82e742..1706c656e 100644
  
  	// Cache for rendered output
  	private cachedText?: string;
-@@ -42,6 +49,15 @@ export class Text implements Component {
+@@ -47,6 +54,15 @@ export class Text implements Component {
  		this.cachedLines = undefined;
  	}
  
@@ -578,7 +578,7 @@ index 2ce82e742..1706c656e 100644
  	render(width: number): string[] {
  		// Check cache
  		if (this.cachedLines && this.cachedText === this.text && this.cachedWidth === width) {
-@@ -72,9 +88,24 @@ export class Text implements Component {
+@@ -77,9 +93,24 @@ export class Text implements Component {
  		const rightMargin = " ".repeat(paddingX);
  		const contentLines: string[] = [];
  
@@ -606,10 +606,10 @@ index 2ce82e742..1706c656e 100644
  			// Apply background if specified (this also pads to full width)
  			if (this.customBgFn) {
 diff --git a/packages/tui/src/index.ts b/packages/tui/src/index.ts
-index 2ca089006..67fa948aa 100644
+index a7aa6215c..3dd90922e 100644
 --- a/packages/tui/src/index.ts
 +++ b/packages/tui/src/index.ts
-@@ -61,7 +61,7 @@ export {
+@@ -67,7 +67,7 @@ export {
  } from "./components/select-list.ts";
  export { type SettingItem, SettingsList, type SettingsListTheme } from "./components/settings-list.ts";
  export { Spacer } from "./components/spacer.ts";
