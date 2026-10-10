@@ -39,6 +39,14 @@ green. Same issue class as #167.
 - `87a03318` fix(provenance): rehash artifact digests after sanitization
 - Issues: #166, #167, #168 (achangkuon/control-tower, status:needs-review)
 
+## Delivery
+
+Pushed to origin/master (e3f428ab..278af5d8) through all three pre-push gates
+(Bun 2162/0, Go green, Python 535 OK after the paralelo contract exception).
+The Python stage surfaced a fourth member of the missed-gate class: 4211dc5
+amended test_builder_flow for the S242 reactivation boundary but missed
+test_paralelo; fixed and commented on #167.
+
 ## Prevention
 
 The gates worked (closed bundle roster + provenance digests + pre-push suite);
