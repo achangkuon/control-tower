@@ -100,8 +100,8 @@ func decision55(t *testing.T) (string, Autoridad) {
 			Blob:           strings.TrimSpace(string(blob)),
 			LineStart:      187,
 			LineEnd:        188,
-			ByteStart:      68892,
-			ByteEnd:        68975,
+			ByteStart:      68900,
+			ByteEnd:        68983,
 			FragmentSHA256: "5f81e57cd92a49a18f44aa642cbd53d2bc93585825ebcca145d8c4d04687c27c",
 		},
 	})
