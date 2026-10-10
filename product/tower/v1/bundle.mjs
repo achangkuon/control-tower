@@ -61,6 +61,7 @@ const workflowNames = [
   "chanks-2-planificador-granular/references/juicio-de-ruta.md",
   "chanks-3-paralelo/SKILL.md",
   "chanks-4-puente/SKILL.md",
+  "chanks-4-puente/references/review-recovery.md",
   "chanks-4-puente/references/session-readiness.md",
   "chanks-4-puente/scripts/prepare_new_change.py",
   "chanks-5-politica-de-entrega/SKILL.md",

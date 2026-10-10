@@ -114,14 +114,14 @@ test("from-checkout builds with the checkout's own larger roster and self-bootst
     const receipt = buildRelease({ repo, out });
     const envelope = JSON.parse(readFileSync(out));
     expect(envelope.members.map(({ path }) => path)).toContain(extra);
-    expect(envelope.members).toHaveLength(105);
+    expect(envelope.members).toHaveLength(106);
     expect(receipt.sha256).toBe(digest(readFileSync(out)));
     // The envelope carries the checkout roster, so it must admit itself again through
-    // the running CLI's superset rule instead of the stale 104-member roster.
+    // the running CLI's superset rule instead of the stale 105-member roster.
     expect(bootstrapVerifiedRelease({ repository: "example/control-tower", tag: `checkout-${receipt.commit.slice(0, 12)}`,
       asset: "tower-v1.json", sha256: receipt.sha256,
       runner: (_command, argv) => ({ status: 0, stdout: argv[0] === "auth" ? Buffer.alloc(0) : readFileSync(out) }) })
-      .manifest.members).toHaveLength(105);
+      .manifest.members).toHaveLength(106);
   }, repo => {
     changeInput(repo, bundlePath, text => text.replace('"chanks-1-adopcion/SKILL.md",',
       `"${extra.slice("agent-workflows/skills/".length)}",\n  "chanks-1-adopcion/SKILL.md",`));
@@ -384,7 +384,7 @@ test("deterministic bytes, fixed keys and exact membership admitted by bootstrap
   const envelope = JSON.parse(bytes);
   expect(Object.keys(envelope)).toEqual(["schema", "members"]);
   expect(envelope.members.map(({ path }) => path)).toEqual(paths);
-  expect(envelope.members).toHaveLength(104);
+  expect(envelope.members).toHaveLength(105);
   expect(Object.keys(envelope.members[0])).toEqual(["path", "type", "encoding", "byteLength", "sha256", "bytes"]);
   const calls = [];
   const result = bootstrapVerifiedRelease({ repository: "example/control-tower", tag: "v1", asset: "tower-v1.json",
@@ -415,7 +415,7 @@ test("release and installer pins carry global-only members and exclude the perso
   const excluded = "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json";
   expect(envelope.members.map(entry => entry.path)).not.toContain(excluded);
   expect(pinned.paths).not.toContain(excluded);
-  expect(pinned.paths).toHaveLength(104);
+  expect(pinned.paths).toHaveLength(105);
   expect(pinned.sha256).toBe(receipt.sha256);
 }, repo => {
   const excluded = join(repo, "agent-workflows/skills/chanks-5-session-doc/assets/project-notion-map.json");
