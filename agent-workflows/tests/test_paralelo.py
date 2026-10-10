@@ -78,8 +78,11 @@ class ParaleloTests(unittest.TestCase):
             "never under `/tmp`",
             "stops that Session only",
         )
-        for gone in ("radar marcar", "radar desmarcar", "chanks-3-session-kickoff", "`en curso`"):
-            self.assertNotIn(gone, self.text, gone)
+        # S242 (maintainer-approved 2026-10-08, issue #150) lets the resuming section
+        # name the two recovery routes; the formal start and the kickoff stay out.
+        self.assertNotIn("chanks-3-session-kickoff", self.text, "chanks-3-session-kickoff")
+        self.assertIn("radar marcar <id> --reactivar", self.text)
+        self.assertIn("radar desmarcar <id>", self.text)
 
     def test_orchestrator_delegates_integrates_and_delivers_inside_one_conversation(self):
         self.assert_phrases(
