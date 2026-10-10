@@ -28,7 +28,10 @@ Triage at a clean `origin/master` worktree (with dependencies installed) showed
 3. **Flakiness (observed, not reproduced at close).** P6-C recovery clock test
    and the benchmark "blocked" verdicts passed on reruns. Issue #168.
 
-Final suite: **2162 pass / 0 fail**.
+Final suite: **2162 pass / 0 fail**. The Go suite (pre-push stage 2) also
+failed for the same sanitization-drift family: the hardcoded Decision 55
+locator in `authority_test.go` was 8 bytes stale. Re-anchored; `go test ./...`
+green. Same issue class as #167.
 
 ## Commits
 
