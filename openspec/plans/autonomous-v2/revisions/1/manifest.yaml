@@ -28,8 +28,8 @@ artifact_refs:
     repo_relative_path: openspec/rfc/sdd-tower-implementation-v1.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
-    content_digest: sha256:a6272899bf76c141850ea1c38444d303b7dfcc84e1f7351c95bffb8557c82cce
+    source_commit: 4635f206bfc458398f66e7d588024ad7cb658e45
+    content_digest: sha256:73a19ca2692098283b7ba608a0304fc5954541dc002d85cef1098e9ca12120da
   requirements:
     schema: artifact-ref
     schema_version: 1
@@ -39,8 +39,8 @@ artifact_refs:
     repo_relative_path: openspec/specs/sdd-tower-implementation-v1-requirements.md
     media_type: text/markdown
     digest_mode: raw-bytes
-    source_commit: 0745f99a3d9ab7f9c3676af4d1ca3adf0f0c5c95
-    content_digest: sha256:277129f30b47c1b6fda0a6c81f6d8943d737a7b5ff5750455e2b41dce6e1e5a0
+    source_commit: 4635f206bfc458398f66e7d588024ad7cb658e45
+    content_digest: sha256:03714847cdb32f18065f25ce4bbe462ec8f857f5ec663cb7499326734d6c34e3
 relationships:
   preserves:
     - sdd-tower-implementation-v1-prd
