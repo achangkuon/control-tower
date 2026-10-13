@@ -227,10 +227,26 @@ def replace_tree(target, source):
     shutil.copytree(source, target, symlinks=True)
 
 
+def tui_dist_target(package_dir):
+    """Locate the installed @earendil-works/pi-tui/dist for this package.
+
+    The package nests its peer dependencies, but npm hoisting can place pi-tui
+    beside it (as in the Pi copy bundled inside gentle-pi). Nested wins.
+    """
+    nested = package_dir / "node_modules/@earendil-works/pi-tui/dist"
+    if nested.is_dir():
+        return nested
+    if package_dir.parent.name == "@earendil-works":
+        hoisted = package_dir.parent / "pi-tui/dist"
+        if hoisted.is_dir():
+            return hoisted
+    return nested
+
+
 def install(package_dir, src, version, backup_root, steps):
     targets = (
         (package_dir / "dist", Path(src) / "packages/coding-agent/dist", "coding-agent-dist"),
-        (package_dir / "node_modules/@earendil-works/pi-tui/dist", Path(src) / "packages/tui/dist", "pi-tui-dist"),
+        (tui_dist_target(package_dir), Path(src) / "packages/tui/dist", "pi-tui-dist"),
     )
     for target, built, _ in targets:
         if not built.is_dir():
