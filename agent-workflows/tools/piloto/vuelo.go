@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 // estadoListo is the vocabulary word Radar emits (the emoji is presentation
@@ -461,19 +463,20 @@ func frenar(root string, i *Interruptor) ([]string, error) {
 // retirarVuelo removes a flight's copy and branch, and only after the approved
 // portion is integrated into the local integrated branch. A flight with a
 // NOVEDAD keeps both intact (D3), and any doubt refuses.
-func retirarVuelo(root, id string) error {
+func retirarVuelo(root, id string, descartarIgnorados bool) ([]string, error) {
 	c, err := corridaActual(root)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	v, ok := vueloPorID(c, id)
 	if !ok {
-		return fmt.Errorf("el vuelo %s no está en la corrida", id)
+		return nil, fmt.Errorf("el vuelo %s no está en la corrida", id)
 	}
 	marcas, err := leerMarcas(root, c)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	var descartados []string
 	integradas := 0
 	var integrada string
 	for _, m := range v.Sesiones {
@@ -483,46 +486,52 @@ func retirarVuelo(root, id string) error {
 		}
 		switch previa.Estado {
 		case estadoEnCurso:
-			return fmt.Errorf("el vuelo %s tiene la Sesión %s EN CURSO: no se retira hasta que cierre", id, m.Sesion)
+			return nil, fmt.Errorf("el vuelo %s tiene la Sesión %s EN CURSO: no se retira hasta que cierre", id, m.Sesion)
 		case estadoNovedad:
-			return fmt.Errorf("el vuelo %s tiene una NOVEDAD (%s): conserva copia y rama (D3)", id, m.Sesion)
+			return nil, fmt.Errorf("el vuelo %s tiene una NOVEDAD (%s): conserva copia y rama (D3)", id, m.Sesion)
 		case estadoCierre:
 			if integrada == "" {
 				if integrada, err = ramaIntegrada(root); err != nil {
-					return err
+					return nil, err
 				}
 			}
 			dentro, err := commitEnRama(root, previa.Commit, integrada)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if !dentro {
-				return fmt.Errorf("la porción aprobada del vuelo %s no está integrada: falta %s", id, previa.Commit)
+				return nil, fmt.Errorf("la porción aprobada del vuelo %s no está integrada: falta %s", id, previa.Commit)
 			}
 			integradas++
 		}
 	}
 	if integradas == 0 {
-		return fmt.Errorf("el vuelo %s no tiene porción aprobada integrada; no se retira", id)
+		return nil, fmt.Errorf("el vuelo %s no tiene porción aprobada integrada; no se retira", id)
 	}
 	if v.Copia != "" {
 		if info, err := os.Lstat(v.Copia); err == nil {
 			if !info.IsDir() {
-				return fmt.Errorf("la copia %s del vuelo %s no es un directorio", v.Copia, id)
+				return nil, fmt.Errorf("la copia %s del vuelo %s no es un directorio", v.Copia, id)
 			}
 			pending, err := trabajoPendiente(v.Copia)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if pending {
-				return fmt.Errorf("la copia %s tiene trabajo sin confirmar; no se retira", v.Copia)
+				return nil, fmt.Errorf("la copia %s tiene trabajo sin confirmar; no se retira", v.Copia)
+			}
+			if descartados, err = ignoradosValiosos(v.Copia); err != nil {
+				return nil, err
+			}
+			if len(descartados) > 0 && !descartarIgnorados {
+				return nil, fmt.Errorf("la copia %s tiene %d archivos ignorados por Git que se borrarían sin vuelta atrás:\n%s\nmovelos fuera de la copia o confirmá la pérdida con `piloto retirar %s --descartar-ignorados`", v.Copia, len(descartados), listaIgnorados(descartados), id)
 			}
 		} else if !errors.Is(err, os.ErrNotExist) {
-			return err
+			return nil, err
 		}
 	}
 	if err := retirarCopia(root, v.Rama, v.Copia); err != nil {
-		return err
+		return nil, err
 	}
 	restantes := make([]Vuelo, 0, len(c.Vuelos))
 	for _, otro := range c.Vuelos {
@@ -531,7 +540,40 @@ func retirarVuelo(root, id string) error {
 		}
 	}
 	c.Vuelos = restantes
-	return escribirCorrida(root, *c)
+	if err := escribirCorrida(root, *c); err != nil {
+		return nil, err
+	}
+	// #169: with no flight left the corrida is over, so the switch goes off and
+	// the next takeoff is not refused by a stale "corrida prendida".
+	if len(c.Vuelos) == 0 {
+		i, err := leerInterruptor(root)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil && i.Prendido {
+			if err := escribirInterruptor(root, Interruptor{Prendido: false, Rondas: i.Rondas, Tope: i.Tope}); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return descartados, nil
+}
+
+// listaIgnorados renders at most 20 paths, one per line, and counts the rest.
+func listaIgnorados(rutas []string) string {
+	const maximo = 20
+	var b strings.Builder
+	for i, r := range rutas {
+		if i == maximo {
+			fmt.Fprintf(&b, "  … y %d más\n", len(rutas)-maximo)
+			break
+		}
+		if strings.ContainsAny(r, "\n\r\t") {
+			r = strconv.Quote(r)
+		}
+		fmt.Fprintf(&b, "  - %s\n", r)
+	}
+	return strings.TrimSuffix(b.String(), "\n")
 }
 
 // SesionReporte is one line of the run report.

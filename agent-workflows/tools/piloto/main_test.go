@@ -187,6 +187,35 @@ func conRelojFijo(t *testing.T, root string) {
 	t.Cleanup(func() { radarStatus = previoRadar })
 }
 
+func TestRetirarCLIIgnorados(t *testing.T) {
+	root, _, ruta := vueloIntegradoConIgnorados(t, "media/video.mp4")
+	var salida, errores bytes.Buffer
+	if codigo := ejecutar([]string{"retirar", "S1", "-C", root}, &salida, &errores, strings.NewReader("")); codigo != 1 {
+		t.Fatalf("sin la opción el retiro sale 1, salió %d: %s", codigo, errores.String())
+	}
+	if !strings.Contains(errores.String(), "media/") || salida.Len() != 0 {
+		t.Fatalf("stderr lista lo ignorado y stdout queda vacío: out=%q err=%q", salida.String(), errores.String())
+	}
+	if _, err := os.Stat(filepath.Join(ruta, "media", "video.mp4")); err != nil {
+		t.Fatalf("el rechazo conserva el archivo: %v", err)
+	}
+	salida.Reset()
+	errores.Reset()
+	if codigo := ejecutar([]string{"retirar", "S1", "--descartar-ignorados", "-C", root}, &salida, &errores, strings.NewReader("")); codigo != 0 {
+		t.Fatalf("con la opción el retiro sale 0, salió %d: %s", codigo, errores.String())
+	}
+	for _, esperado := range []string{"descartados", "media/video.mp4", "vuelo S1 retirado", "corrida terminada"} {
+		if !strings.Contains(salida.String(), esperado) {
+			t.Fatalf("stdout debe nombrar %q: %q", esperado, salida.String())
+		}
+	}
+	var ayuda bytes.Buffer
+	ejecutar([]string{"help"}, &ayuda, &errores, strings.NewReader(""))
+	if !strings.Contains(ayuda.String(), "piloto retirar <vuelo> [--descartar-ignorados]") {
+		t.Fatalf("la ayuda documenta la opción: %s", ayuda.String())
+	}
+}
+
 func TestDespegar(t *testing.T) {
 	t.Run("aprueba cada vuelo por stdin", func(t *testing.T) {
 		root, _ := repoGit(t)
@@ -262,8 +291,37 @@ func TestDespegar(t *testing.T) {
 			t.Fatal(err)
 		}
 		var salida bytes.Buffer
-		if err := cmdDespegar(&salida, strings.NewReader("s\n"), root, []string{"S1"}, 3, 10, true); err == nil {
+		err := cmdDespegar(&salida, strings.NewReader("s\n"), root, []string{"S1"}, 3, 10, true)
+		if err == nil {
 			t.Fatal("con el piloto prendido no se despega otra corrida")
+		}
+		// #169: without flights in the air the refusal names the one command that
+		// clears it, and says despegar turns the switch on by itself.
+		for _, esperado := range []string{"sin vuelos", "piloto interruptor off", "despegar lo prende solo"} {
+			if !strings.Contains(err.Error(), esperado) {
+				t.Fatalf("el rechazo debe nombrar %q: %q", esperado, err.Error())
+			}
+		}
+		if _, err := gitOutput(root, "show-ref", "--verify", ramaDeVuelo("2026-10-02", "S1")); err == nil {
+			t.Fatal("un rechazo no debe crear la rama del vuelo")
+		}
+	})
+	t.Run("con vuelos en el aire el rechazo nombra aterrizar, retirar o frenar", func(t *testing.T) {
+		root, _ := repoGit(t)
+		conRelojFijo(t, root)
+		corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}))
+		if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10}); err != nil {
+			t.Fatal(err)
+		}
+		var salida bytes.Buffer
+		err := cmdDespegar(&salida, strings.NewReader("s\n"), root, []string{"S1"}, 3, 10, true)
+		if err == nil {
+			t.Fatal("con vuelos en el aire no se despega")
+		}
+		for _, esperado := range []string{"1 vuelo", "piloto retirar", "piloto freno"} {
+			if !strings.Contains(err.Error(), esperado) {
+				t.Fatalf("el rechazo debe nombrar %q: %q", esperado, err.Error())
+			}
 		}
 	})
 	t.Run("sin la sonda de consentimiento RDD no despega", func(t *testing.T) {
@@ -528,7 +586,7 @@ func TestEmojiContratoSalidas(t *testing.T) {
 		}
 		gitFixture(t, root, "merge", "--ff-only", rama)
 		var salida bytes.Buffer
-		if err := cmdRetirar(&salida, root, "S1"); err != nil {
+		if err := cmdRetirar(&salida, root, "S1", false); err != nil {
 			t.Fatalf("cmdRetirar: %v", err)
 		}
 		if !strings.Contains(salida.String(), "🧹 vuelo S1 retirado") {

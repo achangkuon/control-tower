@@ -78,6 +78,7 @@ Cada una con opciones, consecuencia y recomendación. El delta exacto que estas 
 - **Opción A — retiro determinista tras la revisión, NOVEDAD conserva todo**: `piloto` expone el retiro como comando (copia + rama) que el orquestador ejecuta por vuelo **sólo después** de que la revisión humana integró la porción aprobada; los vuelos con NOVEDAD · interrumpida conservan copia y rama intactas hasta que su revisión decida (el trabajo ya está en la rama del vuelo, pero la copia es la evidencia viva). Consecuencia: nada se borra antes de tiempo; el retiro es auditable porque es un comando del modelo determinista, no una acción de un agente.
 - **Opción B — retiro automático al aterrizar**: ahorra disco pero pisa el requisito aprobado de que NOVEDAD conserve su trabajo en la copia.
 - **Recomendación: A.** Encaja con P1 (reglas en código) y con la regla P9 de que apagar no borra estados.
+- **Enmienda (2026-10-13, control-tower#169):** `git worktree remove` borra sin aviso los archivos ignorados por Git, y `git status --porcelain` no los muestra; así se perdió media generada en un vuelo. `piloto retirar` ahora lista los archivos ignorados de la copia que no son artefactos regenerables (`node_modules`, `.codegraph`, `__pycache__`, `.pytest_cache`) y se niega; sólo los descarta con `--descartar-ignorados`. Retirar el último vuelo de la corrida apaga el interruptor.
 
 ### D4 — Preparación de la copia: ¿qué incluye el despegue? *(resuelta)*
 

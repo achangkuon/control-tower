@@ -326,6 +326,138 @@ func TestResumir(t *testing.T) {
 	}
 }
 
+// vueloIntegradoConIgnorados builds a landed flight whose copy commits a
+// .gitignore and then holds the given ignored files, mirroring #169.
+func vueloIntegradoConIgnorados(t *testing.T, ignorados ...string) (root, rama, ruta string) {
+	t.Helper()
+	root, _ = repoGit(t)
+	rama = ramaDeVuelo("2026-10-02", "S1")
+	var err error
+	ruta, err = rutaCopia(root, "2026-10-02", "S1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := crearCopia(root, "refs/heads/master", rama, ruta); err != nil {
+		t.Fatal(err)
+	}
+	writeTestFile(t, filepath.Join(ruta, ".gitignore"), "media/\nnode_modules/\n__pycache__/\n.pytest_cache/\n.codegraph/\n", 0o644)
+	gitFixture(t, ruta, "add", ".gitignore")
+	gitFixture(t, ruta, "commit", "-qm", "entrega S1")
+	entrega := gitFixture(t, ruta, "rev-parse", "HEAD^{commit}")
+	for _, f := range ignorados {
+		writeTestFile(t, filepath.Join(ruta, f), "contenido\n", 0o644)
+	}
+	corridaConVuelos(t, root, Vuelo{ID: "S1", Ancla: "S1", Rama: rama, Copia: ruta, Sesiones: []Miembro{{Sesion: "S1"}}})
+	if err := escribirMarca(root, Marca{Sesion: "S1", Vuelo: "S1", Rama: rama, Estado: estadoCierre, Commit: entrega, Ronda: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := escribirInterruptor(root, Interruptor{Prendido: true, Rondas: 3, Tope: 10}); err != nil {
+		t.Fatal(err)
+	}
+	gitFixture(t, root, "merge", "--ff-only", rama)
+	return root, rama, ruta
+}
+
+// TestIgnoradosValiososNombresConEspacios guards the NUL-separated listing:
+// trimming it would turn " node_modules/x.dat" into a regenerable path.
+func TestIgnoradosValiososNombresConEspacios(t *testing.T) {
+	root, _ := repoGit(t)
+	writeTestFile(t, filepath.Join(root, ".gitignore"), "*.dat\n", 0o644)
+	gitFixture(t, root, "add", ".gitignore")
+	gitFixture(t, root, "commit", "-qm", "ignore")
+	writeTestFile(t, filepath.Join(root, " node_modules", "x.dat"), "pago\n", 0o644)
+	writeTestFile(t, filepath.Join(root, "zz ", "y.dat"), "pago\n", 0o644)
+	got, err := ignoradosValiosos(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0] != " node_modules/x.dat" || got[1] != "zz /y.dat" {
+		t.Fatalf("los nombres con espacios se listan intactos: %q", got)
+	}
+}
+
+func TestRetirarIgnorados(t *testing.T) {
+	t.Run("frena y lista lo ignorado que se perdería", func(t *testing.T) {
+		root, rama, ruta := vueloIntegradoConIgnorados(t, "media/video.mp4", "node_modules/dep/index.js")
+		_, err := retirarVuelo(root, "S1", false)
+		if err == nil {
+			t.Fatal("con archivos ignorados valiosos el retiro se niega")
+		}
+		msg := err.Error()
+		for _, esperado := range []string{"media/video.mp4", "--descartar-ignorados", "piloto retirar S1"} {
+			if !strings.Contains(msg, esperado) {
+				t.Fatalf("el rechazo debe nombrar %q: %q", esperado, msg)
+			}
+		}
+		if strings.Contains(msg, "node_modules") {
+			t.Fatalf("los artefactos regenerables no se listan: %q", msg)
+		}
+		if _, err := os.Stat(filepath.Join(ruta, "media", "video.mp4")); err != nil {
+			t.Fatalf("el archivo ignorado debe seguir: %v", err)
+		}
+		if _, err := gitOutput(root, "show-ref", "--verify", rama); err != nil {
+			t.Fatalf("la rama debe seguir: %v", err)
+		}
+		if c, _ := leerCorrida(root); c == nil || len(c.Vuelos) != 1 {
+			t.Fatalf("un rechazo no saca el vuelo de la corrida: %+v", c)
+		}
+		if i, _ := leerInterruptor(root); i == nil || !i.Prendido {
+			t.Fatalf("un rechazo no apaga el interruptor: %+v", i)
+		}
+	})
+	t.Run("con --descartar-ignorados retira y devuelve lo descartado", func(t *testing.T) {
+		root, rama, ruta := vueloIntegradoConIgnorados(t, "media/video.mp4")
+		descartados, err := retirarVuelo(root, "S1", true)
+		if err != nil {
+			t.Fatalf("retirarVuelo: %v", err)
+		}
+		if len(descartados) != 1 || descartados[0] != "media/video.mp4" {
+			t.Fatalf("descartados = %q", descartados)
+		}
+		if _, err := os.Lstat(ruta); !os.IsNotExist(err) {
+			t.Fatalf("la copia debe desaparecer: %v", err)
+		}
+		if _, err := gitOutput(root, "show-ref", "--verify", rama); err == nil {
+			t.Fatal("la rama debe desaparecer")
+		}
+	})
+	t.Run("sólo artefactos regenerables no frena", func(t *testing.T) {
+		root, _, ruta := vueloIntegradoConIgnorados(t, "node_modules/dep/index.js", "app/node_modules/x.js", "pkg/__pycache__/m.pyc", ".pytest_cache/v", ".codegraph/db")
+		descartados, err := retirarVuelo(root, "S1", false)
+		if err != nil {
+			t.Fatalf("los regenerables no bloquean el retiro: %v", err)
+		}
+		if len(descartados) != 0 {
+			t.Fatalf("los regenerables no cuentan como descartados: %q", descartados)
+		}
+		if _, err := os.Lstat(ruta); !os.IsNotExist(err) {
+			t.Fatalf("la copia debe desaparecer: %v", err)
+		}
+	})
+	t.Run("retirar el último vuelo apaga el interruptor", func(t *testing.T) {
+		root, _, _ := vueloIntegradoConIgnorados(t)
+		if _, err := retirarVuelo(root, "S1", false); err != nil {
+			t.Fatalf("retirarVuelo: %v", err)
+		}
+		i, err := leerInterruptor(root)
+		if err != nil || i == nil || i.Prendido || i.Rondas != 3 || i.Tope != 10 {
+			t.Fatalf("sin vuelos la corrida termina y el piloto se apaga conservando límites: %+v (%v)", i, err)
+		}
+	})
+	t.Run("con otros vuelos en la corrida el interruptor sigue prendido", func(t *testing.T) {
+		root, rama, ruta := vueloIntegradoConIgnorados(t)
+		corridaConVuelos(t, root,
+			Vuelo{ID: "S1", Ancla: "S1", Rama: rama, Copia: ruta, Sesiones: []Miembro{{Sesion: "S1"}}},
+			vueloCon("S2", Miembro{Sesion: "S2"}))
+		if _, err := retirarVuelo(root, "S1", false); err != nil {
+			t.Fatalf("retirarVuelo: %v", err)
+		}
+		if i, _ := leerInterruptor(root); i == nil || !i.Prendido {
+			t.Fatalf("queda un vuelo: el interruptor sigue prendido: %+v", i)
+		}
+	})
+}
+
 func TestRetirarVuelo(t *testing.T) {
 	t.Run("retira copia y rama tras integrar", func(t *testing.T) {
 		root, _ := repoGit(t)
@@ -346,11 +478,11 @@ func TestRetirarVuelo(t *testing.T) {
 			t.Fatal(err)
 		}
 		// Todavía no está integrada: el retiro se niega.
-		if err := retirarVuelo(root, "S1"); err == nil {
+		if _, err := retirarVuelo(root, "S1", false); err == nil {
 			t.Fatal("sin integración aprobada el retiro se niega")
 		}
 		gitFixture(t, root, "merge", "--ff-only", rama)
-		if err := retirarVuelo(root, "S1"); err != nil {
+		if _, err := retirarVuelo(root, "S1", false); err != nil {
 			t.Fatalf("retirarVuelo: %v", err)
 		}
 		if _, err := os.Lstat(ruta); !os.IsNotExist(err) {
@@ -376,7 +508,7 @@ func TestRetirarVuelo(t *testing.T) {
 		if err := escribirMarca(root, Marca{Sesion: "S1", Vuelo: "S1", Rama: rama, Estado: estadoNovedad, Motivo: motivoInterrumpida, Ronda: 1}); err != nil {
 			t.Fatal(err)
 		}
-		if err := retirarVuelo(root, "S1"); err == nil {
+		if _, err := retirarVuelo(root, "S1", false); err == nil {
 			t.Fatal("un vuelo con NOVEDAD conserva copia y rama")
 		}
 		if _, err := os.Lstat(ruta); err != nil {
@@ -390,14 +522,14 @@ func TestRetirarVuelo(t *testing.T) {
 		root, _ := repoGit(t)
 		ruta := t.TempDir()
 		corridaConVuelos(t, root, Vuelo{ID: "S1", Ancla: "S1", Rama: ramaDeVuelo("2026-10-02", "S1"), Copia: ruta, Sesiones: []Miembro{{Sesion: "S1"}}})
-		if err := retirarVuelo(root, "S1"); err == nil {
+		if _, err := retirarVuelo(root, "S1", false); err == nil {
 			t.Fatal("sin cierre integrado no hay nada que retirar")
 		}
 	})
 	t.Run("vuelo desconocido", func(t *testing.T) {
 		root, _ := repoGit(t)
 		corridaConVuelos(t, root, vueloCon("S1", Miembro{Sesion: "S1"}))
-		if err := retirarVuelo(root, "S9"); err == nil {
+		if _, err := retirarVuelo(root, "S9", false); err == nil {
 			t.Fatal("un vuelo que no está en la corrida no se retira")
 		}
 	})
@@ -416,7 +548,7 @@ func TestRetirarVuelo(t *testing.T) {
 		if err := escribirMarca(root, Marca{Sesion: "S2", Vuelo: "S1", Rama: rama, Estado: estadoEnCurso, Ronda: 2}); err != nil {
 			t.Fatal(err)
 		}
-		if err := retirarVuelo(root, "S1"); err == nil {
+		if _, err := retirarVuelo(root, "S1", false); err == nil {
 			t.Fatal("un vuelo con una Sesión EN CURSO no se retira")
 		}
 		if _, err := os.Lstat(ruta); err != nil {

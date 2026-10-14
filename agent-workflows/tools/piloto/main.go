@@ -32,8 +32,11 @@ const uso = `piloto — herramienta determinista del piloto automático
                   despegar y marcar --en-curso se niegan sin ella
   piloto interruptor [on|off|estado] [--rondas N] [--tope N] [-C raíz]
                   prende, apaga o muestra el interruptor y los límites de la corrida
-  piloto retirar <vuelo> [-C raíz]
-                  retira copia de trabajo y rama de un vuelo ya integrado
+  piloto retirar <vuelo> [--descartar-ignorados] [-C raíz]
+                  retira copia de trabajo y rama de un vuelo ya integrado; se niega si la
+                  copia guarda archivos ignorados por Git que no son regenerables (media,
+                  salidas generadas) y los lista; --descartar-ignorados confirma su pérdida.
+                  Retirar el último vuelo termina la corrida y apaga el piloto
   piloto informe-vuelo [-C raíz]
                   informe de la revisión por vuelo: POR REVISAR con su nota, NOVEDAD
                   con su motivo, ronda alcanzada y Sesiones sin empezar
@@ -249,15 +252,16 @@ func ejecutar(args []string, salida, errores io.Writer, entrada io.Reader) int {
 	case "retirar":
 		fs := flag.NewFlagSet("retirar", flag.ContinueOnError)
 		fs.SetOutput(errores)
+		descartar := fs.Bool("descartar-ignorados", false, "confirma la pérdida de los archivos ignorados de la copia")
 		pos, err := parsearConPosicionales(fs, resto)
 		if err != nil {
 			return 2
 		}
 		if len(pos) != 1 {
-			fmt.Fprint(errores, "uso: piloto retirar <vuelo> [-C raíz]\n")
+			fmt.Fprint(errores, "uso: piloto retirar <vuelo> [--descartar-ignorados] [-C raíz]\n")
 			return 2
 		}
-		if err := cmdRetirar(salida, root, pos[0]); err != nil {
+		if err := cmdRetirar(salida, root, pos[0], *descartar); err != nil {
 			return falla(err)
 		}
 	case "informe-vuelo":
@@ -491,7 +495,14 @@ func cmdDespegar(w io.Writer, entrada io.Reader, root string, aprobar []string, 
 		return err
 	}
 	if actual != nil && actual.Prendido {
-		return fmt.Errorf("ya hay una corrida prendida: aterrizá o apagá el piloto antes de despegar otra")
+		c, err := leerCorrida(root)
+		if err != nil {
+			return err
+		}
+		if c == nil || len(c.Vuelos) == 0 {
+			return fmt.Errorf("el interruptor quedó prendido sin vuelos en el aire (una corrida vieja o un `interruptor on` manual): apagalo con `piloto interruptor off` y volvé a despegar; despegar lo prende solo")
+		}
+		return fmt.Errorf("hay una corrida en el aire con %d vuelo(s): aterrizá y retirá cada uno con `piloto retirar <vuelo>`, o frená con `piloto freno`, antes de despegar otra", len(c.Vuelos))
 	}
 	// S231 hard lock: the takeoff asks nothing itself, but it refuses while the
 	// corrida's RDD consent question was never answered by a human. The refusal
@@ -756,11 +767,18 @@ func cmdFreno(w io.Writer, root string) error {
 	return nil
 }
 
-func cmdRetirar(w io.Writer, root, vuelo string) error {
-	if err := retirarVuelo(root, vuelo); err != nil {
+func cmdRetirar(w io.Writer, root, vuelo string, descartarIgnorados bool) error {
+	descartados, err := retirarVuelo(root, vuelo, descartarIgnorados)
+	if err != nil {
 		return err
 	}
+	if len(descartados) > 0 {
+		fmt.Fprintf(w, "🗑 %d archivos ignorados descartados con la copia:\n%s\n", len(descartados), listaIgnorados(descartados))
+	}
 	fmt.Fprintf(w, "🧹 vuelo %s retirado (copia y rama)\n", vuelo)
+	if c, err := leerCorrida(root); err == nil && c != nil && len(c.Vuelos) == 0 {
+		fmt.Fprintln(w, "🛬 corrida terminada: el piloto quedó apagado y listo para el próximo despegue")
+	}
 	return nil
 }
 

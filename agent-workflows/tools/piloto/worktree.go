@@ -148,6 +148,49 @@ func trabajoPendiente(ruta string) (bool, error) {
 	return strings.TrimSpace(out) != "", nil
 }
 
+// regenerables are tool artifacts any flight recreates on demand (takeoff runs
+// bun install). An ignored path under one of them is never worth keeping.
+var regenerables = map[string]bool{
+	"node_modules":  true,
+	".codegraph":    true,
+	"__pycache__":   true,
+	".pytest_cache": true,
+}
+
+// ignoradosValiosos lists the gitignored paths inside the copy that are not
+// regenerable artifacts. `git worktree remove` deletes ignored files without a
+// word, and `git status --porcelain` never shows them (#169), so withdrawal has
+// to ask for them explicitly. Files are listed one by one: collapsing directories
+// would hide that an ignored folder only holds regenerable artifacts.
+func ignoradosValiosos(ruta string) ([]string, error) {
+	// Not gitOutput: it trims, and trimming a NUL-separated list would rename the
+	// first and last paths (" node_modules/x" would pass as regenerable).
+	cmd := exec.Command("git", "-C", ruta, "ls-files", "-z", "--others", "--ignored", "--exclude-standard")
+	var errBuf strings.Builder
+	cmd.Stderr = &errBuf
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("git ls-files --ignored: %s", strings.TrimSpace(errBuf.String()+" "+err.Error()))
+	}
+	var valiosos []string
+	for _, p := range strings.Split(string(out), "\x00") {
+		if p == "" {
+			continue
+		}
+		regenerable := false
+		for _, parte := range strings.Split(strings.TrimSuffix(p, "/"), "/") {
+			if regenerables[parte] {
+				regenerable = true
+				break
+			}
+		}
+		if !regenerable {
+			valiosos = append(valiosos, p)
+		}
+	}
+	return valiosos, nil
+}
+
 // retirarCopia removes the work copy and then the branch. Git itself refuses to
 // remove a dirty worktree, so a rejection never discards uncommitted work.
 func retirarCopia(root, rama, ruta string) error {
