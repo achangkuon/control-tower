@@ -1,4 +1,4 @@
-From 20aa0e80a0c00c90f1979313b979a15523466582 Mon Sep 17 00:00:00 2001
+From 10d9ab63a5bd4cf0c7dd5236f81f6c3590b7d9f5 Mon Sep 17 00:00:00 2001
 From: Tower Test <tower@example.invalid>
 Date: Thu, 1 Oct 2026 17:23:50 -0500
 Subject: [PATCH] feat(coding-agent,tui): add tool call annotations
@@ -24,10 +24,10 @@ packages/coding-agent/docs/extensions.md resolved by keeping both sides.
  create mode 100644 packages/tui/test/text-inline-suffix.test.ts
 
 diff --git a/packages/coding-agent/docs/extensions.md b/packages/coding-agent/docs/extensions.md
-index c350e6626..112465e8d 100644
+index c0c7fd23c..77c656078 100644
 --- a/packages/coding-agent/docs/extensions.md
 +++ b/packages/coding-agent/docs/extensions.md
-@@ -83,6 +83,7 @@ Automatic retries, recovery, compaction, or queued work can continue afterward.
+@@ -84,6 +84,7 @@ Automatic retries, recovery, compaction, or queued work can continue afterward.
  | Add an MCP server | `pi.registerMcpServer()` |
  | Route each request to a model | [`pi.registerVirtualModel()`](virtual-models.md) |
  | Add terminal rendering | Renderer registration and `ctx.ui` |
@@ -35,9 +35,9 @@ index c350e6626..112465e8d 100644
  | Communicate with another extension | `pi.events` |
  
  Use the exported declarations in [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) for exact event, context, tool, and result types.
-@@ -179,6 +180,20 @@ pi.on("tool_call", async (event, ctx) => {
+@@ -182,6 +183,20 @@ A tool that orchestrates other tools can adjust what the model sees while it is
  
- A tool that orchestrates other tools can adjust what the model sees while it is active with `prepareLoadout(loadout)`. It runs whenever the active tools change and receives the declared tools, the callable tools, and every registered tool with its exposure, namespace, and prompt guidelines. It returns replacement `descriptions` for declared tools (including its own) and `hiddenDeclarations`: active tools whose declarations requests leave out while they stay active and callable. The default system prompt leaves hidden tools out of its tool list and rules, and names no tool in the skills hint when the file reader is hidden, so the orchestrating tool should present their guidelines itself. `codemode` uses only this hook, `exposure`, and `ctx.executeTool()`, so another tool can implement the same behavior under a different name.
+ A tool that reaches other tools declares which ones a call may reach with `reachesTools(input)`: `"all"`, or the words of the input that may name them, where a word refers to every tool or namespace whose name it contains. `codemode` returns `"all"` for scripts that search or list tools and the words of the script otherwise; `tool_search` always returns `"all"`. Extensions that register tools late use it from their `tool_call` handler to finish registering the tools a call needs before it runs, as the MCP extension does for servers that are still connecting. The MCP extension also activates `codemode` or `tool_search` for MCP tools only when the tool of that name declares `reachesTools`.
  
 +### Annotate a tool call without replacing it
 +
@@ -57,10 +57,10 @@ index c350e6626..112465e8d 100644
  
  Register every tool first, keep optional tools inactive, and use `pi.setActiveTools()` from a loader tool to select the desired active tools. Names must already be registered; unknown names are ignored.
 diff --git a/packages/coding-agent/src/core/extensions/index.ts b/packages/coding-agent/src/core/extensions/index.ts
-index aebd5c60d..26a4acfd3 100644
+index 1465e8267..9139d6d5c 100644
 --- a/packages/coding-agent/src/core/extensions/index.ts
 +++ b/packages/coding-agent/src/core/extensions/index.ts
-@@ -172,6 +172,7 @@ export type {
+@@ -174,6 +174,7 @@ export type {
  	ThinkingLevelSelectEvent,
  	ToolAnnotations,
  	// Events - Tool
@@ -94,10 +94,10 @@ index bee134d35..93f5cc714 100644
  		entryRenderers: new Map(),
  		commands: new Map(),
 diff --git a/packages/coding-agent/src/core/extensions/runner.ts b/packages/coding-agent/src/core/extensions/runner.ts
-index 11ffaca7e..07d59a994 100644
+index 77712e677..de87de6c6 100644
 --- a/packages/coding-agent/src/core/extensions/runner.ts
 +++ b/packages/coding-agent/src/core/extensions/runner.ts
-@@ -270,6 +270,13 @@ function snapshotEventHandlers(extensions: Extension[], event: ExtensionEvent["t
+@@ -277,6 +277,13 @@ function snapshotEventHandlers(extensions: Extension[], event: ExtensionEvent["t
  	return extensions.map((ext) => ({ ext, handlers: ext.handlers.get(event)?.slice() ?? [] }));
  }
  
@@ -111,7 +111,7 @@ index 11ffaca7e..07d59a994 100644
  function sameMessages(left: AgentMessage[], right: AgentMessage[]): boolean {
  	return left.length === right.length && left.every((message, index) => message === right[index]);
  }
-@@ -626,6 +633,29 @@ export class ExtensionRunner {
+@@ -633,6 +640,29 @@ export class ExtensionRunner {
  		return this.extensions.map((e) => e.path);
  	}
  
@@ -142,10 +142,10 @@ index 11ffaca7e..07d59a994 100644
  	getAllRegisteredTools(): RegisteredTool[] {
  		const toolsByName = new Map<string, RegisteredTool>();
 diff --git a/packages/coding-agent/src/core/extensions/types.ts b/packages/coding-agent/src/core/extensions/types.ts
-index 5d65cce98..c58f2d0c9 100644
+index 60388c0eb..e4f1f5bf9 100644
 --- a/packages/coding-agent/src/core/extensions/types.ts
 +++ b/packages/coding-agent/src/core/extensions/types.ts
-@@ -1518,6 +1518,9 @@ export interface MarkdownTransformContext {
+@@ -1546,6 +1546,9 @@ export interface MarkdownTransformContext {
  
  export type MarkdownTransformer = (markdown: string, context: MarkdownTransformContext) => string;
  
@@ -155,7 +155,7 @@ index 5d65cce98..c58f2d0c9 100644
  export interface EntryRenderOptions {
  	expanded: boolean;
  }
-@@ -1639,6 +1642,9 @@ export interface ExtensionAPI {
+@@ -1667,6 +1670,9 @@ export interface ExtensionAPI {
  	// Tool Registration
  	// =========================================================================
  
@@ -165,7 +165,7 @@ index 5d65cce98..c58f2d0c9 100644
  	/** Register a tool that the LLM can call. */
  	registerTool<TParams extends TSchema = TSchema, TDetails = unknown, TState = any>(
  		tool: ToolDefinition<TParams, TDetails, TState>,
-@@ -2243,6 +2249,7 @@ export interface Extension {
+@@ -2274,6 +2280,7 @@ export interface Extension {
  	sourceInfo: SourceInfo;
  	handlers: Map<string, HandlerFn[]>;
  	tools: Map<string, RegisteredTool>;
@@ -174,10 +174,10 @@ index 5d65cce98..c58f2d0c9 100644
  	toolRenderers?: ToolRendererResolver[];
  	markdownTransformer?: MarkdownTransformer;
 diff --git a/packages/coding-agent/src/index.ts b/packages/coding-agent/src/index.ts
-index 3a25f85c6..21dd9a54c 100644
+index 0b8fb1dd2..449ba349e 100644
 --- a/packages/coding-agent/src/index.ts
 +++ b/packages/coding-agent/src/index.ts
-@@ -167,6 +167,7 @@ export type {
+@@ -169,6 +169,7 @@ export type {
  	TerminalInputHandler,
  	ThinkingLevelSelectEvent,
  	ToolAnnotations,
@@ -266,10 +266,10 @@ index bf1cd27f9..04328fb08 100644
  				}
  			}
 diff --git a/packages/coding-agent/src/modes/interactive/interactive-mode.ts b/packages/coding-agent/src/modes/interactive/interactive-mode.ts
-index 55ea40409..19124eb69 100644
+index ce2398475..dae4e7b61 100644
 --- a/packages/coding-agent/src/modes/interactive/interactive-mode.ts
 +++ b/packages/coding-agent/src/modes/interactive/interactive-mode.ts
-@@ -3537,6 +3537,8 @@ export class InteractiveMode {
+@@ -3539,6 +3539,8 @@ export class InteractiveMode {
  										showImages: this.settingsManager.getShowImages(),
  										imageWidthCells: this.settingsManager.getImageWidthCells(),
  										outputPad: this.outputPad,
@@ -278,7 +278,7 @@ index 55ea40409..19124eb69 100644
  									},
  									this.getRegisteredToolDefinition(content.name),
  									this.ui,
-@@ -3616,6 +3618,8 @@ export class InteractiveMode {
+@@ -3618,6 +3620,8 @@ export class InteractiveMode {
  							showImages: this.settingsManager.getShowImages(),
  							imageWidthCells: this.settingsManager.getImageWidthCells(),
  							outputPad: this.outputPad,
@@ -287,7 +287,7 @@ index 55ea40409..19124eb69 100644
  						},
  						this.getRegisteredToolDefinition(event.toolName),
  						this.ui,
-@@ -4034,6 +4038,8 @@ export class InteractiveMode {
+@@ -4048,6 +4052,8 @@ export class InteractiveMode {
  								showImages: this.settingsManager.getShowImages(),
  								imageWidthCells: this.settingsManager.getImageWidthCells(),
  								outputPad: this.outputPad,
@@ -297,7 +297,7 @@ index 55ea40409..19124eb69 100644
  							this.getRegisteredToolDefinition(content.name),
  							this.ui,
 diff --git a/packages/coding-agent/test/extensions-runner.test.ts b/packages/coding-agent/test/extensions-runner.test.ts
-index 51d535adc..66527f18e 100644
+index 7c4a5f428..1240be7a4 100644
 --- a/packages/coding-agent/test/extensions-runner.test.ts
 +++ b/packages/coding-agent/test/extensions-runner.test.ts
 @@ -374,6 +374,109 @@ describe("ExtensionRunner", () => {
@@ -606,7 +606,7 @@ index 024748912..d20b508b8 100644
  			// Apply background if specified (this also pads to full width)
  			if (this.customBgFn) {
 diff --git a/packages/tui/src/index.ts b/packages/tui/src/index.ts
-index a7aa6215c..3dd90922e 100644
+index eb962609f..ee26aa718 100644
 --- a/packages/tui/src/index.ts
 +++ b/packages/tui/src/index.ts
 @@ -67,7 +67,7 @@ export {

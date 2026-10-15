@@ -89,16 +89,16 @@ class MaterializeTests(unittest.TestCase):
 
 
 class PinnedManifestTests(unittest.TestCase):
-    """The shipped manifest and patch must agree and name the v1.1.0 port."""
+    """The shipped manifest and patch must agree and name the v1.3.0 port."""
 
     ROOT = Path(__file__).resolve().parents[1] / "personal-pi"
 
-    def test_shipped_patch_matches_manifest_and_v1_base(self):
+    def test_shipped_patch_matches_manifest_and_v1_3_base(self):
         manifest = json.loads((self.ROOT / "manifest.json").read_text())
         patch = (self.ROOT / "patches/0001-tool-call-annotations.patch").read_bytes()
         self.assertEqual(hashlib.sha256(patch).hexdigest(), manifest["patch_sha256"])
-        self.assertEqual(manifest["base_commit"], "abe508e1b89912adde45528136c3221eb69acdd7")
-        self.assertEqual(manifest["result_tree"], "c26c18520205e54d00e1032c0c86f231a83c813e")
+        self.assertEqual(manifest["base_commit"], "71023aec1546d6d677a65669c5665c0927ce0dd0")
+        self.assertEqual(manifest["result_tree"], "a2baf8d461d6e0529130f54d757c6f1891e9f57f")
         self.assertEqual(len(manifest["selected_paths"]), 13)
 
 
