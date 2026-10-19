@@ -11,13 +11,19 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 # Explicit overrides are preferred; sibling checkouts are a local development convenience,
 # not portable installation paths or a dependency shipped to partners. The checkout may sit
-# directly below the projects directory (Main) or one level deeper (Worktrees/<name>), so probe
-# both ancestors and fall back to the historical depth when neither sibling is present.
-PROJECTS = next((ancestor for ancestor in (ROOT.parents[1], ROOT.parents[2])
-                 if (ancestor / "pi-v2").is_dir() or (ancestor / "gentle-pi").is_dir()),
-                ROOT.parents[2])
-PI_SOURCE = Path(os.environ.get("PERSONAL_PI_SOURCE", str(PROJECTS / "pi-v2")))
-QUIET_SOURCE = Path(os.environ.get("GENTLE_PI_SOURCE", str(PROJECTS / "gentle-pi")))
+# directly below the Tower container (Main) or one level deeper (Worktrees/<name>). The Pi fork
+# lives in the container as pi/v2; gentle-pi and the legacy pi-v2 sit beside the container.
+# Each source is resolved independently, falling back to the historical depth.
+def local_source(*relatives):
+    for ancestor in ROOT.parents[:3]:
+        for relative in relatives:
+            if (ancestor / relative).is_dir():
+                return ancestor / relative
+    return ROOT.parents[2] / relatives[-1]
+
+
+PI_SOURCE = Path(os.environ.get("PERSONAL_PI_SOURCE", str(local_source("pi/v2", "pi-v2"))))
+QUIET_SOURCE = Path(os.environ.get("GENTLE_PI_SOURCE", str(local_source("gentle-pi"))))
 MATERIALIZE = ROOT / "agent-workflows/personal-pi/materialize.py"
 MANIFEST = ROOT / "agent-workflows/personal-pi/manifest.json"
 INSTALLER_PATH = ROOT / "agent-workflows/tools/install.py"
