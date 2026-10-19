@@ -206,8 +206,14 @@ class TowerMigrationTests(unittest.TestCase):
         self.assertEqual(before, {relative: (self.home / relative).read_bytes() for relative in targets})
         for name in INSTALLER.TOWER_V1_SKILLS:
             self.assertEqual(os.readlink(self.home / f".claude/skills/{name}"), f"../../.agents/skills/{name}")
-        self.assertEqual(INSTALLER.PERSONAL_SKILLS, ("chanks-0-agente-soporte", "torre-release"))
+        self.assertEqual(INSTALLER.PERSONAL_SKILLS,
+                         ("chanks-0-agente-soporte", "torre-release", "gentle-deck", "gentle-video"))
         self.assertTrue((self.home / ".agents/skills/chanks-0-agente-soporte/SKILL.md").is_file())
+        for name in ("gentle-deck", "gentle-video"):
+            self.assertEqual(INSTALLER.skill_source_root(ROOT, name), ROOT / "skills-personales" / name)
+            self.assertTrue((self.home / f".agents/skills/{name}/SKILL.md").is_file())
+            self.assertEqual(os.readlink(self.home / f".claude/skills/{name}"), f"../../.agents/skills/{name}")
+            self.assertNotIn(name, INSTALLER.TOWER_V1_SKILLS)
         for name in INSTALLER.DEFERRED_SKILLS:
             self.assertIn(name, INSTALLER.RETIRED_SKILLS)
             self.assertFalse((self.home / f".agents/skills/{name}").exists())

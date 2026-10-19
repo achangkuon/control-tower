@@ -27,9 +27,10 @@ another global workflow block. Install/update these assets through the Tower's
 product lifecycle, not through the maintainer's personal installer.
 
 **`tools/install.py` only writes personal configuration.** The active non-V1
-skills are `chanks-0-agente-soporte` and the maintainer's `torre-release` (from
-[`skills-personales/`](skills-personales/README.md)). Both are installed centrally
-and linked from Claude; neither ships in the Tower bundle or counts as a Tower
+skills are `chanks-0-agente-soporte` and the maintainer's `torre-release`,
+`gentle-deck` and `gentle-video` (from
+[`skills-personales/`](skills-personales/README.md)). All are installed centrally
+and linked from Claude; none ships in the Tower bundle or counts as a Tower
 skill. The installer also manages four personal blocks:
 
 | Template | Marker family |
@@ -146,7 +147,7 @@ available, outside this migration's scope.
 | Session workflow (Tower V1) | `chanks-3-paralelo`, `chanks-0-session-context-loader`, `chanks-2-planificador-granular`, `chanks-5-session-doc` |
 | Delivery policy (Tower V1) | `chanks-5-politica-de-entrega` |
 | Decision and communication support (Tower V1) | `chanks-1-cierre-de-decisiones`, `chanks-0-explicalo-simple`, `chanks-0-mensajes-visibles`, `chanks-0-skill-composer`, `analisis-por-tramos`, `skill-orchestrator` |
-| Personal active skills (not Tower) | `chanks-0-agente-soporte`, `torre-release` |
+| Personal active skills (not Tower) | `chanks-0-agente-soporte`, `torre-release`, `gentle-deck`, `gentle-video` |
 | Manual agent communication (source in `skills/`, Tower V1 packaging pending, not installed yet) | `chanks-0-comunicacion-agentes` |
 | Deferred to V2, Pista (source kept, not installed) | `chanks-0-jornada`, `chanks-3-session-kickoff`, `chanks-3-coordinador-manual` |
 | Deferred to V3, automatic Tower (source kept, not installed) | `chanks-3-despacho-herdr`, `chanks-4-unattended-implementation` |

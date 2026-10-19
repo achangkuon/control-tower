@@ -84,6 +84,8 @@ SUPPORT_SKILLS = (
 # Personal maintainer sources are independent of the Chanks and Tower rosters.
 PERSONAL_SOURCE_DIRS = MappingProxyType({
     "torre-release": "skills-personales",
+    "gentle-deck": "skills-personales",
+    "gentle-video": "skills-personales",
 })
 
 # Sources already in the Method whose Tower V1 packaging is a later Session.
