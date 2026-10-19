@@ -225,6 +225,7 @@ PERSONAL_BLOCKS = tuple(
         ("doc-guard-rule.md", b"chanks:doc-guard-rule"),
         ("explain-to-maintainer.md", b"chanks:explain-to-maintainer"),
         ("main-freshness.md", b"chanks:main-freshness"),
+        ("folder-order.md", b"chanks:folder-order"),
     )
 )
 ADDED_WHEN_ABSENT_BLOCKS = (
@@ -236,9 +237,9 @@ PERSONAL_ADDED_WHEN_ABSENT = (
     b"<!-- chanks:doc-guard-rule -->",
     b"<!-- chanks:explain-to-maintainer -->",
 )
-# main-freshness is appended when absent in every runtime (S224); the codex-only
-# policy above stays untouched for the two blocks that already had it.
-PERSONAL_ALWAYS_ADDED_WHEN_ABSENT = (b"<!-- chanks:main-freshness -->",)
+# main-freshness (S224) and folder-order are appended when absent in every runtime; the
+# codex-only policy above stays untouched for the two blocks that already had it.
+PERSONAL_ALWAYS_ADDED_WHEN_ABSENT = (b"<!-- chanks:main-freshness -->", b"<!-- chanks:folder-order -->")
 ADDED_WHEN_ABSENT_FILES = (Path(".codex/AGENTS.md"),)
 
 # The plan-naming block is one text in every runtime (maintainer decision of 2026-10-01).

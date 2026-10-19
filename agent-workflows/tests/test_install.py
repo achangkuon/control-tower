@@ -183,11 +183,14 @@ class TowerMigrationTests(unittest.TestCase):
                                 env=self.env, capture_output=True, text=True)
         self.assertEqual(normal.returncode, 0, normal.stderr)
         self.assertEqual(normal.stdout.count("HINT: legacy Chanks blocks left untouched"), 1)
-        # The normal install only appends the always-added freshness block; every
-        # legacy byte stays exactly where it was.
-        freshness = INSTALLER.render_personal_blocks(ROOT)[b"<!-- chanks:main-freshness -->"]
+        # The normal install only appends the always-added freshness and folder-order
+        # blocks; every legacy byte stays exactly where it was.
+        rendered = INSTALLER.render_personal_blocks(ROOT)
+        # Blocks end with a newline, so consecutive appended blocks sit one blank line apart.
+        appended = b"\n\n" + b"\n".join(rendered[start]
+                                         for start in INSTALLER.PERSONAL_ALWAYS_ADDED_WHEN_ABSENT)
         for path in INSTALLER.manual_paths(self.home):
-            self.assertEqual(path.read_bytes(), before[path] + b"\n\n" + freshness, path)
+            self.assertEqual(path.read_bytes(), before[path] + appended, path)
         self.assertEqual(self.cli("--apply").returncode, 0)
         targets = [".agents/skills/_shared/plan-naming-convention.md", ".local/bin/radar",
                    ".claude/hooks/chanks-etapa.sh", ".claude/hooks/torre-firma.sh",
@@ -605,6 +608,7 @@ class InstallerTests(unittest.TestCase):
         (b"chanks:doc-guard-rule", "doc-guard-rule.md"),
         (b"chanks:explain-to-maintainer", "explain-to-maintainer.md"),
         (b"chanks:main-freshness", "main-freshness.md"),
+        (b"chanks:folder-order", "folder-order.md"),
     )
     MANUAL_ANNOTATION = " (manual — NOT gentle-ai managed; do not overwrite on sync)".encode()
 
@@ -654,7 +658,7 @@ class InstallerTests(unittest.TestCase):
 
     PLAN_NAMING = b"PLAN-NAMING:GLOBAL"
     ADDED_TO_CODEX = (b"chanks:doc-guard-rule", b"chanks:explain-to-maintainer")
-    ADDED_TO_ALL_RUNTIMES = (b"chanks:main-freshness",)
+    ADDED_TO_ALL_RUNTIMES = (b"chanks:main-freshness", b"chanks:folder-order")
 
     def test_missing_personal_blocks_are_added_to_their_runtime(self):
         INSTALLER.apply(self.home, ROOT)
@@ -669,7 +673,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_main_freshness_block_reaches_every_runtime_and_is_idempotent(self):
         self.assertEqual(INSTALLER.PERSONAL_ALWAYS_ADDED_WHEN_ABSENT,
-                         (b"<!-- chanks:main-freshness -->",))
+                         (b"<!-- chanks:main-freshness -->", b"<!-- chanks:folder-order -->"))
         replacements = INSTALLER.render_personal_blocks(ROOT)
         self.assertIn(b"<!-- chanks:main-freshness -->", replacements)
         self.assertEqual(
@@ -683,6 +687,22 @@ class InstallerTests(unittest.TestCase):
                 self.assertIn(block, path.read_bytes())
                 self.assertNotIn(b"{{", path.read_bytes())
                 self.assertEqual(path.read_bytes().count(b"<!-- chanks:main-freshness -->"), 1)
+        self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
+
+    def test_folder_order_block_reaches_every_runtime_with_its_rules(self):
+        start = b"<!-- chanks:folder-order -->"
+        block = INSTALLER.render_personal_blocks(ROOT)[start]
+        self.assertEqual(block, (ROOT / "templates/folder-order.md").read_bytes())
+        self.assertTrue(block.endswith(b"<!-- /chanks:folder-order -->\n"))
+        for phrase in (b"owner", b"Main/", b"Worktrees/", b"never merge", b"~/projects",
+                       b"/tmp", b"~/go", b"~/Downloads", b"~/orca", b"references",
+                       b"git worktree", b"ask"):
+            self.assertIn(phrase, block, phrase)
+        INSTALLER.apply(self.home, ROOT)
+        for path in INSTALLER.manual_paths(self.home):
+            with self.subTest(path=path):
+                self.assertEqual(path.read_bytes().count(start), 1)
+                self.assertIn(block, path.read_bytes())
         self.assertEqual(INSTALLER.apply(self.home, ROOT), [])
 
     def test_opt_in_flag_controls_only_opt_in_blocks(self):
@@ -801,14 +821,16 @@ class InstallerTests(unittest.TestCase):
         for path, block in seeded.items():
             path.write_bytes(b"prefix\n" + block + path.read_bytes() + b"suffix\n")
         INSTALLER.apply(self.home, ROOT)
-        freshness = INSTALLER.render_personal_blocks(ROOT)[b"<!-- chanks:main-freshness -->"]
+        rendered = INSTALLER.render_personal_blocks(ROOT)
+        always_added = b"\n".join(rendered[start]
+                                  for start in INSTALLER.PERSONAL_ALWAYS_ADDED_WHEN_ABSENT)
         for path, relative in ((claude, ".claude/CLAUDE.md"),
                                (opencode, ".config/opencode/AGENTS.md"),
                                (pi, ".pi/agent/APPEND_SYSTEM.md")):
             content = path.read_bytes()
             self.assertTrue(content.startswith(b"prefix\n" + seeded[path]), path)
             self.assertIn(b"suffix\n", content, path)
-            self.assertTrue(content.endswith(freshness), path)
+            self.assertTrue(content.endswith(always_added), path)
             self.assertEqual(content.count(self.PLAN_NAMING_START), 1, path)
         self.assertIn(b"The sole authority is", pi.read_bytes())
         changed = [

@@ -13,7 +13,7 @@ The complete workflow belongs in each adopted project's `AGENTS.md`, not in a
 second global workflow block. Use Tower's release/update process for these assets.
 
 **Personal configuration only: `tools/install.py`.** It installs the remaining
-active non-V1 skill, `chanks-0-agente-soporte`, and the four personal Chanks blocks.
+active non-V1 skills (`chanks-0-agente-soporte` and the maintainer's personal skills) and the five personal Chanks blocks.
 It also installs the `main-al-dia` freshness launcher to `~/.local/bin/`, like `carril`.
 The five deferred skills remain uninstalled; existing copies are archived as
 before. It never replaces or deletes Tower files.
@@ -34,7 +34,7 @@ copies, replaces or synchronizes them. Third-party skills are outside its roster
 3. **Migrate old blocks once.** Inspect `python3 agent-workflows/tools/install.py
    --migrate-to-tower` first; only then authorize the same command with `--apply`.
    Timestamped backups precede every edit. Superseded global routing/plan-naming
-   blocks are removed; only the four personal blocks get Chanks markers.
+   blocks are removed; only the five personal blocks get Chanks markers.
 4. **Install and verify by owner.** Tower updates product assets. For personal
    changes run `python3 agent-workflows/tools/install.py`, then `--check`.
    Never delete and recopy runtime directories. Verify protected bytes unchanged.
