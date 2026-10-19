@@ -12,8 +12,8 @@ The maintainer organizes the machine by relationship: every file and folder live
    repository; never merge their histories.
 3. **Nothing loose** in `~` or `~/projects`: no stray screenshots, downloads or scratch
    output. Scratch goes to its owner's scratch folder or to `/tmp`.
-4. **Leave tool-owned locations alone:** dot-directories, `~/go`, `~/Downloads` and app
-   state such as `~/orca`.
+4. **Leave tool-owned locations alone:** hidden dot-files and dot-directories, `~/go`,
+   `~/Downloads` and app state such as `~/orca`.
 5. **Before moving, find references** (configs, aliases, launchers, tests) and update them in
    the same change; repair Git worktrees with `git worktree move` or `git worktree repair`.
    Show the list of moves before executing them.
