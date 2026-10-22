@@ -210,7 +210,8 @@ class TowerMigrationTests(unittest.TestCase):
         for name in INSTALLER.TOWER_V1_SKILLS:
             self.assertEqual(os.readlink(self.home / f".claude/skills/{name}"), f"../../.agents/skills/{name}")
         self.assertEqual(INSTALLER.PERSONAL_SKILLS,
-                         ("chanks-0-agente-soporte", "torre-release", "gentle-deck", "gentle-video"))
+                         ("chanks-0-agente-soporte", "torre-release", "gentle-deck", "gentle-video",
+                          "abrir-maquetas", "ego-verify", "navegador-rea", "scrapear-landing-rea"))
         self.assertTrue((self.home / ".agents/skills/chanks-0-agente-soporte/SKILL.md").is_file())
         for name in ("gentle-deck", "gentle-video"):
             self.assertEqual(INSTALLER.skill_source_root(ROOT, name), ROOT / "skills-personales" / name)
@@ -658,7 +659,7 @@ class InstallerTests(unittest.TestCase):
 
     PLAN_NAMING = b"PLAN-NAMING:GLOBAL"
     ADDED_TO_CODEX = (b"chanks:doc-guard-rule", b"chanks:explain-to-maintainer")
-    ADDED_TO_ALL_RUNTIMES = (b"chanks:main-freshness", b"chanks:folder-order")
+    ADDED_TO_ALL_RUNTIMES = (b"chanks:main-freshness", b"chanks:folder-order", b"chanks:ego-browser")
 
     def test_missing_personal_blocks_are_added_to_their_runtime(self):
         INSTALLER.apply(self.home, ROOT)
@@ -673,7 +674,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_main_freshness_block_reaches_every_runtime_and_is_idempotent(self):
         self.assertEqual(INSTALLER.PERSONAL_ALWAYS_ADDED_WHEN_ABSENT,
-                         (b"<!-- chanks:main-freshness -->", b"<!-- chanks:folder-order -->"))
+                         (b"<!-- chanks:main-freshness -->", b"<!-- chanks:folder-order -->", b"<!-- chanks:ego-browser -->"))
         replacements = INSTALLER.render_personal_blocks(ROOT)
         self.assertIn(b"<!-- chanks:main-freshness -->", replacements)
         self.assertEqual(
