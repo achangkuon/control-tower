@@ -230,7 +230,9 @@ class PersonalConfigMigrationTests(unittest.TestCase):
         # install.py owns only the personal roster centrally; the Tower V1 roster
         # is installed by the product installer (issue #154).
         self.assertTrue(set(install.PERSONAL_SKILLS) <= central_names)
-        self.assertEqual(len(install.OWN_SKILLS), 28)
+        # 28 skills before the ego family landed; abrir-maquetas, ego-verify,
+        # navegador-rea and scrapear-landing-rea brought the roster to 32.
+        self.assertEqual(len(install.OWN_SKILLS), 32)
         self.assertFalse(set(install.DEFERRED_SKILLS) & central_names)
         # Simulate the Tower V1 product installer, which on a real machine already
         # placed the V1 roster in the central root before this migration runs
