@@ -86,6 +86,7 @@ PERSONAL_SOURCE_DIRS = MappingProxyType({
     "torre-release": "skills-personales",
     "gentle-deck": "skills-personales",
     "gentle-video": "skills-personales",
+    "abrir-maquetas": "skills-personales",
 })
 
 # Sources already in the Method whose Tower V1 packaging is a later Session.
