@@ -1,6 +1,6 @@
 ---
 name: chanks-0-comunicacion-agentes
-description: "Trigger: comunicate con el agente, decile que, fijate qué hace, decile que frene, abrí un panel, iniciá un agente. Enruta la comunicación manual entre agentes a un caso."
+description: "Trigger: comunicate con el agente, decile que, fijate qué hace, decile que frene, abrí un panel, iniciá un agente, iniciá sesiones de agentes, lanzá un agente para trabajar, sesiones en pestañas, worktrees o rutas específicas. Enruta la comunicación manual entre agentes a un caso y decide la topología de paneles y pestañas; la skill nativa herdr es sólo referencia de sintaxis."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
@@ -16,6 +16,8 @@ un agente nuevo. Cubre la comunicación manual entre agentes de cualquier tipo, 
 ## Hard Rules
 
 - Enrutá a un solo caso por pedido y cargá su detalle bajo demanda desde `references/casos-herdr.md`.
+- Esta skill es la única autoridad de topología para iniciar agentes y paneles. De la skill nativa `herdr` se toman únicamente la sintaxis de comandos y los IDs que devuelve su CLI: sus defaults de ubicación (p. ej. panel hermano en la pestaña actual) no se aplican cuando el destino es un agente lanzado para trabajar. Si el usuario menciona "herdr", esta skill igual gobierna el caso.
+- Si el usuario indica ruta, worktree o proyecto para un agente nuevo, ése es su directorio de trabajo: creale pestaña propia con esa ruta (`tab create --cwd`) y arrancá el agente en su panel raíz.
 - Antes de cualquier comando verificá `HERDR_ENV=1`. Fuera de Herdr decilo y detenete; no
   inspecciones ni controles la sesión desde afuera.
 - La skill nativa `herdr` es la referencia de comandos: citala y no copies su procedimiento. Donde
