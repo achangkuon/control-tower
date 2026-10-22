@@ -1,6 +1,6 @@
 ---
 name: chanks-0-comunicacion-agentes
-description: "Trigger: comunicate con el agente, decile que, fijate qué hace, decile que frene, abrí un panel, iniciá un agente, iniciá sesiones de agentes, lanzá un agente para trabajar, sesiones en pestañas, worktrees o rutas específicas. Enruta la comunicación manual entre agentes a un caso y decide la topología de paneles y pestañas; la skill nativa herdr es sólo referencia de sintaxis."
+description: "Trigger: comunicate con el agente, decile que, fijate qué hace, decile que frene, abrí un panel, iniciá un agente. Iniciá sesiones de agentes, lanzá un agente para trabajar, pestañas, worktrees o rutas específicas; decidí la topología de paneles."
 license: Apache-2.0
 metadata:
   author: gentleman-programming
