@@ -1,6 +1,6 @@
 ---
 name: ego-verify
-description: Verify what was just implemented by driving the real app with ego-browser while narrating every step live for the owner. Trigger: verify, verificá lo implementado, probá lo que hiciste, check en ego — and run it automatically after implementing any change that is visible or usable in an app. Produces a per-flow verdict report; does not accumulate screenshots.
+description: "Verify what was just implemented by driving the real app with ego-browser while narrating every step live for the owner. Trigger: verify, verificá lo implementado, probá lo que hiciste, check en ego — and run it automatically after implementing any change that is visible or usable in an app. Produces a per-flow verdict report; does not accumulate screenshots."
 metadata:
   author: gentleman-programming
   version: "1.0.0"
