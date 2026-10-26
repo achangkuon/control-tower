@@ -19,7 +19,7 @@ The maintainer explicitly requested the port.
 ## Scope and constraints
 
 - Zone: `agent-workflows/` (personal-pi manifest, patch, README; tests) and `odd/tasks/`.
-  Git surgery happens in the fork clone `/home/emili/projects/pi` (upstream
+  Git surgery happens in the fork clone `/home/<usuario>/projects/pi` (upstream
   `earendil-works/pi`, origin `achangkuon/pi`); that clone is not part of this repository.
 - Delivery: direct commits on `master` (`AGENTS.md`). Push stays a maintainer decision.
   Not planned Session work, so the docs gate closes with «nada que registrar».
@@ -75,7 +75,7 @@ The maintainer explicitly requested the port.
 ## Progress
 
 - T1 done. `git cherry-pick db4a3858` onto `abe508e1b` (tag v1.1.0) in worktree
-  `/home/emili/projects/pi-v1.1.0`; 11 paths clean, 4 conflict sites in 2 files
+  `/home/<usuario>/projects/pi-v1.1.0`; 11 paths clean, 4 conflict sites in 2 files
   (`tool-execution.ts` options block; 3 `ToolExecutionComponent` constructor sites in
   `interactive-mode.ts`), all resolved by keeping both sides. Build with Node v24.21.0
   exit 0; overlay tests: tui 4/4, coding-agent 111/111. Reviewed commit: `20aa0e80a`.
@@ -94,7 +94,7 @@ The maintainer explicitly requested the port.
 - Reviewed: `20aa0e80a0c00c90f1979313b979a15523466582`, evidence: `5edb832249c978a5be16801a492606738893c9a1`
 - Patch SHA-256: `485abcd9ca67014d4ea9a2b192077d047750d8dd21c48931083523e5953061f7`
 - Result tree: `c26c18520205e54d00e1032c0c86f231a83c813e`
-- Fork branch: `achangkuon/pi` `personal/tool-call-annotations-v1.1.0` (local worktree `/home/emili/projects/pi-v1.1.0`)
+- Fork branch: `achangkuon/pi` `personal/tool-call-annotations-v1.1.0` (local worktree `/home/<usuario>/projects/pi-v1.1.0`)
 - Selected paths: 13, unchanged.
 
 ## Verification after the writer

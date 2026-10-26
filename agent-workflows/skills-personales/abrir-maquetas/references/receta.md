@@ -1,15 +1,15 @@
 # Receta completa — abrir un HTML en editor-maquetas
 
 Caso real del 2026-10-20: abrir el dashboard de la oficina unificada del
-worktree `carril-app-proveedores` de ecom-ecuador.
+worktree `carril-app-proveedores` de proyecto-beta.
 
 ## Archivo
 
 ```
-/home/emili/projects/ecom-ecuador/Worktrees/carril-app-proveedores/ops/herramientas/oficina-unificada.html
+/home/<usuario>/projects/proyecto-beta/Worktrees/carril-app-proveedores/ops/herramientas/oficina-unificada.html
 ```
 
-- `<root>` = `/home/emili/projects/ecom-ecuador/Worktrees/carril-app-proveedores` (raíz del worktree, NO la carpeta `ops/herramientas/`)
+- `<root>` = `/home/<usuario>/projects/proyecto-beta/Worktrees/carril-app-proveedores` (raíz del worktree, NO la carpeta `ops/herramientas/`)
 - ruta relativa = `ops/herramientas/oficina-unificada.html`
 
 ## Pasos
@@ -27,7 +27,7 @@ curl -s -o /dev/null -w "%{http_code}" "http://localhost:4545/"
 
 ```bash
 cd ~/projects/editor-maquetas && bin/maquetas \
-  /home/emili/projects/ecom-ecuador/Worktrees/carril-app-proveedores \
+  /home/<usuario>/projects/proyecto-beta/Worktrees/carril-app-proveedores \
   ops/herramientas/oficina-unificada.html
 ```
 
