@@ -1,6 +1,7 @@
 {
   "name": "control-tower",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "test": "bun test",
