@@ -17,16 +17,60 @@ proyectos; adoptar un proyecto no autoriza al agente a elegir trabajo.
 V1 permite delegación nativa dentro de una conversación. No coordina varias
 conversaciones independientes ni impone un turno de entrega entre ellas.
 
+## Cómo fluye el trabajo
+
+Un pedido del humano entra, la Torre decide en qué etapa está el trabajo según la
+evidencia del plan y cada salto entre etapas lo anuncia 💪 Chanks. La
+implementación y la revisión quedan en manos de Gentle AI.
+
+```mermaid
+flowchart TD
+  J0["🗼 Torre · jornada<br/>abre el día: master al día y asientos reciclados<br/>lo invoca 💪 chanks-0-jornada"] --> P[Pedido del humano]
+  P --> T0{"🗼 Torre · radar etapa<br/>¿qué permite la evidencia?"}
+  T0 -->|Idea nueva| E1["💪 Etapa 1<br/>Definir alcance"]
+  T0 -->|Retomar| R["🗼 Torre · radar status<br/>EN CURSO y LISTO"]
+  E1 --> E2["💪 Etapa 2<br/>Preparar hasta LISTO"]
+  E2 --> V["🗼 Torre · radar check<br/>valida plan.yaml"]
+  V --> R
+  R -->|LISTO| E3["💪 Etapa 3<br/>Aprobar lote y despachar"]
+  E3 --> A["🗼 Torre · radar admite<br/>libera la escritura"]
+  A --> E4["💪 Etapa 4 → Gentle AI<br/>Implementar y revisar<br/>varias conversaciones en paralelo"]
+  R -->|EN CURSO| E4
+  E4 -->|cada conversación pide turno| E5["💪 Etapa 5<br/>Entregar y cerrar"]
+  subgraph S5["Etapa 5 · entrega ordenada (propuesta)"]
+    E5 --> Q["🗼 Torre · salida<br/>cola de cambios exactos<br/>un solo turno por proyecto"]
+    Q --> I["🗼 Torre · salida<br/>combina con la base actual<br/>y corre radar check"]
+    I --> H{"Humano<br/>¿autoriza ese resultado exacto?"}
+    H -->|sí| PUB["🗼 Torre · salida<br/>publica y confirma qué llegó"]
+    PUB -.->|siguiente de la cola| Q
+  end
+  I -->|"choque o comprobación fallida<br/>vuelve a su conversación"| E4
+  PUB --> C["🗼 Torre · cierre en plan.yaml"]
+  C --> R
+  C -.->|fin del día| J1["🗼 Torre · jornada<br/>diagnóstico de cierre<br/>lo invoca 💪 chanks-0-jornada"]
+  classDef chanks stroke:#1fa892,stroke-width:3px
+  classDef torre stroke:#e08a1e,stroke-width:3px
+  classDef gentle stroke:#8b7be0,stroke-width:3px
+  classDef propuesta stroke:#e08a1e,stroke-width:3px,stroke-dasharray:6 4
+  class E1,E2,E3,E5 chanks
+  class J0,T0,R,V,A,C,J1 torre
+  class E4 gentle
+  class Q,I,PUB propuesta
+```
+
+Las cajas de borde punteado (Etapa 5 · entrega ordenada) son una **propuesta**:
+una herramienta de salida por proyecto que todavía no existe y no forma parte de V1.
+
 ## Inicio rápido
 
 ### Requisitos y procedencia
 
 Se necesita Bun para ejecutar el instalador y el lanzador, Git para el proyecto
-y GitHub CLI (`gh`) autenticado en `github.com` con acceso al repositorio privado
+y GitHub CLI (`gh`) autenticado en `github.com` para descargar los Releases de
 `achangkuon/control-tower`. Radar se distribuye como fuentes Go con su dependencia
 incluida (`vendor/`); se compila sin internet y sólo requiere Go.
 
-Las versiones se publican como Releases privados de `achangkuon/control-tower`
+Las versiones se publican como Releases de `achangkuon/control-tower`
 (la vigente es la marcada `Latest` en `gh release list --repo achangkuon/control-tower`). Una vez instalada, `torre-control update --latest` (o
 «Instalar o actualizar» en la interfaz) busca sola la última versión publicada y
 la verifica con la huella `tower-v1.json.sha256` que se publica junto al paquete.
@@ -102,7 +146,7 @@ Un diagnóstico global sano devuelve `status: "healthy"`; sin instalación devue
 Torre de Control **no se distribuye por Homebrew**. Claude Code o Pi deben estar
 instalados por separado. La compilación posterior de Radar necesita las
 dependencias Go disponibles. Autentique `gh` con `gh auth login` y compruebe
-`gh auth status`: su cuenta debe tener acceso al repositorio privado.
+`gh auth status`.
 
 ### Instalar con un comando
 
@@ -449,3 +493,7 @@ temporal de medición, no un servicio de coordinación.
 
 Los límites de versión están registrados en
 [Definiciones de V1, V2 y V3](docs/architecture/definiciones-v1-v2-v3.md).
+
+## Licencia
+
+Publicado bajo la [licencia MIT](LICENSE).
