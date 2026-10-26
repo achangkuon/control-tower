@@ -136,6 +136,7 @@ cimientos:
     - .pi/settings.json
     - AGENTS.md
     - CLAUDE.md
+    - LICENSE
     - README.md
     - ROADMAP.md
     - bin/torre
