@@ -31,3 +31,10 @@ reescritura).
 
 ## Evidencia
 (registrada por tarea al completar)
+
+### Pasada previa a publicar (2026-10-26)
+- Re-grep de patrones personales: 2 archivos nuevos desde la primera pasada (`abrir-maquetas/references/receta.md`, `odd/tasks/pi-overlay-port-1.1.0.md`) saneados en `b2d58aaa`; re-grep → 0 coincidencias. Chequeo de secretos → 0.
+- Licencia MIT (`LICENSE`, `"license": "MIT"` en package.json) en `5b280303`.
+- README: diagrama Mermaid «Cómo fluye el trabajo» tomado del documento «Chanks como guía de etapas — análisis por tramos» y redacción de repo privado eliminada, en `91379691`.
+- `bun test`: 2162 pass, 1 skip, 0 fail.
+- Pendiente con autorización explícita: hacer público el repo y avisar a Alan (runbook pasos 4–5).
