@@ -21,7 +21,9 @@ function harness(responses = [{ status: 0, stdout: Buffer.from("private auth out
 }
 
 describe("S209 read-only release check", () => {
-  for (const [installed, latest, status] of [["v1.2.1", "v1.2.2", "available"], ["v1.2.2", "v1.2.2", "up-to-date"], ["checkout-abc123", "v1.2.2", "available"], ["checkout-abc123", "checkout-abc123", "up-to-date"], ["v2", "v1", "available"]]) {
+  for (const [installed, latest, status] of [["v1.2.1", "v1.2.2", "available"], ["v1.2.2", "v1.2.2", "up-to-date"], ["checkout-abc123", "v1.2.2", "available"], ["checkout-abc123", "checkout-abc123", "up-to-date"], ["v2", "v1", "available"],
+    // Semver ordering (issue #165): an older stable is never offered over a newer pre-release.
+    ["v2.0.0-rc.1", "v1.3.2", "up-to-date"], ["v2.0.0-rc.1", "v2.0.0", "available"], ["v2.0.0-rc.1", "v2.0.0-rc.2", "available"], ["v2.0.0", "v1.99.99", "up-to-date"], ["v2.0.1-rc.1", "v2.0.1", "available"], ["v2.0.1", "v2.0.1-rc.1", "up-to-date"]]) {
     test(`${installed} versus ${latest}: ${status}, metadata only`, () => {
       const h = harness([{ status: 0, stdout: Buffer.alloc(0) }, { status: 0, stdout: Buffer.from(JSON.stringify({ tagName: latest })) }]);
       expect(checkLatestRelease({ repository: input.repository, installedTag: installed, runner: h.runner })).toEqual({ status, installed, latest });

@@ -197,9 +197,39 @@ function discoverLatestTag(identity, runner) {
   return tag;
 }
 
-/** Metadata only, with an eight-second total subprocess budget. Any different
- * valid tag (including checkout-* or an older published tag) is available;
- * equality alone means up-to-date. This is not semantic-version ordering.
+/** Strict semver parsing for update ordering (issue #165): vMAJOR.MINOR.PATCH
+ * with an optional -prerelease identifier. Anything else (v1, checkout-*)
+ * returns null and the caller keeps the historical inequality rule. */
+const semverOf = tag => {
+  const match = /^v(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/.exec(tag);
+  if (!match) return null;
+  const [major, minor, patch] = [match[1], match[2], match[3]].map(Number);
+  return { major, minor, patch, pre: match[4] ?? null };
+};
+const compareSemver = (a, b) => {
+  for (const key of ["major", "minor", "patch"]) if (a[key] !== b[key]) return a[key] < b[key] ? -1 : 1;
+  if (a.pre === b.pre) return 0;
+  if (a.pre === null) return 1; // a release sorts above its own prereleases
+  if (b.pre === null) return -1;
+  // Dot-separated identifiers; numeric identifiers compare numerically and sort
+  // below alphanumeric ones (semver §11).
+  const x = a.pre.split("."), y = b.pre.split(".");
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    if (x[i] === undefined) return -1;
+    if (y[i] === undefined) return 1;
+    const xn = /^\d+$/.test(x[i]), yn = /^\d+$/.test(y[i]);
+    if (xn && yn && x[i] !== y[i]) return Number(x[i]) < Number(y[i]) ? -1 : 1;
+    if (xn !== yn) return xn ? -1 : 1;
+    if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1;
+  }
+  return 0;
+};
+
+/** Metadata only, with an eight-second total subprocess budget. Two strict
+ * semver tags compare by semver order (prerelease < release), so an older
+ * published stable is never offered over a newer installed pre-release
+ * (issue #165); equality and any pair involving a non-semver tag (checkout-*,
+ * v1) keep the historical rule: a different valid tag is available.
  */
 export function checkLatestRelease(options) {
   try {
@@ -212,7 +242,9 @@ export function checkLatestRelease(options) {
       return runner(command, argv, { ...spawnOptions, timeout, killSignal: "SIGKILL" });
     };
     const latest = discoverLatestTag(identity, boundedRunner);
-    return Object.freeze({ status: latest === installedTag ? "up-to-date" : "available", installed: installedTag, latest });
+    const [installedVersion, latestVersion] = [semverOf(installedTag), semverOf(latest)];
+    const available = installedVersion && latestVersion ? compareSemver(latestVersion, installedVersion) > 0 : latest !== installedTag;
+    return Object.freeze({ status: available ? "available" : "up-to-date", installed: installedTag, latest });
   } catch {
     // Do not expose gh auth output or turn best-effort discovery into a CLI error.
     return Object.freeze({ status: "unknown", reason: "No se pudo consultar una versión publicada válida (gh, sesión, red o tiempo de espera)." });
