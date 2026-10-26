@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test"
+import { afterEach, describe, expect, spyOn, test } from "bun:test"
 import { Database } from "bun:sqlite"
 import { execFileSync } from "node:child_process"
 import { createHash, randomBytes, randomUUID } from "node:crypto"
@@ -202,6 +202,13 @@ const recordClaimantPair = (built) => {
   dispatch("recordTerminationReceipt", claimantRequest(built, "HOST"))
   dispatch("recordTerminationReceipt", claimantRequest(built, "MCP"))
 }
+// The live proof-plane window is wall-clock arithmetic (30s freshness, no future
+// observed_at), so every receipt pair below is expressed against one pinned
+// instant instead of the real clock: otherwise a slow fixture build between test
+// collection and validation can straddle the boundary and flip the verdict.
+const PINNED_NOW_MS = Date.parse("2026-01-01T00:00:00.000Z")
+const pinnedOffset = (offsetMs) => new Date(PINNED_NOW_MS + offsetMs).toISOString()
+const pinClock = () => spyOn(Date, "now").mockReturnValue(PINNED_NOW_MS)
 const insertStoredTerminationPair = (built, { observedAt = new Date().toISOString(), recordedAt = observedAt, receiptJsonFor = canonical } = {}) => {
   const db = new Database(built.fixture.dbPath)
   const subject = db.query("SELECT * FROM ct_claimant_binding WHERE binding_id=?").get(built.workerBindingId)
@@ -415,23 +422,29 @@ describe("P6-C proof plane: validTerminationPairing (reused unmodified by later 
   })
 
   test("accepts a canonically stored receipt pair inside the freshness boundary", () => {
-    const built = buildClaimedFixture()
-    insertStoredTerminationPair(built, { observedAt: new Date(Date.now() - 29_000).toISOString() })
-    const db = openDb(built)
-    expect(tower.validTerminationPairing(db, pairingArgs(built)).pairing_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
-    db.close()
+    const clock = pinClock()
+    try {
+      const built = buildClaimedFixture()
+      insertStoredTerminationPair(built, { observedAt: pinnedOffset(-29_000) })
+      const db = openDb(built)
+      expect(tower.validTerminationPairing(db, pairingArgs(built)).pairing_digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+      db.close()
+    } finally { clock.mockRestore() }
   })
 
   for (const [name, options] of [
     ["invalid observed_at", { observedAt: "x".repeat(24) }],
-    ["future observed_at", { observedAt: new Date(Date.now() + 10_000).toISOString() }],
+    ["future observed_at", { observedAt: pinnedOffset(10_000) }],
     ["receipt_json mismatch", { receiptJsonFor: () => "{}" }],
   ]) test(`rejects ${name} with CT_RECOVERY_REQUIRED`, () => {
-    const built = buildClaimedFixture()
-    insertStoredTerminationPair(built, options)
-    const db = openDb(built)
-    expect(errorCode(() => tower.validTerminationPairing(db, pairingArgs(built)))).toBe("CT_RECOVERY_REQUIRED")
-    db.close()
+    const clock = pinClock()
+    try {
+      const built = buildClaimedFixture()
+      insertStoredTerminationPair(built, options)
+      const db = openDb(built)
+      expect(errorCode(() => tower.validTerminationPairing(db, pairingArgs(built)))).toBe("CT_RECOVERY_REQUIRED")
+      db.close()
+    } finally { clock.mockRestore() }
   })
 
   test("CT-R7-S5 — mismatched os_boot_id between HOST and MCP rows is rejected with CT_RECOVERY_REQUIRED", () => {

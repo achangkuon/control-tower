@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { afterAll, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
@@ -11,6 +11,19 @@ import * as benchmarkModule from "../benchmark.mjs";
 const runBenchmark = (options = {}) => benchmark({ radar: false, ...options });
 
 const gitProxy = fileURLToPath(new URL("../../../../test/helpers/bin", import.meta.url));
+// The suite's git proxy strips itself only from the front of PATH, so an injected
+// directory must land after the leading proxy entries or every `git` call recurses
+// into the proxy instead of resolving the real binary.
+function pathAfterGitProxies(entry, inheritedPath = process.env.PATH ?? "") {
+  const entries = inheritedPath.split(delimiter);
+  let leading = 0;
+  while (leading < entries.length) {
+    try { if (realpathSync(entries[leading] || ".") !== realpathSync(gitProxy)) break; }
+    catch { break; }
+    leading++;
+  }
+  return [...entries.slice(0, leading), entry, ...entries.slice(leading)].join(delimiter);
+}
 
 async function fake(mode, fn, inheritedPath = process.env.PATH) {
   const root = mkdtempSync(join(tmpdir(), "tower-bench-test-"));
@@ -34,15 +47,7 @@ if (${JSON.stringify(mode)} !== 'none') {
 if (${JSON.stringify(mode)} === 'hang-run') await new Promise(() => setInterval(() => {}, 1000));
 `;
   for (const host of ["pi", "claude"]) writeFileSync(join(bin, host), script, { mode: 0o755 });
-  // The suite's git proxy strips itself only from the front of PATH.
-  const entries = inheritedPath.split(delimiter);
-  let leading = 0;
-  while (leading < entries.length) {
-    try { if (realpathSync(entries[leading] || ".") !== realpathSync(gitProxy)) break; }
-    catch { break; }
-    leading++;
-  }
-  const path = [...entries.slice(0, leading), bin, ...entries.slice(leading)].join(delimiter);
+  const path = pathAfterGitProxies(bin, inheritedPath);
   try { await fn({ env: { PATH: path }, root }); }
   finally { rmSync(root, { recursive: true, force: true }); }
 }
@@ -234,7 +239,24 @@ test("Radar execution requires decoded executable position, not shell mentions",
   }
 });
 
-const contrast = (options = {}) => benchmarkModule.runRadarContrast({ env: { PATH: process.env.PATH }, ...options });
+// Radar contrast resolves `go` and probes GOMODCACHE from the caller's environment
+// before it builds anything. Read from process.env, that ambient toolchain and
+// module cache are what turned a measured/equal run into a `blocked` one between
+// identical runs, so every contrast call below gets a test-owned Go environment:
+// a `go` that always resolves (a real build stays behind the spawn seam every test
+// here injects, and fails loudly instead of flaking if one is ever run directly),
+// plus private build and module caches so no operator GOCACHE/GOMODCACHE and no
+// `GOPROXY=off` probe of machine state can decide the verdict.
+const fixtureGo = (() => {
+  const root = mkdtempSync(join(tmpdir(), "tower-bench-go-"));
+  const bin = join(root, "bin"), cache = join(root, "cache"), modules = join(root, "modules");
+  for (const dir of [bin, cache, modules]) mkdirSync(dir);
+  writeFileSync(join(bin, "go"), `#!${process.execPath}\nconsole.error("benchmark fixture go: real Radar builds must be injected through the spawn seam\\n");\nprocess.exit(127);\n`, { mode: 0o755 });
+  return { root, env: () => ({ PATH: pathAfterGitProxies(bin), GOCACHE: cache, GOMODCACHE: modules }) };
+})();
+afterAll(() => rmSync(fixtureGo.root, { recursive: true, force: true }));
+
+const contrast = (options = {}) => benchmarkModule.runRadarContrast({ env: fixtureGo.env(), ...options });
 function radarSpawn(observations, alter = (_cmd, outcome) => outcome) {
   return async (cmd, options) => {
     observations.push({ cmd, ...options });
@@ -272,7 +294,9 @@ function radarSpawn(observations, alter = (_cmd, outcome) => outcome) {
 }
 
 test("Radar resolves the operator module cache before isolating both offline builds", async () => {
-  const operator = { PATH: process.env.PATH, HOME: "/operator-home", GOPATH: "/operator-go" };
+  // PATH is pinned (fixtureGo) so the probe cannot disappear with an ambient
+  // toolchain; HOME/GOPATH stay operator-shaped to prove what the probe inherits.
+  const operator = { PATH: fixtureGo.env().PATH, HOME: "/operator-home", GOPATH: "/operator-go" };
   const observations = [];
   const report = await contrast({ env: operator, spawn: radarSpawn(observations) });
   expect(observations[0].cmd.slice(1)).toEqual(["env", "GOMODCACHE"]);
