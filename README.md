@@ -59,7 +59,8 @@ flowchart TD
 ```
 
 Las cajas de borde punteado (Etapa 5 · entrega ordenada) son una **propuesta**:
-una herramienta de salida por proyecto que todavía no existe y no forma parte de V1.
+Pista, una herramienta de salida por proyecto prevista para V3, que todavía no
+existe y no forma parte de V1.
 
 ## Inicio rápido
 
@@ -482,10 +483,12 @@ El trabajo paralelo de V1 permanece dentro de una sola conversación, usando las
 capacidades nativas del host. Dos conversaciones podrían seleccionar la misma
 Sesión sin aviso; V1 no promete entrega serializada entre ellas.
 
-- **V2 — Pista:** reserva de Sesiones y entrega ordenada para varias conversaciones
-  independientes por proyecto. No es una capacidad entregada por V1.
-- **V3 — Torre automática:** despacho con Herdr, Pi Intercom y ejecución sellada
-  desatendida. No es una capacidad entregada por V1.
+- **V2 — Piloto:** piloto automático desatendido. Una conversación orquestadora
+  por corrida despacha varios vuelos, con un subagente por Sesión, y la revisión
+  ocurre al volver, vuelo por vuelo. No es una capacidad entregada por V1.
+- **V3 — Flota:** una conversación aparte por vuelo para implementar y revisar,
+  Pista (entrega ordenada), despacho con Herdr u otro, reserva segura de Sesiones y
+  aviso de caídas. No es una capacidad entregada por V1.
 
 V1 no instala ni promete procesos persistentes, sockets, supervisión ni rutas
 de despacho entre hosts. El servidor loopback del benchmark es un instrumento
