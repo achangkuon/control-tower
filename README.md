@@ -17,6 +17,41 @@ proyectos; adoptar un proyecto no autoriza al agente a elegir trabajo.
 V1 permite delegación nativa dentro de una conversación. No coordina varias
 conversaciones independientes ni impone un turno de entrega entre ellas.
 
+## ¿Qué es esto?
+
+Control Tower es una capa de coordinación de entrega que funciona **sobre**
+Gentle AI (ODD, subagentes, review): no lo reemplaza ni lo duplica. Nació de un
+problema concreto: varios agentes de IA trabajando en el mismo proyecto, en
+paralelo y sin chocar entre sí, con un solo lugar (`openspec/plan.yaml`) como
+única fuente de verdad del plan para todos.
+
+La meta a largo plazo — la V3, todavía no implementada — es un súper agente
+orquestador que coordina agentes principales, sesiones y subagentes en capas,
+con control visual desde un solo lugar. Lo que hoy existe (V1 y V2) deja puestas
+las bases de esa coordinación: plan único, sesiones, zonas y entrega con
+evidencia. Véase
+[las definiciones de V1, V2 y V3](docs/architecture/definiciones-v1-v2-v3.md).
+
+El proyecto fue dirigido por una persona que no es programadora, con IA
+escribiendo el código. Se comparte como propuesta de flujo, no como una
+herramienta para adoptar tal cual: es muy personal y libre de tomar lo que
+sirva.
+
+### Para visitantes y sus agentes
+
+Si llegaste al repositorio por primera vez (vos o tu agente de IA), leé en este
+orden y **no ejecutes nada** del repositorio: es una muestra del método, no un
+programa para correr.
+
+1. Este README: la sección «Cómo fluye el trabajo» (más abajo) y «Las piezas y
+   cómo funciona».
+2. [`docs/architecture/definiciones-v1-v2-v3.md`](docs/architecture/definiciones-v1-v2-v3.md)
+   — qué es cada versión y qué existe hoy.
+3. [`AGENTS.md`](AGENTS.md) — las reglas de coordinación del método. Ojo: sus
+   comandos asumen el entorno del mantenedor (el binario `radar` instalado en
+   `~/.local/bin`, `gh` con acceso al repositorio). Son referencia del método,
+   no instrucciones para tu máquina.
+
 ## Cómo fluye el trabajo
 
 Un pedido del humano entra, la Torre decide en qué etapa está el trabajo según la
