@@ -90,6 +90,7 @@ PERSONAL_SOURCE_DIRS = MappingProxyType({
     "ego-verify": "skills-personales",
     "navegador-rea": "skills-personales",
     "scrapear-landing-rea": "skills-personales",
+    "crear-agente": "skills-personales",
 })
 
 # Sources already in the Method whose Tower V1 packaging is a later Session.

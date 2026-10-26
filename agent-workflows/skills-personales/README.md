@@ -20,6 +20,8 @@ and creates Claude links when that runtime is present.
   logged-in ego session (REA walkthroughs).
 - [`scrapear-landing-rea`](scrapear-landing-rea/SKILL.md): capture and analyze a
   public landing page in ego-browser for structure and design-system study.
+- [`crear-agente`](crear-agente/SKILL.md): build a specialized Pi agent (toolbox
+  repo, empty-first profile, launcher alias), as proven with Chanks Creativo.
 
 The `ego-browser` base skill itself is NOT versioned here: it is owned and
 upgraded by the `ego-browser` CLI (`ego-browser upgrade` rewrites it).

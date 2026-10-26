@@ -211,9 +211,10 @@ class TowerMigrationTests(unittest.TestCase):
             self.assertEqual(os.readlink(self.home / f".claude/skills/{name}"), f"../../.agents/skills/{name}")
         self.assertEqual(INSTALLER.PERSONAL_SKILLS,
                          ("chanks-0-agente-soporte", "torre-release", "gentle-deck", "gentle-video",
-                          "abrir-maquetas", "ego-verify", "navegador-rea", "scrapear-landing-rea"))
+                          "abrir-maquetas", "ego-verify", "navegador-rea", "scrapear-landing-rea",
+                          "crear-agente"))
         self.assertTrue((self.home / ".agents/skills/chanks-0-agente-soporte/SKILL.md").is_file())
-        for name in ("gentle-deck", "gentle-video"):
+        for name in ("gentle-deck", "gentle-video", "crear-agente"):
             self.assertEqual(INSTALLER.skill_source_root(ROOT, name), ROOT / "skills-personales" / name)
             self.assertTrue((self.home / f".agents/skills/{name}/SKILL.md").is_file())
             self.assertEqual(os.readlink(self.home / f".claude/skills/{name}"), f"../../.agents/skills/{name}")
