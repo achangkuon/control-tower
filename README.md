@@ -140,8 +140,8 @@ Un diagnóstico global sano devuelve `status: "healthy"`; sin instalación devue
 
 | Plataforma | Estado | Requisitos |
 |---|---|---|
-| Linux | Probado en WSL | Bun, Git, Go, `gh` autenticado y `shasum` (Perl); instalarlos con el gestor de paquetes o sus guías oficiales |
-| macOS | **NO probado todavía**; pendiente de prueba guiada | Bun, Git, Go y `gh`; `shasum` viene con el sistema. Homebrew puede instalar los requisitos: `brew install oven-sh/bun/bun git go gh` |
+| Linux | Probado en WSL | Bun, Git, **Go >= 1.26**, `gh` autenticado y `shasum` (Perl); instalarlos con el gestor de paquetes o sus guías oficiales |
+| macOS | Probado en macOS arm64 | Bun, Git, **Go >= 1.26** y `gh`; `shasum` viene con el sistema. Homebrew puede instalar los requisitos: `brew install oven-sh/bun/bun git go gh`. Verificar con `go version` antes de instalar: una versión menor a 1.26 hace fallar la compilación offline (ver issue #164) |
 | Windows | Solo vía WSL | Usar la terminal y los requisitos de Linux dentro de WSL |
 
 Torre de Control **no se distribuye por Homebrew**. Claude Code o Pi deben estar
@@ -489,6 +489,12 @@ Sesión sin aviso; V1 no promete entrega serializada entre ellas.
 - **V3 — Flota:** una conversación aparte por vuelo para implementar y revisar,
   Pista (entrega ordenada), despacho con Herdr u otro, reserva segura de Sesiones y
   aviso de caídas. No es una capacidad entregada por V1.
+
+Ni V1 ni V2 lanzan el agente. «Despegar» (`piloto despegar`) prepara ramas y
+copias de trabajo, registra el vuelo y exige la confirmación RDD previa; el
+despacho a Pi y la recepción automática de resultados llegan en V3. Para operar
+una sesión, la TUI detecta el agente instalado y ofrece copiar las instrucciones
+al portapapeles: el lanzamiento y la supervisión siguen siendo manuales.
 
 V1 no instala ni promete procesos persistentes, sockets, supervisión ni rutas
 de despacho entre hosts. El servidor loopback del benchmark es un instrumento
