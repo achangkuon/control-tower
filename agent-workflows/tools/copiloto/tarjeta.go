@@ -128,7 +128,10 @@ func cmdTarjeta(salida, errores io.Writer, root, common string, args []string) i
 		}
 		snap, err := leerSnapshot(root)
 		if err != nil {
-			fmt.Fprintln(errores, "🧭 panorama no disponible:", err)
+			// Etapa 0 without a readable plan (issue #163): one degraded
+			// panorama line, never the raw error trace. The panorama stays
+			// unseen so the real one still shows once a plan appears.
+			fmt.Fprintln(salida, "🧭 sin plan todavía")
 			return 0
 		}
 		fmt.Fprintln(salida, panoramaDe(snap))

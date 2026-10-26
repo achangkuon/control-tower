@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -89,6 +90,31 @@ func TestEtapa0MuestraPanoramaUnaVez(t *testing.T) {
 	}
 	if salida.String() != "" {
 		t.Fatalf("segunda tarjeta = %q, quiere silencio", salida.String())
+	}
+}
+
+func TestEtapa0SinPlanDegradaSinTrazas(t *testing.T) {
+	root := repoGit(t)
+	common := commonDe(t, root)
+	t.Setenv("COPILOTO_CONVERSACION", "c0")
+	anterior := radarSalida
+	t.Cleanup(func() { radarSalida = anterior })
+	radarSalida = func(root string, args ...string) ([]byte, error) {
+		return nil, fmt.Errorf("no se pudo leer %s/openspec/plan.yaml: no such file or directory", root)
+	}
+
+	var salida, errores bytes.Buffer
+	if codigo := ejecutar([]string{"tarjeta", "-C", root}, &salida, &errores); codigo != 0 {
+		t.Fatalf("tarjeta sin plan salió %d: %s", codigo, errores.String())
+	}
+	if salida.String() != "🧭 sin plan todavía\n" {
+		t.Fatalf("tarjeta sin plan = %q, quiere la línea degradada", salida.String())
+	}
+	if errores.String() != "" {
+		t.Fatalf("tarjeta sin plan filtró el error crudo: %q", errores.String())
+	}
+	if f, _ := leerFoco(common, "c0"); f.PanoramaVisto {
+		t.Fatalf("el panorama degradado no debe marcarse como visto: el panorama real debe mostrarse cuando exista plan")
 	}
 }
 
