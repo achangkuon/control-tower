@@ -38,3 +38,8 @@ reescritura).
 - README: diagrama Mermaid «Cómo fluye el trabajo» tomado del documento «Chanks como guía de etapas — análisis por tramos» y redacción de repo privado eliminada, en `91379691`.
 - `bun test`: 2162 pass, 1 skip, 0 fail.
 - Pendiente con autorización explícita: hacer público el repo y avisar a Alan (runbook pasos 4–5).
+- `LICENSE` asignado a la zona `cimientos` en `5cb53fdb` (el pre-push de Radar rechazaba un archivo sin dueño).
+
+### Publicación (2026-10-26)
+- Autorizada por el mantenedor: repo `achangkuon/control-tower` en público; GitHub detecta la licencia MIT; la página carga sin sesión (HTTP 200).
+- Aviso a Alan: issue https://github.com/Gentleman-Programming/gentle-shell/issues/2563 (sin etiquetas: no somos colaboradores). La versión corta para Discord la pega el mantenedor.
