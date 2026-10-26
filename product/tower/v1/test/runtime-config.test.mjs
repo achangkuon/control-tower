@@ -267,6 +267,22 @@ test("copiloto build output must be a regular file; a substituted symlink is ref
   expect(fs.statSync(join(home, "sentinel")).mode & 0o777).toBe(0o600);
 }));
 
+test("a failing Go build surfaces the compiler diagnostic instead of a generic Go required message", () => fixture(({ options }) => {
+  options.runner = (command, argv, spawnOptions) => {
+    if (command === "gentle-ai") return { status: 0, stdout: "gentle-ai 4.0.0" };
+    if (spawnOptions.cwd.endsWith("/radar")) return { status: 1, stderr: Buffer.from("go: go.mod requires go >= 1.26 (running 'go 1.25.12')\n") };
+    fs.writeFileSync(argv[5], "fixture radar", { mode: 0o755 }); return { status: 0 };
+  };
+  let error; try { prepareRuntime(options); } catch (e) { error = e; }
+  expect(error?.message).toBe("Tower runtime: Radar offline build failed: go: go.mod requires go >= 1.26 (running 'go 1.25.12')");
+}));
+
+test("a Go build that never spawns keeps the generic Go required message", () => fixture(({ options }) => {
+  options.runner = (command) => command === "gentle-ai" ? { status: 0, stdout: "gentle-ai 4.0.0" } : { error: new Error("spawn go ENOENT") };
+  let error; try { prepareRuntime(options); } catch (e) { error = e; }
+  expect(error?.message).toBe("Tower runtime: Radar offline build failed (Go required): spawn go ENOENT");
+}));
+
 test("piloto build output must be a regular file; a substituted symlink is refused", () => fixture(({ home, options, write }) => {
   write("sentinel", "unchanged"); fs.chmodSync(join(home, "sentinel"), 0o600);
   options.runner = (command, argv, spawnOptions) => {

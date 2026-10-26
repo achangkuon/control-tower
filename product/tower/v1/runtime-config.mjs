@@ -185,7 +185,16 @@ function buildGoTool({ env, runner, members, destination, name, label, goflags }
   const temporary = mkdtempSync(join(realpathSync(tmpdir()), `tower-${name}-`));
   const run = (argv, options) => {
     const result = runner("go", argv, { timeout: 180_000, maxBuffer: 1024 * 1024, encoding: "buffer", ...options });
-    if (result?.error || result?.status !== 0) fail(`${label} offline build failed (Go required)`);
+    if (result?.error || result?.status !== 0) {
+      // Surface what Go actually said (issue #164): a version-mismatch build
+      // failure with GOTOOLCHAIN=local must not collapse into a generic
+      // "Go required" hint when the compiler named the real cause. Bounded to
+      // one compact line; keeps the generic hint whenever Go produced no
+      // output (not found, or failed silently), with the spawn cause appended.
+      const outputs = [result?.stderr, result?.stdout].map(v => String(v ?? "").trim()).filter(Boolean);
+      const detail = [...outputs, result?.error ? String(result.error.message).trim() : ""].filter(Boolean).join(" | ").replace(/\s+/g, " ").slice(0, 2000);
+      fail(`${label} offline build failed${outputs.length ? "" : " (Go required)"}${detail ? `: ${detail}` : ""}`);
+    }
     return String(result.stdout ?? "").trim();
   };
   try {
