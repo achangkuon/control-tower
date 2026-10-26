@@ -74,9 +74,20 @@ function excludeSnapshot(snapshot, bytes) {
   return next;
 }
 function planExclude(original) {
-  const before = excludeBytes(original), text = before.toString("latin1");
-  if (text.includes(excludeStart) || text.includes(excludeEnd)) fail("unowned exclude marker");
-  const lines = text.split(/\r?\n/), missing = excludePaths.filter(path => !lines.includes(path));
+  const before = excludeBytes(original), text = before.toString("latin1"), lines = text.split(/\r?\n/);
+  if (text.includes(excludeStart) || text.includes(excludeEnd)) {
+    // A block this product wrote for a sibling adoption of the same common Git
+    // directory is owned (issue #172): exactly one marker pair in order, only
+    // canonical paths inside, and every canonical path already present. Any
+    // foreign, partial, empty or duplicated block stays refused.
+    const start = lines.indexOf(excludeStart), end = lines.indexOf(excludeEnd);
+    if (start < 0 || end <= start + 1 || lines.indexOf(excludeStart, start + 1) >= 0 ||
+        lines.indexOf(excludeEnd, end + 1) >= 0 ||
+        !lines.slice(start + 1, end).every(line => excludePaths.includes(line)) ||
+        !excludePaths.every(path => lines.includes(path))) fail("unowned exclude marker");
+    return { original, installed: original, block: "" };
+  }
+  const missing = excludePaths.filter(path => !lines.includes(path));
   const block = missing.length ? `${before.length && before.at(-1) !== 10 ? "\n" : ""}${excludeStart}\n${missing.join("\n")}\n${excludeEnd}\n` : "";
   return { original, installed: block ? excludeSnapshot(original, Buffer.concat([before, Buffer.from(block)])) : original, block };
 }

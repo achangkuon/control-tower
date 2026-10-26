@@ -77,6 +77,47 @@ describe("S211 adoption robustness", () => {
     expect(readFileSync(path)).toEqual(before);
   }));
 
+  test("an identical canonical exclude block written by a sibling adoption is owned and left untouched (issue #172)", () => fixture(({ projectRoot }) => {
+    const path = join(projectRoot, ".git/info/exclude");
+    const canonical = "# control-tower:project-exclude\n/.control-tower/\n/.control-tower-adoption-v1/\n/.agents/skills/control-tower/\n/.claude/skills/control-tower/\n# /control-tower:project-exclude\n";
+    writeFileSync(path, canonical);
+    initProject(trusted(projectRoot));
+    expect(readFileSync(path, "utf8")).toBe(canonical);
+    expect(doctorProject({ projectRoot }).status).toBe("healthy");
+    uninstallProject({ projectRoot });
+    expect(readFileSync(path, "utf8")).toBe(canonical);
+  }));
+
+  test("a marked exclude block that is not the exact canonical rendering is still refused (issue #172)", () => fixture(({ projectRoot }) => {
+    const path = join(projectRoot, ".git/info/exclude");
+    for (const block of [
+      "# control-tower:project-exclude\n/evil\n# /control-tower:project-exclude\n",
+      "# control-tower:project-exclude\n/.control-tower/\n# /control-tower:project-exclude\n",
+      "# control-tower:project-exclude\n# /control-tower:project-exclude\n",
+      "# control-tower:project-exclude\n/.control-tower/\n# /control-tower:project-exclude\n# control-tower:project-exclude\n/.agents/skills/control-tower/\n# /control-tower:project-exclude\n",
+    ]) {
+      writeFileSync(path, block);
+      expect(() => initProject(trusted(projectRoot))).toThrow("unowned exclude marker");
+    }
+  }));
+
+  test("a sibling worktree adoption after the main checkout owns the shared canonical block (issue #172)", () => fixture(({ projectRoot, base }) => {
+    initProject(trusted(projectRoot));
+    const path = join(projectRoot, ".git/info/exclude"), afterMain = readFileSync(path);
+    expect(afterMain.toString()).toContain("# control-tower:project-exclude");
+    const worktree = join(base, "worktree"), gitdir = join(projectRoot, ".git/worktrees/fixture");
+    mkdirSync(worktree);
+    put(worktree, ".git", `gitdir: ${gitdir}\n`);
+    put(gitdir, "HEAD", "ref: refs/heads/master\n");
+    put(gitdir, "commondir", "../..\n");
+    put(gitdir, "gitdir", `${worktree}/.git\n`);
+    initProject(trusted(worktree));
+    expect(readFileSync(path)).toEqual(afterMain);
+    expect(doctorProject({ projectRoot: worktree }).status).toBe("healthy");
+    uninstallProject({ projectRoot: worktree });
+    expect(readFileSync(path)).toEqual(afterMain);
+  }));
+
   test("modified exclude blocks refuse uninstall before touching project files", () => fixture(({ projectRoot }) => {
     initProject(trusted(projectRoot));
     const path = join(projectRoot, ".git/info/exclude");
