@@ -321,9 +321,12 @@ rigiendo a cualquier agente que trabaje acá, estén o no citadas acá.
 ### Editar la Torre
 
 - Skills propias V1: se editan en `agent-workflows/skills/`; las diferidas en
-  `agent-workflows/skills-diferidas/`. El instalador las deja en la carpeta central
-  `~/.agents/skills`; Claude Code llega por symlinks por skill, y OpenCode, Codex y
-  Pi la leen directo. Nunca borres y recopies directorios runtime.
+  `agent-workflows/skills-diferidas/`. El instalador del producto las deja en la
+  carpeta central `~/.agents/skills`; Claude Code llega por symlinks por skill, y
+  OpenCode, Codex y Pi la leen directo. Nunca borres y recopies directorios runtime.
+- La configuración personal del mantenedor (instalador, skills personales, bloques
+  personales, overlay de Pi) vive en el repo privado machine-setup desde S244 y se
+  instala desde ahí; este repo no la contiene ni la instala.
 - Antes de evaluar o publicar un cambio de la Torre, cargá la skill personal
   `torre-release`: mapa de impacto (`references/impacto.md`) y receta de
   publicación (`references/publicar.md`). Push, publicación y actualización de la
@@ -377,7 +380,7 @@ según las rutas que tocó:
 | Rutas tocadas | Acción posterior a la entrega |
 |---|---|
 | `agent-workflows/tools/radar/` | Ejecutar `agent-workflows/tools/install-radar.sh`. |
-| `agent-workflows/skills/` o `agent-workflows/templates/` | Pedir confirmación humana antes de reinstalar skills; sólo entonces ejecutar `python3 agent-workflows/tools/install.py` y `python3 agent-workflows/tools/install.py --check`. Las skills propias se editan ahí y el instalador las deja en la carpeta central `~/.agents/skills`; Claude Code llega por symlinks por skill, y OpenCode, Codex y Pi la leen directo. |
+| `agent-workflows/skills/` o `agent-workflows/templates/` | Pedir confirmación humana antes de reinstalar skills. Las skills de producto se editan en `agent-workflows/skills/` y las deja en la carpeta central `~/.agents/skills` el instalador del producto (Torre V1); la configuración personal (skills personales, bloques, overlay de Pi) vive en machine-setup y se instala desde ese repositorio, nunca desde este (S244). |
 
 ### Publicación de la radiografía
 
