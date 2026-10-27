@@ -106,6 +106,11 @@ prioridades:
   # necesitan diseño nuevo (no parche) entran por acá, dentro de V2.
   - id: resolucion-problemas-v2
     nombre: Resolución de problemas · V2
+  # Meta aprobada por Emilio el 2026-10-26 (auditoría «Mapa de mis agentes»): la configuración
+  # personal del mantenedor sale del repo público hacia machine-setup. Va antes de las metas con
+  # Sesiones diferidas porque Emilio pidió ejecutarla ya.
+  - id: separacion-config-personal
+    nombre: Separación de la configuración personal
   # El maintainer pidió el 2026-10-07 que las Sesiones de distribución para socios (S184, S190),
   # diferidas hasta la prueba en macOS, dejen de retener la prioridad torre-v1 y no posterguen V2.
   - id: torre-v1-distribucion-socios
@@ -2269,6 +2274,63 @@ sesiones:
   - {id: S242, entrega: {commit: ca16d3aa7d5bc6c35f22d1f2cb1d8c21b12bd2d2}, historico: openspec/archive/sesiones/S242.md}
 
   - {id: S243, entrega: {commit: 7c2124cbc11baff4785ec857f8fa64b4d49dba44}, historico: openspec/archive/sesiones/S243.md}
+
+  # Separación de la configuración personal (2026-10-26): auditoría publicada en «Mapa de mis
+  # agentes»; Emilio eligió la mudanza total (opción B) y aprobó este alcance en la Conversación.
+  - id: S244
+    zona: metodo
+    prioridad: separacion-config-personal
+    resultado: "control-tower ya no contiene la configuración personal del mantenedor: vive e instala desde machine-setup, y la Torre y todos los agentes siguen funcionando igual."
+    autoridad: "Emilio aprobó el 2026-10-26 en esta Conversación la mudanza total del instalador personal y sus piezas a machine-setup (opción B), sin reescribir el historial (decisión 2A), con torre-setup instalando sólo la Torre."
+    depende_de: []
+    archivos: [AGENTS.md, agent-workflows/README.md, agent-workflows/personal-pi/README.md, agent-workflows/personal-pi/manifest.json, agent-workflows/personal-pi/materialize.py, agent-workflows/personal-pi/patches/0001-tool-call-annotations.patch, agent-workflows/skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md, agent-workflows/skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md, agent-workflows/skills-diferidas/v2/chanks-0-agente-soporte/assets/brief-diario.md, agent-workflows/skills-personales/README.md, agent-workflows/skills-personales/abrir-maquetas/SKILL.md, agent-workflows/skills-personales/abrir-maquetas/references/receta.md, agent-workflows/skills-personales/crear-agente/SKILL.md, agent-workflows/skills-personales/crear-agente/references/receta.md, agent-workflows/skills-personales/ego-verify/SKILL.md, agent-workflows/skills-personales/gentle-deck/SKILL.md, agent-workflows/skills-personales/gentle-deck/assets/deck-template.html, agent-workflows/skills-personales/gentle-video/SKILL.md, agent-workflows/skills-personales/gentle-video/references/app-session-capture.md, agent-workflows/skills-personales/gentle-video/references/ffmpeg-overlay-recipe.md, agent-workflows/skills-personales/gentle-video/references/remotion-notes.md, agent-workflows/skills-personales/navegador-rea/SKILL.md, agent-workflows/skills-personales/scrapear-landing-rea/SKILL.md, agent-workflows/skills-personales/torre-release/SKILL.md, agent-workflows/skills-personales/torre-release/references/impacto.md, agent-workflows/skills-personales/torre-release/references/publicar.md, agent-workflows/templates/agent-propagation-map.md, agent-workflows/templates/doc-guard-rule.md, agent-workflows/templates/ego-browser.md, agent-workflows/templates/explain-to-maintainer.md, agent-workflows/templates/folder-order.md, agent-workflows/templates/main-freshness.md, agent-workflows/tests/test_builder_flow.py, agent-workflows/tests/test_carril.py, agent-workflows/tests/test_carril_medir.py, agent-workflows/tests/test_chanks_jornada.py, agent-workflows/tests/test_comunicacion_agentes.py, agent-workflows/tests/test_coordinador_manual.py, agent-workflows/tests/test_despacho_herdr.py, agent-workflows/tests/test_install.py, agent-workflows/tests/test_main_al_dia.py, agent-workflows/tests/test_mensajes_visibles.py, agent-workflows/tests/test_paralelo.py, agent-workflows/tests/test_personal_config.py, agent-workflows/tests/test_personal_pi_composition.py, agent-workflows/tests/test_personal_pi_materialize.py, agent-workflows/tests/test_pi_overlay_rebuild.py, agent-workflows/tools/carril, agent-workflows/tools/carril-medir, agent-workflows/tools/install.py, agent-workflows/tools/main-al-dia, agent-workflows/tools/pi/pi-npm-host-peers, agent-workflows/tools/pi/pi-overlay-rebuild, agent-workflows/tools/prepare-personal-config.py, agent-workflows/tools/roster.py, agent-workflows/tools/setup.sh, install.sh]
+    cimientos: [AGENTS.md, install.sh]
+    recurso: []
+    encargo:
+      pedido_contexto: >-
+        control-tower es público y agent-workflows/ mezcla el producto con la configuración
+        personal del mantenedor: el instalador personal (tools/install.py), skills-personales/,
+        las seis plantillas de bloques personales, personal-pi/, tools/pi/, main-al-dia,
+        carril-medir y la skill chanks-0-agente-soporte. Mapa verificado del acoplamiento:
+        install.py lee en cada corrida todas las carpetas de skills del producto
+        (retired_skill_files → source_files con el roster completo, install.py:1033-1034),
+        chanks/torre-firma.mjs, chanks/pi-*.mjs y dos plantillas legadas; tools/setup.sh:123,218
+        (torre-setup), install.sh:161-168 y AGENTS.md:323,380 lo invocan por ruta; siete pruebas
+        de producto lo importan por sus constantes de roster; test_install.py:173-178 compara el
+        roster con product/tower/v1/runtime-config.mjs; carril candidato importa install.py del
+        worktree que prueba. El mantenedor quiere su configuración en su repo privado
+        machine-setup y que siga funcionando para todos sus agentes.
+      resultado_comportamiento: >-
+        En machine-setup existe la fuente única de la configuración personal: el instalador, sus
+        pruebas, skills-personales, las seis plantillas personales, personal-pi, tools/pi,
+        main-al-dia, carril-medir y chanks-0-agente-soporte. El instalador lee sólo lo personal;
+        cuando necesita piezas del producto (módulos chanks/pi-*.mjs, la firma, el roster V1)
+        las toma de un checkout de control-tower indicado por configuración, nunca de su propio
+        repo. En control-tower, un módulo de roster de producto (agent-workflows/tools/roster.py)
+        reemplaza lo que importaban las siete pruebas; torre-setup e install.sh instalan sólo la
+        Torre y dejan de llamar al instalador personal; carril usa el instalador de machine-setup
+        contra el worktree que prueba; AGENTS.md y agent-workflows/README.md describen la
+        separación; los archivos personales se borran del repo en un commit. Prueba: las
+        instrucciones de los cuatro agentes (Claude, Codex, OpenCode, Pi) quedan byte a byte
+        iguales tras instalar desde machine-setup; install.py --check da OK; las suites de ambos
+        repos pasan; torre-setup sigue funcionando.
+      restricciones_decisiones: >-
+        No se reescribe el historial (decisión 2A del mantenedor). No cambia qué se instala ni
+        dónde: mismos bloques, mismas skills, mismas rutas runtime. Hermes queda fuera. Las
+        skills creativas son otra entrega. Gate humano: torre-setup deja de instalar la
+        configuración personal, cambio visible ya aprobado. Antes de instalar en la máquina real,
+        snapshot de las instrucciones de los cuatro agentes. La parte de machine-setup se rige
+        por el documento odd/tasks/orden-config-agentes.md de ese repo; aquí sólo los archivos
+        declarados, con AGENTS.md e install.sh como Cimientos. Las referencias en docs/ y en
+        product/tower/generic/README.md quedan para una entrega posterior. Al cerrar, clasificar
+        si algo viaja (tools/setup.sh es del instalador del producto) y proponer el tag; publicar
+        exige autorización aparte.
+      referencias: >-
+        Auditoría «Mapa de mis agentes» (claude.ai/artifact/DEZGQBoK1trXJjGibLvVQr);
+        machine-setup odd/tasks/orden-config-agentes.md (L5: mapa del acoplamiento);
+        tools/install.py (PERSONAL_BLOCKS, PERSONAL_SOURCE_DIRS, retired_skill_files,
+        desired_pi_extension); tools/setup.sh; tools/carril; tests/test_install.py;
+        product/tower/v1/runtime-config.mjs; skill personal torre-release (impacto).
 
 references:
   future_successors:
