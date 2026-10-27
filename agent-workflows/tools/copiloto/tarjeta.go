@@ -129,13 +129,24 @@ func cmdTarjeta(salida, errores io.Writer, root, common string, args []string) i
 		snap, err := leerSnapshot(root)
 		if err != nil {
 			// Etapa 0 without a readable plan (issue #163): one degraded
-			// panorama line, never the raw error trace. The panorama stays
-			// unseen so the real one still shows once a plan appears.
+			// panorama line, never the raw error trace. The degraded line
+			// itself shows once per conversation (issue #173); Radar is
+			// polled each turn so the real panorama still shows the first
+			// time a readable plan appears.
+			if f.PanoramaDegradado {
+				return 0
+			}
 			fmt.Fprintln(salida, "🧭 sin plan todavía")
+			f.PanoramaDegradado = true
+			if err := escribirFoco(common, f); err != nil {
+				fmt.Fprintln(errores, "✗", err)
+				return 0
+			}
 			return 0
 		}
 		fmt.Fprintln(salida, panoramaDe(snap))
 		f.PanoramaVisto = true
+		f.PanoramaDegradado = false
 		if err := escribirFoco(common, f); err != nil {
 			fmt.Fprintln(errores, "✗", err)
 			return 0

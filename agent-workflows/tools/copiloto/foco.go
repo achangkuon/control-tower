@@ -35,10 +35,11 @@ var (
 // and a panorama that has not been shown yet: that is how every new conversation
 // starts at Etapa 0 without anyone erasing anything.
 type focoGuardado struct {
-	Schema        string `json:"schema"`
-	Conversacion  string `json:"conversacion"`
-	Foco          string `json:"foco"`
-	PanoramaVisto bool   `json:"panorama_visto"`
+	Schema            string `json:"schema"`
+	Conversacion      string `json:"conversacion"`
+	Foco              string `json:"foco"`
+	PanoramaVisto     bool   `json:"panorama_visto"`
+	PanoramaDegradado bool   `json:"panorama_degradado"`
 }
 
 func validarConversacion(c string) error {

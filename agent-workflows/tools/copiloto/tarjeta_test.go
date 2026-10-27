@@ -113,8 +113,62 @@ func TestEtapa0SinPlanDegradaSinTrazas(t *testing.T) {
 	if errores.String() != "" {
 		t.Fatalf("tarjeta sin plan filtró el error crudo: %q", errores.String())
 	}
-	if f, _ := leerFoco(common, "c0"); f.PanoramaVisto {
-		t.Fatalf("el panorama degradado no debe marcarse como visto: el panorama real debe mostrarse cuando exista plan")
+	if f, _ := leerFoco(common, "c0"); !f.PanoramaDegradado || f.PanoramaVisto {
+		t.Fatalf("la línea degradada no quedó registrada una vez: %+v", f)
+	}
+}
+
+// Issue #173: the degraded line shows once per conversation. It stays silent
+// while no plan is readable, and the real panorama still shows the first time a
+// readable plan appears (that part of the #163 contract survives).
+func TestEtapa0DegradaUnaVezYRealCuandoHayPlan(t *testing.T) {
+	root := repoGit(t)
+	common := commonDe(t, root)
+	t.Setenv("COPILOTO_CONVERSACION", "c0")
+	anterior := radarSalida
+	t.Cleanup(func() { radarSalida = anterior })
+	radarSalida = func(root string, args ...string) ([]byte, error) {
+		return nil, fmt.Errorf("no se pudo leer %s/openspec/plan.yaml: no such file or directory", root)
+	}
+
+	var salida, errores bytes.Buffer
+	if codigo := ejecutar([]string{"tarjeta", "-C", root}, &salida, &errores); codigo != 0 {
+		t.Fatalf("primera tarjeta sin plan salió %d: %s", codigo, errores.String())
+	}
+	if salida.String() != "🧭 sin plan todavía\n" {
+		t.Fatalf("primera tarjeta sin plan = %q, quiere la línea degradada", salida.String())
+	}
+
+	// Second turn, plan still unreadable: total silence, and Radar is the one
+	// polled each turn so the real panorama can appear the moment it exists.
+	salida.Reset()
+	if codigo := ejecutar([]string{"tarjeta", "-C", root}, &salida, &errores); codigo != 0 {
+		t.Fatalf("segunda tarjeta sin plan salió %d: %s", codigo, errores.String())
+	}
+	if salida.String() != "" {
+		t.Fatalf("segunda tarjeta sin plan = %q, quiere silencio", salida.String())
+	}
+
+	// A readable plan appears: the real panorama shows exactly once.
+	fakeRadar(t, map[string]string{"status --json": snapshotFixture(false, "S237=LISTO")})
+	salida.Reset()
+	if codigo := ejecutar([]string{"tarjeta", "-C", root}, &salida, &errores); codigo != 0 {
+		t.Fatalf("tarjeta con plan nuevo salió %d: %s", codigo, errores.String())
+	}
+	if !strings.Contains(salida.String(), "🧭 1 LISTA · 0 EN CURSO") {
+		t.Fatalf("tarjeta con plan nuevo = %q, quiere el panorama real", salida.String())
+	}
+	if f, _ := leerFoco(common, "c0"); !f.PanoramaVisto || f.PanoramaDegradado {
+		t.Fatalf("el panorama real no dejó la marca de vista: %+v", f)
+	}
+
+	// And afterwards: back to the one-panorama contract.
+	salida.Reset()
+	if codigo := ejecutar([]string{"tarjeta", "-C", root}, &salida, &errores); codigo != 0 {
+		t.Fatalf("tarjeta posterior salió %d: %s", codigo, errores.String())
+	}
+	if salida.String() != "" {
+		t.Fatalf("tarjeta posterior = %q, quiere silencio", salida.String())
 	}
 }
 
