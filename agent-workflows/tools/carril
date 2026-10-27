@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # carril — open Pi in an explicit lane, one terminal at a time.
 #
+# The personal installer lives in machine-setup (S244): the candidate lane loads
+# it from there and points it at the worktree being tested for the product
+# pieces (roster, chanks modules), so the lane shows exactly what installing
+# that worktree would install.
+#
 #   carril                  report the lane of THIS terminal
 #   carril limpio           Pi with only Gentle AI's shipped pieces (isolated config dir)
 #   carril estable          Pi with the everyday config (~/.pi/agent), same as plain `pi`
@@ -206,6 +211,7 @@ preparar_limpio() {
 
 CANDIDATO_BASE="${CARRIL_CANDIDATO_BASE:-$HOME/.pi/agent-candidato}"
 WORKTREES_DIR="${CARRIL_WORKTREES_DIR:-$HOME/projects/control-tower/Worktrees}"
+MACHINE_SETUP="${MACHINE_SETUP:-$HOME/projects/machine-setup}"
 # Shared by link: credentials must stay one file (tokens rotate), the rest is read-only.
 CANDIDATO_LINKS=(auth.json mcp-oauth npm bin skills mcp-adapter.json)
 # Copied on every launch, so whatever the candidate changes never reaches the stable dir.
@@ -225,45 +231,57 @@ resolve_worktree() {
     echo "carril: el worktree '$wanted' no existe (buscado en $WORKTREES_DIR)." >&2
     exit 2
   fi
-  if [ ! -f "$dir/agent-workflows/tools/install.py" ]; then
-    echo "carril: $dir no tiene agent-workflows/tools/install.py; no es un worktree de Control Tower." >&2
+  if [ ! -f "$dir/agent-workflows/tools/roster.py" ]; then
+    echo "carril: $dir no tiene agent-workflows/tools/roster.py; no es un worktree de Control Tower." >&2
+    exit 2
+  fi
+  if [ ! -f "$MACHINE_SETUP/tools/install.py" ]; then
+    echo "carril: el instalador personal no está en $MACHINE_SETUP/tools/install.py (exportá MACHINE_SETUP)." >&2
     exit 2
   fi
   canonical "$dir"
 }
 
-# Runs the worktree's own installer functions, so the lane shows exactly what installing
-# that worktree would install, without installing it.
+# Runs the personal installer from machine-setup against the candidate worktree,
+# so the lane shows exactly what installing that worktree would install,
+# without installing it.
 worktree_render() {
-  python3 - "$@" <<'PY'
+  python3 - "$@" "$MACHINE_SETUP" <<'INNER'
 import importlib.util, sys
 from pathlib import Path
-mode, root = sys.argv[1], Path(sys.argv[2])
-spec = importlib.util.spec_from_file_location("carril_candidate_install", root / "tools/install.py")
+mode, candidate, machine_setup = sys.argv[1], Path(sys.argv[2]), Path(sys.argv[-1])
+spec = importlib.util.spec_from_file_location("carril_candidate_install", machine_setup / "tools/install.py")
 installer = importlib.util.module_from_spec(spec)
 # Dataclasses with string annotations look their module up in sys.modules while loading.
 sys.modules[spec.name] = installer
 spec.loader.exec_module(installer)
+# The candidate worktree supplies the product pieces; machine-setup supplies the
+# personal ones. Personal blocks render from the installer's own repository.
+installer.set_torre_root(candidate)
+installer.ensure_product_constants()
 if mode == "append":
     # S230: the lane follows the personal block contract the installer actually
     # writes to Pi (the four chanks blocks) — never the legacy MANUAL_BLOCKS,
     # whose session-routing block is required there but never written to the
     # Tower-covered runtimes, which broke every adopted machine's lane build.
-    blocks = installer.render_personal_blocks(root)
+    blocks = installer.render_personal_blocks(installer.repo_root())
     sys.stdout.buffer.write(installer.desired_personal_content(Path(sys.argv[3]), blocks))
 elif mode == "extension":
-    sys.stdout.buffer.write(installer.desired_pi_extension(root))
+    sys.stdout.buffer.write(installer.desired_pi_extension(candidate))
 elif mode == "settings":
     import json
     with open(sys.argv[3]) as source:
         settings = json.load(source)
     # A settings entry outranks ~/.agents/skills in Pi's collision order; a --skill path
-    # does not, because Pi appends those after every discovered skill.
+    # does not, because Pi appends those after every discovered skill. Sources resolve
+    # where they really live: product from the candidate worktree, personal from
+    # machine-setup.
     settings["skills"] = settings.get("skills", []) + [
-        str(root / "skills" / name) for name in installer.SKILLS if name != "_shared"
+        str(installer.skill_source_root(installer.repo_root(), name))
+        for name in installer.SKILLS if name != "_shared"
     ]
     print(json.dumps(settings, indent=2, ensure_ascii=False))
-PY
+INNER
 }
 
 build_candidato() {

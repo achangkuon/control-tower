@@ -63,15 +63,66 @@ class CarrilTests(unittest.TestCase):
             "record.write_text('\\n'.join(lines) + '\\n')\n"
         )
         self.fake_pi.chmod(0o755)
+        self.machine_setup = self.make_machine_setup()
 
     def tearDown(self):
         self.tempdir.cleanup()
+
+    def make_machine_setup(self):
+        # The personal installer lives in machine-setup (S244); the candidate lane
+        # loads it from there and points it at the candidate worktree for the
+        # product pieces. The stand-in keeps the same lane contract.
+        machine_setup = self.home / "machine-setup"
+        tools = machine_setup / "tools"
+        tools.mkdir(parents=True)
+        (tools / "install.py").write_text(
+            "from __future__ import annotations\n"
+            "import importlib.util\n"
+            "from dataclasses import dataclass\n"
+            "from pathlib import Path\n"
+            "@dataclass(frozen=True)\n"
+            "class Plan:\n"
+            "    name: str\n"
+            "TORRE = Path('/')\n"
+            "SKILLS = ('_shared', 'chanks-a', 'chanks-b')\n"
+            "def set_torre_root(path):\n"
+            "    global TORRE\n"
+            "    TORRE = Path(path)\n"
+            "    spec = importlib.util.spec_from_file_location('carril_candidate_roster', TORRE / 'tools/roster.py')\n"
+            "    module = importlib.util.module_from_spec(spec)\n"
+            "    spec.loader.exec_module(module)\n"
+            "def ensure_product_constants():\n"
+            "    pass\n"
+            "def repo_root():\n"
+            "    return Path(__file__).resolve().parents[1]\n"
+            "def render_manual_blocks(root):\n"
+            "    raise AssertionError('legacy contract must not be used by candidato')\n"
+            "def desired_manual_content(path, replacements):\n"
+            "    raise AssertionError('legacy contract must not be used by candidato')\n"
+            "def render_personal_blocks(root):\n"
+            "    return {b'<!-- chanks:doc-guard-rule -->': b'NEW-CHANKS',\n"
+            "            b'<!-- chanks:main-freshness -->': b'FRESH'}\n"
+            "def desired_personal_content(path, replacements):\n"
+            "    content = path.read_bytes()\n"
+            "    content = content.replace(b'OLD-CHANKS', b'NEW-CHANKS')\n"
+            "    if b'FRESH' not in content:\n"
+            "        content += b'\\n\\nFRESH'\n"
+            "    return content\n"
+            "def desired_pi_extension(root):\n"
+            "    return ('// chanks from ' + str(root)).encode()\n"
+            "def skill_source_root(root, name):\n"
+            "    if name in ('chanks-a', 'chanks-b'):\n"
+            "        return TORRE / 'skills' / name\n"
+            "    return root / 'skills-personales' / name\n"
+        )
+        return machine_setup
 
     def run_carril(self, *args, env_extra=None):
         env = {
             "PATH": os.environ["PATH"],
             "HOME": str(self.home),
             "CARRIL_PI_BIN": str(self.fake_pi),
+            "MACHINE_SETUP": str(self.machine_setup),
         }
         env.update(env_extra or {})
         return subprocess.run(
@@ -160,32 +211,22 @@ class CarrilTests(unittest.TestCase):
         tools.mkdir(parents=True)
         for skill in ("_shared", "chanks-a", "chanks-b"):
             (worktree / "agent-workflows/skills" / skill).mkdir(parents=True)
-        # A stand-in for the worktree's installer: the lane must render through the
-        # worktree's own functions, never through the installed copies.
-        # The real installer declares dataclasses, which only load when the module is
-        # registered before it executes; the stand-in keeps that property.
-        (tools / "install.py").write_text(
-            "from __future__ import annotations\n"
-            "from dataclasses import dataclass\n"
-            "@dataclass(frozen=True)\n"
-            "class Plan:\n"
-            "    name: str\n"
+        # A stand-in for the worktree's product roster (S244): the lane points the
+        # machine-setup installer at this worktree for the product pieces.
+        (tools / "roster.py").write_text(
             "SKILLS = ('_shared', 'chanks-a', 'chanks-b')\n"
-            "def render_manual_blocks(root):\n"
-            "    raise AssertionError('legacy contract must not be used by candidato')\n"
-            "def desired_manual_content(path, replacements):\n"
-            "    raise AssertionError('legacy contract must not be used by candidato')\n"
-            "def render_personal_blocks(root):\n"
-            "    return {b'<!-- chanks:doc-guard-rule -->': b'NEW-CHANKS',\n"
-            "            b'<!-- chanks:main-freshness -->': b'FRESH'}\n"
-            "def desired_personal_content(path, replacements):\n"
-            "    content = path.read_bytes()\n"
-            "    content = content.replace(b'OLD-CHANKS', b'NEW-CHANKS')\n"
-            "    if b'FRESH' not in content:\n"
-            "        content += b'\\n\\nFRESH'\n"
-            "    return content\n"
-            "def desired_pi_extension(root):\n"
-            "    return ('// chanks from ' + str(root)).encode()\n"
+            "CHANKS_SKILLS = ()\n"
+            "SUPPORT_SKILLS = ()\n"
+            "V2_DEFERRED_SKILLS = ()\n"
+            "V3_DEFERRED_SKILLS = ()\n"
+            "DEFERRED_SKILLS = ()\n"
+            "DEFERRED_SOURCE_VERSIONS = {}\n"
+            "V1_PENDING_SKILLS = ()\n"
+            "TOWER_V1_SKILLS = ()\n"
+            "STOP_MANAGING_SKILLS = ()\n"
+            "RETIRED_SKILLS = ()\n"
+            "RETIRED_SKILL_FILES = {}\n"
+            "PERSONAL_SKILLS = ()\n"
         )
         return worktree
 
@@ -218,12 +259,12 @@ class CarrilTests(unittest.TestCase):
         self.assertIn("no existe", result.stderr)
         self.assertFalse(self.record.exists())
 
-    def test_candidato_refuses_a_dir_without_the_installer(self):
+    def test_candidato_refuses_a_dir_without_the_product_roster(self):
         self.seed_candidate_stable()
         (self.home / "projects/control-tower/Worktrees/vacio").mkdir(parents=True)
         result = self.run_carril("candidato", "vacio")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("install.py", result.stderr)
+        self.assertIn("roster.py", result.stderr)
         self.assertFalse(self.candidate_dir("vacio").exists())
 
     def test_candidato_launches_pi_with_the_worktree_pieces(self):
@@ -299,10 +340,10 @@ class CarrilTests(unittest.TestCase):
         # The stable file is never touched by the lane build.
         self.assertEqual((self.home / ".pi/agent/APPEND_SYSTEM.md").read_bytes(), before)
 
-    def test_candidato_does_not_launch_when_the_worktree_installer_is_broken(self):
+    def test_candidato_does_not_launch_when_the_worktree_roster_is_broken(self):
         self.seed_candidate_stable()
         worktree = self.make_worktree()
-        (worktree / "agent-workflows/tools/install.py").write_text("raise SystemExit('roto')\n")
+        (worktree / "agent-workflows/tools/roster.py").write_text("raise SystemExit('roto')\n")
         result = self.run_carril("candidato", "implementer-1")
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(self.record.exists())
