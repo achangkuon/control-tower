@@ -148,25 +148,16 @@ fi
 mv "$tmp" "$OC_JSON"
 ok "MCP registrado en opencode.json${backup:+ (backup: $(basename "$backup"))}"
 
-# ── El método: skills y radar ────────────────────────────────────────────────
+# ── El método: radar ─────────────────────────────────────────────────────────
 # La Torre de Control como producto son tres piezas: el motor (arriba), el método
 # (agent-workflows) y el dato de planificación que el método lee. El motor no depende
 # del método —no tiene una sola referencia a plan.yaml ni a radar— así que cada pieza
 # trae su propio instalador y este archivo sólo los compone. Ninguno pisa al otro.
+# La configuración personal del método (skills personales y bloques) vive en su
+# propio repositorio y se instala desde ahí; este archivo no la toca.
 echo
 echo "Método (agent-workflows)"
 echo
-
-if command -v python3 >/dev/null 2>&1; then
-    if python3 "$SRC/agent-workflows/tools/install.py" >/dev/null 2>&1; then
-        ok "skills instaladas en los agentes"
-    else
-        bad "las skills no se instalaron; corré agent-workflows/tools/install.py para ver por qué"
-    fi
-else
-    echo "  ~ sin python3: las skills no se instalan. Instalalo y corré"
-    echo "    agent-workflows/tools/install.py"
-fi
 
 if [[ -z "$want_plan" ]]; then
     if [[ -t 0 ]]; then
