@@ -9,7 +9,7 @@ Estas fuentes se conservan para versiones posteriores; moverlas no activa su ins
 | [chanks-0-jornada](v2/chanks-0-jornada/SKILL.md) | Diagnostica y prepara las copias de trabajo de una jornada. Esa preparación coordinada no forma parte del flujo orgánico de V1. |
 | [chanks-3-session-kickoff](v2/chanks-3-session-kickoff/SKILL.md) | Admite y marca el inicio de una Sesión con Radar. V1 no tiene arranque formal ni registra «en curso». |
 | [chanks-3-coordinador-manual](v2/chanks-3-coordinador-manual/SKILL.md) | Coordina un lote elegido por el humano y sus handoffs. La coordinación entre conversaciones independientes queda fuera de V1. |
-| [chanks-0-agente-soporte](v2/chanks-0-agente-soporte/SKILL.md) | Aporta evidencia de planificación, capacidad y conflictos. Su fuente queda fuera del producto V1; como excepción de compatibilidad, el instalador personal sigue instalándola desde aquí. |
+| `chanks-0-agente-soporte` | Aporta evidencia de planificación, capacidad y conflictos. Fuente en el repositorio personal machine-setup desde S244; el instalador personal la sigue instalando desde ahí. |
 
 ## V3 — Torre automática: tabs de trabajo prolongado, Herdr
 

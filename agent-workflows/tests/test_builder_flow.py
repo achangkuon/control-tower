@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import re
 import sys
@@ -15,6 +16,17 @@ assert SPEC.loader is not None
 sys.modules[SPEC.name] = ROSTER
 SPEC.loader.exec_module(ROSTER)
 SKILLS = ROOT / "skills"
+# chanks-0-agente-soporte is personal since S244: its source lives in machine-setup.
+MACHINE_SETUP = Path(os.environ.get(
+    "MACHINE_SETUP", str(Path.home() / "projects/machine-setup")))
+MACHINE_SETUP_SOURCES = MACHINE_SETUP / "skills-diferidas/v2/chanks-0-agente-soporte"
+
+
+def read_personal(relative: str) -> str:
+    path = MACHINE_SETUP / relative
+    if not path.is_file():
+        raise unittest.SkipTest(f"personal source not available: {path}")
+    return path.read_text(encoding="utf-8")
 SNAPSHOT_SHA256 = {
     "skills/chanks-0-agente-soporte/SKILL.md": "25eb5b1f0f253ca9df24829add72f91cadbf24aadb80034e90e42501110fc032",
     "skills/chanks-0-agente-soporte/assets/assignment-implementation.md": "70752539f85ffa8565dc32d9a1c6d9d32082d7df8357331bd8a500112816e7da",
@@ -137,10 +149,10 @@ class GenericBuilderFlowTests(unittest.TestCase):
             self.assertIn(phrase, kickoff)
 
     def test_native_resume_reconciles_same_identity_but_legacy_keeps_pending_module(self):
-        support = read("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
+        support = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
         kickoff = read("skills-diferidas/v2/chanks-3-session-kickoff/SKILL.md")
-        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
-        brief = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/brief-diario.md")
+        handoff = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        brief = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/assets/brief-diario.md")
 
         for source in (kickoff, handoff):
             self.assertIn("same Session identity", source)
@@ -444,8 +456,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertNotIn("chanks-3-session-kickoff", template)
 
     def test_support_preserves_read_only_adoption_and_handoff_boundaries(self):
-        support = read("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
-        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        support = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
+        handoff = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
 
         for phrase in (
             "$HOME/.local/bin/radar status --json -C <repo>",
@@ -504,8 +516,8 @@ class GenericBuilderFlowTests(unittest.TestCase):
 
     def test_restores_operational_legacy_and_adoption_guards_around_native_odd(self):
         bridge = read("skills/chanks-4-puente/SKILL.md")
-        support = read("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
-        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        support = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/SKILL.md")
+        handoff = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
         canon = read("skills/_shared/plan-naming-convention.md")
 
         for phrase in ("native ODD", "historical legacy evidence",
@@ -520,7 +532,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertIn("incomplete Encargo retains known declarations", canon)
 
     def test_implementation_handoff_carries_no_v2_machinery(self):
-        handoff = read("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
+        handoff = read_personal("skills-diferidas/v2/chanks-0-agente-soporte/assets/assignment-implementation.md")
         for gone in ("PI_SESSION_ID", "APPROVED_ALIAS", "Intercom", "listo para revisión",
                      "seal", "RDD", "SHA-256", "TDD"):
             with self.subTest(gone=gone):
@@ -587,7 +599,6 @@ class GenericBuilderFlowTests(unittest.TestCase):
         self.assertTrue(set(ROSTER.SKILLS).isdisjoint(forbidden))
         self.assertTrue(all(source.is_relative_to(SKILLS)
                             or source.is_relative_to(ROOT / "skills-diferidas")
-                            or source.is_relative_to(ROOT / "skills-personales")
                             for _, _, source in ROSTER.source_files(ROOT)))
         self.assertFalse((ROOT / "skills/torre-control-entregas").exists())
 
@@ -746,7 +757,11 @@ class StageSkillBoundaryTests(unittest.TestCase):
             self.assertNotIn(gone, skill)
 
     def test_orphan_support_files_are_gone(self):
-        support = ROOT / "skills-diferidas/v2/chanks-0-agente-soporte"
+        # S244: the personal skill lives in machine-setup with the same file list.
+        self.assertFalse((ROOT / "skills-diferidas/v2/chanks-0-agente-soporte").exists())
+        support = MACHINE_SETUP_SOURCES
+        if not support.is_dir():
+            raise unittest.SkipTest(f"personal source not available: {support}")
         self.assertEqual(
             sorted(p.relative_to(support).as_posix() for p in support.rglob("*") if p.is_file()),
             ["SKILL.md", "assets/assignment-implementation.md", "assets/brief-diario.md"],

@@ -6,7 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 DEFERRED = ROOT / "skills-diferidas"
 EXPECTED = {
-    "v2": {"chanks-0-jornada", "chanks-3-session-kickoff", "chanks-3-coordinador-manual", "chanks-0-agente-soporte"},
+    "v2": {"chanks-0-jornada", "chanks-3-session-kickoff", "chanks-3-coordinador-manual"},
     "v3": {"chanks-3-despacho-herdr", "chanks-4-unattended-implementation"},
 }
 

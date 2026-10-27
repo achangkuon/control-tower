@@ -129,7 +129,7 @@ approval, not an active runtime, a dispatch, or a delivery authorization.
 - `references/night-mode.md`
 - `references/runtime-standalone.md`
 - `../../../skills/_shared/plan-naming-convention.md`
-- `../../v2/chanks-0-agente-soporte/SKILL.md`
+- `chanks-0-agente-soporte` — source in the machine-setup repository since S244
 - `../chanks-3-despacho-herdr/SKILL.md`
 - `../chanks-3-despacho-herdr/assets/worker-handoff.md` — the full sealed worker handoff
 - `../../v2/chanks-3-session-kickoff/SKILL.md`

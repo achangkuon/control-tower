@@ -62,7 +62,7 @@ plan, lock, topology, or delivery authority was created.
 ## References
 
 - `references/admission-contract.md`
-- `../chanks-0-agente-soporte/SKILL.md`
+- `chanks-0-agente-soporte` — source in the machine-setup repository since S244
 - `../../../skills/chanks-4-puente/SKILL.md`
 - `../../../skills/chanks-4-puente/references/session-readiness.md`
 - `../../../skills/chanks-3-paralelo/SKILL.md`
