@@ -35,16 +35,18 @@ Todos los agentes siguen funcionando byte a byte igual.
 ## Tasks
 | ID | Specs | Route | Status | Evidence / commit |
 |---|---|---|---|---|
-| T1 | S1,S5 | delegated: machine-setup side | pending | mudar instalador+tests+skills+plantillas+personal-pi+tools/pi+main-al-dia+carril-medir+agente-soporte; instalador lee producto del checkout configurado |
-| T2 | S6 | inline control-tower | pending | roster.py + 7 pruebas re-apuntadas |
-| T3 | S6 | inline control-tower | pending | torre-setup e install.sh sin instalador personal |
-| T4 | S6 | inline control-tower | pending | carril usa instalador de machine-setup |
-| T5 | S6,S10 | inline control-tower | pending | AGENTS.md + README.md describen la separación |
-| T6 | S2 | inline control-tower | pending | borrado de archivos personales en un commit |
-| T7 | S3,S4,S8 | inline | pending | snapshot 4 agentes → pregunta al mantenedor → instalar desde machine-setup → byte a byte + --check + suites de ambos repos + torre-setup |
+| T1 | S1,S5 | inline machine-setup | done | commit e202ff4 (feat/orden-config-agentes): fuente única + instalador con checkout configurable; suite 275 OK |
+| T2 | S6 | inline control-tower | done | commits 21523351, 43aca812: roster.py + 7 pruebas re-apuntadas |
+| T3 | S6 | inline control-tower | done | commit a4cf3b23: torre-setup e install.sh sin instalador personal |
+| T4 | S6 | inline control-tower | done | commit 2b594bc1: carril usa instalador de machine-setup |
+| T5 | S6,S10 | inline control-tower | done | commit 8550d1c4: AGENTS.md + README.md |
+| T6 | S2 | inline control-tower | done | commit 20a28b2a: borrado personal en un commit |
+| T7 | S3,S4,S8 | inline | in progress | snapshot 4 agentes → pregunta al mantenedor → instalar desde machine-setup → byte a byte + --check + suites de ambos repos + torre-setup |
 | T8 | S9 | inline | pending | reporte de cierre: commit, pruebas, clasificación de release; sin push |
 
 ## Log
 - L1 (2026-10-26, mantenedor, verbatim): "Implementá la Sesión S244 del plan de esta Torre (control-tower). Seguí el flujo del AGENTS.md de este repo: corré 'radar etapa' y 'radar sesion S244', y trabajá solo con los archivos que la Sesión declara (su encargo trae el alcance aprobado, el mapa del acoplamiento y las restricciones). La parte del otro repo vive en /home/emili/projects/machine-setup: leé su odd/tasks/orden-config-agentes.md (S1 y L5) y no toques las otras tareas de ese documento. Antes de instalar algo en la máquina real, sacá un snapshot de las instrucciones de los cuatro agentes y preguntame. No hagas push sin mi autorización. Cuando termines, reportame el commit, las pruebas y si algo viaja en una release."
 - L2 (2026-10-26): Emilio eligió piloto automático (relay de la sesión de machine-setup); sonda de consentimiento RDD respondida por él: sí. Vuelo S244 despegado: rama `piloto/2026-10-26/vuelo-S244`, worktree `Worktrees/piloto-2026-10-26/vuelo-S244`.
 - L3 (2026-10-26): decisión de diseño: prepare-personal-config.py se muda con el instalador (importa install.py; dejarlo sería código muerto). Reportado al mantenedor en el cierre.
+- L4 (2026-10-26): Implementación completa. Suites: control-tower (rama de vuelo) mjs 2174 OK · python 260 OK (1 skip) · go radar OK; machine-setup python 275 OK (1 skip). radar check: 0 errores. carril settings ahora resuelve cada skill desde su fuente real (producto del candidato, personal de machine-setup).
+- L5 (2026-10-26): Pre-existing red avoided: the original installer's SKILLS/scan contract was preserved exactly (SKILLS = SHARED + CHANKS + SUPPORT + personales, deferred never scanned). The roster-vs-runtime-config check now runs from machine-setup's test_install against the configured checkout.
