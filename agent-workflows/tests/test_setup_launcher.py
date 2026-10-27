@@ -33,14 +33,22 @@ class SetupLauncherTests(unittest.TestCase):
             "PYTHONDONTWRITEBYTECODE": "1",
         }
 
-    def run_setup(self, flag="--link", name=None, install=False):
+    def run_setup(self, flag="--link", name=None, install=False, env_extra=None):
         env = dict(self.env)
+        env["PATH"] = os.environ["PATH"]  # torre-setup installs the Tower: bun and jq resolve
+        env.update(env_extra or {})
         if name is not None:
             env["SETUP_LAUNCHER"] = name
         if install:
             (self.home / ".claude").mkdir()
-            # Exercise the real skills installer, but never pull or use real agents.
-            command = ["bash", "-c", 'source "$1"; pull_repo() { :; }; run_install',
+            # Exercise the real Tower installer, but never pull or use a real checkout.
+            self.fake_tower = self.home / "projects/control-tower/Main"
+            (self.fake_tower / ".git").mkdir(parents=True)
+            (self.fake_tower / "install.sh").write_text(
+                "#!/usr/bin/env bash\necho \"Torre instalada (fake)\"\n")
+            self.fake_tower.joinpath("install.sh").chmod(0o755)
+            env["TOWER_DIR"] = str(self.fake_tower)
+            command = ["bash", "-c", 'source "$1"; pull_repo() { :; }; run_install_tower',
                        "setup-test", str(SCRIPT)]
         else:
             command = ["bash", str(SCRIPT), flag]
@@ -106,29 +114,26 @@ class SetupLauncherTests(unittest.TestCase):
         self.assertFalse((other_bin / "torre-control").exists())
         self.assert_tower_unchanged()
 
-    def test_install_default_preserves_tower_and_creates_setup(self):
+    def test_install_tower_runs_the_tower_installer_and_touches_nothing_else(self):
         result = self.run_setup(install=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(self.target.read_bytes(), launcher())
-        self.assert_tower_unchanged()
+        self.assertIn("Torre instalada (fake)", result.stdout)
+        # The personal configuration is not this installer's business anymore.
+        self.assertFalse(self.target.exists())
+        self.assertFalse((self.home / ".agents/skills").exists())
 
-    def test_install_succeeds_when_reserved_launcher_refused(self):
-        result = self.run_setup(name="torre-control", install=True)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("Torre V1", result.stdout + result.stderr)
-        self.assertIn("skills instaladas", result.stdout)
-        # Tower-owned skill was absent and must remain untouched by personal setup.
-        self.assertFalse(os.path.lexists(self.home / ".agents/skills/chanks-1-prd"))
-        self.assert_tower_unchanged()
+    def test_update_tower_refuses_without_a_tower(self):
+        # A PATH without the real `torre` command: the refusal must come from the
+        # missing install, not from finding the maintainer's machine-wide binary.
+        restricted = "/usr/local/bin:/usr/bin:/bin:/home/linuxbrew/.linuxbrew/bin"
+        result = self.run_setup(flag="--update", env_extra={"PATH": restricted})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no está instalada", result.stdout + result.stderr)
 
-    def test_install_succeeds_with_foreign_setup_and_preserves_it(self):
-        foreign = b"personal setup\n"
-        self.target.write_bytes(foreign)
-        result = self.run_setup(install=True)
+    def test_check_reports_the_tower_and_no_skills_section(self):
+        result = self.run_setup(flag="--check")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("skills instaladas", result.stdout)
-        self.assertEqual(self.target.read_bytes(), foreign)
-        self.assert_tower_unchanged()
+        self.assertNotIn("Skills", result.stdout)
 
     def test_help_names_installer_not_tower(self):
         result = self.run_setup(flag="--help")
