@@ -8,12 +8,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools/install.py"
-SPEC = importlib.util.spec_from_file_location("agent_workflows_install", SCRIPT)
-INSTALLER = importlib.util.module_from_spec(SPEC)
+SCRIPT = ROOT / "tools/roster.py"
+SPEC = importlib.util.spec_from_file_location("control_tower_roster_builder_flow", SCRIPT)
+ROSTER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = INSTALLER
-SPEC.loader.exec_module(INSTALLER)
+sys.modules[SPEC.name] = ROSTER
+SPEC.loader.exec_module(ROSTER)
 SKILLS = ROOT / "skills"
 SNAPSHOT_SHA256 = {
     "skills/chanks-0-agente-soporte/SKILL.md": "25eb5b1f0f253ca9df24829add72f91cadbf24aadb80034e90e42501110fc032",
@@ -292,7 +292,7 @@ class GenericBuilderFlowTests(unittest.TestCase):
         reactivating a dead worker's existing EN CURSO dispatch and retiring a stale
         marker are recovery operations, never part of the normal V1 flow, so those
         two literal routes are allowed there and nowhere else."""
-        folders = [INSTALLER.skill_source_root(ROOT, name) for name in INSTALLER.CHANKS_SKILLS]
+        folders = [ROSTER.skill_source_root(ROOT, name) for name in ROSTER.CHANKS_SKILLS]
         sources = [path for folder in folders for path in sorted(folder.rglob("*"))
                    if path.is_file() and path.suffix in {".md", ".json", ".py"}]
         sources.append(ROOT / "templates/session-routing.md")
@@ -584,11 +584,11 @@ class GenericBuilderFlowTests(unittest.TestCase):
     def test_registry_does_not_register_frozen_product_assets_or_tower_skills(self):
         forbidden = {"product/tower/generic", "torre-control", "torre-control-soporte", "torre-control-entregas"}
 
-        self.assertTrue(set(INSTALLER.SKILLS).isdisjoint(forbidden))
+        self.assertTrue(set(ROSTER.SKILLS).isdisjoint(forbidden))
         self.assertTrue(all(source.is_relative_to(SKILLS)
                             or source.is_relative_to(ROOT / "skills-diferidas")
                             or source.is_relative_to(ROOT / "skills-personales")
-                            for _, _, source in INSTALLER.source_files(ROOT)))
+                            for _, _, source in ROSTER.source_files(ROOT)))
         self.assertFalse((ROOT / "skills/torre-control-entregas").exists())
 
 

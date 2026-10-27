@@ -6,12 +6,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools/install.py"
-SPEC = importlib.util.spec_from_file_location("agent_workflows_install_comunicacion", SCRIPT)
-INSTALLER = importlib.util.module_from_spec(SPEC)
+SCRIPT = ROOT / "tools/roster.py"
+SPEC = importlib.util.spec_from_file_location("control_tower_roster_comunicacion_agentes", SCRIPT)
+ROSTER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = INSTALLER
-SPEC.loader.exec_module(INSTALLER)
+sys.modules[SPEC.name] = ROSTER
+SPEC.loader.exec_module(ROSTER)
 
 SKILL_NAME = "chanks-0-comunicacion-agentes"
 SKILL_PATH = f"skills/{SKILL_NAME}/SKILL.md"
@@ -176,15 +176,15 @@ class ComunicacionAgentesTests(unittest.TestCase):
         self.assertTrue((ROOT / "skills-diferidas/v3/chanks-3-despacho-herdr/SKILL.md").is_file())
 
     def test_source_inventory_includes_the_skill_and_the_tower_roster_ships_it(self):
-        self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
-        sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
+        self.assertIn(SKILL_NAME, ROSTER.CHANKS_SKILLS)
+        sources = {skill for skill, _, _ in ROSTER.source_files(ROOT)}
         self.assertIn(SKILL_NAME, sources)
         # The packaging Session removed the pending gate: the skill now belongs to
         # the Tower V1 package and this installer stops managing it personally.
-        self.assertEqual(INSTALLER.V1_PENDING_SKILLS, ())
-        self.assertIn(SKILL_NAME, INSTALLER.TOWER_V1_SKILLS)
-        self.assertIn(SKILL_NAME, INSTALLER.STOP_MANAGING_SKILLS)
-        self.assertNotIn(SKILL_NAME, INSTALLER.PERSONAL_SKILLS)
+        self.assertEqual(ROSTER.V1_PENDING_SKILLS, ())
+        self.assertIn(SKILL_NAME, ROSTER.TOWER_V1_SKILLS)
+        self.assertIn(SKILL_NAME, ROSTER.STOP_MANAGING_SKILLS)
+        self.assertNotIn(SKILL_NAME, ROSTER.PERSONAL_SKILLS)
 
     def test_shared_canon_and_readme_catalog_include_the_skill(self):
         canon = read("skills/_shared/plan-naming-convention.md")

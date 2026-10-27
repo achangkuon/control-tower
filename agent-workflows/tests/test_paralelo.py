@@ -6,12 +6,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools/install.py"
-SPEC = importlib.util.spec_from_file_location("agent_workflows_install_paralelo", SCRIPT)
-INSTALLER = importlib.util.module_from_spec(SPEC)
+SCRIPT = ROOT / "tools/roster.py"
+SPEC = importlib.util.spec_from_file_location("control_tower_roster_paralelo", SCRIPT)
+ROSTER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = INSTALLER
-SPEC.loader.exec_module(INSTALLER)
+sys.modules[SPEC.name] = ROSTER
+SPEC.loader.exec_module(ROSTER)
 
 SKILL_NAME = "chanks-3-paralelo"
 
@@ -45,7 +45,7 @@ class ParaleloTests(unittest.TestCase):
         self.assertLessEqual(len(self.skill.splitlines()), 90)
 
     def test_registered_in_installer_and_readme(self):
-        self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
+        self.assertIn(SKILL_NAME, ROSTER.CHANKS_SKILLS)
         self.assertIn(f"`{SKILL_NAME}`", read("README.md"))
 
     def test_reads_radar_compatibility_and_unknown_is_unsafe(self):

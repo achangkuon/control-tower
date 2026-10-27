@@ -6,12 +6,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools/install.py"
-SPEC = importlib.util.spec_from_file_location("agent_workflows_install_jornada", SCRIPT)
-INSTALLER = importlib.util.module_from_spec(SPEC)
+SCRIPT = ROOT / "tools/roster.py"
+SPEC = importlib.util.spec_from_file_location("control_tower_roster_chanks_jornada", SCRIPT)
+ROSTER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = INSTALLER
-SPEC.loader.exec_module(INSTALLER)
+sys.modules[SPEC.name] = ROSTER
+SPEC.loader.exec_module(ROSTER)
 
 SKILL_NAME = "chanks-0-jornada"
 SKILL_PATH = f"skills-diferidas/v2/{SKILL_NAME}/SKILL.md"
@@ -192,9 +192,9 @@ class ChanksJornadaSkillTests(unittest.TestCase):
         )
 
     def test_installer_defers_the_skill_to_v2_and_keeps_its_source(self):
-        self.assertIn(SKILL_NAME, INSTALLER.V2_DEFERRED_SKILLS)
-        self.assertIn(SKILL_NAME, INSTALLER.RETIRED_SKILLS)
-        sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
+        self.assertIn(SKILL_NAME, ROSTER.V2_DEFERRED_SKILLS)
+        self.assertIn(SKILL_NAME, ROSTER.RETIRED_SKILLS)
+        sources = {skill for skill, _, _ in ROSTER.source_files(ROOT)}
         self.assertNotIn(SKILL_NAME, sources)
         self.assertTrue((ROOT / SKILL_PATH).is_file())
 

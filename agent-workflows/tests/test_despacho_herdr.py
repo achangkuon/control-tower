@@ -6,12 +6,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools/install.py"
-SPEC = importlib.util.spec_from_file_location("agent_workflows_install_despacho", SCRIPT)
-INSTALLER = importlib.util.module_from_spec(SPEC)
+SCRIPT = ROOT / "tools/roster.py"
+SPEC = importlib.util.spec_from_file_location("control_tower_roster_despacho_herdr", SCRIPT)
+ROSTER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = INSTALLER
-SPEC.loader.exec_module(INSTALLER)
+sys.modules[SPEC.name] = ROSTER
+SPEC.loader.exec_module(ROSTER)
 
 SKILL_NAME = "chanks-3-despacho-herdr"
 SECTIONS = (
@@ -28,7 +28,7 @@ def read(relative):
     # Dynamic skill selectors use the installer's version-aware source inventory.
     path = Path(relative)
     if path.parts[0] == "skills":
-        path = INSTALLER.skill_source_root(ROOT, path.parts[1]).joinpath(*path.parts[2:])
+        path = ROSTER.skill_source_root(ROOT, path.parts[1]).joinpath(*path.parts[2:])
     return (ROOT / path).read_text(encoding="utf-8")
 
 
@@ -59,8 +59,8 @@ class DespachoHerdrDispatchTests(unittest.TestCase):
             self.assertIn(" ".join(phrase.lower().split()), self.normalized, phrase)
 
     def test_skill_is_registered_listed_and_well_formed(self):
-        self.assertIn(SKILL_NAME, INSTALLER.V3_DEFERRED_SKILLS)
-        self.assertNotIn(SKILL_NAME, INSTALLER.SKILLS)
+        self.assertIn(SKILL_NAME, ROSTER.V3_DEFERRED_SKILLS)
+        self.assertNotIn(SKILL_NAME, ROSTER.SKILLS)
         self.assertTrue(self.skill.startswith(f"---\nname: {SKILL_NAME}\n"))
         for section in SECTIONS:
             self.assertIn(section, self.skill)
@@ -747,29 +747,9 @@ class DespachoHerdrRetireTests(unittest.TestCase):
         self.assertIn("starts with `-`", self.retire)
 
 
-class DespachoHerdrRoutingTests(unittest.TestCase):
-    def test_installed_routing_does_not_route_to_dispatch_or_retirement(self):
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as raw:
-            home = Path(raw)
-            old_block = INSTALLER.START_MARKER + b"\n- old routing\n" + INSTALLER.END_MARKER + b"\n"
-            for path in INSTALLER.manual_paths(home):
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(old_block)
-            INSTALLER.apply(home, ROOT)
-
-            for path in INSTALLER.manual_paths(home):
-                match = INSTALLER.BLOCK_RE.search(path.read_bytes())
-                self.assertIsNotNone(match, path)
-                assert match is not None
-                text = " ".join(match.group().decode("utf-8").split())
-                for skill in (SKILL_NAME, "chanks-3-coordinador-manual"):
-                    self.assertNotIn(skill, text, path)
-                for mechanic in ("Torre", "fire-and-forget", "intercom ask", "retire mode", "may load"):
-                    self.assertNotIn(mechanic, text, path)
-                # Tower owns workflow text; the personal installer preserves legacy bytes.
-                self.assertEqual(match.group(), old_block, path)
+# The installer-contract routing test (the applied manual block never routes to
+# dispatch or retirement skills) moved with the installer: the personal suite in
+# machine-setup covers it (test_installed_block_does_not_route_to_v2_dispatch_skills).
 
 
 V2_SKILLS = (
@@ -928,13 +908,13 @@ class WorkerHandoffAssetTests(unittest.TestCase):
     def test_v2_skills_point_at_the_handoff_asset(self):
         for name in (SKILL_NAME, "chanks-3-coordinador-manual", "chanks-4-unattended-implementation"):
             with self.subTest(skill=name):
-                skill_path = INSTALLER.skill_source_root(ROOT, name) / "SKILL.md"
+                skill_path = ROSTER.skill_source_root(ROOT, name) / "SKILL.md"
                 links = re.findall(r"`([^`]+assets/worker-handoff\.md|assets/worker-handoff\.md)`",
                                    skill_path.read_text(encoding="utf-8"))
                 self.assertTrue(links, f"{name} must link its own handoff directly")
                 for link in links:
                     self.assertEqual((skill_path.parent / link).resolve(),
-                                     (INSTALLER.skill_source_root(ROOT, SKILL_NAME) / "assets/worker-handoff.md").resolve())
+                                     (ROSTER.skill_source_root(ROOT, SKILL_NAME) / "assets/worker-handoff.md").resolve())
                     self.assertTrue((skill_path.parent / link).is_file(), link)
         self.assertNotIn("assignment-implementation.md", read(f"skills/{SKILL_NAME}/SKILL.md"))
         self.assertNotIn("assignment-implementation.md",
@@ -945,7 +925,7 @@ class WorkerHandoffAssetTests(unittest.TestCase):
         links = re.findall(r"`([^`]+assets/worker-handoff\.md)`", night.read_text(encoding="utf-8"))
         self.assertEqual(len(links), 1)
         self.assertEqual((night.parent / links[0]).resolve(),
-                         (INSTALLER.skill_source_root(ROOT, SKILL_NAME) / "assets/worker-handoff.md").resolve())
+                         (ROSTER.skill_source_root(ROOT, SKILL_NAME) / "assets/worker-handoff.md").resolve())
         self.assertTrue((night.parent / links[0]).is_file())
 
 

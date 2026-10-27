@@ -5,12 +5,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools/install.py"
-SPEC = importlib.util.spec_from_file_location("agent_workflows_install_coordinator", SCRIPT)
-INSTALLER = importlib.util.module_from_spec(SPEC)
+SCRIPT = ROOT / "tools/roster.py"
+SPEC = importlib.util.spec_from_file_location("control_tower_roster_coordinador_manual", SCRIPT)
+ROSTER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = INSTALLER
-SPEC.loader.exec_module(INSTALLER)
+sys.modules[SPEC.name] = ROSTER
+SPEC.loader.exec_module(ROSTER)
 
 SKILL_NAME = "chanks-3-coordinador-manual"
 
@@ -33,10 +33,10 @@ class CoordinadorManualTests(unittest.TestCase):
             self.assertIn(" ".join(phrase.lower().split()), self.text, phrase)
 
     def test_registration_and_routing_preserve_the_canonical_admission_contract(self):
-        self.assertIn(SKILL_NAME, INSTALLER.V2_DEFERRED_SKILLS)
-        self.assertNotIn(SKILL_NAME, INSTALLER.SKILLS)
-        self.assertNotIn("coordinador-multi-agente", INSTALLER.CHANKS_SKILLS)
-        self.assertIn("coordinador-multi-agente", INSTALLER.RETIRED_SKILLS)
+        self.assertIn(SKILL_NAME, ROSTER.V2_DEFERRED_SKILLS)
+        self.assertNotIn(SKILL_NAME, ROSTER.SKILLS)
+        self.assertNotIn("coordinador-multi-agente", ROSTER.CHANKS_SKILLS)
+        self.assertIn("coordinador-multi-agente", ROSTER.RETIRED_SKILLS)
         self.assertTrue(self.skill.startswith(f"---\nname: {SKILL_NAME}\n"))
         self.assertIn(f"`{SKILL_NAME}`", read("README.md"))
         routing = read("templates/session-routing.md")

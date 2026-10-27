@@ -5,12 +5,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "tools/install.py"
-SPEC = importlib.util.spec_from_file_location("agent_workflows_install_mensajes", SCRIPT)
-INSTALLER = importlib.util.module_from_spec(SPEC)
+SCRIPT = ROOT / "tools/roster.py"
+SPEC = importlib.util.spec_from_file_location("control_tower_roster_mensajes_visibles", SCRIPT)
+ROSTER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = INSTALLER
-SPEC.loader.exec_module(INSTALLER)
+sys.modules[SPEC.name] = ROSTER
+SPEC.loader.exec_module(ROSTER)
 
 SKILL_NAME = "chanks-0-mensajes-visibles"
 SKILL_PATH = f"skills/{SKILL_NAME}/SKILL.md"
@@ -99,8 +99,8 @@ class MensajesVisiblesTests(unittest.TestCase):
             self.assertIn(phrase, self.skill)
 
     def test_installer_and_source_catalog_include_the_skill(self):
-        self.assertIn(SKILL_NAME, INSTALLER.CHANKS_SKILLS)
-        sources = {skill for skill, _, _ in INSTALLER.source_files(ROOT)}
+        self.assertIn(SKILL_NAME, ROSTER.CHANKS_SKILLS)
+        sources = {skill for skill, _, _ in ROSTER.source_files(ROOT)}
         self.assertIn(SKILL_NAME, sources)
 
     def test_shared_canon_and_readme_catalog_include_the_skill(self):
