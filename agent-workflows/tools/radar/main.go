@@ -240,7 +240,9 @@ func resolverRaiz(explicita, declarada, archivo string) (string, error) {
 	if base == "" {
 		base = filepath.Dir(archivo)
 	}
-	root, err := gitOutput(base, "rev-parse", "--show-toplevel")
+	root, err := recordar("toplevel\x00"+base, func() (string, error) {
+		return gitOutput(base, "rev-parse", "--show-toplevel")
+	})
 	if err != nil {
 		return "", fmt.Errorf("no se pudo derivar la raíz Git desde %s: %w", base, err)
 	}

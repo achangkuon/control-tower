@@ -95,7 +95,7 @@ func leerDespacho(root, id string) (*despacho, error) {
 	if root == "" {
 		return nil, nil
 	}
-	common, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := commonDir(root)
 	if err != nil {
 		return nil, err
 	}
@@ -279,11 +279,11 @@ func despachoVivo(root string, m despacho) bool {
 	if err != nil || resolved != m.Worktree {
 		return false
 	}
-	from, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	from, err := commonDir(root)
 	if err != nil {
 		return false
 	}
-	to, err := gitOutput(m.Worktree, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	to, err := commonDir(m.Worktree)
 	if err != nil || from != to {
 		return false
 	}
@@ -428,7 +428,7 @@ func leerMarcaPiloto(root, id string) (*marcaPiloto, error) {
 	if root == "" {
 		return nil, nil
 	}
-	common, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := commonDir(root)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +453,7 @@ func leerInterruptorPiloto(root string) (*interruptorPiloto, error) {
 	if root == "" {
 		return nil, nil
 	}
-	common, err := gitOutput(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	common, err := commonDir(root)
 	if err != nil {
 		return nil, err
 	}
@@ -787,7 +787,9 @@ func saneaWorker(base string) string {
 }
 
 func commonDir(dir string) (string, error) {
-	return gitOutput(dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	return recordar("common\x00"+dir, func() (string, error) {
+		return gitOutput(dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	})
 }
 
 // admisionMarcar runs the admission every marcar route shares before it reads

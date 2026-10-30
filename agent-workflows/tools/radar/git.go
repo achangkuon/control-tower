@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 )
@@ -105,7 +106,9 @@ func gitOID(root, value string) (string, error) {
 	if len(value) != length || !hexadecimal.MatchString(value) {
 		return "", fmt.Errorf("se requiere un OID %s completo de %d hexadecimales", format, length)
 	}
-	resolved, err := gitOutput(root, "rev-parse", "--verify", "--end-of-options", value+"^{commit}")
+	resolved, err := recordar("oid\x00"+root+"\x00"+value, func() (string, error) {
+		return gitOutput(root, "rev-parse", "--verify", "--end-of-options", value+"^{commit}")
+	})
 	if err != nil {
 		return "", err
 	}
@@ -190,6 +193,9 @@ func verificarIntegracion(root, commit, head string) (bool, string, bool) {
 	if strings.TrimSpace(commit) == "" {
 		return false, "falta entrega.commit", true
 	}
+	if alcanzableDesde(root, commit, head) {
+		return true, "", true
+	}
 	resolved, err := gitOID(root, commit)
 	if err != nil {
 		return false, fmt.Sprintf("el commit %q no es un OID completo válido del repositorio: %v", commit, err), false
@@ -209,6 +215,29 @@ func verificarIntegracion(root, commit, head string) (bool, string, bool) {
 		return false, fmt.Sprintf("no se pudo verificar si %s está integrado en %s: %s", resolved, head, detail), false
 	}
 	return true, "", true
+}
+
+// alcanzableDesde answers the common case with one ancestry walk per HEAD: a
+// full OID listed by rev-list is a commit reachable from head. Any doubt (a
+// short or symbolic value, a failed walk, a commit outside the walk) answers
+// false and the caller asks git directly, so a miss never becomes a verdict.
+func alcanzableDesde(root, commit, head string) bool {
+	_, length, err := gitObjectFormat(root)
+	if err != nil || len(commit) != length || !hexadecimal.MatchString(commit) || len(head) != length || !hexadecimal.MatchString(head) {
+		return false
+	}
+	ancestros, err := recordar("ancestros\x00"+root+"\x00"+head, func() (map[string]bool, error) {
+		out, err := gitOutput(root, "rev-list", "--end-of-options", head)
+		if err != nil {
+			return nil, err
+		}
+		set := map[string]bool{}
+		for _, oid := range strings.Fields(out) {
+			set[oid] = true
+		}
+		return set, nil
+	})
+	return err == nil && ancestros[strings.ToLower(commit)]
 }
 
 // commitEnRamaDeVuelo reports whether commit is reachable from the flight
@@ -243,4 +272,31 @@ func ramaVueloSubida(root, rama string) bool {
 		return true
 	}
 	return ok
+}
+
+// respuestasFijas remembers the git answers that cannot change while one Radar
+// process runs: a full OID, a blob, the tree of a full OID, the common directory
+// and the toplevel of a directory. One radar etapa spawned 1404 git processes for
+// 375 distinct questions; on WSL each costs milliseconds. HEAD and branch refs
+// move, so they are never asked through here, and errors are never remembered.
+var respuestasFijas sync.Map
+
+func recordar[T any](clave string, preguntar func() (T, error)) (T, error) {
+	if previa, hay := respuestasFijas.Load(clave); hay {
+		return previa.(T), nil
+	}
+	respuesta, err := preguntar()
+	if err == nil {
+		respuestasFijas.Store(clave, respuesta)
+	}
+	return respuesta, err
+}
+
+// gitBlob reads one blob by its object id. The caller gets its own copy, so the
+// remembered bytes cannot be altered through it.
+func gitBlob(root, blob string) ([]byte, error) {
+	raw, err := recordar("blob\x00"+root+"\x00"+blob, func() ([]byte, error) {
+		return gitCommand("-C", root, "cat-file", "blob", blob).Output()
+	})
+	return slices.Clone(raw), err
 }

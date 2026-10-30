@@ -119,8 +119,9 @@ func trackedFilesAt(root, head string) ([]string, error) {
 	// -z keeps raw, unquoted paths: with the default core.quotepath=true, git
 	// quotes non-ASCII paths in octal and the quoted spelling never matches any
 	// Zona (issue #146).
-	cmd := gitCommand("-C", root, "ls-tree", "-r", "--name-only", "--full-tree", "-z", head)
-	out, err := cmd.Output()
+	out, err := recordar("tree\x00"+root+"\x00"+head, func() ([]byte, error) {
+		return gitCommand("-C", root, "ls-tree", "-r", "--name-only", "--full-tree", "-z", head).Output()
+	})
 	if err != nil {
 		return nil, fmt.Errorf("no se pudo listar los archivos de %s con git: %w", root, err)
 	}

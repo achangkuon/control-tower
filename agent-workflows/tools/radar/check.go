@@ -1238,7 +1238,7 @@ func validarCita(root, nombre string, c Cita) []Hallazgo {
 // proven by the locator actually name the decision the citation claims. Without
 // it a mis-copied range passes, and the citation says nothing.
 func verificarNumeroDeDecision(root string, c Cita, nombre string) []Hallazgo {
-	raw, err := gitCommand("-C", root, "cat-file", "blob", c.Loc.Blob).Output()
+	raw, err := gitBlob(root, c.Loc.Blob)
 	if err != nil || c.Loc.ByteEnd > len(raw) {
 		return []Hallazgo{{"error", "autoridad", fmt.Sprintf("%s: el fragmento de la decisión %d no se pudo leer", nombre, c.Ref)}}
 	}
@@ -1505,7 +1505,7 @@ func validateFragmentLocator(root string, loc FragmentLocator, etiqueta string) 
 	if err != nil || len(parts) != 4 || parts[1] != "blob" || (parts[0] != "100644" && parts[0] != "100755") || parts[2] != loc.Blob {
 		return []Hallazgo{{"error", "locator de referencia", fmt.Sprintf("%s: no prueba un blob regular exacto", etiqueta)}}
 	}
-	raw, err := gitCommand("-C", root, "cat-file", "blob", loc.Blob).Output()
+	raw, err := gitBlob(root, loc.Blob)
 	if err != nil {
 		return []Hallazgo{{"error", "locator de referencia", fmt.Sprintf("%s: blob ilegible: %v", etiqueta, err)}}
 	}
