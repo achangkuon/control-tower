@@ -138,6 +138,9 @@ cimientos:
     - .gitignore
     - .opencode/agent/support-agent.md
     - .opencode/plugins/tower-spike.js
+    # Project skill for releasing the Tower; moved here from the owner's global skills (2026-10-30).
+    - .agents/skills/torre-release/
+    - .claude/skills/torre-release
     - .pi/settings.json
     - AGENTS.md
     - CLAUDE.md
