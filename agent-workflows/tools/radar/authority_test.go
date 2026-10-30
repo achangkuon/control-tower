@@ -2,6 +2,7 @@ package main
 
 import (
 	"os/exec"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -226,5 +227,34 @@ func TestAutoridadDeTextoLibreSigueCargandoYPasando(t *testing.T) {
 	}
 	if h := validarAutoridad("/repo", s); len(h) != 0 {
 		t.Fatalf("la exigencia se enciende en S115, no acá: %+v", h)
+	}
+}
+
+// 61 Engram citations printed 61 identical-rule warnings on every run and buried
+// any new one (audit 2026-10-30). The output groups them into one line; every
+// other finding passes through unchanged and in order.
+func TestAvisosEngramSeAgrupanEnUnaLinea(t *testing.T) {
+	entrada := []Hallazgo{
+		{"error", "rutas reales", "falta x"},
+		{"aviso", reglaEngram, "S1 cita Engram 1, que vive fuera de Git: se declara y no se prueba"},
+		{"aviso", "rutas reales", "la zona declara y"},
+		{"aviso", reglaEngram, "S2 cita Engram 2, que vive fuera de Git: se declara y no se prueba"},
+		{"aviso", reglaEngram, "S3 cita Engram 3, que vive fuera de Git: se declara y no se prueba"},
+	}
+	got := agruparAvisos(entrada)
+	want := []Hallazgo{
+		{"error", "rutas reales", "falta x"},
+		{"aviso", reglaEngram, "3 citas a Engram viven fuera de Git: se declaran y no se prueban"},
+		{"aviso", "rutas reales", "la zona declara y"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("agruparAvisos =\n%+v\nwant\n%+v", got, want)
+	}
+}
+
+func TestUnaSolaCitaEngramConservaSuDetalle(t *testing.T) {
+	entrada := []Hallazgo{{"aviso", reglaEngram, "S1 cita Engram 1, que vive fuera de Git: se declara y no se prueba"}}
+	if got := agruparAvisos(entrada); !reflect.DeepEqual(got, entrada) {
+		t.Fatalf("a single citation keeps its own line: %+v", got)
 	}
 }

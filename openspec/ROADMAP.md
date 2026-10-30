@@ -100,7 +100,7 @@
 ### S4.12 — Reporte de caída de Pi: detener y conservar rama/worktree/candidato sin recuperación automática
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
-  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs
   - Archivos autorizados: hosts/pi-recovery.mjs, test/hosts/pi-recovery.test.mjs
   - Depende de: S9.4, S1.18
   - Recursos: árbol de procesos Tower-owned, checkpoint durable, lineage Pi
@@ -186,7 +186,7 @@
 ### S9.8 — Dispatch sin espera y estado terminal visible en Main y tabs; absorbe S9.7, S168 y S171 sin reclamar paralelismo cuando el host serializa.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
-  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs
   - Archivos autorizados: product/tower/skills/torre-control/SKILL.md, product/tower/skills/torre-control-entregas/SKILL.md, test/extensions/pi/tower-session-router.test.mjs
   - Depende de: S1.18
   - Recursos: dispatch&#95;id, canal Intercom ya ligado por S1.18 y mailbox de Main; sin ownership de Herdr, lifecycle de procesos o entrega Git
@@ -211,7 +211,7 @@
 ### S107 — Tabs y workers Tower-owned dentro del workspace ligado, con una tab por Session ID, ocupación legible y readback determinista; absorbe S108, S9.2, S119 y S121.
 - Coordinación:
   - Estado derivado: 🟡 DIFERIDO
-  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs
   - Archivos autorizados: hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/launch-worker.mjs, hosts/opencode-view.mjs, hosts/production-provider.mjs, test/hosts/launch-worker.test.mjs, test/hosts/opencode-view.test.mjs, test/hosts/production-provider.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
   - Depende de: S1.18
   - Recursos: HERDR&#95;WORKSPACE&#95;ID explícito y recursos Herdr devueltos frescos; sin autoridad sobre recursos extranjeros
@@ -862,7 +862,7 @@
 ### S165 — Puente mínimo y aislado Pi–semáforo: un adapter invoca el binario y una extensión registra exactamente las ocho tower&#95;&#42; sin continuation ni routing adicional.
 - Coordinación:
   - Estado derivado: 📚 ARCHIVADO
-  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+  - Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs
   - Archivos autorizados: adapters/pi/semaphore-v1.mjs, extensions/pi/tower-v1/package.json, extensions/pi/tower-v1/semaphore.ts, test/adapters/pi/semaphore-v1.test.mjs, test/extensions/pi/tower-v1-semaphore.test.mjs
   - Depende de: S149
   - Recursos: binario del semáforo producido por S149, invocado por la ruta absoluta que provee el caller
@@ -3653,7 +3653,7 @@ Rutas históricas (evidencia): hosts/herdr-topology.mjs, test/hosts/herdr-topolo
 
 ### S9.9 — Binding explícito de workspace Herdr
 - Estado derivado: 📚 ARCHIVADO
-- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs
 - Depende de: —
 - Cimientos: test/install/launch-worker-cli.test.mjs, hosts/herdr-topology.mjs, test/hosts/herdr-topology.test.mjs, hosts/seat-cli.mjs, test/hosts/seat-cli.test.mjs
 - Recursos: binding explícito de workspace Herdr y fixtures aislados; cero mutación real
@@ -4020,7 +4020,7 @@ Rutas: schemas/delivery-policy-v1.schema.json, test/contracts/s3-2-schemas.test.
 
 ### S110 — Corte del entorno constructor: el repositorio deja de exponerle skills de la Torre a un host Pi, y ningún agente que construye la Torre la recibe como sistema de coordinación.
 - Estado derivado: 📚 ARCHIVADO
-- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs
 - Depende de: —
 - Cimientos: .pi/settings.json
 - Recursos: —
@@ -4163,7 +4163,7 @@ Rutas: agent-workflows/tools/radar/plan.go, agent-workflows/tools/radar/check.go
 
 ### S118 — Una operación de la Torre se reconoce a simple vista dentro de una sesión Pi: emoji, nombre y color propios en los cuatro estados observables.
 - Estado derivado: 📚 ARCHIVADO
-- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs
+- Zona/Área: hosts · hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs
 - Depende de: —
 - Cimientos: —
 - Recursos: superficie de render de la extensión Pi y el contrato de capacidades de extensions/pi/package.json

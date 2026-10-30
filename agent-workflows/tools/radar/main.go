@@ -250,7 +250,7 @@ func resolverRaiz(explicita, declarada, archivo string) (string, error) {
 }
 
 func cmdCheck(p *Plan, root string) int {
-	hallazgos := append(p.Check(root), p.avisosDeTrailers(root)...)
+	hallazgos := agruparAvisos(append(p.Check(root), p.avisosDeTrailers(root)...))
 	var errores, avisos int
 	for _, h := range hallazgos {
 		if h.Severidad == "error" {

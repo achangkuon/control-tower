@@ -1202,6 +1202,38 @@ func nombreDeCita(sesion string, i, total int) string {
 	return fmt.Sprintf("%s (cita %d de %d)", sesion, i+1, total)
 }
 
+// reglaEngram names the warning for a citation Radar cannot open.
+const reglaEngram = "autoridad no verificable"
+
+// agruparAvisos folds every Engram citation warning into one line placed where
+// the first one was. They are permanent by design: printed one by one they
+// buried every new warning under dozens Radar can never resolve. A single
+// citation keeps its own detail.
+func agruparAvisos(hallazgos []Hallazgo) []Hallazgo {
+	citas := 0
+	for _, h := range hallazgos {
+		if h.Regla == reglaEngram {
+			citas++
+		}
+	}
+	if citas < 2 {
+		return hallazgos
+	}
+	var out []Hallazgo
+	agrupado := false
+	for _, h := range hallazgos {
+		if h.Regla != reglaEngram {
+			out = append(out, h)
+			continue
+		}
+		if !agrupado {
+			out = append(out, Hallazgo{"aviso", reglaEngram, fmt.Sprintf("%d citas a Engram viven fuera de Git: se declaran y no se prueban", citas)})
+			agrupado = true
+		}
+	}
+	return out
+}
+
 // validarCita is the single verification of one citation, applied with the same
 // demand to the simple form and to every element of the composed one.
 func validarCita(root, nombre string, c Cita) []Hallazgo {
@@ -1216,7 +1248,7 @@ func validarCita(root, nombre string, c Cita) []Hallazgo {
 		}
 		// Reported, never counted as proven. Saying "verified" about something
 		// this tool cannot open is how a pass stops meaning anything.
-		return []Hallazgo{{"aviso", "autoridad no verificable", fmt.Sprintf("%s cita Engram %d, que vive fuera de Git: se declara y no se prueba", nombre, c.ID)}}
+		return []Hallazgo{{"aviso", reglaEngram, fmt.Sprintf("%s cita Engram %d, que vive fuera de Git: se declara y no se prueba", nombre, c.ID)}}
 	case "repo":
 		return validateFragmentLocator(root, c.Loc, etiqueta)
 	case "decision":

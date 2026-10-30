@@ -5,7 +5,7 @@ producto: control-tower
 zonas:
   - id: hosts
     nombre: Hosts
-    rutas: [hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs, scripts/host-compatibility/opencode.mjs, test/compat/opencode-runtime.test.mjs]
+    rutas: [hosts/, adapters/, extensions/, plugin/, test/hosts/, test/adapters/, test/extensions/, test/plugin/, test/host-adapters.test.mjs]
   - id: entrega
     nombre: Entrega
     rutas: [delivery/, continuation/, test/delivery/, test/continuation/]
