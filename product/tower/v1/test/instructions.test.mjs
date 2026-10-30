@@ -55,6 +55,16 @@ describe("Control Tower V1 instruction templates", () => {
     }
   });
 
+  // Bare `radar etapa` answers "1 · Definir" for every conversation by design
+  // (it reads as a loose idea), so it cannot be the opening step (audit 2026-10-30).
+  test("project instructions open with the real panorama, never bare radar etapa", () => {
+    const text = readTemplate("project-agents.md");
+    expect(text).not.toMatch(/`radar etapa`/);
+    expect(text).not.toContain("🗼 radar etapa ·");
+    expect(text).toContain("| Start of every conversation, before acting on a request | `radar status --json` |");
+    expect(text).toContain("`radar etapa <ID>`");
+  });
+
   test("project instructions replace the shipped skill table with the copiloto card rule", () => {
     const text = readTemplate("project-agents.md");
     expect(text).toContain("### Which skill to load");
