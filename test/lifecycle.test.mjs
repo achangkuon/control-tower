@@ -2,7 +2,7 @@
 // manifest and its recomputed pre-start boundary. Every fixture here is real
 // P4 state produced by actually running create -> validate -> publish ->
 // claim; no synthetic CLAIMED/STARTED row is ever inserted directly.
-import { afterEach, describe, expect, test } from "bun:test"
+import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test"
 import { Database } from "bun:sqlite"
 import { createHash, randomBytes, randomUUID } from "node:crypto"
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
@@ -12,6 +12,15 @@ import { join } from "node:path"
 import * as tower from "../core.mjs"
 import { createMcpHandler } from "../mcp.mjs"
 import { git as runGit } from "./helpers/git.mjs"
+
+// Bun's implicit 5s per-test wall clock was the only wall-clock threshold in this
+// file, and it measures the machine rather than the contract: every test here builds
+// real Git plus SQLite fixtures, so a host under load legitimately needs more than 5s
+// (measured with every core busy: 10.3s for the ten-variant manifest loop and 5.2s for
+// the reject replay test) and failed the delivery gate merely for being busy. The
+// behavior is still bounded — a test that hangs is killed after this timeout — and
+// nothing else here asserts an elapsed time or a sleep duration.
+setDefaultTimeout(60_000)
 
 const temporaryDirectories = []
 const git = (cwd, args) => runGit(cwd, args, { encoding: "utf8" }).trim()
@@ -568,7 +577,10 @@ describe("P5-C completion and compensation", () => {
     const first = completeInSubprocess(fixture, request, firstReady)
     const second = completeInSubprocess(fixture, request, secondReady)
     try {
-      const deadline = Date.now() + 2000
+      // Reaching the barrier is bounded by child startup, not by anything the test
+      // controls: two Bun processes importing core.mjs can take seconds on a loaded
+      // host, and the old 2s deadline failed the gate before either ever raced.
+      const deadline = Date.now() + 30_000
       while (!(await Bun.file(firstReady).exists()) || !(await Bun.file(secondReady).exists())) {
         if (Date.now() >= deadline) throw new Error("complete racers did not reach the writer barrier")
         await Bun.sleep(10)
