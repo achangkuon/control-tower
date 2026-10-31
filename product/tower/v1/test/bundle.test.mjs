@@ -29,8 +29,6 @@ const workflowNames = [
   "analisis-por-tramos/SKILL.md",
   "analisis-por-tramos/references/estructura.md",
   "analisis-por-tramos/references/medios.md",
-  "chanks-0-comunicacion-agentes/SKILL.md",
-  "chanks-0-comunicacion-agentes/references/casos-herdr.md",
   "chanks-0-explicalo-simple/SKILL.md",
   "chanks-0-explicalo-simple/references/formato.md",
   "chanks-0-mensajes-visibles/SKILL.md",

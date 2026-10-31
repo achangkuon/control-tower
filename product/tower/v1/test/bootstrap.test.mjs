@@ -93,10 +93,11 @@ test("intake admits a member count above the running roster and still rejects a 
 test("a roster-103 CLI installs a published 105-member envelope (issue #156 bridge)", () => {
   const bootstrapPath = resolve(import.meta.dir, "../bootstrap.mjs");
   const bundlePath = resolve(import.meta.dir, "../bundle.mjs");
-  // The two chanks-0-comunicacion-agentes members are dropped from the current roster
-  // to reconstruct a smaller running CLI than the published envelope.
-  const retired = new Set(["agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
-    "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md"]);
+  // Two arbitrary current-roster members are dropped to reconstruct a smaller
+  // running CLI than the published envelope (chanks-0-comunicacion-agentes left
+  // the roster on 2026-10-30, so the simulation uses other members).
+  const retired = new Set(["agent-workflows/skills/chanks-0-explicalo-simple/SKILL.md",
+    "agent-workflows/skills/chanks-0-explicalo-simple/references/formato.md"]);
   const runningShort = BUNDLE_MEMBERS.filter(({ source }) => !retired.has(source));
   expect(runningShort).toHaveLength(93); // + ten engine modules = the 103-path running roster
   const envelope = encode({ schema, members: paths.map((path) => member(path)) });

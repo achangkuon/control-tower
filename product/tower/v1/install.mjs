@@ -40,7 +40,7 @@ function prerequisites(runner, env) {
 // This standalone asset has no repository imports. Stamped pinned.paths is the
 // exact reviewed file roster; these guards additionally bound canonical layouts.
 const WORKFLOW_SKILLS = new Set([
-  "analisis-por-tramos", "chanks-0-comunicacion-agentes", "chanks-0-explicalo-simple", "chanks-0-mensajes-visibles",
+  "analisis-por-tramos", "chanks-0-explicalo-simple", "chanks-0-mensajes-visibles",
   "chanks-0-session-context-loader", "chanks-0-skill-composer", "chanks-1-adopcion",
   "chanks-1-autoridad", "chanks-1-brain-dump", "chanks-1-cierre-de-decisiones",
   "chanks-1-descubrimiento", "chanks-1-feature", "chanks-1-heredado", "chanks-1-prd",

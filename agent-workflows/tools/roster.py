@@ -33,7 +33,6 @@ CHANKS_SKILLS = (
     "chanks-1-rfc",
     "chanks-1-terreno",
     "chanks-0-agente-soporte",
-    "chanks-0-comunicacion-agentes",
     "chanks-0-mensajes-visibles",
     "chanks-0-explicalo-simple",
     "chanks-0-session-context-loader",
@@ -111,6 +110,9 @@ PERSONAL_SKILLS = ()
 # Explicit ownership migration. Normal installs retire only these known derived
 # copies; unlisted directories remain untouched.
 RETIRED_SKILLS = (
+    # Left the Tower 2026-10-30: personal global skill `comunicacion-agentes`
+    # in machine-setup; the chanks- name does not travel to clients.
+    "chanks-0-comunicacion-agentes",
     "chanks-6-politica-de-entrega",
     "chanks-7-session-doc",
     "session-doc",

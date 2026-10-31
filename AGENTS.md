@@ -130,7 +130,8 @@ de workers, viven en `agent-workflows/skills-diferidas/v3/chanks-3-despacho-herd
 
 **Comunicación manual entre agentes.** V3 es sólo el despacho automático de Sesiones.
 El uso manual —dejarle un mensaje a otro agente, mirar qué está haciendo, frenarlo o
-abrir un panel— lo gobierna la skill `chanks-0-comunicacion-agentes`, y se dispara por
+abrir un panel— lo gobierna la skill `comunicacion-agentes` (personal y global, se
+actualiza desde machine-setup, no viaja en el paquete de la Torre), y se dispara por
 lo que pide el mantenedor —"comunicate con el agente", "fijate qué hace"—, sin necesidad
 de nombrar Herdr. Cargala y atendé sólo lo pedido (requiere estar corriendo dentro de
 Herdr, `HERDR_ENV=1`). Eso es una solicitud manual, no habilita despacho automático de

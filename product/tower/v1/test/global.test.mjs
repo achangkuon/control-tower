@@ -293,8 +293,8 @@ test("rollback to a published 30-member cache keeps every installed runtime byte
 
 test("a mixed-generation store lists, inspects and rolls back a cache whose roster differs from the running CLI", () => {
   const current = install("mixed-current"); // active, 105-member roster
-  const retired = new Set(["agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
-    "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md"]);
+  const retired = new Set(["agent-workflows/skills/chanks-0-explicalo-simple/SKILL.md",
+    "agent-workflows/skills/chanks-0-explicalo-simple/references/formato.md"]); // chanks-0-comunicacion-agentes left the roster 2026-10-30
   const legacyPaths = paths.filter(path => !retired.has(path));
   expect(legacyPaths).toHaveLength(103); // v1.2.5's roster matches no named generation
   const legacy = seedHistoricalCache("v1.2.5", legacyPaths);

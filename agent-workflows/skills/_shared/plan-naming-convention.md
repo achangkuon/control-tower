@@ -246,11 +246,13 @@ rewrite a frozen product archive. Report unknown historical evidence rather than
 
 ## 19. Chanks inventory
 
-`chanks-0-` is cross-cutting, including `chanks-0-mensajes-visibles` and
-`chanks-0-comunicacion-agentes`; `chanks-2-planificador-granular` prepares Sessions; in V1 `chanks-3-paralelo` proposes a compatible lot for human approval and
+`chanks-0-` is cross-cutting, including `chanks-0-mensajes-visibles`;
+`chanks-2-planificador-granular` prepares Sessions; in V1 `chanks-3-paralelo` proposes a compatible lot for human approval and
 delegation; `chanks-4-puente` hands the Session to Gentle AI
 and receives its delivered commit; and `chanks-5-session-doc` closes a delivered Session. These IDs are compatibility names,
-not hierarchy levels or runtime authority.
+not hierarchy levels or runtime authority. Manual agent-to-agent communication is not
+product material: it is the personal global skill `comunicacion-agentes`, owned by
+machine-setup and never shipped in this package.
 
 ## 20. Compliance checklist
 
