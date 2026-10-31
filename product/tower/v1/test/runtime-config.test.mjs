@@ -613,6 +613,26 @@ test("S225 drops an already-absent retired entry without failing the upgrade", (
   expect(doctorRuntime({ home, runner: () => ({ status: 0, stdout: "gentle-ai 4.0.0" }) }).skills).toBe("ok");
 }));
 
+test("#176 a retired skill's nested directories in the ownership manifest do not block the upgrade", () => fixture(({ home, install }) => {
+  install();
+  const agent = ".agents/skills/chanks-0-comunicacion-agentes";
+  fs.mkdirSync(join(home, agent, "references"), { recursive: true, mode: 0o755 });
+  fs.writeFileSync(join(home, agent, "SKILL.md"), "recorded", { mode: 0o644 });
+  fs.writeFileSync(join(home, agent, "references/casos-herdr.md"), "recorded", { mode: 0o644 });
+  const record = manifest(home);
+  record.entries.push({ path: agent, component: "skills", installed: { kind: "directory", children: {
+    "SKILL.md": fileSnapshot(join(home, agent, "SKILL.md")),
+    references: { kind: "directory", children: { "casos-herdr.md": fileSnapshot(join(home, agent, "references/casos-herdr.md")) } },
+  } } });
+  record.directories.push(`${agent}/references`);
+  fs.writeFileSync(join(home, ".local/share/torre-control/runtime-ownership.json"), JSON.stringify(record));
+  install();
+  // The upgrade drops the retired entry and removes the Tower-owned retired bytes;
+  // machines that already replaced them (absent on disk) take the drop-only path.
+  expect(manifest(home).entries.some(entry => entry.path === agent)).toBe(false);
+  expect(fs.existsSync(join(home, agent))).toBe(false);
+}));
+
 test("pointer insertion tolerates real gentle-ai blocks with unpaired start/end notes and nesting", () => fixture(({ home, write, install }) => {
   const claude = "<!-- gentle-ai:orchestrator -->\n<!-- authority-first-terminal-procedure:start -->\nsteps\n" +
     "<!-- authority-first-terminal-procedure:end -->\n<!-- /gentle-ai:orchestrator -->\n" +

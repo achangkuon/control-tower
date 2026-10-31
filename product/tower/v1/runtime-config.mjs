@@ -111,6 +111,14 @@ function retiredSkill(path) {
   // treating it as removable would let a corrupted manifest delete a live owned parent.
   return match && match[1] !== "_shared" && match[1] !== "." && match[1] !== ".." && !V1_SKILLS.includes(match[1]) ? match[1] : null;
 }
+// Nested directories recorded under a retired skill's root (issue #176): an older
+// install owns them whole, so the directories check must tolerate them exactly where
+// the entries check already tolerates the retired root itself. No other unknown path
+// is admitted.
+function retiredSkillChild(path) {
+  const match = typeof path === "string" && /^(\.(?:agents|claude)\/skills\/[^/]+)\//.exec(path);
+  return match ? retiredSkill(match[1]) : null;
+}
 function load(home) {
   const bytes = read(home, join(home, manifestPath)); if (!bytes) return null;
   let value; try { value = JSON.parse(bytes); } catch { fail("invalid ownership manifest JSON"); }
@@ -131,7 +139,7 @@ function load(home) {
   for (const path of [...allowed.keys(), ...skillFiles, ...pointerPaths, manifestPath, settingsPath]) {
     let parent = dirname(path); while (parent !== ".") { parents.add(parent); parent = dirname(parent); }
   }
-  if (value.directories.some(p => !parents.has(p) && p !== `${share}/backups` && !retiredSkill(p) &&
+  if (value.directories.some(p => !parents.has(p) && p !== `${share}/backups` && !retiredSkill(p) && !retiredSkillChild(p) &&
       !(typeof p === "string" && /^\.local\/share\/torre-control\/backups\/[A-Za-z0-9T_.:-]+$/.test(p) && !p.split("/").includes("..")))) fail("invalid directory manifest");
   return value;
 }
