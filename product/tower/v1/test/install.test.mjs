@@ -68,7 +68,7 @@ test("expanded canonical release extracts every pinned skill, template and signa
     "agent-workflows/tools/radar/vendor/modules.txt", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/LICENSE", "agent-workflows/tools/radar/vendor/gopkg.in/yaml.v3/yaml.go"]) {
     expect(deps.pinned.paths).toContain(path);
   }
-  expect(deps.pinned.paths).toHaveLength(105);
+  expect(deps.pinned.paths).toHaveLength(103);
   for (const path of ["agent-workflows/tools/copiloto/main_test.go", "agent-workflows/tools/copiloto/foco_test.go",
     "agent-workflows/tools/copiloto/tarjeta_test.go", "agent-workflows/tools/piloto/main_test.go",
     "agent-workflows/tools/piloto/aterrizaje_test.go", "agent-workflows/tools/piloto/marca_test.go",

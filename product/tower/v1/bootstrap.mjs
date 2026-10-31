@@ -16,7 +16,7 @@ const RELEASE_PATHS = new Set([
 // follow the running CLI's roster: an installed CLI N must admit the published
 // envelope of a later roster M > N (issue #156, v1.2.5 roster 91 -> v1.3.0 roster 93),
 // otherwise every roster-size change is unreachable by self-update. 512 is finite and
-// documented: >5x the 93-member roster shipping today leaves room for many future
+// documented: >5x the 91-member roster shipping today leaves room for many future
 // rosters while keeping the nonrecursive preflight to a few thousand allocations, so
 // it still guards JSON.parse against a runaway object count.
 export const ABSOLUTE_MEMBER_LIMIT = 512;

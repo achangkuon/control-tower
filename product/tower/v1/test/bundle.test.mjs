@@ -162,7 +162,7 @@ describe("closed Tower V1 release bundle", () => {
   test("personal Notion map is optional, never bundled, and not an open-ended exclusion", () => fixture(({ sources }) => {
     put(sources, excluded, "not read or shipped");
     const result = validateBundle(sources);
-    expect(result.members).toHaveLength(95);
+    expect(result.members).toHaveLength(93);
     expect(result.members.some(({ source }) => source === excluded)).toBe(false);
     put(sources, workflows + "chanks-5-session-doc/assets/other.json");
     expect(() => validateBundle(sources)).toThrow();
@@ -180,7 +180,7 @@ describe("closed Tower V1 release bundle", () => {
   test("one versioned positive membership source yields exact, immutable, in-memory bytes", () => fixture(({ sources }) => {
     expect(BUNDLE_SCHEMA).toBe("tower.v1.bundle/1");
     expect(BUNDLE_MEMBERS.map(({ source, destination }) => [source, destination])).toEqual(expected);
-    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(95);
+    expect(new Set(BUNDLE_MEMBERS.map((member) => member.destination)).size).toBe(93);
     const result = validateBundle(sources);
     expect(result.schema).toBe(BUNDLE_SCHEMA);
     expect(Object.isFrozen(result)).toBe(true);
