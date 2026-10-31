@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
-import { BUNDLE_MEMBERS } from "./bundle.mjs";
+import { BUNDLE_MEMBERS, RETIRED_MEMBERS } from "./bundle.mjs";
 
 const schema = "tower.v1.runtime/1";
 const share = ".local/share/torre-control";
@@ -276,9 +276,11 @@ function permissionPaths(home, { stateRoot, launcherPath, registryRoot }) {
       if (!stat(store).isDirectory()) fail("unsafe version store");
       const ids = readdirSync(store).sort();
       if (ids.length > 16 || ids.some(id => !/^[a-f0-9]{64}$/.test(id))) fail("unknown version-store entry or membership bound");
-      // Every supported cached roster is a subset of this closed source layout.
-      // Never repair an extra file that normal lifecycle admission would reject.
-      const files = new Set(["provenance.json", "release.json", ...BUNDLE_MEMBERS.map(m => m.source),
+      // Every supported cached roster is a subset of this closed source layout,
+      // plus the explicitly retired members (RETIRED_MEMBERS) that older cached
+      // rosters may still contain for rollback (issue #176). Never repair an extra
+      // file that normal lifecycle admission would reject.
+      const files = new Set(["provenance.json", "release.json", ...BUNDLE_MEMBERS.map(m => m.source), ...RETIRED_MEMBERS,
         ...["adoption", "bundle", "project-files", "bootstrap", "release", "global", "projects", "cli", "runtime-config", "release-build"].map(name => `product/tower/v1/${name}.mjs`)]);
       const parents = new Set([""]);
       for (const file of files) { let parent = dirname(file); while (parent !== ".") { parents.add(parent); parent = dirname(parent); } }

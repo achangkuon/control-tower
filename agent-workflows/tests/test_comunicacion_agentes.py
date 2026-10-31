@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+import re
 import sys
 import unittest
 
@@ -46,8 +47,19 @@ class ComunicacionAgentesRetiredTests(unittest.TestCase):
     def test_the_v1_package_no_longer_ships_it(self):
         bundle = read_repo("product/tower/v1/bundle.mjs")
         installer = read_repo("product/tower/v1/install.mjs")
-        self.assertNotIn(OLD_NAME, bundle)
+        # The old name may only appear inside RETIRED_MEMBERS (issue #176): the
+        # closed list that admits cached rosters for rollback, never as a member.
+        retired_block = re.search(
+            r"export const RETIRED_MEMBERS = Object\.freeze\(\[[^\]]*\]\);", bundle, re.DOTALL)
+        self.assertIsNotNone(retired_block)
+        rest = bundle.replace(retired_block.group(0), "")
+        self.assertNotIn(OLD_NAME, rest)
         self.assertNotIn(OLD_NAME, installer)
+        members = re.findall(r'"([^"]+)"', retired_block.group(0))
+        self.assertEqual(members, [
+            f"agent-workflows/skills/{OLD_NAME}/SKILL.md",
+            f"agent-workflows/skills/{OLD_NAME}/references/casos-herdr.md",
+        ])
 
     def test_shared_canon_records_the_move_to_a_personal_skill(self):
         canon = read("skills/_shared/plan-naming-convention.md")

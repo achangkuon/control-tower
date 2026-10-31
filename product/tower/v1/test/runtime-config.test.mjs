@@ -64,6 +64,31 @@ test("S205 fix removes only go-w bits from admitted paths, preserving unrelated 
   install();
 }));
 
+test("#176 a cached version holding explicitly retired members is admitted; unknown members still fail", () => {
+  const home = fs.mkdtempSync("/tmp/tower-retired-store-");
+  try {
+    const stateRoot = join(home, ".local/share/torre-control/v1");
+    const cached = join(stateRoot, "versions", "4".repeat(64));
+    const seedFile = relative => {
+      const path = join(cached, relative);
+      fs.mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+      fs.writeFileSync(path, "cached bytes", { mode: 0o600 });
+    };
+    seedFile("provenance.json");
+    seedFile("release.json");
+    seedFile("agent-workflows/tools/radar/main.go");
+    seedFile("agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md");
+    seedFile("agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md");
+    fs.mkdirSync(stateRoot, { recursive: true, mode: 0o700 });
+    fs.writeFileSync(join(stateRoot, "state.json"), JSON.stringify({ schema: "tower.v1.global/1" }), { mode: 0o600 });
+    fs.writeFileSync(join(home, "launcher"), "#!/usr/bin/env bun\n", { mode: 0o700 });
+    const options = { home, stateRoot, launcherPath: join(home, "launcher") };
+    expect(() => preflightRuntimeHome(options)).not.toThrow();
+    seedFile("agent-workflows/skills/chanks-9-ghost/SKILL.md");
+    expect(() => preflightRuntimeHome(options)).toThrow(/unknown version member/);
+  } finally { fs.rmSync(home, { recursive: true, force: true }); }
+});
+
 test("S205 explicit repair reports changes before the normal preflight can reject settings", () => fixture(({ home, write }) => {
   write(".claude/settings.json", "{bad"); fs.chmodSync(join(home, ".claude/settings.json"), 0o666);
   const reported = [];

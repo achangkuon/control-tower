@@ -4,6 +4,17 @@ import { isAbsolute, join, parse, resolve, sep } from "node:path";
 
 export const BUNDLE_SCHEMA = "tower.v1.bundle/1";
 
+// Explicitly retired source members (issue #176, 2026-10-30 roster shrink): files that
+// cached versions in the state store may legitimately contain after a release removes
+// them from BUNDLE_MEMBERS. Admitting an entry in the version-store walk and nowhere
+// else requires the same explicit release review as the roster itself; the list is
+// closed and never discovered. Members are removed from BUNDLE_MEMBERS in the same
+// change that adds them here.
+export const RETIRED_MEMBERS = Object.freeze([
+  "agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
+  "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md",
+]);
+
 const radarRoot = "agent-workflows/tools/radar";
 const copilotoRoot = "agent-workflows/tools/copiloto";
 const pilotoRoot = "agent-workflows/tools/piloto";

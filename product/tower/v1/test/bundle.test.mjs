@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { existsSync, statSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { BUNDLE_MEMBERS, BUNDLE_SCHEMA, validateBundle, validateDestination } from "../bundle.mjs";
+import { BUNDLE_MEMBERS, BUNDLE_SCHEMA, RETIRED_MEMBERS, validateBundle, validateDestination } from "../bundle.mjs";
 
 const radar = "agent-workflows/tools/radar/";
 const copiloto = "agent-workflows/tools/copiloto/";
@@ -118,6 +118,17 @@ const changed = (members, index, patch) => members.map((member, i) => i === inde
 }, 180_000);
 
 describe("closed Tower V1 release bundle", () => {
+  test("RETIRED_MEMBERS is the closed, reviewed list of files older cached rosters may still hold (#176)", () => {
+    expect(RETIRED_MEMBERS).toEqual([
+      "agent-workflows/skills/chanks-0-comunicacion-agentes/SKILL.md",
+      "agent-workflows/skills/chanks-0-comunicacion-agentes/references/casos-herdr.md",
+    ]);
+    expect(Object.isFrozen(RETIRED_MEMBERS)).toBe(true);
+    // A retired member must be gone from the current roster in the same change.
+    const sources = new Set(BUNDLE_MEMBERS.map(({ source }) => source));
+    for (const member of RETIRED_MEMBERS) expect(sources.has(member)).toBe(false);
+  });
+
   test("reviewed workflow roster is sorted and the real checkout has no missing or unlisted files", () => {
     expect(workflowNames).toEqual([...workflowNames].sort());
     const result = validateBundle(new URL("../../../..", import.meta.url).pathname);
